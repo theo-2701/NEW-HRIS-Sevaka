@@ -1,0 +1,505 @@
+/* =============================================================================
+   SEVAKA HRIS — FORM FIELD STANDARDIZATION  (Figma form-field spec)
+   -----------------------------------------------------------------------------
+   Single source of truth for every form field across every module. Matches the
+   Figma component exactly:
+
+     • Label / title ............... 16px / 700 / Slate (#334155 → --fg-2)
+       required "*" ................ 16px / 700 / Rose (#EF4444 → error-500)
+     • Gap (label → input box) ..... 4px
+     • Input box ................... 36px tall · Cloud fill (#FAFCFE)
+                                     · 1px Silver border (#94A3B8) · 8px radius
+                                     · 12px horizontal padding
+     • Field content + placeholder . 12px / 500 / Slate · line-height 1.4 (16.8px)
+     • Focus ....................... border → Ocean + 4px soft ring
+
+   Covers the field wrappers / labels / controls used across the app:
+     .fld    / .fld__label              add-employee, payroll Run / THR, modals
+     .field  / .field__input            authentication
+     .pc-formfield / .pc-formlabel       payroll-component form
+     .pc-fld / .pc-fld__label            payroll-component modals
+     .eb-field / .eb-label               e-banking transfer
+
+   Load AFTER each module's own stylesheet so this wins. Add new field classes
+   here rather than re-styling them inline elsewhere.
+   ========================================================================== */
+
+/* ---- Labels / titles: 16px bold, Slate ---- */
+.fld__label,
+.field__label,
+.pc-formlabel,
+.pc-fld__label,
+.eb-label,
+.pp-money-field__label {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--fg-2);
+}
+.fld__label .req,
+.pc-fld__label .req,
+.pc-formlabel .req { color: var(--color-error-500); font-weight: 700; }
+
+/* ---- Gap between label and input box: 4px ---- */
+.fld { gap: 4px; }
+.field { gap: 4px; }
+.pc-fld { gap: 4px; }
+.pc-formlabel { margin-bottom: 4px; }
+.eb-label { margin-bottom: 4px; }
+.pp-money-field__label { margin-bottom: 4px; }
+
+/* ---- Input box: 36px · cloud fill · 1px silver border · 8px radius ---- */
+.ctl:not(.ctl--area),
+.field__input {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  border-radius: 8px;
+  background: var(--color-cloud);
+  border: 1px solid var(--color-silver);
+  box-shadow: none;
+}
+.ctl--area {
+  height: auto;
+  min-height: 36px;
+  max-height: none;
+  border-radius: 8px;
+  background: var(--color-cloud);
+  border: 1px solid var(--color-silver);
+  box-shadow: none;
+}
+.field__input { padding: 0 12px; }
+.ctl > input { padding: 0 12px; }
+/* Textareas need vertical padding so the placeholder/first line doesn't hug the
+   top edge — ~9px top matches the visual inset of a single-line field's
+   centered text. Standardized for every multi-line field across the project. */
+.ctl > textarea { padding: 9px 12px; }
+
+/* ---- Focus: ocean border + soft ring ---- */
+.ctl:focus-within,
+.ctl--area:focus-within {
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px rgba(2,132,199,.16);
+}
+.field__input:focus {
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px rgba(2,132,199,.16);
+  outline: none;
+}
+
+/* ---- Field content + placeholder: 12px / 500 / Slate ----
+   font-family is declared explicitly: form controls do NOT inherit the page font,
+   so without it inputs fall back to Arial and textareas to monospace, which makes
+   their placeholders look different from every other label/value on the screen. */
+.ctl > input,
+.ctl > textarea,
+.ctl__value,
+.field__input,
+.eb-input,
+.pp-money input {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--fg-2);
+}
+.ctl > input::placeholder,
+.ctl > textarea::placeholder,
+.field__input::placeholder,
+.eb-input::placeholder {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--fg-4);
+}
+
+/* ---- ALL placeholder text is ONE colour: Silver #94A3B8 (= --fg-4). --------
+   Real ::placeholder already uses it; here we line up every FAUX placeholder
+   too — custom-select triggers, day-picker value, period value — so an empty
+   field reads identically whether it's a real <input> or a styled <span>. ---- */
+.ctl__value:not(.has-value),
+.pp-placeholder,
+.dp__value.is-empty,
+.pc-period__val.is-placeholder,
+.lov-menu__search input::placeholder,
+.filter-search input::placeholder {
+  color: var(--fg-4);
+}
+
+/* ---- Label with a right-aligned counter (e.g. "0/0") ---- */
+.fld__labelrow,
+.pc-formlabel--counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fld__count,
+.pc-counter {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;          /* 16.8px @ 12px */
+  color: var(--fg-4);
+}
+
+/* =============================================================================
+   CHOOSE-FILE FIELD  (Figma file-input spec)
+   -----------------------------------------------------------------------------
+   One standard for every "Choose file" control, regardless of module:
+     .file-ctl  (employee modals)      .imp-upload (payroll import)
+
+     • Box ......... 36px · Cloud fill · 1px Silver border · 8px radius
+                     · 6px x-padding · 8px gap
+     • Chip ........ 24px · Secondary-50 fill · 3px radius
+                     · 10px / 700 / UPPERCASE / Secondary-700 · 0.2px tracking
+     • File name ... 12px / 500 / Silver (Slate once a file is chosen)
+   ========================================================================== */
+.file-ctl,
+.imp-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 4px 6px;
+  background: var(--color-cloud);
+  border: 1px solid var(--color-silver);
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--duration-2) var(--ease-standard),
+              box-shadow var(--duration-2) var(--ease-standard);
+}
+.file-ctl:focus-within,
+.imp-upload:focus-within {
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-secondary-500) 18%, transparent);
+}
+
+.file-ctl__btn,
+.imp-upload__btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 4px 8px;
+  background: var(--color-secondary-50);
+  color: var(--color-secondary-700);
+  border: none;
+  border-radius: 3px;
+  box-shadow: none;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard);
+}
+.file-ctl__btn:hover,
+.imp-upload:hover .imp-upload__btn,
+.imp-upload__btn:hover { background: var(--color-secondary-100); }
+
+.file-ctl__name,
+.imp-upload__name {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--fg-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-ctl__name.has-file,
+.imp-upload.is-filled .imp-upload__name { color: var(--fg-2); font-weight: 500; }
+
+/* filled box keeps the standard look (no tint swap) */
+.imp-upload.is-filled { border-color: var(--color-silver); background: var(--color-cloud); }
+
+/* small clear (x) button stays compact */
+.imp-upload__clear { width: 24px; height: 24px; flex-shrink: 0; }
+.imp-upload__clear svg { width: 14px; height: 14px; }
+
+/* =============================================================================
+   PREFIXED MONEY / IDR INPUT  (the "RP …" fields)
+   -----------------------------------------------------------------------------
+   Every currency input — wherever it appears — is the SAME field as above:
+   36px tall · Cloud fill · 1px Silver border · 8px radius · content 12/500/Slate.
+   The leading "RP" segment is a clean divider that shares the silver border —
+   no fuzzy inset-rim, no lighter hairline that breaks the stroke.
+
+   Covers:  .pp-money   (Run Payroll / THR "Bonus", "Overtime", …)
+            .pc-newamt  (Payroll Component — New Amount cell)
+            .thr-money  (Run THR — Total THR cell)
+            .ctl > .ctl__prefix  (add-employee "Basic Salary" etc.)
+   ========================================================================== */
+.pp-money,
+.pc-newamt,
+.thr-money {
+  display: flex;
+  align-items: stretch;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  border-radius: 8px;
+  background: var(--color-cloud);
+  border: 1px solid var(--color-silver);
+  box-shadow: none;
+  overflow: hidden;
+  transition: border-color var(--duration-2) var(--ease-standard),
+              box-shadow var(--duration-2) var(--ease-standard);
+}
+.pp-money:focus-within,
+.pc-newamt:focus-within,
+.thr-money:focus-within {
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px rgba(2,132,199,.16);
+}
+
+/* leading "RP" segment — shares the silver stroke as a divider */
+.pp-money__cur,
+.pc-newamt__cur,
+.thr-money__cur {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  flex-shrink: 0;
+  background: var(--color-vapor);
+  border-right: 1px solid var(--color-silver);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--fg-2);
+}
+
+/* value segment — 12 / 500 / Slate, 12px x-padding (matches every field) */
+.pp-money input,
+.pc-newamt input,
+.thr-money input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0 12px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--fg-2);
+}
+.pp-money input::placeholder,
+.pc-newamt input::placeholder,
+.thr-money input::placeholder { color: var(--fg-4); font-weight: 500; }
+
+/* disabled keeps the same crisp border, just muted */
+.pp-money.is-disabled,
+.pc-newamt.is-disabled,
+.thr-money.is-disabled {
+  background: var(--color-vapor);
+  border-color: var(--color-silver);
+  box-shadow: none;
+}
+.pp-money.is-disabled .pp-money__cur,
+.pc-newamt.is-disabled .pc-newamt__cur,
+.thr-money.is-disabled .thr-money__cur { background: #e7ebf0; color: var(--fg-4); }
+
+/* fixed widths for the in-table money cells are preserved */
+.pc-newamt { width: 200px; }
+.thr-money { width: 200px; }
+
+/* ---- Search field inside the Edit Component modal: same standard field ---- */
+.pp-editsearch {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 0 12px;
+  gap: 8px;
+  background: var(--color-cloud);
+  border: 1px solid var(--color-silver);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.pp-editsearch:focus-within {
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px rgba(2,132,199,.16);
+}
+.pp-editsearch input {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--fg-2);
+}
+.pp-editsearch input::placeholder { color: var(--fg-4); font-weight: 500; }
+.pp-editsearch svg { width: 16px; height: 16px; }
+
+/* ---- .ctl with a leading prefix: clip to the field's rounded border so the
+        "RP" segment can't poke past the corners, and match the divider stroke */
+.ctl:has(.ctl__prefix) { overflow: hidden; }
+.ctl__prefix {
+  border-right: 1px solid var(--color-silver);
+  border-radius: 0;
+  background: var(--color-vapor);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-2);
+}
+
+/* =============================================================================
+   TABLE ACTION BUTTON  (the "Action" / "Actions" / "Edit" buttons in tables)
+   -----------------------------------------------------------------------------
+   One secondary-button size everywhere: 36px tall · 0 16px pad · 8px radius ·
+   Cloud fill + inset-rim · 13/700 Secondary-700 · 14px chevron · soft-press hover.
+   ========================================================================== */
+.action-btn,
+.pc-actbtn,
+.pp-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-inset-rim);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-secondary-700);
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard),
+              box-shadow var(--duration-2) var(--ease-standard);
+}
+.action-btn:hover,
+.pc-actbtn:hover,
+.pp-edit-btn:hover { background: var(--color-vapor); box-shadow: var(--shadow-press); }
+.action-btn svg,
+.pc-actbtn svg,
+.pp-edit-btn svg { width: 14px; height: 14px; }
+
+/* =============================================================================
+   "ADD …" BUTTON  (Add Filter · Add Other · Add Employee · Add Component …)
+   -----------------------------------------------------------------------------
+   ONE standard everywhere: 40px tall · white fill + inset-rim · 8px radius ·
+   14/700 Secondary-700 · soft-press hover · leading OUTLINE circle-plus icon
+   (stroke = currentColor, never a solid/filled square).
+   ========================================================================== */
+.add-filter,
+.add-filter--sm,
+.ae-addother,
+.eb-addfilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-inset-rim);
+  font: 700 14px/1 var(--font-body);
+  color: var(--color-secondary-700);
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard),
+              box-shadow var(--duration-2) var(--ease-standard);
+}
+.add-filter:hover,
+.add-filter--sm:hover,
+.ae-addother:hover,
+.eb-addfilter:hover { background: var(--color-vapor); box-shadow: var(--shadow-press); }
+
+/* the leading icon: always an 18px outline circle-plus in brand blue */
+.add-filter > svg,
+.add-filter--sm > svg,
+.ae-addother > svg,
+.eb-addfilter > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-secondary-500);
+}
+
+/* kill the old solid-square plus wrapper on the e-banking variant */
+.eb-addfilter__plus {
+  width: auto; height: auto;
+  background: none;
+  border-radius: 0;
+  color: var(--color-secondary-500);
+}
+.eb-addfilter__plus svg { width: 18px; height: 18px; }
+
+/* =============================================================================
+   REMOVE / DISMISS ICON BUTTON  (remove an added row · filter · SBU …)
+   -----------------------------------------------------------------------------
+   ONE restrained ghost standard everywhere — replaces the heavy red filled
+   square. 32px hit area · transparent · 8px radius · 16px "×" glyph in Silver,
+   turning Error-600 on a soft Error-50 hover tint. Reads as "remove this row",
+   not a destructive delete.
+   ========================================================================== */
+.pc-delrow,
+.sbu-remove,
+.filter-block__remove {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-silver);
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard),
+              color var(--duration-2) var(--ease-standard);
+}
+.pc-delrow:hover,
+.sbu-remove:hover,
+.filter-block__remove:hover {
+  background: var(--color-error-50, #fef2f2);
+  color: var(--color-error-600);
+}
+.pc-delrow svg,
+.sbu-remove svg,
+.filter-block__remove svg { width: 16px; height: 16px; }
+
+/* ---------- Radio group (STANDARD) ----------
+   Markup: <div class="radio-row"><label class="radio"><input type="radio" name="x" value="v">
+           <span class="radio__dot"></span>Label</label>…</div>
+   Written with :where() so specificity is 0 — this is a FALLBACK for pages that
+   have no radio primitive of their own; any page also loading add-employee.css
+   keeps that file's sizing/colour untouched. */
+:where(.radio-row) { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 32px; min-height: 40px; }
+:where(.radio) { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font: 500 13px/1.3 var(--font-body); color: var(--fg-2); user-select: none; }
+:where(.radio input) { position: absolute; opacity: 0; pointer-events: none; }
+:where(.radio__dot) { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; background: var(--color-cloud, #FAFCFE); box-shadow: inset 0 0 0 1.5px var(--color-silver, #94A3B8); display: inline-flex; transition: box-shadow var(--duration-2, .16s) var(--ease-standard, cubic-bezier(.2,0,0,1)); }
+:where(.radio input:checked + .radio__dot) { box-shadow: inset 0 0 0 5px var(--color-secondary-500, #0284C7); }
+:where(.radio input:focus-visible + .radio__dot) { box-shadow: inset 0 0 0 5px var(--color-secondary-500, #0284C7), 0 0 0 4px rgba(2, 132, 199, .16); }
+:where(.radio input:disabled + .radio__dot) { box-shadow: inset 0 0 0 1.5px var(--border-2, #D0D5DD); background: var(--color-vapor, #F1F5F9); }
+:where(.radio input:disabled ~ *) { color: var(--fg-4); }
+
+
+/* ---------- Field helper text + inline code chip (STANDARD fallback) ----------
+   Defined only in finance.css / productivity.css before this; :where() keeps
+   specificity 0 so those files' own copies still win where they load. */
+:where(.fld__hint){display:block;margin-top:4px;font:400 12px/1.45 var(--font-body);color:var(--fg-4)}
+:where(.pg-shell code,.ovl code,.note code,.rc-card code,.doc-lead code,.fld__hint code){font:600 11.5px/1.4 var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);background:rgba(15,23,42,.06);border-radius:4px;padding:1px 5px}

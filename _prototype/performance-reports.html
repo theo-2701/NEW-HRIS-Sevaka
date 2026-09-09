@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Performance — Monitor &amp; Reports</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/document.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.rplay{display:grid;grid-template-columns:268px 1fr;gap:24px;align-items:start}.rpmain{min-width:0}.rpick{border:1px solid var(--border-1,#EAECF0);border-radius:10px;background:var(--color-white);overflow:hidden}.rpick__h{font:700 10px/1 Inter;letter-spacing:.02em;text-transform:uppercase;color:var(--fg-4,#94A3B8);padding:12px 14px;border-bottom:1px solid var(--border-1,#EAECF0)}.rpick__list{display:flex;flex-direction:column}.rpick__b{display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border-1,#EAECF0);padding:11px 14px;cursor:pointer;font:500 13px/1.35 Inter;color:var(--fg-3,#334155);transition:background-color .16s cubic-bezier(.2,0,0,1),color .16s cubic-bezier(.2,0,0,1)}.rpick__b:last-child{border-bottom:0}.rpick__b:hover{background:var(--color-vapor,#F1F5F9)}.rpick__b.is-on{background:var(--color-primary-50,#f3fafd);color:var(--color-secondary-700,#036397);font-weight:700}.rpick__n{font:700 10px/1.7 Inter;letter-spacing:.02em;color:var(--fg-4,#94A3B8);min-width:16px}.rpick__b.is-on .rpick__n{color:var(--color-secondary-500,#0284C7)}.grp{background:var(--color-white);border:1px solid var(--border-1,#EAECF0);border-radius:10px;padding:16px;margin-bottom:16px}.grp__h{display:flex;align-items:flex-start;gap:12px}.grp__n{font:700 10px/1.4 Inter;letter-spacing:.02em;text-transform:uppercase;color:var(--fg-4,#94A3B8)}.grp__t{font:700 16px/1.3 'Plus Jakarta Sans';color:var(--color-obsidian,#111827)}.grp__sp{flex:1}.grp__r{font:500 13px/1.5 Inter;color:var(--fg-3,#334155);margin:6px 0 0}.grp__r b{font-weight:700;color:var(--color-obsidian,#111827)}.grp__d{margin-top:12px}.es{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;font:700 10px/1 Inter;letter-spacing:.02em;white-space:nowrap}.es--amber{background:var(--color-warning-50,#fffbeb);color:var(--color-warning-800,#92400e);border:1px solid var(--color-warning-200,#fde68a)}.es--violet{background:oklch(.96 .03 300);color:oklch(.42 .13 300);border:1px solid oklch(.9 .05 300)}.es--grey{background:var(--color-vapor,#F1F5F9);color:var(--fg-3,#334155);border:1px solid var(--border-1,#EAECF0)}.es--blue{background:var(--color-primary-50,#f3fafd);color:var(--color-secondary-800,#014a70);border:1px solid var(--color-primary-200,#bfe4f4)}.frz{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 12px;font:700 10px/1 Inter;letter-spacing:.02em}.frz--f{background:var(--color-vapor,#F1F5F9);color:var(--fg-3,#334155)}.frz--l{background:var(--color-success-50,#ecfdf5);color:var(--color-success-800,#065f46)}.secttl{font:700 13px/1 Inter;color:var(--color-obsidian,#111827);margin:24px 0 12px;display:flex;align-items:center;gap:10px}.mini{font:400 11px/1.4 Inter;color:var(--fg-4,#94A3B8)}.rpnav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.rpnav__b{border:1px solid var(--border-1,#EAECF0);background:var(--color-white);border-radius:999px;padding:7px 14px;font:600 12px/1 Inter;color:var(--fg-3,#334155);cursor:pointer;transition:background-color .16s cubic-bezier(.2,0,0,1),border-color .16s cubic-bezier(.2,0,0,1)}.rpnav__b:hover{background:var(--color-vapor,#F1F5F9)}.rpnav__b.is-on{background:var(--color-primary-50,#f3fafd);border-color:var(--color-primary-200,#bfe4f4);color:var(--color-secondary-800,#014a70);font-weight:700}a{color:var(--fg-link,#0284c7);text-decoration:none}a:hover{text-decoration:underline}</style>
+</head>
+<body data-screen-label="Performance — Monitor &amp; Reports" data-perf-page="reports">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <div class="rc-sec"><span class="rc-sec__title">Monitor &amp; Reports</span></div>
+          <p class="doc-lead">A read-and-assemble layer: no CRUD, no signal recomputation, no excusal decisions, no score writing. Everything here is derived from events owned elsewhere — the signal board by the recomputation sweep, the frozen history by sign-off, the access trail by whichever screen opened somebody's data. Changing a score still only ever happens through an <a href="performance-objections.html">objection</a>. No score, no grade, no threshold column exists on this page.</p>
+
+          <div class="tabs" id="rpTab" style="margin:4px 0 20px">
+            <button type="button" class="tabs__tab is-on" data-sub="signal">Signal Board</button>
+            <button type="button" class="tabs__tab" data-sub="frozen">Frozen History</button>
+            <button type="button" class="tabs__tab" data-sub="reports">HR Reports</button>
+            <button type="button" class="tabs__tab" data-sub="access">Access Trail</button>
+          </div>
+
+          <!-- Signal board — PL-01 / PL-02 -->
+          <div data-sub-panel="signal">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="sgWho" style="width:290px"><span class="ctl__value">Myself (Dedi Kurniawan)</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown">
+                  <div class="dropdown__opt" data-val="me">Myself (Dedi Kurniawan)</div>
+                  <div class="dropdown__opt" data-val="dedi">Dedi Kurniawan — as supervisor/HR</div>
+                </div>
+              </div>
+              <div class="ctl ctl--select" id="sgPeriod" style="width:230px"><span class="ctl__value">Semester 1 2026</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="s1-2026">Semester 1 2026</div><div class="dropdown__opt" data-val="s2-2025">Semester 2 2025</div></div>
+              </div>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <p class="fld__hint" id="sgScope" style="margin:0 0 16px"></p>
+            <div class="kv" style="margin-bottom:20px">
+              <div class="kv__k">Period &amp; phase</div><div class="kv__v">Semester 1 2026 <span class="sb sb--amber"><span class="sb__dot"></span>SIGNING</span> <span class="mini">— one call, one period</span></div>
+              <div class="kv__k">Computed at</div><div class="kv__v">28 Jul 2026 06:00 <span class="mini">— read from the recap, not recalculated here</span></div>
+            </div>
+            <div id="sgGroups"></div>
+            <div class="doc-note" style="margin-top:4px">
+              <div class="doc-note__h"><i data-lucide="info"></i>Mandatory notice, always shown, for all three reader regimes</div>
+              <p>These figures already take excused circumstances into account. An excusal applies to this assessment only — a reprimand letter held by the employee service is counted under its own rules.</p>
+            </div>
+            <div class="doc-note" style="margin-top:16px">
+              <div class="doc-note__h"><i data-lucide="palette"></i>Four kinds of empty, four different colours</div>
+              <p>"0 of 5" is a real finding, <code>NO_RECORD</code> is a live source that genuinely holds nothing, <code>NOT_AVAILABLE</code> is a source that did not answer, and <code>NO_TASK_ASSIGNED</code> means there was no denominator at all. Painting them alike would merge four different meanings. Group order carries no ranking of importance.</p>
+            </div>
+          </div>
+
+          <!-- Frozen history — PL-03 / PL-04 / PL-05 -->
+          <div data-sub-panel="frozen" hidden>
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="frWho" style="width:290px"><span class="ctl__value">Myself (Budi Santoso)</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown">
+                  <div class="dropdown__opt" data-val="me">Myself (Budi Santoso)</div>
+                  <div class="dropdown__opt" data-val="budi">Budi Santoso — as chain supervisor/HR</div>
+                </div>
+              </div>
+              <label class="chk" style="margin-left:4px"><input type="checkbox" id="frRev"><span class="chk__box"></span><span class="chk__lbl">Show every revision</span></label>
+              <div class="doc-tbar__sp"></div>
+              <span class="frz frz--f"><i data-lucide="arrow-down"></i>ORDER: approved_at DESC</span>
+            </div>
+            <p class="fld__hint" id="frScope" style="margin:0 0 16px"></p>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>Snapshot</th><th>Sheet</th><th>Revision</th><th>Job Grade</th><th>Approved</th><th></th></tr></thead>
+              <tbody id="frBody"></tbody>
+            </table></div>
+            <p class="fld__hint" id="frHint">One row per sheet showing its latest revision; the revision number climbs by one on every re-signing after an objection.</p>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>Read rights follow the chain as it stands today</div>
+              <p>Access is judged against <strong>today's</strong> reporting chain, not the chain that existed during the period — a former supervisor loses sight of history they once wrote themselves. That is a direct consequence of the read regime, not a defect. Every read of somebody else's history writes one access-trail row.</p>
+            </div>
+          </div>
+
+          <!-- HR reports -->
+          <div data-sub-panel="reports" hidden>
+           <div class="rplay">
+            <aside class="rpick">
+              <div class="rpick__h">Choose a report</div>
+              <div class="rpick__list" id="rpNav"></div>
+            </aside>
+            <div class="rpmain">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="rpPeriod" style="width:230px"><span class="ctl__value">Semester 1 2026</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="s1-2026">Semester 1 2026</div><div class="dropdown__opt" data-val="s2-2025">Semester 2 2025</div></div>
+              </div>
+              <div class="doc-tbar__sp"></div>
+              <span class="es es--grey">ORDER FIXED BY THE REPORT — NO SORT CONTROL EXISTS</span>
+            </div>
+            <p class="fld__hint" id="rpAuth" style="margin:0 0 12px"></p>
+            <div class="secttl" id="rpTitle"></div>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead id="rpHead"></thead>
+              <tbody id="rpBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="rpFoot" hidden></div>
+            <p class="fld__hint" id="rpHint"></p>
+            </div>
+           </div>
+          </div>
+
+          <!-- Access trail -->
+          <div data-sub-panel="access" hidden>
+            <div class="doc-tbar">
+              <button class="btn btn--secondary" type="button" id="alFilterBtn">Filter</button>
+              <span class="doc-fsum" id="alFsum">No filter applied — the three contracted criteria are subject, reader and date range.</span>
+              <div class="doc-tbar__sp"></div>
+              <span class="frz frz--f"><i data-lucide="arrow-down"></i>ORDER: created_at DESC</span>
+              <button class="btn btn--secondary" type="button" id="alTrigBtn">Trigger Points</button>
+            </div>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>ID</th><th>Reader</th><th>Subject</th><th>Written By (frozen identity)</th><th>Created At</th><th>Activity</th></tr></thead>
+              <tbody id="alBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="alFoot"></div>
+            <p class="fld__hint">Exactly the six contracted fields. There is no "what was opened" column: that fourth dimension is deliberately not stored, so rendering it would promise data that does not exist — the four doors that write these rows are listed under <strong>Trigger Points</strong>. <code>activity</code> is always <code>I</code> — the table is append-only, with no edit or delete surface.</p>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="key-round"></i>One door, one row</div>
+              <p>Writing the row is a <strong>precondition</strong> of the read, not a side effect of it: a refused read writes <strong>nothing</strong>, a successful read writes <strong>exactly one</strong> row per object per call. Reading your own board writes nothing at all — that is not access to somebody else's data.</p>
+              <p style="margin-top:8px">HR only. Neither the subject nor the reader is given access to their own log, so the control function stays intact. This follows the standing pattern in the corpus rather than an explicit product decision, and is open to being overridden.</p>
+              <p style="margin-top:8px">Context for the rows above: Rina opened Budi's signal board before deciding his approval round; Hesti opened Dedi's board during the July review sweep; Hesti opened Rina's board while preparing the HR reports.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Frozen revision detail -->
+<div class="ovl" id="frM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:720px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Frozen revision detail</h3><p class="ovl__desc">Frozen values and the live notes attached to them, kept visually apart.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="secttl" style="margin-top:0"><span class="frz frz--f"><i data-lucide="lock"></i>FROZEN</span>Immutable since sign-off</div>
+    <div class="kv">
+      <div class="kv__k">Snapshot</div><div class="kv__v">SNAP-0002-1 · revision 1</div>
+      <div class="kv__k">Review sheet</div><div class="kv__v">RS-0002 · Budi Santoso</div>
+      <div class="kv__k">Approved at</div><div class="kv__v">05 Jul 2026 11:00 <span class="mini">(Asia/Jakarta)</span></div>
+      <div class="kv__k">Job grade</div><div class="kv__v">Staff Grade 3</div>
+      <div class="kv__k">Scale length</div><div class="kv__v">5</div>
+      <div class="kv__k">Objection term</div><div class="kv__v">14 days <span class="mini">— frozen at sign-off</span></div>
+      <div class="kv__k">Reprimand state</div><div class="kv__v">CLEAR · standing level CLEAR · 0 active points<br><span class="mini">The state <strong>as it stood at sign-off, 05 Jul 2026 11:00</strong> — never shown bare, always stamped with that moment. Had the employee service been unreachable at sign-off, this would read NOT_AVAILABLE and the sign-off would still have gone through.</span></div>
+      <div class="kv__k">Assessment basis</div><div class="kv__v">Full copy of the basis, the method and the result, retained with the revision.</div>
+    </div>
+    <div class="secttl"><span class="frz frz--l"><i data-lucide="activity"></i>LIVE</span>Attached, not copied — these still move</div>
+    <div class="kv">
+      <div class="kv__k">Objection summary</div><div class="kv__v">OBJ-0001 <span class="sb sb--amber"><span class="sb__dot"></span>SUBMITTED</span> <span class="mini">— follows the current answer, not part of the snapshot</span></div>
+      <div class="kv__k">Incident recap</div><div class="kv__v">Still open to change for this period — read it on the <a href="#" id="frToBoard">signal board</a>, do not treat this revision as a mirror of today.</div>
+    </div>
+    <p class="fld__hint" style="margin-top:16px">The screen states both things side by side on purpose: the score and its basis are frozen for good, while the incident notes around it can still move.</p>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-close>Close</button></div>
+</div></div>
+
+<!-- Access trail trigger points -->
+<div class="ovl" id="alTrigM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:760px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Trigger points</h3><p class="ovl__desc">The four cross-module doors that write a row into this trail.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+      <thead><tr><th>Trigger point</th><th>Module owning the endpoint</th><th>Source data opened <span class="mini">(documentation, not a stored column)</span></th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /employees/{id}/signal-board</code></td><td>Monitor &amp; Reports</td><td>signal recap</td></tr>
+        <tr><td><code>GET /employees/{id}/review-history</code>, <code>GET /review-history/{id}</code></td><td>Monitor &amp; Reports</td><td>review sheet snapshot</td></tr>
+        <tr><td>Approval screen opening a subordinate's sheet</td><td>Score Approval</td><td>review sheet</td></tr>
+        <tr><td>HR opening somebody else's objection detail</td><td>Objections</td><td>objection</td></tr>
+      </tbody>
+    </table></div>
+    <p class="fld__hint" style="margin-top:12px">Documentation only — none of these three columns is stored on the row. Writing the row is a precondition of the read: a refused read writes nothing, a successful read writes exactly one row per object per call.</p>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-close>Close</button></div>
+</div></div>
+
+<!-- Access trail filter -->
+<div class="ovl" id="alFilterM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Filter access trail</h3><p class="ovl__desc">Three criteria, exactly as contracted — subject, reader, date range.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="fld"><label class="fld__label">Subject</label>
+        <div class="ctl ctl--select" id="alSubj"><span class="ctl__value">Anyone</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt" data-val="">Anyone</div><div class="dropdown__opt" data-val="Dedi Kurniawan">Dedi Kurniawan</div><div class="dropdown__opt" data-val="Budi Santoso">Budi Santoso</div><div class="dropdown__opt" data-val="Rina Amelia">Rina Amelia</div></div>
+        </div></div>
+      <div class="fld"><label class="fld__label">Reader</label>
+        <div class="ctl ctl--select" id="alRead"><span class="ctl__value">Anyone</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt" data-val="">Anyone</div><div class="dropdown__opt" data-val="Hesti Wulandari">Hesti Wulandari</div><div class="dropdown__opt" data-val="Rina Amelia">Rina Amelia</div></div>
+        </div></div>
+      <div class="fld"><label class="fld__label">Date range</label>
+        <div class="rng" data-placeholder="Any date"><button class="rng__ctl" type="button"><span class="rng__val is-empty">Any date</span></button></div>
+        <p class="fld__hint">Matched on the moment the row was created.</p></div>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" id="alReset">Reset</button><button class="btn btn--primary" type="button" id="alApply">Apply</button></div>
+</div></div>
+
+<script>window.SEVAKA_SESSION = { roles: ['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER','ROLE_HR_STAFF','ROLE_HR_MANAGER'] };</script>
+<script src="js/performance-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script>
+(function(){
+  var F = window.Flow || window.F;
+  var esc = function(s){ return String(s); };
+
+  /* ---- Signal board: six groups, fixed order, recap first then newest-first detail ---- */
+  var GROUPS = [
+    { n:1, key:'ATTENDANCE', name:'Attendance',
+      recap:'<b>2</b> late occurrences · <b>0</b> absences',
+      note:'Two separate counts. This group is never reduced by excusals — the neutral filtering already happened upstream, so these are raw post-filter counts, not "5 late minus 3 held".',
+      head:['Date','Status'], rows:[['05 Mar 2026','LATE'],['10 Feb 2026','LATE']] },
+    { n:2, key:'OVERTIME', name:'Overtime',
+      recap:'<b>12.5</b> payable hours · across <b>3</b> days',
+      note:'Two separate figures, no good/bad label attached to either.',
+      head:['Date','Payable Hours'], rows:[['18 Mar 2026','5.0'],['20 Feb 2026','3.0'],['12 Feb 2026','4.5']] },
+    { n:3, key:'TRANSITION', name:'Transition Tasks',
+      recap:'<b>0</b> legally late · <b>1</b> operationally late',
+      note:'Two separate counts that must never be added together — they answer different questions.',
+      head:['Date','Deadline Class','Status'], rows:[['02 Apr 2026','OPERATIONAL','Late']] },
+    { n:4, key:'PRODUCTIVITY', name:'Task Timeliness',
+      recap:'<b>0</b> of <b>5</b> assigned tasks finished on time',
+      badge:'<span class="es es--amber">A REAL FINDING — NOT AN EMPTY STATE</span>',
+      note:'Read as a pair, always: 5 assigned and 0 on time is a finding. It is told apart from "no tasks at all" by the combination of the two counts, never by one of them alone. Any excused row would stay listed here with its basis and the minutes it reduced.',
+      head:['Date','Detail','Excusal basis'], rows:[] , empty:'No individual rows returned for this period; the pair of counts above is the finding.' },
+    { n:5, key:'PENDING_DECISION', name:'Pending Decisions',
+      recap:'<b>0</b> finance decision delays · <b>0</b> settlement delays · <b>0</b> approval delay minutes over <b>0</b> occurrences',
+      badge:'<span class="es es--violet">NO_RECORD</span>',
+      note:'The live source answered and genuinely holds nothing. Rows here would each state whether the delay is resolved or still running — a running one keeps growing. Approver leave is already deducted from these minutes, and any excused row would show its basis and reduced minutes rather than only the net figure.',
+      head:['Occurred','Detail','Excusal basis','Resolution'], rows:[] },
+    { n:6, key:'REPRIMAND', name:'Standing Reprimands',
+      recap:'<span class="mini">Never materialised here — pulled live from the employee service at display time.</span>',
+      badge:'<span class="es es--grey">NOT_AVAILABLE</span>',
+      note:'The call did not answer in time. This is not "zero reprimands" — the two readings must never be merged.',
+      head:[], rows:[] }
+  ];
+  function drawGroups(){
+    document.getElementById('sgGroups').innerHTML = GROUPS.map(function(g){
+      var det = '';
+      if (g.head.length && g.rows.length) {
+        det = '<div class="grp__d"><div class="dtable-wrap dtable-wrap--plain"><table class="dtable"><thead><tr>'+
+          g.head.map(function(h){ return '<th>'+h+'</th>'; }).join('')+'</tr></thead><tbody>'+
+          g.rows.map(function(r){ return '<tr>'+r.map(function(c){ return '<td>'+c+'</td>'; }).join('')+'</tr>'; }).join('')+
+          '</tbody></table></div></div>';
+      } else if (g.empty) {
+        det = '<p class="mini" style="margin:10px 0 0">'+g.empty+'</p>';
+      }
+      return '<div class="grp"><div class="grp__h"><div><div class="grp__n">Group '+g.n+'</div><div class="grp__t">'+g.name+'</div></div>'+
+        '<div class="grp__sp"></div>'+(g.badge||'')+'</div>'+
+        '<p class="grp__r">'+g.recap+'</p>'+
+        '<p class="mini" style="margin:6px 0 0">'+g.note+'</p>'+det+'</div>';
+    }).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+  function drawScope(){
+    var mine = document.querySelector('#sgWho .ctl__value').textContent.indexOf('Myself')===0;
+    document.getElementById('sgScope').innerHTML = mine
+      ? 'Your own board. Nothing is written to the access trail — reading your own data is not access to somebody else\u2019s.'
+      : 'Identical data, single source of truth, zero display duplication — what differs is the endpoint and one side effect: this read writes exactly one access-trail row. A peer who is not on the assessment chain gets "not found" rather than "forbidden", so the roster cannot be enumerated.';
+  }
+
+  /* ---- Frozen history ---- */
+  var HIST = [ { snap:'SNAP-0002-1', sheet:'RS-0002', rev:1, grade:'Staff Grade 3', at:'05 Jul 2026 11:00' } ];
+  function drawFrozen(){
+    var all = document.getElementById('frRev').checked ? HIST : HIST.filter(function(h){ return true; });
+    document.getElementById('frBody').innerHTML = all.map(function(h){
+      return '<tr><td><strong>'+h.snap+'</strong></td><td>'+h.sheet+'</td><td>'+h.rev+'</td><td>'+h.grade+'</td><td>'+h.at+'</td>'+
+        '<td><div class="rowacts"><button class="rowbtn" type="button" data-frdetail>View Detail</button></div></td></tr>';
+    }).join('');
+    var mine = document.querySelector('#frWho .ctl__value').textContent.indexOf('Myself')===0;
+    document.getElementById('frScope').innerHTML = mine
+      ? 'Your own frozen revisions. No access-trail row is written.'
+      : 'Opened as a supervisor on the chain <strong>as it stands today</strong>, or as HR. Each read writes one access-trail row; someone outside the current chain gets "not found".';
+    document.getElementById('frHint').textContent = document.getElementById('frRev').checked
+      ? 'Every revision of every sheet, newest sign-off first.'
+      : 'One row per sheet showing its latest revision; the revision number climbs by one on every re-signing after an objection.';
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /* ---- HR reports: eight read-only lists ---- */
+  var REPORTS = [
+    { id:1, tab:'Task distribution', title:'Task distribution per supervisor', auth:'HR, or a supervisor for their own roster — the approval screen reuses this list.',
+      head:['Supervisor','Subordinate','Assigned Tasks'],
+      rows:[['Budi Santoso','Dedi Kurniawan','5'],['','Yanti Prasetya','<span class="es es--blue">NO_TASK_ASSIGNED</span>'],['Rina Amelia','Budi Santoso','<span class="es es--blue">NO_TASK_ASSIGNED</span>']],
+      hint:'Every subordinate of the period is listed, including the skipped ones — dropping them would make the spread look flatter than it is. A missing assignment count is not a zero: there is no recap for that person yet, so it carries a label instead of a number. A peer asking for somebody else\u2019s roster gets "not found".' },
+    { id:2, tab:'Target type mix', title:'Target type mix per job grade', auth:'HR only.',
+      head:['Job Grade','NUMERIC','NARRATIVE'], rows:[['Staff Grade 3','2','2']],
+      hint:'A plain count grouped by grade. Additional lines carry no master item and therefore no grade, so they fall outside this count entirely.' },
+    { id:3, tab:'Inactive master items', title:'Master items flagged inactive', auth:'HR only.', paged:true,
+      head:['Job Grade','Active Flag'], rows:[['Staff Grade 3','<span class="sb sb--grey">false</span>']],
+      hint:'The flag as it stands, read as-is — deciding when an item becomes inactive belongs to the master list screen. The item name exists in the model but is deliberately left out of this response: the focus is the flag. This is the only one of the eight lists that pages.' },
+    { id:4, tab:'Additional-line share', title:'Additional-line share per supervisor against the 30% guard', auth:'HR only.',
+      head:['Supervisor','Additional Share (by weight)','Guard'], rows:[['Budi Santoso','17.6%','30%'],['Rina Amelia','0%','30%']],
+      hint:'A share of weight, not a naive share of rows: one of three lines is 33% by count but 17.6% by weight, and those two readings disagree about the guard. The guard is a remark, not a hidden threshold that blocks anything.' },
+    { id:5, tab:'Not yet assessable', title:'Not yet assessable, with reason', auth:'HR only.',
+      head:['Employee','Reason'], rows:[['Ahmad Fauzi','<span class="sb sb--grey">NO_ASSESSOR_IN_STRUCTURE</span>']],
+      hint:'Employees with no review sheet at all for the period: the active roster minus everybody who already has one. HR reads this at the moment a period is opened.' },
+    { id:6, tab:'Excluded', title:'Excluded from assessment, with reason', auth:'HR only.',
+      head:['Employee','Reason'], rows:[['Wayan Sudira','<span class="sb sb--grey">APPROVER_CHAIN_EXHAUSTED</span>'],['Fajar Setiawan','<span class="sb sb--grey">NOT_INCLUDED_MID_PERIOD</span>']],
+      hint:'Also without a sheet, but for two structurally different causes: the approver chain ran out without a decision, or the person joined mid-period and was not added. This list only reads flags written by the screens that own them — neither cause can be objected to, because neither is anybody\u2019s decision.' },
+    { id:7, tab:'Blank input & unread', title:'Blank self-assessment and unread ratio per supervisor', auth:'HR only.',
+      head:['Supervisor','Sheets Without Self-Assessment','Unread Lines'], rows:[['Budi Santoso','0%','33.3%'],['Rina Amelia','0%','0%']],
+      hint:'Two independent proportions, both neutral: they inform, they hold nothing up. Unread is also where a reset read-mark is told apart from one that never existed — a reset count above zero next to an empty read timestamp, read as a pair.' },
+    { id:8, tab:'Pending objections', title:'Unanswered objections and their current holder', auth:'HR, or the current holder asking about their own rows.',
+      head:['Objection','Current Holder','Holder Context','Days Since Submitted'], rows:[['OBJ-0001','Rina Amelia','PENILAI_ASLI','18']],
+      hint:'Days since submitted is derived at read time, not stored. Anyone who is neither HR nor the holder is refused.' }
+  ];
+  var curRp = 1, rpPg = null;
+  function drawReport(){
+    var r = REPORTS.filter(function(x){ return x.id===curRp; })[0];
+    document.getElementById('rpNav').innerHTML = REPORTS.map(function(x){
+      return '<button type="button" class="rpick__b'+(x.id===curRp?' is-on':'')+'" data-rp="'+x.id+'"><span class="rpick__n">'+String(x.id).padStart(2,'0')+'</span><span>'+x.tab+'</span></button>';
+    }).join('');
+    document.getElementById('rpTitle').textContent = r.id+'. '+r.title;
+    document.getElementById('rpAuth').textContent = r.auth;
+    document.getElementById('rpHead').innerHTML = '<tr>'+r.head.map(function(h){ return '<th>'+h+'</th>'; }).join('')+'</tr>';
+    document.getElementById('rpBody').innerHTML = r.rows.map(function(row){
+      return '<tr>'+row.map(function(c){ return '<td>'+(c===''?'<span class="mini">↳</span>':c)+'</td>'; }).join('')+'</tr>';
+    }).join('');
+    document.getElementById('rpHint').textContent = r.hint;
+    var foot = document.getElementById('rpFoot');
+    foot.hidden = !r.paged;
+    if (r.paged && rpPg) { rpPg.state.total = r.rows.length; if (rpPg.paint) rpPg.paint(); }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /* ---- Access trail ---- */
+  var LOGS = [
+    { id:'AL-0002', reader:'Hesti Wulandari', subj:'Dedi Kurniawan', role:'ROLE_HR_MANAGER', at:'15 Jul 2026 09:00 WIB' },
+    { id:'AL-0001', reader:'Rina Amelia',     subj:'Budi Santoso',   role:'ROLE_DEPT_MANAGER', at:'05 Jul 2026 10:45 WIB' },
+    { id:'AL-0003', reader:'Hesti Wulandari', subj:'Rina Amelia',    role:'ROLE_HR_MANAGER', at:'20 Jun 2026 14:50 WIB' }
+  ];
+  var flt = { subj:'', reader:'' };
+  var pg = F.pager('alFoot', 10, drawLogs, 'entries');
+  function drawLogs(){
+    var all = LOGS.filter(function(l){ return (!flt.subj||l.subj===flt.subj) && (!flt.reader||l.reader===flt.reader); });
+    pg.state.total = all.length;
+    var view = pg.slice ? pg.slice(all) : all;
+    document.getElementById('alBody').innerHTML = view.map(function(l){
+      return '<tr><td>'+l.id+'</td><td><strong>'+l.reader+'</strong></td><td>'+l.subj+'</td>'+
+        '<td>'+l.reader+' <span class="mini">· '+l.role+'</span></td><td>'+l.at+'</td>'+
+        '<td><span class="sb sb--grey">I</span></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="dtable__empty">No entry matches this filter.</td></tr>';
+    if (pg.paint) pg.paint();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /* ---- wiring ---- */
+  rpPg = F.pager('rpFoot', 20, drawReport, 'items');
+  document.getElementById('rpNav').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rp]'); if (!b) return;
+    curRp = +b.dataset.rp; if (rpPg && rpPg.reset) rpPg.reset(); drawReport();
+  });
+  document.getElementById('rpTab').addEventListener('click', function(e){
+    var t = e.target.closest('.tabs__tab'); if (!t) return;
+    var v = t.dataset.sub;
+    this.querySelectorAll('.tabs__tab').forEach(function(b){ b.classList.toggle('is-on', b===t); });
+    document.querySelectorAll('[data-sub-panel]').forEach(function(p){ p.hidden = p.dataset.subPanel !== v; });
+    if (v==='frozen') drawFrozen(); else if (v==='reports') drawReport(); else if (v==='access') drawLogs(); else drawGroups();
+  });
+  ['change','selectchange'].forEach(function(ev){
+    document.getElementById('sgWho').addEventListener(ev, drawScope);
+    document.getElementById('frWho').addEventListener(ev, drawFrozen);
+  });
+  document.getElementById('frRev').addEventListener('change', drawFrozen);
+  document.getElementById('frBody').addEventListener('click', function(e){
+    if (e.target.closest('[data-frdetail]')) F.openModal('frM');
+  });
+  document.getElementById('frToBoard').addEventListener('click', function(e){
+    e.preventDefault(); F.closeModal('frM');
+    var b = document.querySelector('#rpTab .tabs__tab[data-sub="signal"]'); if (b) b.click();
+  });
+  document.getElementById('alFilterBtn').addEventListener('click', function(){ F.openModal('alFilterM'); });
+  document.getElementById('alTrigBtn').addEventListener('click', function(){ F.openModal('alTrigM'); });
+  document.getElementById('alApply').addEventListener('click', function(){
+    var s = document.querySelector('#alSubj .ctl__value').textContent.trim();
+    var r = document.querySelector('#alRead .ctl__value').textContent.trim();
+    flt.subj = s==='Anyone' ? '' : s; flt.reader = r==='Anyone' ? '' : r;
+    var bits = [];
+    if (flt.subj) bits.push('subject = '+flt.subj);
+    if (flt.reader) bits.push('reader = '+flt.reader);
+    document.getElementById('alFsum').textContent = bits.length ? bits.join(' · ')
+      : 'No filter applied — the three contracted criteria are subject, reader and date range.';
+    F.closeModal('alFilterM'); pg.reset(); drawLogs();
+  });
+  document.getElementById('alReset').addEventListener('click', function(){
+    flt = { subj:'', reader:'' };
+    document.querySelector('#alSubj .ctl__value').textContent = 'Anyone';
+    document.querySelector('#alRead .ctl__value').textContent = 'Anyone';
+    document.getElementById('alFsum').textContent = 'No filter applied — the three contracted criteria are subject, reader and date range.';
+    pg.reset(); drawLogs();
+  });
+
+  drawGroups(); drawScope(); drawFrozen(); drawReport(); drawLogs();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

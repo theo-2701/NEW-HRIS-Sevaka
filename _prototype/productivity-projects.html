@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Project (Active)</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/daterange.css?v=3">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Project">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Project &amp; Task</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Project</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Project</h1>
+<p class="flow-sub">A project is born <strong>AKTIF</strong>. Archiving is a gated transition, not a delete — refused while any task inside is still open — and restoring is owner-only. Both sides of the pair live here.</p>
+</div>
+<div class="flow-head__actions"><button class="btn btn--primary" type="button" id="prjNewBtn">New project</button></div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tbar">
+<span class="seg">
+<button class="seg__btn is-on" type="button" data-sub="active">Active</button>
+<button class="seg__btn" type="button" data-sub="archive">Archive</button>
+</span>
+<button class="btn btn--secondary" type="button" data-filter-open="prjFilter" data-tbar="active">Filter</button>
+<span class="sec-head__note" data-filter-sum="prjFilter" data-tbar="active">No filter applied</span>
+<button class="btn btn--secondary" type="button" data-filter-open="arFilter" data-tbar="archive" style="display:none">Filter</button>
+<span class="sec-head__note" data-filter-sum="arFilter" data-tbar="archive" style="display:none">No filter applied</span>
+</div>
+
+<div class="subpanel is-on" data-subpanel="active">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Project</th><th>Owner</th><th>Status</th><th>Created</th><th></th></tr></thead>
+<tbody id="prjBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgPrj"></div>
+<div class="note note--info" style="margin-top:18px">
+<i data-lucide="info"></i>
+<span><strong>Archive is not delete.</strong> <code>state=ARSIP</code> moves the project to the Archive tab and keeps every task exactly where it is — the machine never silently closes a task. Removing a member deactivates the membership row (<code>is_active=false</code>); re-adding the same person restores that row instead of inserting a new one.</span>
+</div>
+</div>
+
+<div class="subpanel" data-subpanel="archive">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Project</th><th>Owner</th><th>Status</th><th>Archived since</th><th></th></tr></thead>
+<tbody id="arBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgAr"></div>
+<div class="note note--warn" style="margin-top:18px">
+<i data-lucide="triangle-alert"></i>
+<span><strong>422 PROD_PROJECT_ARCHIVED — cross-reference, not an action of this tab.</strong> This code is raised on the <em>Tasks</em> page when a new task points at an archived project. Nothing here triggers it; it is shown where the archived rows live so the reason a project can no longer receive work is documented. Zero create on this side — a project only lands here through an archive transition.
+<button class="rowbtn" type="button" id="arDemoBtn" style="margin-left:10px">See the refusal</button></span>
+</div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ FILTER ============ -->
+<div class="ovl" id="prjFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter projects</h3><p class="ovl__desc">Fields mirror the grid contract: name, owner, created-between and sort order. <code>state</code> is not a filter here — the menu itself is the <code>AKTIF</code> side.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Project name</label><div class="ctl"><input type="text" id="fName" placeholder="Contains…"></div></div>
+<div class="fld"><label class="fld__label">Owner</label><div class="ctl ctl--select" id="fOwner"><span class="ctl__value">All owners</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fOwnerDD"></div></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Created from</label><div class="ctl ctl--date"><input type="text" id="fFrom" placeholder="DD MMM YYYY"></div></div>
+<div class="fld"><label class="fld__label">Created to</label><div class="ctl ctl--date"><input type="text" id="fTo" placeholder="DD MMM YYYY"></div></div>
+</div>
+<div class="fld"><label class="fld__label">Sort by</label><div class="ctl ctl--select" id="fSort" data-nosum><span class="ctl__value">created_at (default)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="created_at">created_at (default)</div><div class="dropdown__opt" data-val="project_name">project_name</div><div class="dropdown__opt" data-val="state">state</div></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="fReset">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<!-- ============ CREATE ============ -->
+<div class="ovl" id="prjCreate">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New project</h3><p class="ovl__desc">One field only. Owner and status are filled by the server from your identity — never sent by the client.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Project name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="cName" maxlength="150" placeholder="e.g. Migrasi Server Q3"></div>
+<span class="fld__hint"><span id="cNameCount">0</span>/150 · required, non-blank</span></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="lock"></i>Server-filled on create</div>
+<div class="pv-row"><span class="pv-row__k">Owner</span><span class="pv-row__v" id="cOwner">Dedi Kurniawan</span></div>
+<div class="pv-row"><span class="pv-row__k">Status</span><span class="pv-row__v">AKTIF</span></div>
+<div class="pv-row"><span class="pv-row__k">Archived at</span><span class="pv-row__v">null</span></div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="cSave" disabled>Create project</button>
+</div>
+</div>
+</div>
+
+<!-- ============ DETAIL / EDIT ============ -->
+<div class="ovl" id="prjDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="dTitle">Project detail</h3><p class="ovl__desc">Name is editable by the owner or HR. Archiving is a state transition, not a field — it lives on its own footer action and is refused while a task inside is still open. Membership opens a review window; it never grants write access to someone else's work.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger" id="dGate" style="display:none">
+<i data-lucide="octagon-alert"></i>
+<span><strong>422 PROD_PROJECT_ARCHIVE_HAS_OPEN_TASK</strong><br><span id="dGateMsg"></span></span>
+</div>
+<div class="fld"><label class="fld__label">Project name <span class="req">*</span></label><div class="ctl"><input type="text" id="dName" maxlength="150"></div></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="file-clock"></i>Read-only</div>
+<div class="pv-row"><span class="pv-row__k">id</span><span class="pv-row__v" id="dCode">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Owner</span><span class="pv-row__v" id="dOwner">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Created</span><span class="pv-row__v" id="dCreated">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Status</span><span class="pv-row__v"><span class="pv-tag">AKTIF</span></span></div>
+<div class="pv-row"><span class="pv-row__k">Open tasks in project</span><span class="pv-row__v" id="dOpen">—</span></div>
+</div>
+<div>
+<div class="sec-head"><span class="sec-head__t">Members</span><span class="sec-head__c" id="dMemCount">0</span><span class="subtabs__sp"></span><span class="sec-head__note">Only active memberships are listed.</span></div>
+<div class="dtable-wrap dtable-wrap--act" style="margin-top:8px">
+<table class="dtable"><thead><tr><th>Employee</th><th>Role in project</th><th></th></tr></thead><tbody id="dMemBody"></tbody></table>
+</div>
+<div style="margin-top:12px">
+<button class="add-filter" type="button" id="dAddOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add member</button>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--secondary" id="dArchive">Set as Archive</button>
+<button class="btn btn--primary" id="dSave">Save changes</button>
+</div>
+</div>
+</div>
+
+<!-- ============ ADD MEMBER (stacked over the detail modal) ============ -->
+<div class="ovl ovl--stack" id="prjAddMem">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Add member</h3><p class="ovl__desc">Adding the same person twice is an idempotent no-op — a deactivated membership row is reactivated instead of duplicated.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Employee <span class="req">*</span></label><div class="ctl ctl--select" id="dAddSel"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="dAddDD"></div></div>
+<span class="fld__hint">Membership grants read access to the project's tasks — never write access.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="dAddBtn">Add member</button>
+</div>
+</div>
+</div>
+
+<!-- ============ FILTER ============ -->
+<div class="ovl" id="arFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter archived projects</h3><p class="ovl__desc">Same grid contract as the active side, pinned to <code>state=ARSIP</code>.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Project name</label><div class="ctl"><input type="text" id="afName" placeholder="Contains…"></div></div>
+<div class="fld"><label class="fld__label">Owner</label><div class="ctl ctl--select" id="afOwner"><span class="ctl__value">All owners</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="afOwnerDD"></div></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Archived from</label><div class="ctl ctl--date"><input type="text" id="afFrom" placeholder="DD MMM YYYY"></div></div>
+<div class="fld"><label class="fld__label">Archived to</label><div class="ctl ctl--date"><input type="text" id="afTo" placeholder="DD MMM YYYY"></div></div>
+</div>
+<div class="fld"><label class="fld__label">Sort by</label><div class="ctl ctl--select" id="afSort" data-nosum><span class="ctl__value">created_at (default)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="created_at">created_at (default)</div><div class="dropdown__opt" data-val="project_name">project_name</div><div class="dropdown__opt" data-val="archived_at">archived_at</div></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="afReset">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<!-- ============ DETAIL / RESTORE ============ -->
+<div class="ovl" id="arDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="arTitle">Archived project</h3><p class="ovl__desc">Restore is authority-gated (owner only — <code>403 PROD_NOT_OBJECT_OWNER</code> for anyone else, HR included; only <code>DELETE</code> is owner-or-HR) but otherwise ungated — reopening a project never touches the status of the tasks inside it.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="archive"></i>Read-only</div>
+<div class="pv-row"><span class="pv-row__k">Project</span><span class="pv-row__v" id="arName">—</span></div>
+<div class="pv-row"><span class="pv-row__k">id</span><span class="pv-row__v" id="arCode">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Owner</span><span class="pv-row__v" id="arOwner">—</span></div>
+<div class="pv-row"><span class="pv-row__k">archived_at</span><span class="pv-row__v" id="arAt">—</span></div>
+<div class="pv-row"><span class="pv-row__k">archived_at_timezone</span><span class="pv-row__v" id="arTz">Asia/Jakarta</span></div>
+<div class="pv-row"><span class="pv-row__k">Tasks kept inside</span><span class="pv-row__v" id="arTasks">—</span></div>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span>Restoring sets <code>state=AKTIF</code> and clears <code>archived_at</code> / <code>archived_at_timezone</code>. The row disappears from this grid and reappears on Project — Active.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="arRestore">Restore project</button>
+</div>
+</div>
+</div>
+
+<!-- ============ 422 CROSS-REFERENCE DEMO ============ -->
+<div class="ovl" id="arDemo">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">PROD_PROJECT_ARCHIVED</h3><p class="ovl__desc">Cross-reference demonstration — raised by the Tasks page, shown here for context.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger"><i data-lucide="octagon-alert"></i><span><strong>422 PROD_PROJECT_ARCHIVED</strong><br>Proyek tujuan berstatus ARSIP — task baru maupun pemindahan task ke proyek ini ditolak.</span></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="git-branch"></i>Where it comes from</div>
+<div class="pv-row"><span class="pv-row__k">Raised by</span><span class="pv-row__v">POST /tasks · PATCH /tasks/{id}</span></div>
+<div class="pv-row"><span class="pv-row__k">Raised by this page</span><span class="pv-row__v">Never</span></div>
+<div class="pv-row"><span class="pv-row__k">Way out</span><span class="pv-row__v">Restore the project, or pick an active one</span></div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+<button class="btn btn--primary" onclick="location.href='productivity-tasks.html'">Open Tasks</button>
+</div>
+</div>
+</div>
+
+<script>document.addEventListener("click",function(e){var b=e.target.closest(".seg [data-sub]");if(!b)return;var on=b.getAttribute("data-sub");document.querySelectorAll(".seg .seg__btn").forEach(function(t){t.classList.toggle("is-on",t===b)});document.querySelectorAll("[data-subpanel]").forEach(function(p){p.classList.toggle("is-on",p.getAttribute("data-subpanel")===on)});document.querySelectorAll("[data-tbar]").forEach(function(el){el.style.display=el.getAttribute("data-tbar")===on?"":"none"});});</script>
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0001', roles:['ROLE_EMPLOYEE','ROLE_HR_MANAGER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-project-active.js"></script>
+<script src="js/productivity-project-archive.js"></script>
+</body>
+</html>

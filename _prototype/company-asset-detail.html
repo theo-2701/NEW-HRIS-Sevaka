@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Asset Detail</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/company.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Asset Detail">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Company Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <a class="crumbs__item" href="company-assets.html">Assets</a>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">AST-0001</span>
+          </nav>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="co-hero">
+            <div class="co-hero__thumb"><i data-lucide="laptop"></i></div>
+            <div class="co-hero__main">
+              <span class="co-hero__code">AST-0001 · SN12345</span>
+              <h1 class="co-hero__name">Laptop Dell XPS 13</h1>
+              <div class="co-hero__badges">
+                <span class="sb sb--blue"><span class="sb__dot"></span>Assigned</span>
+                <span class="sb sb--blue"><span class="sb__dot"></span>Handover: Giving</span>
+                <span class="co-muted">IT Equipment · Kantor Bandung · Owned</span>
+              </div>
+            </div>
+            <div class="co-hero__actions">
+              <div class="rowmenu">
+                <button type="button" class="rowmenu__trigger rowmenu__trigger--primary">Action<svg class="rowmenu__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="rowmenu__pop">
+                  <button type="button" class="rowmenu__item" data-act="assign"><i data-lucide="user-check"></i>Assign</button>
+                  <button type="button" class="rowmenu__item" data-act="return"><i data-lucide="corner-up-left"></i>Return</button>
+                  <button type="button" class="rowmenu__item" data-act="transfer"><i data-lucide="arrow-left-right"></i>Transfer</button>
+                  <button type="button" class="rowmenu__item" data-act="maintenance"><i data-lucide="wrench"></i>Maintenance</button>
+                  <button type="button" class="rowmenu__item" data-act="lease"><i data-lucide="file-signature"></i>Lease</button>
+                  <button type="button" class="rowmenu__item" data-act="residual"><i data-lucide="trending-down"></i>Residual</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabnav" id="adTabs" style="margin-top:20px">
+            <button class="tabnav__tab is-on" type="button" data-tab="assignment">Assignment History</button>
+            <button class="tabnav__tab" type="button" data-tab="maintenance">Maintenance Log</button>
+            <button class="tabnav__tab" type="button" data-tab="transfer">Transfer Log</button>
+          </div>
+
+          <div class="tabpanel is-on" data-tabpanel="assignment">
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th class="ta-c">Event</th><th>Employee</th><th>Location</th><th class="ta-c">Complete</th><th>Notes</th><th>Date</th></tr></thead>
+              <tbody id="hoBody"></tbody>
+            </table></div>
+          </div>
+          <div class="tabpanel" data-tabpanel="maintenance">
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th class="ta-c">Type</th><th>Description</th><th class="ta-r">Cost</th><th>Vendor</th><th>Date</th><th>Next Due</th></tr></thead>
+              <tbody id="mtBody"></tbody>
+            </table></div>
+          </div>
+          <div class="tabpanel" data-tabpanel="transfer">
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>From Branch</th><th>To Branch</th><th>Reason</th><th>Date</th></tr></thead>
+              <tbody id="trBody"></tbody>
+            </table></div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== ASSIGN (GIVING) ===== -->
+<div class="ovl" id="mAssign"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Assign asset</h3><p class="ovl__desc">GIVING event. If "complete" is off, the master becomes INCOMPLETE (still assigned).</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Employee <span class="req">*</span></label>
+      <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt">Budi Santoso (E001)</div><div class="dropdown__opt">Sari Melati (E002)</div></div>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">Location</label><div class="ctl"><input type="text" placeholder="e.g. Meja 12"></div></div>
+    <div class="fld"><label class="fld__label">Handover notes</label><div class="ctl ctl--area"><textarea rows="2" placeholder="Notes"></textarea></div></div>
+    <label class="co-switch"><input type="checkbox" checked><span class="co-switch__track"></span><span class="co-switch__label">Handover complete (else → INCOMPLETE)</span></label>
+    <div class="fld"><label class="fld__label">Condition photo</label>
+      <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label>
+    </div>
+    <div class="fld"><label class="fld__label">Photo note</label><div class="ctl"><input type="text" placeholder="e.g. kondisi serah"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" data-save="Asset assigned (GIVING).">Assign</button></div>
+</div></div>
+
+<!-- ===== RETURN (RECEIVE) ===== -->
+<div class="ovl" id="mReturn"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Return asset</h3><p class="ovl__desc">RECEIVE event. The returned condition sets the master status.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Returned condition <span class="req">*</span></label>
+      <div class="co-radios">
+        <label class="co-radio"><input type="radio" name="retCond" value="AVAILABLE" checked><span class="co-radio__dot"></span>Available</label>
+        <label class="co-radio"><input type="radio" name="retCond" value="ACCIDENTALLY_LOST"><span class="co-radio__dot"></span>Accidentally lost</label>
+        <label class="co-radio"><input type="radio" name="retCond" value="EMPLOYEE_NEGLIGENCE"><span class="co-radio__dot"></span>Employee negligence</label>
+      </div>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Lost / negligence are terminal; negligence is flagged for claim. Employee link is cleared.</span>
+    </div>
+    <div class="fld"><label class="fld__label">Handover notes</label><div class="ctl ctl--area"><textarea rows="2" placeholder="Condition on return"></textarea></div></div>
+    <label class="co-switch"><input type="checkbox" checked><span class="co-switch__track"></span><span class="co-switch__label">Return complete</span></label>
+    <div class="fld"><label class="fld__label">Condition photo</label>
+      <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label>
+    </div>
+    <div class="fld"><label class="fld__label">Photo note</label><div class="ctl"><input type="text" placeholder="e.g. kondisi terima"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" data-save="Asset returned (RECEIVE).">Return</button></div>
+</div></div>
+
+<!-- ===== TRANSFER ===== -->
+<div class="ovl" id="mTransfer"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Transfer asset</h3><p class="ovl__desc">Modeled as two events — RECEIVE then GIVING. Moving updates the asset's branch.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="mc" style="margin-bottom:4px">
+      <div class="mc__step is-done"><span class="mc__badge"><span class="mc__num">1</span>RECEIVE</span><span class="mc__who">From current holder</span></div>
+      <div class="mc__step is-active"><span class="mc__badge"><span class="mc__num">2</span>GIVING</span><span class="mc__who">To destination branch</span></div>
+    </div>
+    <div class="fld"><label class="fld__label">Destination branch <span class="req">*</span></label>
+      <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select branch</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt">Kantor Pusat Jakarta</div><div class="dropdown__opt">Kantor Surabaya</div></div>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">Reason</label><div class="ctl ctl--area"><textarea rows="2" placeholder="e.g. relokasi"></textarea></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" data-save="Asset transferred.">Transfer</button></div>
+</div></div>
+
+<!-- ===== MAINTENANCE ===== -->
+<div class="ovl" id="mMaint"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Log maintenance</h3><p class="ovl__desc">Scheduled maintenance shifts the next due date; unscheduled does not.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Type <span class="req">*</span></label>
+      <div class="co-radios">
+        <label class="co-radio"><input type="radio" name="maintType" value="SCHEDULED" checked><span class="co-radio__dot"></span>Scheduled</label>
+        <label class="co-radio"><input type="radio" name="maintType" value="UNSCHEDULED"><span class="co-radio__dot"></span>Unscheduled</label>
+      </div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Date <span class="req">*</span></label><div class="ctl ctl--date"><input type="date"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+      <div class="fld"><label class="fld__label">Completion date</label><div class="ctl ctl--date"><input type="date"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Cost</label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" placeholder="0"></div></div>
+      <div class="fld"><label class="fld__label">Vendor <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+        <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select vendor</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">PT Bina Karya Logistik</div><div class="dropdown__opt">CV Sumber Jaya</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">Description</label><div class="ctl ctl--area"><textarea rows="2" placeholder="Service performed"></textarea></div></div>
+    <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Vendor is optional — leave blank if maintenance is done internally. SCHEDULED + a completion date shifts the next maintenance date (completion + category interval).</span>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" data-save="Maintenance logged.">Save</button></div>
+</div></div>
+
+<!-- ===== LEASE ===== -->
+<div class="ovl" id="mLease"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Record lease</h3><p class="ovl__desc">Only for LEASED assets. Vendor is mandatory. Writes to <code>log_asset_lease</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Lease amount <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" placeholder="0"></div></div>
+      <div class="fld"><label class="fld__label">Lease contract no. <span class="req">*</span></label><div class="ctl"><input type="text" placeholder="LSE-01"></div></div>
+      <div class="fld"><label class="fld__label">Lease start <span class="req">*</span></label><div class="ctl ctl--date"><input type="date"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+      <div class="fld"><label class="fld__label">Lease end <span class="req">*</span></label><div class="ctl ctl--date"><input type="date"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+    </div>
+    <div class="fld"><label class="fld__label">Vendor <span class="req">*</span></label>
+      <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select vendor</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt">PT Bina Karya Logistik</div><div class="dropdown__opt">CV Sumber Jaya</div></div>
+      </div>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" data-save="Lease recorded.">Save</button></div>
+</div></div>
+
+<!-- ===== RESIDUAL ===== -->
+<div class="ovl" id="mResidual"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:460px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Update residual value</h3><p class="ovl__desc">Records a new current residual value with history.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Residual value <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" placeholder="0"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" data-save="Residual value updated.">Save</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company Management', activeItem: 'Asset List' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/company-asset-detail.js"></script>
+</body>
+</html>

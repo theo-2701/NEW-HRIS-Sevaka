@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Tasks</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/daterange.css?v=3">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Tasks">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Project &amp; Task</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Tasks</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Tasks</h1>
+<p class="flow-sub"><code>task_origin</code> is decided by the server from who you assign the task to, and frozen for life. Status moves along a fixed diagram; the category master below is HR territory.</p>
+</div>
+<div class="flow-head__actions">
+<div class="pv-persona">
+<span class="pv-persona__lbl">Acting as</span>
+<span class="seg" id="pvPersona">
+<button class="seg__btn is-on" type="button" data-persona="DEDI">Dedi · Employee</button>
+<button class="seg__btn" type="button" data-persona="HESTI">Hesti · HR</button>
+</span>
+</div>
+<button class="btn btn--primary" id="tskNewBtn">New task</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="subtabs tbar" style="margin-top:4px">
+<span class="seg">
+<button class="seg__btn is-on" type="button" data-sub="tasks">My Tasks</button>
+<button class="seg__btn" type="button" data-sub="cats">Task Category</button>
+</span>
+<button class="btn btn--secondary" type="button" data-filter-open="tskFilter" data-tbar="tasks">Filter</button>
+<span class="sec-head__note" data-filter-sum="tskFilter" data-tbar="tasks">No filter applied</span>
+<span class="sec-head__note" id="catNote" data-tbar="cats" style="display:none">HR writes; everybody reads.</span>
+<span class="tbar__sp"></span>
+<button class="btn btn--secondary" type="button" id="catNewBtn" data-tbar="cats" style="display:none">New category</button>
+</div>
+
+<!-- ===== MY TASKS ===== -->
+<div class="subpanel is-on" data-subpanel="tasks">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Task</th><th>Project</th><th>Category</th><th>Assignee</th><th>Priority</th><th>Due</th><th>Status</th><th>Origin</th><th></th></tr></thead>
+<tbody id="tskBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgTsk"></div>
+</div>
+
+<!-- ===== TASK CATEGORY ===== -->
+<div class="subpanel" data-subpanel="cats">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Category</th><th>Active</th><th>Ever used by a task</th><th>Created</th><th></th></tr></thead>
+<tbody id="catBody"></tbody>
+</table>
+</div>
+<div class="note note--info" style="margin-top:18px">
+<i data-lucide="info"></i>
+<span>A category that has <strong>ever</strong> been used by a task — including cancelled and completed ones — can never be hard-deleted (<code>409 PROD_TASK_CATEGORY_IN_USE</code>). Deactivation is the only route: existing tasks stay valid, the category just leaves the picker. Category is also what makes work paid, so <em>Rapat &amp; Koordinasi</em> is intentionally left unmapped in Group for Payroll — its hours settle as unpaid, fail-closed.</span>
+</div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ TASK FILTER ============ -->
+<div class="ovl" id="tskFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter tasks</h3><p class="ovl__desc">Every field here exists in the search contract — including the standalone "no project" switch.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Task title</label><div class="ctl"><input type="text" id="tfTitle" placeholder="Contains…"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Status</label><div class="ctl ctl--select" id="tfStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfStatusDD"></div></div></div>
+<div class="fld"><label class="fld__label">Priority</label><div class="ctl ctl--select" id="tfPrio"><span class="ctl__value">All priorities</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfPrioDD"></div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Project</label><div class="ctl ctl--select" id="tfProject"><span class="ctl__value">All projects</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfProjectDD"></div></div>
+<span class="fld__hint">"Without project" maps to <code>has_project=false</code>, not to an empty cell.</span></div>
+<div class="fld"><label class="fld__label">Category</label><div class="ctl ctl--select" id="tfCat"><span class="ctl__value">All categories</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfCatDD"></div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Assignee</label><div class="ctl ctl--select" id="tfAssignee"><span class="ctl__value">Dedi Kurniawan (self)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfAssigneeDD"></div></div></div>
+<div class="fld"><label class="fld__label">Due between</label>
+<div class="rng" id="tfDue" data-placeholder="Select due-date range"><button class="rng__ctl" type="button"><span class="rng__val is-empty">Select due-date range</span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div></div>
+</div>
+<div class="fld"><label class="fld__label">Sort by</label><div class="ctl ctl--select" id="tfSort" data-nosum><span class="ctl__value">created_at (default)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="created_at">created_at (default)</div><div class="dropdown__opt" data-val="due_date">due_date</div><div class="dropdown__opt" data-val="task_title">task_title</div><div class="dropdown__opt" data-val="status">status</div><div class="dropdown__opt" data-val="priority">priority</div></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="tfReset">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<!-- ============ TASK CREATE ============ -->
+<div class="ovl" id="tskCreate">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New task</h3><p class="ovl__desc">Assigning the task to yourself makes it <code>DIBUAT_SENDIRI</code>; assigning it to someone else makes it <code>DITUGASKAN</code> — the server decides, you never send the field.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger" id="ncGate" style="display:none"><i data-lucide="octagon-alert"></i><span><strong>422 PROD_PROJECT_ARCHIVED</strong><br>Proyek tujuan berstatus ARSIP — task baru ditolak. Restore the project first, or pick an active one.</span></div>
+<div class="fld"><label class="fld__label">Task title <span class="req">*</span></label><div class="ctl"><input type="text" id="ncTitle" maxlength="150" placeholder="e.g. Perbaikan bug checkout"></div></div>
+<div class="fld"><label class="fld__label">Description</label><div class="ctl ctl--area"><textarea id="ncDesc" rows="3" placeholder="Optional"></textarea></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Assigned to <span class="req">*</span></label><div class="ctl ctl--select" id="ncAssignee"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="ncAssigneeDD"></div></div>
+<span class="fld__hint" id="ncOriginHint">Origin is derived from this field.</span></div>
+<div class="fld"><label class="fld__label">Project</label><div class="ctl ctl--select" id="ncProject"><span class="ctl__value" style="color:var(--fg-4)">Without project</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="ncProjectDD"></div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Category</label><div class="ctl ctl--select" id="ncCat"><span class="ctl__value" style="color:var(--fg-4)">Unmapped (unpaid)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="ncCatDD"></div></div></div>
+<div class="fld"><label class="fld__label">Priority</label><div class="ctl ctl--select" id="ncPrio"><span class="ctl__value">SEDANG</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="ncPrioDD"></div></div></div>
+<div class="fld"><label class="fld__label">Due date <span class="req">*</span></label><div class="ctl ctl--date"><input type="date" id="ncDue">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+</div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="lock"></i>Server-filled</div>
+<div class="pv-row"><span class="pv-row__k">Status</span><span class="pv-row__v">BELUM_DIKERJAKAN</span></div>
+<div class="pv-row"><span class="pv-row__k">task_origin</span><span class="pv-row__v" id="ncOrigin">—</span></div>
+<div class="pv-row"><span class="pv-row__k">original_due_date</span><span class="pv-row__v">copy of Due date, frozen</span></div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="ncSave" disabled>Create task</button>
+</div>
+</div>
+</div>
+
+<!-- ============ TASK DETAIL / EDIT ============ -->
+<div class="ovl" id="tskDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="tdTitle">Task detail</h3><p class="ovl__desc" id="tdDesc">Title, description and priority are free edits. Category, due date and status write a history row.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="subtabs"><span class="seg">
+<button class="seg__btn is-on" type="button" data-sub="tdetail">Detail</button>
+<button class="seg__btn" type="button" data-sub="thist">History<span class="tabnav__count" id="tdHistCount">0</span></button>
+</span></div>
+<div class="subpanel is-on" data-subpanel="tdetail">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger" id="tdGate" style="display:none"><i data-lucide="octagon-alert"></i><span><strong>422 PROD_TASK_STATUS_TRANSITION_INVALID</strong><br><span id="tdGateMsg"></span></span></div>
+<div class="fld"><label class="fld__label">Task title <span class="req">*</span></label><div class="ctl"><input type="text" id="tdName" maxlength="150"></div></div>
+<div class="fld"><label class="fld__label">Description</label><div class="ctl ctl--area"><textarea id="tdDescInput" rows="3"></textarea></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Category</label><div class="ctl ctl--select" id="tdCat"><span class="ctl__value">—</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tdCatDD"></div></div>
+<span class="fld__hint">Writes <code>log_task_change · TASK_CATEGORY</code> — it moves paid work.</span></div>
+<div class="fld"><label class="fld__label">Priority</label><div class="ctl ctl--select" id="tdPrio"><span class="ctl__value">—</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tdPrioDD"></div></div>
+<span class="fld__hint">Pure classification — zero performance signal, zero history row.</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Due date</label><div class="ctl ctl--date"><input type="date" id="tdDue">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+<span class="fld__hint" id="tdDueHint">—</span></div>
+<div class="fld"><label class="fld__label">Status</label><div class="ctl ctl--select" id="tdStatus"><span class="ctl__value">—</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tdStatusDD"></div></div>
+<span class="fld__hint" id="tdStatusHint">—</span></div>
+</div>
+<div class="fld" id="tdReasonFld" style="display:none"><label class="fld__label">Change reason <span class="req">*</span></label>
+<div class="ctl ctl--area"><textarea id="tdReason" rows="2" placeholder="Required when the due date moves backwards"></textarea></div>
+<span class="fld__hint">Missing reason on a backwards move ⇒ <code>422 PROD_TASK_DUE_DATE_REASON_REQUIRED</code>.</span></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="snowflake"></i>Frozen at birth</div>
+<div class="pv-row"><span class="pv-row__k">Code · id</span><span class="pv-row__v" id="tdCode">—</span></div>
+<div class="pv-row"><span class="pv-row__k">task_origin</span><span class="pv-row__v" id="tdOrigin">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Assignee · assigner</span><span class="pv-row__v" id="tdActors">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Project</span><span class="pv-row__v" id="tdProject">—</span></div>
+<div class="pv-row"><span class="pv-row__k">original_due_date</span><span class="pv-row__v" id="tdOrig">—</span></div>
+</div>
+</div>
+</div>
+<div class="subpanel" data-subpanel="thist">
+<div class="dtable-wrap">
+<table class="dtable"><thead><tr><th>Field</th><th>Old</th><th>New</th><th>Reason</th><th>By</th><th>When</th></tr></thead><tbody id="tdHistBody"></tbody></table>
+</div>
+<span class="fld__hint" style="margin-top:10px">Sorted <code>created_at DESC</code> — the latest change first, a deliberate exception to the ascending default.</span>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="tdSave">Save changes</button>
+</div>
+</div>
+</div>
+
+<!-- ============ CATEGORY FORM ============ -->
+<div class="ovl" id="catForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="cfTitle">New category</h3><p class="ovl__desc">Master data per company. Names are unique among the active rows.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger" id="cfDup" style="display:none"><i data-lucide="octagon-alert"></i><span><strong>409 Conflict</strong><br>A category with this name already exists and is active.</span></div>
+<div class="fld"><label class="fld__label">Category name <span class="req">*</span></label><div class="ctl"><input type="text" id="cfName" maxlength="60" placeholder="e.g. Riset & Analisis"></div>
+<span class="fld__hint"><span id="cfCount">0</span>/60 · required, unique per company</span></div>
+<div class="fld" id="cfActiveFld" style="display:none"><label class="fld__label">Active</label>
+<span class="seg" id="cfActive"><button class="seg__btn is-on" type="button" data-active="1">Active</button><button class="seg__btn" type="button" data-active="0">Inactive</button></span>
+<span class="fld__hint">Inactive leaves the picker for new tasks; tasks already using it stay valid.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="cfSave" disabled>Save category</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0001', roles:['ROLE_EMPLOYEE','ROLE_HR_MANAGER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script>document.addEventListener("click",function(e){var b=e.target.closest(".subtabs [data-sub]");if(!b)return;var on=b.getAttribute("data-sub");document.querySelectorAll("[data-tbar]").forEach(function(el){el.style.display=el.getAttribute("data-tbar")===on?"":"none"});});</script>
+<script src="js/productivity-tasks.js"></script>
+</body>
+</html>

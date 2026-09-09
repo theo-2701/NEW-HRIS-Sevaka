@@ -1,0 +1,315 @@
+/* ============================================================
+   SEVAKA HRIS — Notifications dropdown (under bell icon)
+   Used by index.html (dashboard topnav). Inbox page uses
+   inbox.css for the full-page treatment.
+   ============================================================ */
+
+.notif-wrap { display: inline-flex; }
+
+/* The bell button — we lift it slightly so the red dot is crisper */
+.notif-wrap .icon-btn .dot {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--color-error-500);
+  box-shadow: 0 0 0 2px white;
+}
+
+/* ============================================================
+   Popover shell
+   ============================================================ */
+.notif-pop {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -8px;
+  width: 408px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  z-index: 1100;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: notifPopIn 160ms var(--ease-emphasized);
+}
+.notif-pop.is-open { display: flex; }
+
+@keyframes notifPopIn {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+
+/* Little arrow pointing up at the bell */
+.notif-pop__arrow {
+  position: absolute;
+  top: -7px; right: 20px;
+  width: 14px; height: 14px;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-1);
+  border-top:  1px solid var(--border-1);
+  transform: rotate(45deg);
+  border-top-left-radius: 3px;
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.notif-pop__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 8px;
+}
+.notif-pop__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.notif-pop__title {
+  font: 700 16px/1.2 var(--font-display);
+  color: var(--fg-1);
+  letter-spacing: -0.01em;
+}
+.notif-pop__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-100);
+  color: var(--color-secondary-700);
+  font: 700 11px/1 var(--font-body);
+  letter-spacing: 0.02em;
+}
+.notif-pop__markread {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  font: 600 12px/1 var(--font-body);
+  color: var(--color-secondary-500);
+  transition: background var(--duration-2) var(--ease-standard),
+              color var(--duration-2) var(--ease-standard);
+}
+.notif-pop__markread:hover {
+  background: var(--color-primary-100);
+  color: var(--color-secondary-700);
+}
+
+/* ============================================================
+   Tab pills (All / Unread / Mentions)
+   ============================================================ */
+.notif-pop__tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px 20px 12px;
+  border-bottom: 1px solid var(--border-1);
+}
+.notif-pop__tab {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-1);
+  background: white;
+  cursor: pointer;
+  font: 600 12px/1 var(--font-body);
+  color: var(--fg-3);
+  transition: background var(--duration-2) var(--ease-standard),
+              color var(--duration-2) var(--ease-standard),
+              border-color var(--duration-2) var(--ease-standard);
+}
+.notif-pop__tab:hover {
+  background: var(--color-mist);
+  color: var(--fg-1);
+}
+.notif-pop__tab.is-on {
+  background: var(--color-secondary-500);
+  color: white;
+  border-color: var(--color-secondary-500);
+  box-shadow: var(--shadow-inset-rim-brand);
+}
+
+/* ============================================================
+   List
+   ============================================================ */
+.notif-pop__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 460px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-1) transparent;
+}
+.notif-pop__list::-webkit-scrollbar { width: 6px; }
+.notif-pop__list::-webkit-scrollbar-thumb {
+  background: var(--border-1); border-radius: 3px;
+}
+
+/* ============================================================
+   Individual notification item
+   ============================================================ */
+.notif-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px 1fr 12px;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard);
+  border-bottom: 1px solid var(--color-vapor);
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--color-mist); }
+.notif-item.is-unread { background: rgba(218, 240, 249, .35); }
+.notif-item.is-unread:hover { background: rgba(218, 240, 249, .55); }
+
+/* Category icon tile */
+.notif-item__icon {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-inset-rim);
+}
+.notif-item__icon svg {
+  width: 20px; height: 20px;
+}
+
+/* Category color tiles — soft surface + saturated icon */
+.notif-icon--payroll      { background: #E6F4FB; color: #026A9F; }
+.notif-icon--timeoff      { background: #FEF6D8; color: #A26B0B; }
+.notif-icon--attendance   { background: #FEE2E2; color: #B91C1C; }
+.notif-icon--reimburse    { background: #D1FAE5; color: #047857; }
+.notif-icon--mpp          { background: #DBEAFE; color: #1E40AF; }
+.notif-icon--overtime     { background: #FEF3C7; color: #B45309; }
+.notif-icon--shift        { background: #E0E7FF; color: #4338CA; }
+.notif-icon--changedata   { background: #F3E8FF; color: #6B21A8; }
+.notif-icon--addemp       { background: #ECFCCB; color: #4D7C0F; }
+.notif-icon--transfer     { background: #FFE4E6; color: #9F1239; }
+.notif-icon--goal         { background: #FCE7F3; color: #9D174D; }
+.notif-icon--reviews      { background: #CFFAFE; color: #155E75; }
+.notif-icon--report       { background: #F1F5F9; color: #334155; }
+.notif-icon--delegation   { background: #FFEDD5; color: #9A3412; }
+.notif-icon--announcement { background: #E6F4FB; color: #0284C7; }
+
+.notif-item__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.notif-item__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.notif-item__source {
+  font: 700 13px/1.2 var(--font-body);
+  color: var(--fg-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notif-item.is-unread .notif-item__source { color: var(--color-secondary-700); }
+.notif-item__time {
+  font: 500 11px/1 var(--font-body);
+  color: var(--fg-4);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.notif-item__msg {
+  font: 400 13px/1.4 var(--font-body);
+  color: var(--fg-2);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notif-item__msg b { color: var(--fg-1); font-weight: 600; }
+
+/* Subtle category tag chip */
+.notif-item__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  font: 700 9px/1 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  width: fit-content;
+  margin-top: 4px;
+}
+.tag-payroll      { background: #E6F4FB; color: #026A9F; }
+.tag-timeoff      { background: #FEF6D8; color: #8B5A0A; }
+.tag-attendance   { background: #FEE2E2; color: #B91C1C; }
+.tag-reimburse    { background: #D1FAE5; color: #047857; }
+.tag-mpp          { background: #DBEAFE; color: #1E40AF; }
+.tag-overtime     { background: #FEF3C7; color: #B45309; }
+.tag-shift        { background: #E0E7FF; color: #4338CA; }
+.tag-changedata   { background: #F3E8FF; color: #6B21A8; }
+.tag-addemp       { background: #ECFCCB; color: #4D7C0F; }
+.tag-transfer     { background: #FFE4E6; color: #9F1239; }
+.tag-goal         { background: #FCE7F3; color: #9D174D; }
+.tag-reviews      { background: #CFFAFE; color: #155E75; }
+.tag-report       { background: #F1F5F9; color: #334155; }
+.tag-delegation   { background: #FFEDD5; color: #9A3412; }
+.tag-announcement { background: #E6F4FB; color: #0284C7; }
+
+/* Unread blue dot at the right edge */
+.notif-item__unread {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--color-secondary-500);
+  box-shadow: 0 0 0 3px rgba(2,132,199,.18);
+  align-self: center;
+  visibility: hidden;
+}
+.notif-item.is-unread .notif-item__unread { visibility: visible; }
+
+/* ============================================================
+   Footer CTA → Inbox
+   ============================================================ */
+.notif-pop__foot {
+  border-top: 1px solid var(--border-1);
+  padding: 10px;
+  background: var(--color-cloud);
+}
+.notif-pop__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-secondary-500);
+  color: white;
+  text-decoration: none;
+  font: 700 13px/1 var(--font-body);
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-primary), var(--shadow-inset-rim-brand);
+  transition: background var(--duration-2) var(--ease-standard),
+              box-shadow var(--duration-2) var(--ease-standard);
+}
+.notif-pop__cta:hover {
+  background: var(--color-secondary-600);
+  box-shadow: var(--shadow-primary-hover), var(--shadow-inset-rim-brand);
+}
+.notif-pop__cta:active {
+  background: var(--color-secondary-700);
+  box-shadow: var(--shadow-primary-press), var(--shadow-inset-rim-brand);
+}
+.notif-pop__cta svg { width: 16px; height: 16px; }
+
+.notif-icon--default{background:var(--color-secondary-50,#F0F9FF);color:var(--color-secondary-600,#0284C7)}
+.tag-default{background:var(--color-vapor);color:var(--color-secondary-800)}
+.notif-item--empty{cursor:default}

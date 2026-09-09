@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Transition</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    .tr-form .ctl--date > input { pointer-events: auto; }
+    .tr-typebar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .tr-typecard { flex: 1; min-width: 150px; display: flex; align-items: center; gap: 12px; padding: 14px 15px; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--border-1); cursor: pointer; text-align: left; transition: box-shadow var(--duration-2) var(--ease-standard), transform var(--duration-2) var(--ease-standard); }
+    .tr-typecard:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+    .tr-typecard__ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--color-primary-200); color: var(--color-secondary-700); }
+    .tr-typecard__ic svg { width: 20px; height: 20px; }
+    .tr-typecard__t { font: 700 14px/1.2 var(--font-body); color: var(--fg-1); }
+    .tr-typecard__d { font: 500 12px/1.3 var(--font-body); color: var(--fg-3); margin-top: 2px; }
+    .side-split { display: flex; gap: 8px; }
+    .side-split > div { flex: 1; padding: 4px 0; }
+    .side-tag { font: 700 9px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; display: inline-block; margin-bottom: 8px; }
+    .side-tag--rel { background: var(--flow-orange-bg); color: var(--flow-orange-fg); }
+    .side-tag--pro { background: var(--color-primary-200); color: var(--color-secondary-700); }
+  </style>
+</head>
+<body data-screen-label="Transition">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Transition</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Transition</h1>
+              <p class="flow-sub">One framework for onboarding, transfers and offboarding. Each transition spawns role-assigned tasks; structural moves happen atomically on the effective date once required tasks are done.</p>
+            </div>
+            <div class="flow-head__actions">
+              <div style="position:relative">
+                <button class="btn btn--primary" id="newTrBtn">New transition<i data-lucide="chevron-down"></i></button>
+                <div class="menu" id="newTrMenu" style="min-width:210px">
+                  <button class="menu__item" data-type="ONBOARDING"><i data-lucide="log-in"></i>Onboarding</button>
+                  <button class="menu__item" data-type="TRANSFER"><i data-lucide="arrow-left-right"></i>Transfer / Promotion</button>
+                  <button class="menu__item" data-type="OFFBOARDING"><i data-lucide="log-out"></i>Offboarding</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+        <div class="kpi" style="margin-top:4px">
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="git-branch-plus"></i>Active transitions</span><span class="kpi__value" id="kpiActive">5</span><span class="kpi__foot">In approval &amp; in progress</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="list-checks"></i>Tasks in progress</span><span class="kpi__value" id="kpiTasks">9</span><span class="kpi__foot">Across all transitions</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="user-check"></i>Awaiting employee</span><span class="kpi__value" id="kpiConfirm">2</span><span class="kpi__foot">Two-party confirmation</span></div>
+          <div class="kpi__tile kpi__tile--danger"><span class="kpi__label"><i data-lucide="alarm-clock"></i>Overdue tasks</span><span class="kpi__value" id="kpiOverdue">2</span><span class="kpi__foot">Past target — still open</span></div>
+        </div>
+
+        <div class="sec-head" style="margin-top:22px"><span class="sec-head__t">Transitions</span><span class="sec-head__c" id="trCount">5</span></div>
+        <div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+          <table class="dtable">
+            <thead><tr><th>Employee</th><th>Type</th><th>Detail</th><th>Effective</th><th>Progress</th><th>Status</th><th class="ta-r"></th></tr></thead>
+            <tbody id="trBody"></tbody>
+          </table>
+        </div>
+        <div class="ph-foot" id="pgTr"></div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ TR-CREATE (branching) ============ -->
+<div class="ovl" id="trCreate">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title" id="trCreateTitle">New transition</h3><p class="ovl__desc" id="trCreateDesc"></p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <form class="tr-form" id="trForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+      <div class="fld">
+        <label class="fld__label">Employee <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="trEmp"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt">Eka Saputra — Staff Finance, BR-Papua</div>
+            <div class="dropdown__opt">Dimas Prabowo — Backend Engineer, HQ</div>
+            <div class="dropdown__opt">Nadia Rahman — Sales Executive, BR-Surabaya</div>
+            <div class="dropdown__opt">Fajar Nugroho — Ops Coordinator, BR-Jakarta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSFER-only -->
+      <div id="trfBlock" class="is-hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="fld">
+          <label class="fld__label">Sub-type <span class="req">*</span></label>
+          <div class="ctl ctl--select" id="trSub"><span class="ctl__value" style="color:var(--fg-4)">Select sub-type</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown">
+              <div class="dropdown__opt">Lateral</div><div class="dropdown__opt">Promotion</div>
+              <div class="dropdown__opt">Demotion</div><div class="dropdown__opt">Relocation</div><div class="dropdown__opt">Mutual transfer</div>
+            </div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Destination position <span class="req">*</span></label>
+          <div class="ctl ctl--select" id="trDest"><span class="ctl__value" style="color:var(--fg-4)">Select position</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown">
+              <div class="dropdown__opt">Senior Finance — HQ</div><div class="dropdown__opt">Team Lead Ops — BR-Jakarta</div><div class="dropdown__opt">Regional Sales — BR-Bali</div>
+            </div>
+          </div>
+        </div>
+        <div class="fld" id="trGradeFld" style="grid-column:1 / -1">
+          <label class="fld__label">Target job grade <span class="req">*</span></label>
+          <div class="ctl ctl--select" id="trGrade"><span class="ctl__value" style="color:var(--fg-4)">Select target job grade</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown">
+              <div class="dropdown__opt">Class III-B · Staff</div><div class="dropdown__opt">Class IV-A · Specialist</div>
+              <div class="dropdown__opt">Class V-A · Supervisor</div><div class="dropdown__opt">Class VI-A · Manager</div>
+            </div>
+          </div>
+          <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Required for Promotion and Demotion only — the destination position is structural, this is the grade.</span>
+        </div>
+      </div>
+      <!-- OFFBOARDING-only -->
+      <div id="offBlock" class="is-hidden fld">
+        <label class="fld__label">Reason <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="trReason"><span class="ctl__value" style="color:var(--fg-4)">Select reason</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt" data-val="RESIGN">Resignation (voluntary)</div>
+            <div class="dropdown__opt" data-val="CONTRACT_END">Contract end</div>
+            <div class="dropdown__opt" data-val="TERMINATION">Termination (with cause)</div>
+            <div class="dropdown__opt" data-val="LAYOFF">Layoff</div>
+            <div class="dropdown__opt" data-val="RETIREMENT">Retirement</div>
+          </div>
+        </div>
+        <div class="note note--warn" id="offImmediate" style="margin-top:10px"><i data-lucide="triangle-alert"></i><span>Termination with cause revokes access immediately; the employee is not paid through a notice period.</span></div>
+      </div>
+
+      <div class="fld" style="max-width:240px">
+        <label class="fld__label">Effective date <span class="req">*</span></label>
+        <div class="ctl ctl--date"><input type="date" id="trDate">
+          <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+      </div>
+
+      <div class="note note--info"><i data-lucide="workflow"></i><span id="trFlowNote"></span></div>
+    </form>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="trSubmit" disabled>Create transition</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'Transition' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/transition-data.js"></script>
+<script src="js/transition.js"></script>
+<script src="js/kpi-status.js"></script>
+</body>
+</html>

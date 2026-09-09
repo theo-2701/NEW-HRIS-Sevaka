@@ -1,0 +1,80 @@
+/* SEVAKA HRIS — Settings Service (Pengaturan). Only the bits the shared layers don't ship.
+   Reuses: pg-shell/crumbs/flow-title (employee-flows.css), tabnav (employee.css),
+   seg/subtabs, dtable + freeze (table-standard/employee-flows), ovl modals, note, sb badges,
+   ph-foot (pagination-standard.css), fin-search/fin-tbar (finance.css). */
+
+/* machine name — the row label is still setup_code (PROB-FRONTEND-034) */
+.st-code{display:block;font:600 12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-secondary-700);word-break:normal;overflow-wrap:anywhere}
+.st-sub{display:block;font:500 11px/1.4 var(--font-body);color:var(--fg-4);margin-top:3px;max-width:300px}
+/* one predictable grid across all seven tabs — rows differ wildly in how much they carry */
+#thead th:nth-child(1),#tbody td:nth-child(1){min-width:290px;max-width:340px}
+#thead th:nth-child(2),#tbody td:nth-child(2){min-width:110px}
+#thead th:nth-child(3),#tbody td:nth-child(3){min-width:210px}
+#thead th:nth-child(4),#tbody td:nth-child(4){min-width:200px;max-width:280px}
+#thead th:nth-child(5),#tbody td:nth-child(5){min-width:200px;max-width:300px}
+#tbody td{vertical-align:top;padding-top:14px;padding-bottom:14px;white-space:normal;text-wrap:pretty}
+#tbody td .rowacts{white-space:nowrap}
+
+/* derived screen badge (never a contract field) */
+.st-tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font:700 9.5px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.st-tag--blue{background:var(--color-secondary-50);color:var(--color-secondary-700)}
+.st-tag--green{background:var(--color-success-100);color:var(--color-success-900)}
+.st-tag--amber{background:var(--color-warning-100);color:var(--color-warning-800)}
+.st-tag--red{background:var(--color-error-100);color:var(--color-error-800)}
+.st-tag--indigo{background:var(--flow-indigo-bg);color:var(--flow-indigo-fg)}
+.st-tag--grey{background:var(--color-vapor);color:var(--fg-3)}
+.st-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+
+/* value cell */
+.st-val{font:600 13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg-1)}
+.st-none{font:500 12.5px/1.4 var(--font-body);color:var(--fg-4)}
+.st-offer{font:500 11.5px/1.5 var(--font-body);color:var(--fg-3)}
+
+/* in-row controls, 36px house field */
+.st-ctl{width:120px}
+.st-ctl--wide{width:190px}
+.st-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.st-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 6px 0 10px;border-radius:999px;background:var(--color-secondary-50);color:var(--color-secondary-700);font:600 12px/1 var(--font-body)}
+.st-chip button{border:0;background:transparent;cursor:pointer;color:inherit;font:700 13px/1 var(--font-body);opacity:.65;padding:0 2px}
+.st-chip button:hover{opacity:1}
+.st-num{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:230px}
+.st-unit{font:500 12px/1 var(--font-body);color:var(--fg-3)}
+.st-ctl.is-bad{border-color:var(--color-error-500)}
+.ctl.st-ctl--empty{border-style:dashed;background:transparent}
+.st-bad{flex:0 0 100%;font:500 11.5px/1.45 var(--font-body);color:var(--color-error-600)}
+.st-noctl{font:500 11.5px/1.5 var(--font-body);color:var(--fg-4);max-width:190px;display:block}
+.st-dirty td{background:var(--color-secondary-50)}
+
+/* unnamed-rows strip — carries the contract count without inventing key names */
+.st-strip td{background:var(--color-mist);border-top:1px dashed var(--color-silver)}
+.st-strip__in{display:flex;align-items:center;gap:8px;font:500 12px/1.5 var(--font-body);color:var(--fg-3)}
+.st-strip__in svg{width:15px;height:15px;color:var(--color-warning-600,#d97706);flex-shrink:0}
+
+/* request/response body shown literally (KEU-4 / GAJ-3) */
+.st-json{background:var(--color-obsidian,#111827);color:#e5e7eb;border-radius:10px;padding:14px 16px;font:500 11.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;overflow-x:auto}
+
+/* viewing-as strip (prototype device, labelled as such) */
+.st-as{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--border-1);border-radius:10px;background:#fff;margin-bottom:18px}
+.st-as__l{font:700 11px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-4)}
+.st-as .ctl--select{width:260px}
+.st-as__m{font:500 12px/1.5 var(--font-body);color:var(--fg-3)}
+.st-as__sp{flex:1}
+
+/* gate refusal (WKT-5 / RIW-2) */
+.st-gate{border:1px dashed var(--color-silver);border-radius:12px;background:var(--color-mist);padding:44px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.st-gate__i{width:46px;height:46px;border-radius:12px;background:var(--color-error-100);color:var(--color-error-700);display:inline-flex;align-items:center;justify-content:center}
+.st-gate__i svg{width:23px;height:23px}
+.st-gate__t{font:700 15px/1.3 var(--font-display);color:var(--fg-1)}
+.st-gate__d{font:500 12.5px/1.6 var(--font-body);color:var(--fg-3);max-width:560px}
+.st-gate__c{font:600 11.5px/1 ui-monospace,Menlo,monospace;color:var(--color-error-700);background:#fff;border:1px solid var(--color-error-200,#fecaca);border-radius:6px;padding:5px 9px}
+
+/* module checkbox grid (RIW-1 filter) */
+.st-mods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 18px}
+
+/* erasure tracker */
+.st-svc{font:600 12.5px/1.4 ui-monospace,Menlo,monospace;color:var(--fg-1)}
+.st-count{font:700 13px/1.4 var(--font-body);color:var(--fg-1);font-variant-numeric:tabular-nums}
+.st-count--hot{color:var(--color-warning-700,#b45309)}
+.st-sum{display:flex;gap:8px;flex-wrap:wrap}
+.st-two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:900px){.st-two,.st-mods{grid-template-columns:1fr}}

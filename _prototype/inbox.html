@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Inbox</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/inbox.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="02 Inbox" data-theme="ocean">
+
+<div class="app">
+  <!-- ===================== TOP NAV (shared with dashboard) ===================== -->
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <!-- ===================== BODY: SIDEBAR + MAIN ===================== -->
+  <div class="app__body">
+
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="app__main">
+      <div class="app__scroll inbox-scroll">
+
+        <!-- ===================== INBOX BOX ===================== -->
+        <section class="inbox-box">
+
+        <!-- Page header -->
+        <header class="inbox-page-head">
+          <div class="inbox-page-head__copy">
+            <nav class="inbox-page-head__crumb">
+              <a href="index.html">Dashboard</a>
+              <span class="inbox-page-head__crumb-sep">/</span>
+              <span class="inbox-page-head__crumb-current">Notifications</span>
+            </nav>
+            <h1 class="inbox-page-head__title">Inbox</h1>
+          </div>
+          <div class="inbox-page-head__actions">
+              <button class="btn-ghost" id="markAllReadBtn"><i data-lucide="check-check"></i>Mark all as read</button>
+              <button class="btn-ghost"><i data-lucide="clipboard-list"></i>Approval list</button>
+              <button class="btn-primary"><i data-lucide="settings-2"></i>Preferences</button>
+          </div>
+        </header>
+
+        <!-- ===================== INBOX SHELL: 3 panes ===================== -->
+        <section class="inbox-shell">
+
+          <!-- LEFT RAIL — categories -->
+          <aside class="inbox-cats" id="inboxCats">
+            <div class="inbox-cats__search">
+              <i data-lucide="search"></i>
+              <input type="text" placeholder="Filter category" id="catFilter">
+            </div>
+
+            <div class="inbox-cats__group">
+              <span class="inbox-cats__head">Inbox</span>
+              <button class="cat is-on" data-cat="all">
+                <span class="cat__icon"><i data-lucide="inbox"></i></span>
+                <span class="cat__label">All Messages</span>
+                <span class="cat__pill" data-count-cat="all">14</span>
+              </button>
+              <button class="cat" data-cat="approvals">
+                <span class="cat__icon"><i data-lucide="clipboard-check"></i></span>
+                <span class="cat__label">Approvals</span>
+                <span class="cat__pill" data-count-cat="approvals">5</span>
+              </button>
+              <button class="cat" data-cat="announcement">
+                <span class="cat__icon"><i data-lucide="megaphone"></i></span>
+                <span class="cat__label">Announcements</span>
+                <span class="cat__pill is-muted" data-count-cat="announcement">1</span>
+              </button>
+            </div>
+
+            <div class="inbox-cats__group">
+              <span class="inbox-cats__head">Time</span>
+              <button class="cat" data-cat="timeoff">
+                <span class="cat__icon"><i data-lucide="calendar-x-2"></i></span>
+                <span class="cat__label">Time Off</span>
+                <span class="cat__pill" data-count-cat="timeoff">2</span>
+              </button>
+              <button class="cat" data-cat="overtime">
+                <span class="cat__icon"><i data-lucide="hourglass"></i></span>
+                <span class="cat__label">Overtime</span>
+                <span class="cat__pill is-muted" data-count-cat="overtime">1</span>
+              </button>
+              <button class="cat" data-cat="attendance">
+                <span class="cat__icon"><i data-lucide="clock-alert"></i></span>
+                <span class="cat__label">Attendance</span>
+                <span class="cat__pill" data-count-cat="attendance">1</span>
+              </button>
+              <button class="cat" data-cat="shift">
+                <span class="cat__icon"><i data-lucide="repeat"></i></span>
+                <span class="cat__label">Change Shift</span>
+                <span class="cat__pill is-muted" data-count-cat="shift">0</span>
+              </button>
+            </div>
+
+            <div class="inbox-cats__group">
+              <span class="inbox-cats__head">People</span>
+              <button class="cat" data-cat="addemp">
+                <span class="cat__icon"><i data-lucide="user-plus"></i></span>
+                <span class="cat__label">Add Employee</span>
+                <span class="cat__pill is-muted" data-count-cat="addemp">0</span>
+              </button>
+              <button class="cat" data-cat="transfer">
+                <span class="cat__icon"><i data-lucide="users"></i></span>
+                <span class="cat__label">Employee Transfer</span>
+                <span class="cat__pill is-muted" data-count-cat="transfer">1</span>
+              </button>
+              <button class="cat" data-cat="changedata">
+                <span class="cat__icon"><i data-lucide="user-cog"></i></span>
+                <span class="cat__label">Change Data</span>
+                <span class="cat__pill" data-count-cat="changedata">1</span>
+              </button>
+              <button class="cat" data-cat="delegation">
+                <span class="cat__icon"><i data-lucide="user-check"></i></span>
+                <span class="cat__label">Delegation</span>
+                <span class="cat__pill is-muted" data-count-cat="delegation">0</span>
+              </button>
+            </div>
+
+            <div class="inbox-cats__group">
+              <span class="inbox-cats__head">Performance</span>
+              <button class="cat" data-cat="mpp">
+                <span class="cat__icon"><i data-lucide="users-round"></i></span>
+                <span class="cat__label">MPP</span>
+                <span class="cat__pill is-muted" data-count-cat="mpp">1</span>
+              </button>
+              <button class="cat" data-cat="goal">
+                <span class="cat__icon"><i data-lucide="target"></i></span>
+                <span class="cat__label">Goal</span>
+                <span class="cat__pill is-muted" data-count-cat="goal">0</span>
+              </button>
+              <button class="cat" data-cat="reviews">
+                <span class="cat__icon"><i data-lucide="star"></i></span>
+                <span class="cat__label">Reviews</span>
+                <span class="cat__pill is-muted" data-count-cat="reviews">0</span>
+              </button>
+            </div>
+
+            <div class="inbox-cats__group">
+              <span class="inbox-cats__head">Finance</span>
+              <button class="cat" data-cat="payroll">
+                <span class="cat__icon"><i data-lucide="wallet"></i></span>
+                <span class="cat__label">Payroll</span>
+                <span class="cat__pill" data-count-cat="payroll">2</span>
+              </button>
+              <button class="cat" data-cat="reimbursement">
+                <span class="cat__icon"><i data-lucide="receipt"></i></span>
+                <span class="cat__label">Reimbursement</span>
+                <span class="cat__pill is-muted" data-count-cat="reimbursement">1</span>
+              </button>
+            </div>
+
+            <div class="inbox-cats__group">
+              <span class="inbox-cats__head">Reports</span>
+              <button class="cat" data-cat="report">
+                <span class="cat__icon"><i data-lucide="file-bar-chart"></i></span>
+                <span class="cat__label">Report Builder</span>
+                <span class="cat__pill is-muted" data-count-cat="report">0</span>
+              </button>
+            </div>
+          </aside>
+
+          <!-- MIDDLE — message list -->
+          <section class="inbox-list-col">
+            <div class="inbox-list__toolbar">
+              <label class="checkbox" style="margin:0">
+                <input type="checkbox" id="msgSelectAll">
+                <span class="checkbox__box"></span>
+              </label>
+              <button class="list-tool" id="markReadBtn" disabled><i data-lucide="mail-open"></i>Mark read</button>
+              <button class="list-tool list-tool--danger" id="deleteBtn" disabled><i data-lucide="trash-2"></i>Delete</button>
+              <button class="list-tool list-tool--icon" aria-label="more"><i data-lucide="more-horizontal"></i></button>
+
+              <div class="inbox-list__search">
+                <i data-lucide="search"></i>
+                <input type="text" placeholder="Search messages" id="msgSearch">
+              </div>
+            </div>
+
+            <div class="inbox-list__header">
+              <div>
+                <h2 class="inbox-list__heading" id="listHeading">All Messages</h2>
+                <span class="inbox-list__sub" id="listSub">14 messages • 5 unread</span>
+              </div>
+              <button class="list-sort">
+                <i data-lucide="arrow-down-narrow-wide"></i>
+                Newest
+              </button>
+            </div>
+
+            <ul class="inbox-list" id="inboxList" role="listbox" aria-label="Inbox messages">
+              <!-- Populated by JS -->
+            </ul>
+
+            <div class="inbox-list__footnote">
+              <i data-lucide="info"></i>
+              <span>You can only access data from the last 2 years. To access older data, kindly contact us via email at <a href="#" onclick="event.preventDefault()">support-hr@sevaka.id</a>.</span>
+            </div>
+          </section>
+
+          <!-- RIGHT — detail panel -->
+          <section class="inbox-detail" id="inboxDetail">
+            <!-- Populated by JS — defaults to empty state -->
+          </section>
+        </section>
+
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: true, notifDot: true, activeGroup: 'company', activeItem: 'Notification' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/inbox.js"></script>
+
+</body>
+</html>

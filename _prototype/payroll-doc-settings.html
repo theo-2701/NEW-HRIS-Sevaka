@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Salary Settings</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/finance.css">
+  <link rel="stylesheet" href="css/company.css">
+  <link rel="stylesheet" href="css/payroll-doc.css">
+  <style>.dtable-wrap--nofreeze{overflow-x:auto}.dtable-wrap--nofreeze .dtable th:first-child,.dtable-wrap--nofreeze .dtable td:first-child,.dtable-wrap--nofreeze .dtable th:last-child,.dtable-wrap--nofreeze .dtable td:last-child{position:static}</style>
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Salary Settings">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Payroll</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Salary Settings</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Salary Settings</h1>
+              <p class="flow-sub">The proposer side. Maintain the component catalog, propose trait and per-employee value changes, follow bulk change batches, and read the minimum-wage attestation log. Every proposal is decided by the checker in Authorization &amp; Handover.</p>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="pdTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="cat">Component Catalog<span class="tabnav__count" id="cntCat">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="val">Per-Employee Values<span class="tabnav__count" id="cntVal">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="bulk">Bulk Change<span class="tabnav__count" id="cntBulk">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="ump">UMP Attestation Log<span class="tabnav__count" id="cntUmp">0</span></button>
+          </div>
+
+          <!-- ===================== CATALOG ===================== -->
+          <div class="tabpanel is-on" data-tabpanel="cat">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Acting as <strong>Rudi Hartono</strong> — <code>ROLE_PAYROLL_OFFICER</code>. A new component is published straight to <code>AKTIF</code>. Only the <strong>name</strong> can be edited directly; the code is immutable and the four traits move only through a proposal.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="catState" style="width:220px;height:40px">
+                  <span class="ctl__value">All proposal states</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All proposal states</div><div class="dropdown__opt">AKTIF</div><div class="dropdown__opt">MENUNGGU_PERSETUJUAN</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right" style="display:flex;gap:10px"><div class="co-search"><i data-lucide="search"></i><input type="text" id="catSearch" placeholder="Search code or name"></div><button class="btn btn--secondary" id="catAdd">Create component</button></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Code</th><th>Component</th><th class="ta-c">Tetap</th><th class="ta-c">Basis lembur</th><th class="ta-c">Kena pajak</th><th class="ta-c">Kena BPJS</th><th class="ta-r">Employees using</th><th class="ta-c">Proposal state</th><th class="ta-r"></th></tr></thead>
+              <tbody id="catBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="pgCat"></div>
+          </div>
+
+          <!-- ===================== PER-EMPLOYEE VALUES ===================== -->
+          <div class="tabpanel" data-tabpanel="val">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>One direction-blind path covers every change — raise, lower, add, remove or shift the dates. The current row is derived, not stored: <code>effective_until IS NULL AND approval_state = 'DISETUJUI'</code>.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="valEmp" style="width:260px;height:40px">
+                  <span class="ctl__value">Indah Permatasari</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown" id="valEmpOpts"></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><button class="btn btn--secondary" id="valAdd">Propose change</button></div>
+            </div>
+            <div id="valHead"></div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Component</th><th class="ta-r">Amount</th><th>Effective from</th><th>Effective until</th><th class="ta-c">Approval state</th><th class="ta-c">Channel</th><th class="ta-c">Current</th></tr></thead>
+              <tbody id="valBody"></tbody>
+            </table></div>
+          </div>
+
+          <!-- ===================== BULK CHANGE ===================== -->
+          <div class="tabpanel" data-tabpanel="bulk">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>A batch starts as <strong>DRAFT</strong> while it is being assembled, then <strong>Submit</strong> locks it and freezes the impact summary. Only submitted batches appear in this grid; the decision itself belongs to Authorization &amp; Handover.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="bulkState" style="width:220px;height:40px">
+                  <span class="ctl__value">All statuses</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All statuses</div><div class="dropdown__opt">DRAFT</div><div class="dropdown__opt">MENUNGGU_PERSETUJUAN</div><div class="dropdown__opt">DISETUJUI</div><div class="dropdown__opt">DITOLAK</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><button class="btn btn--secondary" id="bulkAdd">Create batch</button></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Batch</th><th>Name</th><th class="ta-c">Status</th><th class="ta-r">Members</th><th class="ta-c">Escalation</th><th>Submitted by</th><th class="ta-r"></th></tr></thead>
+              <tbody id="bulkBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="pgBulk"></div>
+          </div>
+
+          <!-- ===================== UMP ATTESTATION ===================== -->
+          <div class="tabpanel" data-tabpanel="ump">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Read-only. Rows are written automatically as a side effect of setting or changing a salary and of running a period — there is no write endpoint. The two check points are deliberately kept as separate rows so the repeated check leaves a trace.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left" style="display:flex;gap:10px">
+                <div class="ctl ctl--select" id="umpCp" style="width:240px;height:40px">
+                  <span class="ctl__value">All check points</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All check points</div><div class="dropdown__opt">PENETAPAN_ATAU_PERUBAHAN</div><div class="dropdown__opt">PERIODE_DIJALANKAN</div></div>
+                </div>
+                <div class="ctl ctl--select" id="umpBelow" style="width:200px;height:40px">
+                  <span class="ctl__value">Any result</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">Any result</div><div class="dropdown__opt">Below UMP</div><div class="dropdown__opt">Safe</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--nofreeze"><table class="dtable">
+              <thead><tr><th style="width:150px">Attestation</th><th>Employee</th><th style="width:210px">Check point</th><th class="ta-c" style="width:150px">Result</th><th class="ta-r" style="width:170px">UMP vs salary base</th><th>Reason</th></tr></thead>
+              <tbody id="umpBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="pgUmp"></div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== F2 · CREATE COMPONENT ===== -->
+<div class="ovl" id="mComp"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Create component</h3><p class="ovl__desc">Published straight as <code>AKTIF</code>. When “ikut basis lembur” is left untouched it follows “tetap”.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="compForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Component code <span class="req">*</span></label><div class="ctl"><input type="text" id="compCode" placeholder="e.g. SC-009" maxlength="20"></div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Set once — never editable afterwards.</span></div>
+      <div class="fld"><label class="fld__label">Component name <span class="req">*</span></label><div class="ctl"><input type="text" id="compName" placeholder="e.g. Tunjangan Kehadiran" maxlength="100"></div></div>
+    </div>
+    <div class="fld"><label class="fld__label">Traits</label>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+        <label class="co-switch"><input type="checkbox" id="tFixed" checked><span class="co-switch__track"></span><span class="co-switch__label">Tetap — paid at a fixed monthly rate</span></label>
+        <label class="co-switch"><input type="checkbox" id="tOt" checked><span class="co-switch__track"></span><span class="co-switch__label">Ikut basis lembur — counts towards the hourly overtime basis</span></label>
+        <span class="fld__hint" id="tOtHint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3);margin:-6px 0 2px 52px">Left untouched it follows “tetap” — the field is optional and the server derives it from <code>is_fixed</code>.</span>
+        <label class="co-switch"><input type="checkbox" id="tTax" checked><span class="co-switch__track"></span><span class="co-switch__label">Kena pajak — part of gross taxable income</span></label>
+        <label class="co-switch"><input type="checkbox" id="tBpjs"><span class="co-switch__track"></span><span class="co-switch__label">Kena BPJS — part of the BPJS contribution base</span></label>
+      </div>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="compSave">Create component</button></div>
+</div></div>
+
+<!-- ===== F3 · RENAME ===== -->
+<div class="ovl" id="mRename"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Rename component</h3><p class="ovl__desc">The only field this endpoint accepts. The code and the four traits are out of reach here.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="renameForm" autocomplete="off">
+    <div class="fld"><label class="fld__label">Component name <span class="req">*</span></label><div class="ctl"><input type="text" id="renameName" maxlength="100"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="renameSave">Save name</button></div>
+</div></div>
+
+<!-- ===== F4 · PROPOSE TRAIT CHANGE ===== -->
+<div class="ovl" id="mPropose"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="propTitle">Propose trait change</h3><p class="ovl__desc">At least one trait must differ. The effective date is computed by the system, and the active traits stay untouched until the checker decides.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="propBody" style="display:flex;flex-direction:column;gap:16px"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="propSave">Submit proposal</button></div>
+</div></div>
+
+<!-- ===== F6 · DELETE ===== -->
+<div class="ovl" id="mDel"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:480px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Delete component</h3><p class="ovl__desc">Allowed only while no employee row references the component.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="delBody"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="delGo">Delete component</button></div>
+</div></div>
+
+<!-- ===== G2 · PROPOSE INDIVIDUAL CHANGE ===== -->
+<div class="ovl" id="mVal"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="valTitle">Propose value change</h3><p class="ovl__desc">Direction-blind: the same path raises, lowers, adds or removes a component. Refused when the employee already has a row waiting for approval.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="valForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Employee</label><div class="ctl"><input type="text" id="valEmpName" disabled></div></div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Component <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="valComp"><span class="ctl__value" style="color:var(--fg-4)">Select component</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="valCompOpts"></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Amount <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="valAmt" placeholder="0"></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Effective from</label><div class="ctl"><input type="text" id="valFrom" value="01 October 2026" disabled></div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Computed by the system — the start of the next payroll period. Never sent by the client.</span></div>
+    </div>
+    <div id="valUmp"></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="valSave">Submit proposal</button></div>
+</div></div>
+
+<!-- ===== BATCH DRAFT ===== -->
+<div class="ovl" id="mBulkNew"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Create bulk change batch</h3><p class="ovl__desc">Saved as <strong>DRAFT</strong>. Members are added afterwards; submitting the batch locks it, freezes the impact summary and sends it to the checker. Escalation is not chosen here — it is computed at submit from the member count against <code>payroll.bulk_change_escalation_count</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="bulkForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Batch name <span class="req">*</span></label><div class="ctl"><input type="text" id="bulkName" placeholder="e.g. Kenaikan Berkala Semester 1 2027" maxlength="150"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="bulkSave">Save as draft</button></div>
+</div></div>
+
+<!-- ===== BATCH · ADD MEMBER ===== -->
+<div class="ovl" id="mBulkItem"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Add member to batch</h3><p class="ovl__desc">Allowed only while the batch is <strong>DRAFT</strong>. Each member becomes a value row carrying <code>batch_id</code> and <code>source_channel = BULK_CHANGE</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="itemForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Batch</label><div class="ctl"><input type="text" id="itemBatch" disabled></div></div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Employee <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="itemEmp"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="itemEmpOpts"></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Component <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="itemComp"><span class="ctl__value" style="color:var(--fg-4)">Select component</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="itemCompOpts"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fld" style="max-width:280px"><label class="fld__label">Amount <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="itemAmt" placeholder="0"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="itemSave">Add member</button></div>
+</div></div>
+
+<!-- ===== BATCH · DETAIL ===== -->
+<div class="ovl" id="mBulkDetail"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:760px">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="bdTitle">Batch detail</h3><p class="ovl__desc" id="bdDesc"></p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="bulkDetail"></div>
+  <div class="ovl__foot" id="bdFoot"></div>
+</div></div>
+
+<!-- ===== BATCH · LOCK & SUBMIT ===== -->
+<div class="ovl" id="mBulkSubmit"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Lock &amp; submit batch</h3><p class="ovl__desc">The impact summary is computed once and frozen — it cannot be recomputed afterwards, and no member can be added or removed after this.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="submitBody"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="submitGo">Lock &amp; submit</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Payroll', activeItem: 'Salary Settings' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/payroll-doc-data.js"></script>
+<script src="js/payroll-doc-settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Loan Detail</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=5">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Loan Detail">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<a class="crumbs__item" href="finance-loan.html">Loan</a>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page" id="crName">Detail</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title" id="ttl">Loan detail</h1>
+<p class="flow-sub" id="sub">Read-only view of one request: the details as submitted, the schedule received from the funding party, and the installment plan.</p>
+</div>
+<div class="flow-head__actions">
+<a class="btn btn--secondary" href="finance-loan.html">Back to list</a>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+<div class="rolechip rolechip--read">LN-S1 · detail view<span class="rolechip__sep"></span>Owner ROLE_EMPLOYEE (own row) · ROLE_FINANCE_OFFICER · ROLE_HR_MANAGER<span class="rolechip__sep"></span>Read only</div>
+<div id="body"></div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };
+window.SEVAKA_SESSION = { employee_id: 'emp-budi', roles: ['ROLE_EMPLOYEE', 'ROLE_DEPT_MANAGER', 'ROLE_FINANCE_OFFICER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-loan-detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA Recruitment — Job Listing Detail</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/recruitment.css">
+  <link rel="stylesheet" href="css/recruitment-create.css">
+  <link rel="stylesheet" href="css/recruitment-detail.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Recruitment — Job Listing Detail">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <div class="jd-head">
+            <div>
+              <a class="crumb" href="recruitment-job-listings.html">Job Listings</a>
+              <h1 class="rc-detail-title">Senior Backend Engineer</h1>
+              <p class="jd-head__sub">JL-1042 · Jakarta HQ · Engineering</p>
+            </div>
+            <div class="jd-head__acts">
+              <button class="btn btn--secondary" type="button" id="jdPreview">Preview Job Listing</button>
+              <button class="btn btn--primary" type="button" id="jdAddCandidate">Add Candidate</button>
+            </div>
+          </div>
+          <hr class="rc-rule">
+
+          <div class="jd-top">
+            <div class="jd-block">
+              <button class="jd-editbtn" type="button" data-edit="sum" aria-label="Edit job listing details"><i data-lucide="pencil"></i></button>
+              <div id="jdSummary"></div>
+            </div>
+            <aside class="jd-side">
+              <h2 class="jd-side__title">Candidates summary</h2>
+              <div class="jd-stat"><span class="jd-stat__k">All candidates</span><span class="jd-stat__v">0</span></div>
+              <div class="jd-stat"><span class="jd-stat__k">New candidates</span><span class="jd-stat__v">0</span></div>
+              <div class="jd-stat"><span class="jd-stat__k">In process</span><span class="jd-stat__v">0</span></div>
+              <div class="jd-stat"><span class="jd-stat__k">In offering</span><span class="jd-stat__v">0</span></div>
+              <div class="jd-stat"><span class="jd-stat__k">Hired</span><span class="jd-stat__v">0</span></div>
+              <div class="jd-stat"><span class="jd-stat__k">Rejected</span><span class="jd-stat__v">0</span></div>
+              <div class="jd-stat"><span class="jd-stat__k">Withdrawn</span><span class="jd-stat__v">0</span></div>
+            </aside>
+          </div>
+
+          <div class="jd-tabs">
+            <button class="jd-tab is-on" type="button" data-tab="job">Job Information</button>
+            <button class="jd-tab" type="button" data-tab="form">Application Form</button>
+            <button class="jd-tab" type="button" data-tab="stages">Hiring Stages</button>
+            <button class="jd-tab" type="button" data-tab="team">Hiring Team</button>
+            <button class="jd-tab" type="button" data-tab="plat">Publication Platform</button>
+          </div>
+
+          <section class="jd-panel is-on" data-tab="job">
+            <div class="jd-block">
+              <button class="jd-editbtn" type="button" data-edit="job" aria-label="Edit job information"><i data-lucide="pencil"></i></button>
+              <h2 class="jd-panel__title">Job Information</h2>
+              <div id="jdJobBody"></div>
+            </div>
+          </section>
+
+          <section class="jd-panel" data-tab="form">
+            <div class="jd-block">
+              <button class="jd-editbtn" type="button" data-edit="form" aria-label="Edit application form"><i data-lucide="pencil"></i></button>
+              <h2 class="jd-panel__title">Application Form</h2>
+              <div id="jdFormBody"></div>
+            </div>
+          </section>
+
+          <section class="jd-panel" data-tab="stages">
+            <div class="jd-block">
+              <button class="jd-editbtn" type="button" data-edit="stages" aria-label="Edit hiring stages"><i data-lucide="pencil"></i></button>
+              <h2 class="jd-panel__title">Hiring Stages</h2>
+              <div id="jdStagesBody"></div>
+            </div>
+          </section>
+
+          <section class="jd-panel" data-tab="team">
+            <div class="jd-block">
+              <button class="jd-editbtn" type="button" data-edit="team" aria-label="Edit hiring team"><i data-lucide="pencil"></i></button>
+              <h2 class="jd-panel__title">Hiring Team</h2>
+              <div id="jdTeamBody"></div>
+            </div>
+          </section>
+
+          <section class="jd-panel" data-tab="plat">
+            <div class="jd-block">
+              <button class="jd-editbtn" type="button" data-edit="plat" aria-label="Edit publication platform"><i data-lucide="pencil"></i></button>
+              <h2 class="jd-panel__title">Publication Platform</h2>
+              <div id="jdPlatBody"></div>
+            </div>
+          </section>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.RC_PAGE = { active: 'jobs' };</script>
+<script src="js/recruitment-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/recruitment-detail.js"></script>
+</body>
+</html>

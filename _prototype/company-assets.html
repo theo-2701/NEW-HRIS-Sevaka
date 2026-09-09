@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Assets</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/payroll-history.css">
+  <link rel="stylesheet" href="css/company.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Assets">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Company Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Assets</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Assets</h1>
+              <p class="flow-sub">The asset registry. Registration branches by ownership (Owned vs Leased). An asset with no branch or category is forced to <strong>NOT_AVAILABLE</strong> — a blocker, distinct from the non-blocking INCOMPLETE.</p>
+            </div>
+            <div class="flow-head__actions"><button class="btn btn--primary" id="regBtn">Register asset</button></div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="kpi" style="margin-top:0">
+            <div class="kpi__tile kpi__tile--success"><span class="kpi__label"><i data-lucide="package-check"></i>Available</span><span class="kpi__value" id="kAvail">0</span><span class="kpi__foot">In the assignable pool</span></div>
+            <div class="kpi__tile kpi__tile--info"><span class="kpi__label"><i data-lucide="user-check"></i>Assigned</span><span class="kpi__value" id="kAssigned">0</span><span class="kpi__foot">Currently held by staff</span></div>
+            <div class="kpi__tile kpi__tile--warning"><span class="kpi__label"><i data-lucide="clipboard-list"></i>Incomplete</span><span class="kpi__value" id="kIncomplete">0</span><span class="kpi__foot">Assigned, missing detail</span></div>
+            <div class="kpi__tile kpi__tile--danger"><span class="kpi__label"><i data-lucide="ban"></i>Not available</span><span class="kpi__value" id="kNa">0</span><span class="kpi__foot">Blocked — branch/category missing</span></div>
+          </div>
+
+          <div class="tabnav" id="asTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="list">Asset List<span class="tabnav__count" id="alCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="assigned">Assigned Assets<span class="tabnav__count" id="agCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="category">Category<span class="tabnav__count" id="acCount">0</span></button>
+          </div>
+
+          <div class="tabpanel is-on" data-tabpanel="list">
+            <div class="co-tbar">
+              <div class="co-tbar__left"></div>
+              <div class="co-tbar__right">
+                <span class="co-infotip">
+                  <button type="button" class="co-infotip__btn" id="legendBtn" aria-label="Asset status legend"><i data-lucide="info"></i></button>
+                  <span class="co-infotip__pop">Asset status legend — the 9 values of <b>last_asset_status</b>. Click to open the full reference. Shown here as a build/requirements aid.</span>
+                </span>
+                <div class="co-search"><i data-lucide="search"></i><input type="text" id="alSearch" placeholder="Search code or name"></div>
+              </div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Code</th><th>Asset Name</th><th>Category</th><th>Branch</th><th>Ownership</th><th class="ta-c">Status</th><th class="ta-c">Handover</th><th class="ta-r"></th></tr></thead>
+              <tbody id="alBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing">
+                <span id="alShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize">
+                  <select id="alPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="alPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="alPageBox">1</span>
+                <span class="ph-pager__from" id="alPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="alNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabpanel" data-tabpanel="assigned">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Assets currently held by an employee — status <strong>ASSIGNED</strong> or <strong>INCOMPLETE</strong> (INCOMPLETE is still assigned, only missing detail).</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left"></div>
+              <div class="co-tbar__right">
+                <div class="co-search"><i data-lucide="search"></i><input type="text" id="agSearch" placeholder="Search code or name"></div>
+              </div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Code</th><th>Asset Name</th><th>Holder</th><th>Branch</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="agBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing">
+                <span id="agShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize">
+                  <select id="agPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="agPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="agPageBox">1</span>
+                <span class="ph-pager__from" id="agPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="agNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabpanel" data-tabpanel="category">
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <button class="add-filter" id="acAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Add category</button>
+              </div>
+              <div class="co-tbar__right">
+                <div class="co-search"><i data-lucide="search"></i><input type="text" id="acSearch" placeholder="Search category name"></div>
+              </div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Category Name</th><th class="ta-c">Maintenance Interval (days)</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="acBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing">
+                <span id="acShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize">
+                  <select id="acPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="acPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="acPageBox">1</span>
+                <span class="ph-pager__from" id="acPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="acNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== REGISTER ASSET ===== -->
+<div class="ovl" id="regEdit"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title">Register asset</h3><p class="ovl__desc">Maps to <code>mst_asset</code>. Owned vs Leased drives the required fields (Mandatory-by-Value).</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="regForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Asset code <span class="req">*</span></label><div class="ctl"><input type="text" id="rCode" placeholder="AST-0001"></div></div>
+      <div class="fld"><label class="fld__label">Asset name <span class="req">*</span></label><div class="ctl"><input type="text" id="rName" placeholder="Laptop Dell XPS"></div></div>
+      <div class="fld co-span2"><label class="fld__label">Serial number <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label><div class="ctl"><input type="text" id="rSerial" placeholder="SN12345"></div></div>
+    </div>
+    <div class="fld"><label class="fld__label">Description <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label><div class="ctl ctl--area"><textarea id="rDesc" rows="2" placeholder="Short description"></textarea></div></div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Current location <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label><div class="ctl"><input type="text" id="rLoc" placeholder="e.g. Lantai 3"></div></div>
+      <div class="fld"><label class="fld__label">Manufacture year <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label><div class="ctl"><input type="number" id="rYear" min="1900" placeholder="2024"></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Category <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="rCat"><span class="ctl__value" style="color:var(--fg-4)">Select category</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">IT Equipment</div><div class="dropdown__opt">Kendaraan</div><div class="dropdown__opt">Furniture</div></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Branch <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="rBranch"><span class="ctl__value" style="color:var(--fg-4)">Select branch</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">Kantor Bandung</div><div class="dropdown__opt">Kantor Pusat Jakarta</div><div class="dropdown__opt">Kantor Surabaya</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="note note--warn is-hidden" id="rNaNote"><i data-lucide="triangle-alert"></i><span>Branch and/or category is empty — this asset will be saved as <strong>NOT_AVAILABLE</strong> (blocked from assignment). Setting it AVAILABLE will be rejected (422) until both are filled.</span></div>
+
+    <div class="fld"><label class="fld__label">Ownership <span class="req">*</span></label>
+      <div class="co-radios" id="rOwn">
+        <label class="co-radio"><input type="radio" name="rOwnType" value="OWNED" checked><span class="co-radio__dot"></span>Owned</label>
+        <label class="co-radio"><input type="radio" name="rOwnType" value="LEASED"><span class="co-radio__dot"></span>Leased</label>
+      </div>
+    </div>
+
+    <!-- OWNED block -->
+    <div id="rOwnedBlock">
+      <div class="co-grid2">
+        <div class="fld"><label class="fld__label">Purchase price <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="rPrice" placeholder="0"></div></div>
+        <div class="fld"><label class="fld__label">Purchase invoice no. <span class="req">*</span></label><div class="ctl"><input type="text" id="rInvoice" placeholder="INV-2026-0087"></div></div>
+      </div>
+      <div class="fld" style="margin-top:16px"><label class="fld__label">Invoice document <span class="req">*</span></label>
+        <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label>
+      </div>
+      <div class="fld" style="margin-top:16px"><label class="fld__label">Vendor <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+        <div class="ctl ctl--select" id="rVendorOwned"><span class="ctl__value" style="color:var(--fg-4)">Select vendor</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">PT Bina Karya Logistik</div><div class="dropdown__opt">CV Sumber Jaya</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEASED block -->
+    <div id="rLeasedBlock" class="is-hidden">
+      <div class="co-grid2">
+        <div class="fld"><label class="fld__label">Lease amount <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="rLease" placeholder="0"></div></div>
+        <div class="fld"><label class="fld__label">Lease contract no. <span class="req">*</span></label><div class="ctl"><input type="text" id="rContract" placeholder="LSE-01"></div></div>
+        <div class="fld"><label class="fld__label">Lease start <span class="req">*</span></label><div class="ctl ctl--date"><input type="date" id="rStart"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+        <div class="fld"><label class="fld__label">Lease end <span class="req">*</span></label><div class="ctl ctl--date"><input type="date" id="rEnd"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+      </div>
+      <div class="fld" style="margin-top:16px"><label class="fld__label">Vendor <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="rVendor"><span class="ctl__value" style="color:var(--fg-4)">Select vendor</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">PT Bina Karya Logistik</div><div class="dropdown__opt">CV Sumber Jaya</div></div>
+        </div>
+      </div>
+      <div class="fld" style="margin-top:16px"><label class="fld__label">Lease contract document <span class="req">*</span></label>
+        <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label>
+      </div>
+    </div>
+
+    <div class="fld"><label class="fld__label">Initial condition photo <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+      <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label>
+    </div>
+
+    <div class="co-gap">
+      <div class="co-gap__head"><i data-lucide="triangle-alert"></i>No storage column — proxied by created_at (GAP)</div>
+      <div class="fld"><label class="fld__label">Purchase date</label><div class="ctl"><input type="text" placeholder="Shown as created_at (read-only proxy)" disabled></div></div>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="regSave">Register asset</button></div>
+</div></div>
+
+<!-- ===== STATUS LEGEND ===== -->
+<div class="ovl" id="legendModal"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title">Asset status legend</h3><p class="ovl__desc">Nine values of <code>last_asset_status</code>. INCOMPLETE ≠ NOT_AVAILABLE.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="co-legend" id="legendGrid"></div>
+  <div class="note note--info" style="margin-top:16px"><i data-lucide="info"></i><span>This legend is a <strong>build / requirements reference</strong> — it exists so every one of the nine status values can be verified during development. In the shipped product it can be hidden or condensed; it is not a primary end-user surface.</span></div>
+  <div class="note note--warn" style="margin-top:16px"><i data-lucide="triangle-alert"></i><span><strong>INCOMPLETE</strong> is informational and non-blocking — the asset is still assigned. <strong>NOT_AVAILABLE</strong> is a hard blocker (missing branch/category) that keeps the asset out of the pool.</span></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<!-- ===== CATEGORY EDIT ===== -->
+<div class="ovl" id="acEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="acTitle">Add category</h3><p class="ovl__desc">Maps to <code>cnf_asset_category</code>. The interval drives the next maintenance date.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="acForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Category name <span class="req">*</span></label><div class="ctl"><input type="text" id="acName" placeholder="e.g. Laptop"></div></div>
+    <div class="fld"><label class="fld__label">Maintenance interval (days)</label><div class="ctl"><input type="number" id="acInterval" min="0" value="180"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="acSave">Save category</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company Management', activeItem: 'Asset List' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/company-assets.js"></script>
+</body>
+</html>

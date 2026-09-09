@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Disbursement &amp; Receivables</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=4">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Disbursement and Receivables">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Finance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Disbursement &amp; Receivables</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Disbursement &amp; Receivables</h1>
+<p class="flow-sub">A horizontal slice across benefit claims, loans and cash advances — not a fourth request type. Finance never executes a payment here: every endpoint writes or reads a <strong>mark</strong> — the fact that something was paid — never a transfer instruction.</p>
+</div>
+<div class="flow-head__actions">
+<div class="seg" id="roleSeg"><button type="button" class="seg__opt is-on" data-val="FIN">Finance Officer</button><button type="button" class="seg__opt" data-val="HR">HR Manager</button></div>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="dpTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="disbursement">Disbursement<span class="tabnav__count" id="cntPay">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="outstanding">Outstanding Clearance<span class="tabnav__count" id="cntOut">0</span></button>
+</div>
+
+<!-- ===== DP-A2 ===== -->
+<div class="tabpanel is-on" data-tabpanel="disbursement">
+<div class="fin-filters">
+<div class="fld fld--sm">
+<label class="fld__label">Mark status</label>
+<div class="ctl ctl--select" id="fltMark"><span class="ctl__value">UNMARKED</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="UNMARKED">UNMARKED</div><div class="dropdown__opt" data-val="MARKED">MARKED</div><div class="dropdown__opt" data-val="ALL">ALL</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Payable type</label>
+<div class="ctl ctl--select" id="fltType"><span class="ctl__value">All types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All types</div><div class="dropdown__opt" data-val="BENEFIT_CLAIM">BENEFIT_CLAIM</div><div class="dropdown__opt" data-val="LOAN">LOAN</div><div class="dropdown__opt" data-val="CASH_ADVANCE">CASH_ADVANCE</div><div class="dropdown__opt" data-val="CASH_ADVANCE_SHORTFALL">CASH_ADVANCE_SHORTFALL</div></div>
+</div>
+</div>
+<div class="fld fld--sm">
+<label class="fld__label">Request no.</label>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltNo" placeholder="Search here"></div>
+</div>
+<div class="fld fld--sm">
+<label class="fld__label">From</label>
+<div class="ctl ctl--date"><input type="text" id="fltFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld fld--sm">
+<label class="fld__label">To</label>
+<div class="ctl ctl--date"><input type="text" id="fltTo" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld fld--sm">
+<label class="fld__label">Sort</label>
+<div class="ctl ctl--select" id="fltSort"><span class="ctl__value">Submitted — newest</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="created_at">Submitted — newest</div><div class="dropdown__opt" data-val="marked_at">Marked at — newest</div><div class="dropdown__opt" data-val="amount">Amount — highest</div><div class="dropdown__opt" data-val="request_no">Request no.</div></div>
+</div>
+</div>
+<div class="fin-filters__sp"></div>
+<div class="fin-filters__acts"><button class="btn btn--secondary" id="exportBtn">Export CSV</button></div>
+</div><p class="fld__hint" style="margin-top:8px">Mark status defaults to UNMARKED — the working list — and is derived from an anti-join, not a stored column. The date range targets <code>marked_at</code> when the list is MARKED, and the source request date when it is UNMARKED or ALL.</p>
+
+<div class="selbar" id="selBar" hidden><span class="selbar__txt" id="selTxt">0 rows selected</span><button class="btn btn--primary" id="bulkMarkBtn" disabled>Mark selected as paid</button></div>
+
+<div class="dtable-wrap dtable-wrap--scroll" id="payWrap" style="margin-top:14px">
+<table class="dtable" id="payTable">
+<thead><tr><th style="width:44px"></th><th>Type</th><th>Request No.</th><th>Employee</th><th class="ta-r">Amount</th><th>Submitted</th><th>Mark Status</th><th>Method / Source</th><th></th></tr></thead>
+<tbody id="payBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgPay"></div>
+
+<div class="note note--info" style="margin-top:14px"><i data-lucide="server"></i><span><strong>Four machine integration doors have no UI by design</strong> (read payables, write payment marks, read and write loan calculations — server-to-server, cursor paginated, machine identity). Rows produced by those doors carry the <code>CLIENT_SYSTEM</code> source badge: readable in detail, never writable from this screen. <code>actual_paid_at</code> is carried on the detail record only and is never used to calculate anything.</span></div>
+</div>
+
+<!-- ===== DP-B2 ===== -->
+<div class="tabpanel" data-tabpanel="outstanding">
+<div class="fin-bar">
+<div class="fin-bar__flt">
+<div class="fld fld--sm">
+<label class="fld__label">Status</label>
+<div class="ctl ctl--select" id="fltOut"><span class="ctl__value">All status</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All status</div><div class="dropdown__opt" data-val="OUTSTANDING">OUTSTANDING</div><div class="dropdown__opt" data-val="CLEARED_BY_REPAYMENT">CLEARED_BY_REPAYMENT</div><div class="dropdown__opt" data-val="DECLARED_SETTLED">DECLARED_SETTLED</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Employee</label>
+<div class="ctl ctl--select" id="fltEmp"><span class="ctl__value">All employees</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltEmpDd"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Employee</th><th>Exit Date</th><th class="ta-r">Outstanding Amount</th><th>Status</th><th>Recorded</th><th>Resolved</th><th></th></tr></thead>
+<tbody id="outBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgOut"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span><code>outstanding_amount</code> is <strong>one combined figure</strong> for loan and cash advance, snapshotted once when the exit event is received — it is not refreshed as later projections move. <code>CLEARED_BY_REPAYMENT</code> is written by a watcher process with no human action, so it has no screen; declaring it settled is the only human write here, open to the finance officer <strong>and</strong> the HR manager.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ detail — payable ============ -->
+<div class="ovl" id="payDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Payable detail</h3><p class="ovl__desc">Read-only. The mark block is present only once the row has been marked; the source tells a human mark from a client-system one.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="pdKv"></div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div>
+</div>
+
+<!-- ============ detail — outstanding clearance ============ -->
+<div class="ovl" id="outDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Clearance detail</h3><p class="ovl__desc">Read-only. The amount is a snapshot taken when the exit event arrived, not a live balance.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="odKv"></div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div>
+</div>
+
+<!-- ============ DP-A3 — mark paid ============ -->
+<div class="ovl" id="markModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Mark as paid</h3><p class="ovl__desc">Preview first: rows failing a gate are shown as they are, never hidden. One payment method applies to the whole action.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="sumbox" id="mkSum"></div>
+<div>
+<div class="sumbox__head" style="padding-left:0"><i data-lucide="list-checks"></i>Resolved rows</div>
+<div class="dtable-wrap" style="margin-top:6px"><table class="dtable"><thead><tr><th>Type</th><th>Request No.</th><th>Employee</th><th class="ta-r">Amount</th></tr></thead><tbody id="mkResolved"></tbody></table></div>
+</div>
+<div id="mkUnresolvedWrap" style="display:none">
+<div class="sumbox__head" style="padding-left:0"><i data-lucide="triangle-alert"></i>Unresolved rows — shown, not hidden</div>
+<div class="dtable-wrap" style="margin-top:6px"><table class="dtable"><thead><tr><th>Request No.</th><th>Employee</th><th class="ta-r">Amount</th><th>Blocking gate</th></tr></thead><tbody id="mkUnresolved"></tbody></table></div>
+</div>
+<div class="fld">
+<label class="fld__label">Payment method <span class="req">*</span></label>
+<div class="ctl ctl--select" id="mkMethod"><span class="ctl__value" style="color:var(--fg-4)">Select method</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="BANK_TRANSFER">BANK_TRANSFER</div><div class="dropdown__opt" data-val="CASH">CASH</div><div class="dropdown__opt" data-val="WITH_PAYROLL">WITH_PAYROLL</div></div>
+</div>
+<span class="fld__hint">One value for every selected row — a mixed-method batch must be split into two actions. <code>WITH_PAYROLL</code> on a loan before payroll confirms is refused with <strong>422 FIN_PAYROLL_CONFIRMATION_REQUIRED</strong>.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Reason note <span class="req">*</span></label>
+<div class="ctl ctl--area"><textarea id="mkNote" rows="2" maxlength="500" placeholder="Transfer batch 13 Jul 2026"></textarea></div>
+<span class="fld__hint">Always mandatory here — this door always records a manual mark. Time of the act and the actor come from the server, never from the client.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="mkConfirm" disabled>Confirm mark as paid</button>
+</div>
+</div>
+</div>
+
+<!-- ============ Reverse a mark (correction path) ============ -->
+<div class="ovl" id="reverseModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Reverse mark</h3><p class="ovl__desc">A correction, not a payment: the reversing row inherits the payable type and id of the row it reverses.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="rvKv"></div>
+<div class="fld">
+<label class="fld__label">Reason note <span class="req">*</span></label>
+<div class="ctl ctl--area"><textarea id="rvNote" rows="2" maxlength="500" placeholder="Why the mark is reversed"></textarea></div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--danger" id="rvConfirm">Reverse mark</button>
+</div>
+</div>
+</div>
+
+<!-- ============ DP-B3 — declare settled ============ -->
+<div class="ovl" id="settleModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Declare settled</h3><p class="ovl__desc">A human statement that the balance will not be pursued further. Terminal state — there is no way back to OUTSTANDING.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="dsKv"></div>
+<div class="fld">
+<label class="fld__label">Settlement note <span class="req">*</span></label>
+<div class="ctl ctl--area"><textarea id="dsNote" rows="3" maxlength="500" placeholder="Written off, below the collection threshold"></textarea></div>
+<span class="fld__hint">Always mandatory. A row already resolved by another session is refused with <strong>409 FIN_OUTSTANDING_ALREADY_RESOLVED</strong>.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="dsConfirm" disabled>Confirm declare settled</button>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-disbursement.js"></script>
+</body>
+</html>

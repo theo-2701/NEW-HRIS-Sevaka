@@ -1,0 +1,110 @@
+/* ============================================================
+   SEVAKA HRIS — Document Service (unique bits only)
+   Everything else reuses app.css / employee-flows.css / form-standard.css /
+   table-standard.css / pagination-standard.css.
+   ============================================================ */
+
+/* contract note / honest-limit panel */
+.doc-note{background:var(--color-mist);border:1px solid var(--border-1);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.doc-note__h{display:flex;align-items:center;gap:8px;font:700 12.5px/1.3 var(--font-body);color:var(--fg-1)}
+.doc-note__h svg{width:16px;height:16px;color:var(--color-secondary-600)}
+.doc-note p{margin:0;font:500 12px/1.6 var(--font-body);color:var(--fg-3)}
+.doc-note code{font:600 11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;border:1px solid var(--border-1);border-radius:4px;padding:1px 5px;color:var(--color-secondary-700)}
+.doc-note--gap{background:var(--color-warning-50,#fffbeb);border-color:var(--color-warning-200,#fde68a)}
+.doc-note--gap .doc-note__h svg{color:var(--color-warning-600,#d97706)}
+.doc-note--hard{background:var(--color-error-50,#fef2f2);border-color:var(--color-error-200,#fecaca)}
+.doc-note--hard .doc-note__h svg{color:var(--color-error-600)}
+
+/* Scrollable table WITHOUT frozen columns. Needed because both
+   .dtable-wrap--scroll (finance.css) and .dtable-wrap--act (employee-flows.css) pin the
+   first/last column, and .dtable-wrap alone is overflow:hidden (content gets clipped).
+   Use this for every table with no Action column: modal tables, version history,
+   per-recipient tasks, pickers, read-only audit grids. */
+.dtable-wrap--plain{overflow-x:auto}
+.dtable-wrap--plain .dtable th,.dtable-wrap--plain .dtable td{position:static !important;box-shadow:none !important}
+.dtable-wrap--plain .dtable{width:100%;min-width:100%}
+
+/* small stat cards (batch report summary) */
+.doc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.doc-stat{background:#fff;border:1px solid var(--border-1);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow-card-sm)}
+.doc-stat__t{font:600 10.5px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
+.doc-stat__v{font:700 26px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--fg-1);margin-top:6px}
+.doc-stat__f{font:500 11.5px/1.4 var(--font-body);color:var(--fg-4);margin-top:4px}
+
+/* A2 content panel: response headers + viewer */
+.doc-heads{background:var(--color-obsidian,#111827);border-radius:10px;padding:14px 16px;overflow-x:auto}
+.doc-heads pre{margin:0;font:500 11.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:#e6f0f7;white-space:pre}
+.doc-viewer{border:1px dashed var(--color-silver,#94A3B8);border-radius:10px;background:var(--color-cloud);min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px}
+.doc-viewer__ic{width:40px;height:40px;border-radius:10px;background:var(--color-secondary-50);display:flex;align-items:center;justify-content:center;color:var(--color-secondary-600)}
+.doc-viewer__ic svg{width:20px;height:20px}
+.doc-viewer__t{font:700 13.5px/1.3 var(--font-body);color:var(--fg-1)}
+.doc-viewer__s{font:500 12px/1.6 var(--font-body);color:var(--fg-3);max-width:420px}
+.doc-viewer--inapp{border-style:solid;border-color:var(--color-error-200,#fecaca);background:#fff}
+
+/* template body (naskah) */
+.doc-body{background:var(--color-cloud);border:1px solid var(--border-1);border-radius:8px;padding:12px 14px;max-height:240px;overflow:auto}
+.doc-body pre{margin:0;font:500 12px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg-2);white-space:pre-wrap}
+
+/* role reader checklist (A7) */
+.doc-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+.doc-role{display:flex;align-items:center;gap:10px;font:500 12.5px/1 var(--font-body);color:var(--fg-2);padding:6px 0}
+.doc-role input{width:16px;height:16px;accent-color:var(--color-secondary-500)}
+
+/* multi-value enum criterion inside a filter modal (batch_state[]) */
+.doc-chks{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+/* a row that just changed state, so the terminal frame is visible */
+.row-fresh>td{background:var(--color-primary-50)}
+
+/* toolbar: reuse co-tbar but allow wrapping with several controls */
+.doc-tbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
+.doc-tbar__sp{flex:1}
+.doc-tbar .co-search{min-width:260px}
+.doc-tbar .rng{width:240px}
+.doc-tbar .rng__ctl{height:40px}
+.doc-fsum{font:500 12px/1.4 var(--font-body);color:var(--fg-4);max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-tbar .fchk{font:500 12.5px/1.4 var(--font-body);color:var(--fg-2)}
+
+/* in-page step heading (Employee Files EF-1) */
+.doc-step{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font:700 16px/1.3 var(--font-display);color:var(--fg-1);margin-bottom:14px}
+.doc-step__m{font:500 12px/1.4 var(--font-body);color:var(--fg-4)}
+.doc-step__m code{font:600 11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-secondary-700)}
+
+/* two-hands cards (Document Templates · A9 decision) */
+.doc-hands{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.doc-hand{background:var(--color-mist);border:1px solid var(--border-1);border-radius:10px;padding:14px 16px}
+.doc-hand__t{font:700 12.5px/1.3 var(--font-body);color:var(--fg-1);margin-bottom:6px}
+.doc-hand p{margin:0;font:500 12px/1.6 var(--font-body);color:var(--fg-3)}
+.doc-hand code{font:600 11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;border:1px solid var(--border-1);border-radius:4px;padding:1px 5px;color:var(--color-secondary-700)}
+.doc-hand__w{margin-top:8px;font:600 12px/1.4 var(--font-body);color:var(--color-secondary-700)}
+
+/* selected-employee context strip (Employee Files) */
+.doc-ctx{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--border-1);border-radius:10px;padding:12px 16px;margin-bottom:16px;box-shadow:var(--shadow-card-sm)}
+.doc-ctx__av{width:36px;height:36px;border-radius:50%;background:var(--color-primary-200);display:flex;align-items:center;justify-content:center;font:700 13px/1 var(--font-body);color:var(--color-secondary-800)}
+.doc-ctx__n{font:700 13.5px/1.3 var(--font-body);color:var(--fg-1)}
+.doc-ctx__m{font:500 12px/1.4 var(--font-body);color:var(--fg-3)}
+
+/* public verification page (Regime C, no shell) */
+.vf-page{min-height:100vh;background:linear-gradient(180deg,var(--color-secondary-700) 0%,var(--color-secondary-500) 55%,var(--color-primary-500) 100%);display:flex;flex-direction:column;align-items:center;padding:48px 24px 64px}
+.vf-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.vf-brand__m{width:32px;height:32px;border-radius:8px;background:var(--color-primary-500);display:flex;align-items:center;justify-content:center;font:700 18px/1 Arial,sans-serif;color:#fff}
+.vf-brand__t{font:700 18px/1 Arial,sans-serif;color:#fff;letter-spacing:.02em}
+.vf-card{width:100%;max-width:520px;background:#fff;border-radius:16px;box-shadow:var(--shadow-modal);padding:28px 28px 24px;display:flex;flex-direction:column;gap:18px}
+.vf-card h1{margin:0;font:700 22px/1.25 var(--font-display);letter-spacing:-.02em;color:var(--fg-1)}
+.vf-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border-1)}
+.vf-tab{flex:1;position:relative;padding:12px 8px;border:none;background:none;cursor:pointer;font:700 12.5px/1 var(--font-body);letter-spacing:.04em;text-transform:uppercase;color:var(--fg-3);transition:color var(--duration-2) var(--ease-standard)}
+.vf-tab:hover{color:var(--color-secondary-700)}
+.vf-tab.is-on{color:var(--color-secondary-700)}
+.vf-tab.is-on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--color-secondary-500)}
+.vf-card p.vf-sub{margin:0;font:500 12.5px/1.6 var(--font-body);color:var(--fg-3)}
+.vf-res{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.vf-res__ic{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.vf-res__ic svg{width:28px;height:28px}
+.vf-res__ic--ok{background:var(--color-success-100);color:var(--color-success-900)}
+.vf-res__ic--no{background:var(--color-vapor);color:var(--fg-3)}
+.vf-res__t{font:700 18px/1.3 var(--font-display);color:var(--fg-1)}
+.vf-foot{margin-top:20px;font:500 11.5px/1.6 var(--font-body);color:#fff;text-align:center;max-width:520px}
+.vf-foot a{color:#fff}
+
+/* ---------- Page lead paragraph under a section title (STANDARD fallback) ---------- */
+:where(.doc-lead){margin:0 0 18px;max-width:74ch;font:400 13px/1.7 var(--font-body);color:var(--fg-3);text-wrap:pretty}
+:where(.doc-lead strong){font-weight:700;color:var(--fg-2)}

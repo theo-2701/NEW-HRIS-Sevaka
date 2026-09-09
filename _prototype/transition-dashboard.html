@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Transition Dashboard</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    /* ---------- transition summary hero ---------- */
+    .td-hero { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 16px; box-shadow: var(--shadow-card-sm); overflow: hidden; }
+    .td-hero__top { display: flex; align-items: flex-start; gap: 18px; padding: 22px 24px; }
+    .td-hero__ic { width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, var(--color-primary-500), var(--color-secondary-600)); }
+    .td-hero__ic svg { width: 26px; height: 26px; }
+    .td-hero__main { flex: 1; min-width: 0; }
+    .td-hero__eyebrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .td-hero__kind { font: 700 11px/1 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--color-secondary-700); }
+    .td-hero__name { font: 700 26px/1.15 var(--font-display); letter-spacing: -.02em; color: var(--fg-1); margin: 0; }
+    .td-hero__route { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; font: 500 14px/1.4 var(--font-body); color: var(--fg-2); }
+    .td-hero__route .pos { display: inline-flex; align-items: center; gap: 7px; }
+    .td-hero__route .pos svg { width: 15px; height: 15px; color: var(--fg-4); }
+    .td-hero__route .arrow { color: var(--color-secondary-500); display: inline-flex; }
+    .td-hero__route .arrow svg { width: 18px; height: 18px; }
+    .td-hero__eff { font: 500 13px/1.4 var(--font-body); color: var(--fg-3); margin-top: 8px; }
+    .td-hero__eff b { color: var(--fg-1); font-weight: 700; }
+    .subchip { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 10px; border-radius: 999px; background: var(--color-primary-100); color: var(--color-secondary-700); font: 700 10.5px/1 var(--font-body); letter-spacing: .04em; }
+
+    /* ---------- stepper ---------- */
+    .td-steps { display: flex; align-items: flex-start; padding: 6px 24px 24px; }
+    .td-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .td-step__node { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 13px/1 var(--font-body); z-index: 1;
+      background: var(--color-vapor); color: var(--fg-4); border: 2px solid var(--color-fog); transition: all var(--duration-2) var(--ease-standard); }
+    .td-step__node svg { width: 17px; height: 17px; }
+    .td-step__label { font: 700 11px/1.2 var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--fg-4); margin-top: 10px; text-align: center; }
+    .td-step__sub { font: 500 11px/1.3 var(--font-body); color: var(--fg-4); margin-top: 3px; text-align: center; }
+    /* connector line between nodes */
+    .td-step::before, .td-step::after { content: ""; position: absolute; top: 16px; height: 3px; background: var(--color-fog); z-index: 0; }
+    .td-step::before { left: 0; right: 50%; margin-right: 17px; }
+    .td-step::after  { left: 50%; right: 0; margin-left: 17px; }
+    .td-step:first-child::before, .td-step:last-child::after { display: none; }
+    /* states */
+    .td-step.is-done .td-step__node { background: var(--color-success-500); border-color: var(--color-success-500); color: #fff; }
+    .td-step.is-done .td-step__label { color: var(--fg-2); }
+    .td-step.is-active .td-step__node { background: var(--color-secondary-500); border-color: var(--color-secondary-500); color: #fff; box-shadow: 0 0 0 4px var(--color-primary-100); }
+    .td-step.is-active .td-step__label { color: var(--color-secondary-700); }
+    .td-step.is-done::before, .td-step.is-done::after,
+    .td-step.is-active::before { background: var(--color-success-500); }
+    .td-steps.is-cancelled .td-step__label { color: var(--fg-4); }
+
+    /* ---------- task completion bar ---------- */
+    .td-meter { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--border-1); background: var(--color-mist); }
+    .td-meter__txt { font: 700 13px/1 var(--font-body); color: var(--fg-1); white-space: nowrap; }
+    .td-meter__txt span { color: var(--fg-3); font-weight: 500; }
+    .td-meter__bar { flex: 1; height: 10px; border-radius: 999px; background: var(--color-vapor); overflow: hidden; }
+    .td-meter__bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--color-secondary-500), var(--color-primary-500)); transition: width var(--duration-3) var(--ease-standard); }
+    .td-meter__pct { font: 700 15px/1 var(--font-display); color: var(--color-secondary-700); white-space: nowrap; }
+
+    /* ---------- task side groups ---------- */
+    .td-group + .td-group { margin-top: 24px; }
+    .td-group__head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .td-group__tag { font: 700 10px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+    .td-group__tag--rel { background: var(--flow-orange-bg); color: var(--flow-orange-fg); }
+    .td-group__tag--pro { background: var(--color-primary-100); color: var(--color-secondary-700); }
+    .td-group__tag--gen { background: var(--color-vapor); color: var(--fg-2); }
+    .td-group__desc { font: 500 12.5px/1.4 var(--font-body); color: var(--fg-3); }
+
+    .td-info { display: flex; gap: 10px; align-items: flex-start; margin-top: 20px; padding: 14px 16px; border-radius: 12px; background: var(--color-primary-50); border: 1px solid var(--border-1); font: 500 13px/1.5 var(--font-body); color: var(--fg-2); }
+    .td-info svg { width: 18px; height: 18px; color: var(--color-secondary-500); flex-shrink: 0; margin-top: 1px; }
+    .side-tag { font: 700 9px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; display: inline-block; margin-bottom: 8px; }
+    .side-tag--rel { background: var(--flow-orange-bg); color: var(--flow-orange-fg); }
+    .side-tag--pro { background: var(--color-primary-100); color: var(--color-secondary-700); }
+  </style>
+</head>
+<body data-screen-label="Transition Dashboard">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <a class="crumbs__item" href="transition.html">Transition</a>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page" id="crumbId">TR-…</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Transition Detail</h1>
+              <p class="flow-sub">Progress &amp; task list for this transition (read-only). The structural move happens atomically on the effective date once required tasks complete.</p>
+            </div>
+            <div class="flow-head__actions">
+              <a class="btn btn--secondary" href="transition.html">Back to list</a>
+              <button class="btn btn--secondary is-hidden" id="clearanceBtn">Clearance gate</button>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <!-- summary hero -->
+          <div class="td-hero">
+            <div class="td-hero__top">
+              <div class="td-hero__ic"><i data-lucide="arrow-left-right" id="heroIcon"></i></div>
+              <div class="td-hero__main">
+                <div class="td-hero__eyebrow">
+                  <span class="td-hero__kind" id="heroKind">Transfer</span>
+                  <span class="subchip is-hidden" id="heroSub"><i data-lucide="trending-up"></i><span id="heroSubTxt">PROMOTION</span></span>
+                </div>
+                <h2 class="td-hero__name" id="heroName">—</h2>
+                <div class="td-hero__route" id="heroRoute"></div>
+                <div class="td-hero__eff" id="heroEff"></div>
+              </div>
+              <span id="heroStatus"></span>
+            </div>
+
+            <!-- stepper -->
+            <div class="td-steps" id="steps"></div>
+
+            <!-- task completion meter -->
+            <div class="td-meter">
+              <span class="td-meter__txt" id="meterTxt">0 of 0 tasks done</span>
+              <div class="td-meter__bar"><span id="meterBar" style="width:0%"></span></div>
+              <span class="td-meter__pct" id="meterPct">0%</span>
+            </div>
+          </div>
+
+          <div class="td-info" id="lifeNote"></div>
+
+          <!-- tasks -->
+          <div class="sec-head" style="margin-top:26px"><span class="sec-head__t">Task list</span><span class="sec-head__c" id="taskCount">0</span></div>
+          <div id="taskGroups" style="margin-top:14px"></div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ TR-WAIVE ============ -->
+<div class="ovl" id="trWaive">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Waive task</h3><p class="ovl__desc" id="waiveDesc">Waiving marks the task WAIVED so it stops blocking the transition. Recorded to the audit log with your identity.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="note note--warn"><i data-lucide="triangle-alert"></i><span><strong>GAP · PROB-FRONTEND-003</strong> — the waive-task endpoint (control class D3) is not yet confirmed in the API contract. This action is wired to the documented model but enforcement is deferred.</span></div>
+    <div class="fld">
+      <label class="fld__label">Control class <span class="req">*</span></label>
+      <div class="seg" id="waiveClass" role="radiogroup">
+        <button type="button" class="seg__opt is-on" data-val="STANDARD">Standard</button>
+        <button type="button" class="seg__opt" data-val="ELEVATED">Elevated</button>
+      </div>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Elevated is required for clearance-blocking tasks.</span>
+    </div>
+    <div class="fld">
+      <label class="fld__label">Skip reason <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="waiveReason" rows="2" maxlength="150" placeholder="Why is this task being waived?"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="waiveBtn" disabled>Waive task</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TR-CLEARANCE ============ -->
+<div class="ovl" id="trClear">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Clearance gate</h3><p class="ovl__desc">The terminal state is held until every clearance-blocking task clears — unless an elevated approver force-releases.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="dtable-wrap"><table class="dtable"><thead><tr><th>Clearance task</th><th>Owner</th><th>Blocking</th><th>Status</th></tr></thead><tbody id="clearBody"></tbody></table></div>
+    <div class="note note--danger"><i data-lucide="shield-alert"></i><span><strong>Force-release</strong> overrides the gate for any still-blocking task. It is elevated and written to the audit log with your identity and reason.</span></div>
+    <div class="fld">
+      <label class="fld__label">Reason for force-release <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="forceReason" rows="2" maxlength="150" placeholder="Why override the clearance gate?"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Close</button>
+      <button class="btn btn--danger" id="forceBtn" disabled>Force-release &amp; complete</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'Transition' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/transition-data.js"></script>
+<script src="js/transition-dashboard.js"></script>
+<script src="js/kpi-status.js"></script>
+</body>
+</html>

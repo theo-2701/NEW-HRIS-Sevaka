@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Employee Profile</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-profile.css?v=7">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Employee Profile">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <div class="ep-page">
+          <div class="ep-frame">
+
+          <!-- ============ BREADCRUMB ============ -->
+          <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Employee Profile</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">General</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item" id="crumbGroup">Personal</span>
+              <span class="crumbs__sep" aria-hidden="true" id="crumbSubSep">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page" id="crumbLeaf">Basic Info</span>
+          </nav>
+
+          <!-- ===== IDENTITY CARD (standalone) ===== -->
+          <div class="ep-idcard">
+            <div class="ep-idcard__top">
+              <div class="ep-idhdr">
+                <span class="ep-idhdr__ava" style="background:linear-gradient(155deg,#7ab9d4,#026395)">BS</span>
+                <div class="ep-idhdr__main">
+                  <h1 class="ep-idhdr__name">Budi Santoso</h1>
+                  <div class="ep-idhdr__role">Backend Engineer · Engineering</div>
+                  <div class="ep-idhdr__meta">
+                    <span class="ep-idhdr__pill"><i data-lucide="id-card"></i>NIK-0101</span>
+                    <span class="ep-idhdr__pill"><i data-lucide="flag"></i>CITIZEN</span>
+                    <span class="ep-idhdr__status">Active Employee</span>
+                  </div>
+                </div>
+              </div>
+              <span class="ep-chip"><i data-lucide="database"></i>schema <b>employee_profile</b></span>
+            </div>
+            <div class="scope-bar">
+              <span class="scope-bar__lbl">Actor data-scope</span>
+              <button class="scope-pill is-on" data-actor="ESS" type="button"><i data-lucide="user"></i>Employee · self †</button>
+              <button class="scope-pill" data-actor="HR" type="button"><i data-lucide="shield-check"></i>HR Manager · restricted fields</button>
+              <span class="scope-bar__hint"><code>employee_id</code> is taken from the JWT claim (anti-IDOR); body ids are ignored.</span>
+            </div>
+          </div>
+
+          <!-- ---- section body (switched by the global sidebar) ---- -->
+          <div class="ep-content">
+
+              <!-- ===== BASIC INFO ===== -->
+              <section class="ep-sec is-on" data-section="basic-info">
+                <div class="note note--warn"><i data-lucide="shield-alert"></i><span><strong>HR-restricted fields.</strong> <code class="ep-code">nationality</code> and <code class="ep-code">marital_status</code> can only be changed by HR (they feed identity dedup &amp; PTKP). As an employee you can edit everything else; those two stay locked in your edit form.</span></div>
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="user" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Basic Info</h2>
+                      <p class="ep-card__desc">Biodata HOT (<code class="ep-code">mst_employee_profile</code>) + COLD (<code class="ep-code">mst_employee_personal</code>) · 1:1</p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="arrow-up-right"></i><b>GET</b> /employee-profiles/{id}</span>
+                      <button class="action-btn" id="biEdit" type="button">Edit</button>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="note note--info"><i data-lucide="lock"></i><span>PII is masked by default (<code class="ep-code">id_card_number</code>, <code class="ep-code">mother_maiden_name</code>). Full values are shown only via <code class="ep-code">GET /{id}/reveal</code>, which writes an append-only read-audit row.</span></div>
+                    <div class="ep-twocol">
+                      <div class="ep-block">
+                        <div class="ep-block__head"><i data-lucide="id-card"></i>Identity &amp; Residence <span class="ep-tablbl">· mst_employee_profile</span></div>
+                        <div class="kv ep-kv" id="biHot"></div>
+                      </div>
+                      <div class="ep-block ep-block--cold">
+                        <div class="ep-block__head"><i data-lucide="user-round"></i>Personal Data <span class="ep-tablbl">· mst_employee_personal</span></div>
+                        <div class="kv ep-kv" id="biCold"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===== FAMILY ===== -->
+              <section class="ep-sec" data-section="family">
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="users" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Family</h2>
+                      <p class="ep-card__desc">Relatives &amp; dependants · <code class="ep-code">mst_relative</code> · CRUD soft-delete</p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="arrow-up-right"></i><b>POST</b> /employee-relatives</span>
+                      <button class="add-filter add-filter--sm" id="famAdd" type="button">Add Family Member</button>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="ep-toolbar ep-toolbar--split">
+                      <div class="ctl ctl--select ep-relfilter" id="famRelFilter"><span class="ctl__value has-value">All relationships</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All relationships</div><div class="dropdown__opt" data-val="SPOUSE">Spouse</div><div class="dropdown__opt" data-val="CHILD">Child</div><div class="dropdown__opt" data-val="PARENT">Parent</div><div class="dropdown__opt" data-val="SIBLING">Sibling</div><div class="dropdown__opt" data-val="OTHER">Other</div></div></div>
+                      <label class="ep-search"><i data-lucide="search"></i><input type="text" id="famSearch" placeholder="Search name…" autocomplete="off"></label>
+                    </div>
+                    <div class="ep-tablewrap dtable-wrap--scroll dtable-wrap--act">
+                      <table class="dtable" id="famTable"></table>
+                    </div>
+                    <div class="gap-legend gap-legend--closed"><i data-lucide="check-circle-2"></i><div><span class="gap-tag">FINAL</span>&nbsp; A <strong>digital signature</strong> for a family member is <strong>not added</strong> — final decision (<code>PROB-FRONTEND-006</code> c, CLOSE 04 Aug 2026): no concrete use case, so <code>signature</code> stays on <code>mst_employee_personal</code> only (FSD-PROFILE 0.2 §8). The <strong>Address</strong> field mirrors the Figma form but has <strong>no backing column</strong> on <code>mst_relative</code> (kept as a flagged addition). Dependants are <strong>not</strong> auto-claimed for PTKP; that decision lives in payroll (CD-016).</div></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===== EMERGENCY CONTACT ===== -->
+              <section class="ep-sec" data-section="emergency-contact">
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="phone-call" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Emergency Contact</h2>
+                      <p class="ep-card__desc">Filtered projection of Family where <code class="ep-code">is_emergency_contact = true</code></p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="filter"></i>search <b>is_emergency_contact:true</b></span>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="note note--info"><i data-lucide="info"></i><span>This menu is a <strong>projection, not a separate resource</strong>. Add a contact from <strong>Family</strong> (tick “Emergency contact”). Here you can only <strong>edit</strong> or <strong>release</strong> — releasing sets <code class="ep-code">is_emergency_contact = false</code> (an UPDATE, <strong>not</strong> a delete); the person stays in Family.</span></div>
+                    <div class="ep-toolbar">
+                      <label class="ep-search"><i data-lucide="search"></i><input type="text" id="ecSearch" placeholder="Search name…" autocomplete="off"></label>
+                    </div>
+                    <div class="ep-tablewrap dtable-wrap--scroll dtable-wrap--act">
+                      <table class="dtable" id="ecTable"></table>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===== FORMAL EDUCATION ===== -->
+              <section class="ep-sec" data-section="formal-education">
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="graduation-cap" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Formal Education</h2>
+                      <p class="ep-card__desc">Single field · <code class="ep-code">mst_employee_personal.last_education</code> · update-only</p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="arrow-up-right"></i><b>PUT</b> /employee-profiles/{id}</span>
+                      <button class="action-btn" id="feEdit" type="button">Change Level</button>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="ep-single">
+                      <span class="ep-single__ic"><i data-lucide="graduation-cap"></i></span>
+                      <div>
+                        <div class="ep-single__lbl">Highest education level</div>
+                        <div class="ep-single__val" id="feVal">—</div>
+                      </div>
+                    </div>
+                    <div class="gap-legend gap-legend--closed"><i data-lucide="check-circle-2"></i><div><span class="gap-tag">FINAL</span>&nbsp; A detailed <strong>formal-education history</strong> (institution / major / diploma file) was <strong>dropped</strong> — final decision (<code>PROB-FRONTEND-006</code> b, CLOSE); only the single <code>last_education</code> level exists (FSD-PROFILE 0.2 §8). This field is <strong>not</strong> HR-restricted, so you may change it yourself.</div></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===== INFORMAL EDUCATION ===== -->
+              <section class="ep-sec" data-section="informal-education">
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="book-open" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Informal Education (Training)</h2>
+                      <p class="ep-card__desc">Trainings &amp; certifications · <code class="ep-code">mst_training</code> · CRUD soft-delete</p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="arrow-up-right"></i><b>POST</b> /trainings</span>
+                      <button class="add-filter add-filter--sm" id="trAdd" type="button">Add Training</button>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="ep-tablewrap dtable-wrap--scroll dtable-wrap--act">
+                      <table class="dtable" id="trTable"></table>
+                    </div>
+                    <div class="gap-legend gap-legend--closed"><i data-lucide="check-circle-2"></i><div><span class="gap-tag">ACTIVE</span>&nbsp; <code>training_activity</code> is <strong>live in the §7.4 contract</strong> (TSD-PROFILE delta 0.4) and is now rendered as an optional form field — no longer a gap (FSD-PROFILE 0.2 §5.2). Expiry (<code>certificate_expiry_date</code>) powers the “expired” detection; DELETE returns <strong>204 No Content</strong>.</div></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===== WORKING EXPERIENCE ===== -->
+              <section class="ep-sec" data-section="working-experience">
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="briefcase" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Working Experience</h2>
+                      <p class="ep-card__desc">External work history · <code class="ep-code">mst_work_experience</code> · month-year precision</p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="arrow-up-right"></i><b>POST</b> /work-experiences</span>
+                      <button class="add-filter add-filter--sm" id="weAdd" type="button">Add Experience</button>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="note note--info"><i data-lucide="calendar-check"></i><span>Dates are captured as <strong>month + year</strong> (stored with day = 01) and the leave date must be on or after the join date (<code class="ep-code">leave_date ≥ join_date</code>) — enforced in-form and by a DB CHECK.</span></div>
+                    <div class="ep-tablewrap dtable-wrap--scroll dtable-wrap--act">
+                      <table class="dtable" id="weTable"></table>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===== ADDITIONAL INFO ===== -->
+              <section class="ep-sec" data-section="additional-info">
+                <div class="ep-card">
+                  <div class="ep-card__head">
+                    <i data-lucide="clipboard-list" class="ep-card__ic"></i>
+                    <div>
+                      <h2 class="ep-card__title">Additional Info</h2>
+                      <p class="ep-card__desc">Remaining COLD biodata · <code class="ep-code">mst_employee_personal</code> · update-only</p>
+                    </div>
+                    <div class="ep-card__actions">
+                      <span class="ep-chip"><i data-lucide="arrow-up-right"></i><b>PUT</b> /employee-profiles/{id}</span>
+                      <button class="action-btn" id="aiEdit" type="button">Edit</button>
+                    </div>
+                  </div>
+                  <div class="ep-card__body">
+                    <div class="kv ep-kv" id="aiKv" style="grid-template-columns:220px 1fr"></div>
+                    <div class="gap-legend gap-legend--closed"><i data-lucide="check-circle-2"></i><div><span class="gap-tag">FINAL</span>&nbsp; A separate blood <strong>rhesus (+/−)</strong> field is <strong>not added</strong> — final decision (<code>PROB-FRONTEND-006</code> a, CLOSE 04 Aug 2026); <code>blood_type</code> (A/B/AB/O/OTHER) is sufficient (FSD-PROFILE 0.2 §8). No field here is HR-restricted; you may change all of them yourself.</div></div>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ MODALS (form bodies generated by JS) ============ -->
+<div class="ovl ovl--form" id="mBasic"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head"><div><h3 class="ovl__title">Edit Basic Info</h3><p class="ovl__desc">Update HOT + COLD biodata in one transaction. HR-restricted fields are locked.</p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <form class="ep-form" id="fBasic"></form>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" data-save="basic" type="button">Save changes</button></div>
+  </div>
+</div>
+
+<div class="ovl ovl--form" id="mFamily"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel">
+    <div class="ovl__head"><div><h3 class="ovl__title" id="mFamilyTitle">Add Family Member</h3><p class="ovl__desc" id="mFamilyDesc">Name, relationship and phone number are the minimum required fields.</p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <form class="ep-form" id="fFamily"></form>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" data-save="family" type="button" id="mFamilySave">Save</button></div>
+  </div>
+</div>
+
+<div class="ovl ovl--form" id="mFormal"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel">
+    <div class="ovl__head"><div><h3 class="ovl__title">Change Education Level</h3><p class="ovl__desc">Pick your highest completed formal education level.</p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <form class="ep-form" id="fFormal"></form>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" data-save="formal" type="button">Save</button></div>
+  </div>
+</div>
+
+<div class="ovl ovl--form" id="mTraining"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head"><div><h3 class="ovl__title" id="mTrainingTitle">Add Training</h3><p class="ovl__desc">Only the category is validated against the enum; other fields are optional.</p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <form class="ep-form" id="fTraining"></form>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" data-save="training" type="button" id="mTrainingSave">Save</button></div>
+  </div>
+</div>
+
+<div class="ovl ovl--form" id="mWork"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head"><div><h3 class="ovl__title" id="mWorkTitle">Add Working Experience</h3><p class="ovl__desc">Company, position and both month-year periods are required.</p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <form class="ep-form" id="fWork"></form>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" data-save="work" type="button" id="mWorkSave">Save</button></div>
+  </div>
+</div>
+
+<div class="ovl ovl--form" id="mAdditional"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel">
+    <div class="ovl__head"><div><h3 class="ovl__title">Edit Additional Info</h3><p class="ovl__desc">All fields here are self-editable (no HR-restricted field).</p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <form class="ep-form" id="fAdditional"></form>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" data-save="additional" type="button">Save</button></div>
+  </div>
+</div>
+
+<div class="ovl" id="mConfirm"><div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel" style="max-width:440px">
+    <div class="ovl__head"><div><h3 class="ovl__title" id="mConfirmTitle">Confirm</h3><p class="ovl__desc" id="mConfirmDesc"></p></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="ovl__body"><div class="note" id="mConfirmNote"></div></div>
+    <div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn" id="mConfirmOk" type="button">Confirm</button></div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+  window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };
+  window.__sevakaDefaultHashRoute = 'employee-profile.html#basic-info';
+</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/employee-profile.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,293 @@
+/* =========================================================================
+   SEVAKA HRIS — Design Tokens
+   Source: Figma file "UI HRIS_V1.0 (21052026).fig"
+   ========================================================================= */
+
+/* Webfonts — self-hosted from /fonts (variable TTFs):
+   - Plus Jakarta Sans: headings & display
+   - Inter: body, buttons, data
+   - (Arial fallback): wordmark + sidebar nav labels (Figma uses Arial Bold)
+   These @font-face rules make both families reachable from the CSS itself,
+   so consumers no longer depend on the Google Fonts CDN. url()s resolve
+   relative to THIS file (project root), i.e. ./fonts/…
+*/
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/Inter-VariableFont_opsz_wght.ttf") format("truetype-variations");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/Inter-Italic-VariableFont_opsz_wght.ttf") format("truetype-variations");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("fonts/PlusJakartaSans-VariableFont_wght.ttf") format("truetype-variations");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: italic;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf") format("truetype-variations");
+}
+
+:root {
+  /* ---------- Font families ---------- */
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body:    "Inter", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mark:    "Arial", "Helvetica Neue", Helvetica, sans-serif; /* brand wordmark */
+
+  /* ---------- Brand palette ---------- */
+  /* Primary — Sky Blue. Used for accenting illustrations, primary brand mark, hero gradients. */
+  --color-primary-50:   #f3fafd;   /* Light */
+  --color-primary-100:  #edf8fc;   /* Light :hover */
+  --color-primary-200:  #daf0f9;   /* Light :active */
+  --color-primary-500:  #87ceeb;   /* Normal — primary brand */
+  --color-primary-600:  #7ab9d4;   /* Normal :hover */
+  --color-primary-700:  #6ca5bc;   /* Normal :active */
+  --color-primary-800:  #659bb0;   /* Dark */
+  --color-primary-850:  #517c8d;   /* Dark :hover */
+  --color-primary-900:  #3d5d6a;   /* Dark :active */
+  --color-primary-950:  #2f4852;   /* Darker */
+
+  /* Secondary — Ocean. The workhorse: CTAs, focus/active states, links. */
+  --color-secondary-50:   #e6f3f9;
+  --color-secondary-100:  #d9edf7;   /* Light :hover */
+  --color-secondary-200:  #b1d9ee;   /* Light :active */
+  --color-secondary-500:  #0284c7;   /* Normal — Ocean (#0284C7) */
+  --color-secondary-600:  #0277b3;   /* Normal :hover (Figma rgb(2,119,179)) */
+  --color-secondary-700:  #026a9f;   /* Normal :active (rgb(2,106,159)) */
+  --color-secondary-800:  #026395;   /* Dark */
+  --color-secondary-850:  #014f77;   /* Dark :hover */
+  --color-secondary-900:  #013b5a;   /* Dark :active */
+  --color-secondary-950:  #012e46;   /* Darker */
+
+  /* Tertiary — Sand. Accenting illustrations, light surfaces. */
+  --color-tertiary-50:   #fffdf3;
+  --color-tertiary-100:  #fffbed;   /* Light :hover */
+  --color-tertiary-200:  #fef7db;   /* Light :active */
+  --color-tertiary-500:  #fde68a;   /* Normal — Sand (#FDE68A) */
+  --color-tertiary-600:  #e4cf7c;
+  --color-tertiary-700:  #cab86e;
+  --color-tertiary-800:  #bead68;   /* Dark */
+  --color-tertiary-850:  #988a53;   /* Dark :hover */
+  --color-tertiary-900:  #72673e;
+  --color-tertiary-950:  #595130;
+
+  /* ---------- Semantic palette ---------- */
+  /* Success — Emerald */
+  --color-success-50:   #ebfbf5;
+  --color-success-100:  #e1f8f0;
+  --color-success-200:  #c0f1df;
+  --color-success-500:  #34d399;   /* Normal */
+  --color-success-600:  #2fbe8a;
+  --color-success-700:  #2aa97a;
+  --color-success-800:  #279e73;   /* Dark */
+  --color-success-900:  #1f7f5c;
+  --color-success-950:  #124a36;   /* Darker */
+
+  /* Warning — Amber */
+  --color-warning-50:   #fef5e7;
+  --color-warning-100:  #fef0da;
+  --color-warning-200:  #fce1b3;
+  --color-warning-500:  #f59e0b;   /* Normal */
+  --color-warning-600:  #dd8e0a;
+  --color-warning-700:  #c47e09;
+  --color-warning-800:  #b87708;   /* Dark */
+  --color-warning-900:  #935f07;
+  --color-warning-950:  #563704;   /* Darker */
+
+  /* Error — Rose */
+  --color-error-50:    #fdecec;
+  --color-error-100:   #fde3e3;
+  --color-error-200:   #fac5c5;
+  --color-error-500:   #ef4444;   /* Normal */
+  --color-error-600:   #d73d3d;
+  --color-error-700:   #bf3636;
+  --color-error-800:   #b33333;   /* Dark */
+  --color-error-900:   #8f2929;
+  --color-error-950:   #541818;   /* Darker */
+
+  /* ---------- Neutrals / surfaces ---------- */
+  --color-white:        #ffffff;
+  --color-cloud:        #fafcfe;   /* Light mode dialogs / overlays */
+  --color-vapor:        #f1f5f9;   /* Border accent */
+  --color-mist:         #f3fafd;   /* Page background (very light primary) */
+  --color-fog:          #eaecf0;   /* Hairline dividers (rgb(234,236,240)) */
+  --color-silver:       #94a3b8;   /* Helper / deemphasized text */
+  --color-steel:        #667085;   /* Secondary helper */
+  --color-slate:        #334155;   /* Body text */
+  --color-obsidian:     #111827;   /* Headings, overlays */
+  --color-ink:          #1f1f1f;   /* Captions */
+  --color-black:        #000000;
+
+  /* ---------- Semantic tokens (intent-based) ---------- */
+  --fg-1:               var(--color-obsidian);  /* primary text */
+  --fg-2:               var(--color-slate);     /* body text */
+  --fg-3:               var(--color-steel);     /* secondary helper */
+  --fg-4:               var(--color-silver);    /* helper / deemphasized */
+  --fg-on-brand:        var(--color-cloud);     /* text on Ocean/Sky surfaces */
+  --fg-link:            var(--color-secondary-500);
+  --fg-link-hover:      var(--color-secondary-700);
+
+  --bg-app:             var(--color-mist);
+  --bg-surface:         var(--color-white);
+  --bg-raised:          var(--color-cloud);
+  --bg-subtle:          var(--color-vapor);
+  --bg-brand:           var(--color-secondary-500);
+  --bg-brand-soft:      var(--color-secondary-100);
+  --bg-accent-soft:     var(--color-primary-100);
+
+  --border-1:           var(--color-fog);        /* default hairline */
+  --border-2:           #d0d5dd;                 /* stronger */
+  --border-focus:       var(--color-secondary-500);
+  --border-dashed:      var(--color-silver);
+
+  /* ---------- Radii (8pt-aligned · skip 10) ---------- */
+  --radius-xs:   2px;     /* tiny chips, accent slivers */
+  --radius-sm:   4px;     /* tight inner elements */
+  --radius-md:   8px;     /* DEFAULT — buttons, fields, chips */
+  --radius-lg:   12px;    /* cards, dropdowns, modals */
+  --radius-xl:   16px;    /* swatches, large cards */
+  --radius-2xl:  24px;    /* heros, large modals */
+  --radius-pill: 999px;
+
+  /* ---------- Spacing (8pt grid) ---------- */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+
+  /* ---------- Elevation (Figma Shadow page) ----------
+     The Figma file ships ONE canonical card shadow (0 2 4 rgba(0,0,0,0.16))
+     replicated five times. We augment with the inset-glow + sunken styles
+     observed throughout the button system. */
+  --shadow-card:       0px 2px 4px 0px rgba(0, 0, 0, 0.16);
+  --shadow-card-sm:    0px 1px 2px 0px rgba(16, 24, 40, 0.06),
+                       0px 1px 3px 0px rgba(16, 24, 40, 0.10);
+  --shadow-modal:      0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  --shadow-overlay:    0px 8px 24px 0px rgba(17, 24, 39, 0.16);
+
+  /* Inset rim — used on every input & secondary button */
+  --shadow-inset-rim:        inset 0 0 2px 0 var(--color-slate);
+  --shadow-inset-rim-brand:  inset 0 0 2px 0 var(--color-secondary-700);
+
+  /* Pressed / hover-inset: characteristic SEVAKA "soft-press" effect */
+  --shadow-press:
+    inset  1px  1px 2px 0 rgba(255, 255, 255, 0.30),
+    inset -1px -2px 2px 0 rgba(255, 255, 255, 0.30),
+    inset  0    0   10px 0 rgba(255, 255, 255, 0.30),
+    inset  0    0   2px  0 var(--color-secondary-700),
+    inset  2px  2px 4px 0 rgba(17, 24, 39, 0.24);
+
+  /* Primary button — recessed glow, brand-tinted soft shadows */
+  --shadow-primary:
+    inset  0   0   8px 0 #026A9F,
+    inset -1px -2px 2px 0 rgba(2, 106, 159, 0.24),
+    inset  1px  1px 2px 0 rgba(2, 106, 159, 0.24);
+  --bg-primary-btn: linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.16) 95.83%), #026A9F;
+
+  /* Primary :hover — one shade darker (Ocean-600), same recipe */
+  --shadow-primary-hover:
+    inset  0   0   8px 0 #026395,
+    inset -1px -2px 2px 0 rgba(2, 99, 149, 0.24),
+    inset  1px  1px 2px 0 rgba(2, 99, 149, 0.24);
+  --bg-primary-btn-hover: linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.16) 95.83%), #026395;
+
+  /* Primary :active — sunken: top-down highlight + dark inset shadow */
+  --shadow-primary-press:
+    inset  2px  2px 4px 0 rgba(0, 0, 0, 0.24),
+    inset  0   0   8px 0 #026395,
+    inset -1px -2px 2px 0 rgba(2, 99, 149, 0.24),
+    inset  1px  1px 2px 0 rgba(2, 99, 149, 0.24);
+  --bg-primary-btn-press: linear-gradient(180deg, rgba(255,255,255,0.16) 4.17%, rgba(255,255,255,0) 100%), #026395;
+
+  /* Danger button — Error-500 (#BF3636) base */
+  --shadow-danger:
+    inset  0   0   8px 0 #BF3636,
+    inset -1px -2px 2px 0 rgba(191, 54, 54, 0.24),
+    inset  1px  1px 2px 0 rgba(191, 54, 54, 0.24);
+  --bg-danger-btn: linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.16) 95.83%), #BF3636;
+
+  /* Danger :hover — one shade darker (#8F2929) */
+  --shadow-danger-hover:
+    inset  0   0   8px 0 #8F2929,
+    inset -1px -2px 2px 0 rgba(143, 41, 41, 0.24),
+    inset  1px  1px 2px 0 rgba(143, 41, 41, 0.24);
+  --bg-danger-btn-hover: linear-gradient(0deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.16) 95.83%), #8F2929;
+
+  /* Danger :active — sunken */
+  --shadow-danger-press:
+    inset  2px  2px 4px 0 rgba(0, 0, 0, 0.24),
+    inset  0   0   8px 0 #8F2929,
+    inset -1px -2px 2px 0 rgba(143, 41, 41, 0.24),
+    inset  1px  1px 2px 0 rgba(143, 41, 41, 0.24);
+  --bg-danger-btn-press: linear-gradient(180deg, rgba(255,255,255,0.16) 4.17%, rgba(255,255,255,0) 100%), #8F2929;
+
+  /* ---------- Motion ---------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0.1, 1);
+  --duration-1: 120ms;
+  --duration-2: 180ms;
+  --duration-3: 240ms;
+}
+
+/* =========================================================================
+   Base typography — directly from /Color-Palette-Typography/Type-Scale
+   ========================================================================= */
+
+html { color: var(--fg-1); font-family: var(--font-body); font-size: 16px; }
+body { margin: 0; background: var(--bg-app); color: var(--fg-2); -webkit-font-smoothing: antialiased; }
+
+/* Display & headings (Plus Jakarta Sans) */
+.t-display    { font-family: var(--font-display); font-weight: 700; font-size: 64px;  line-height: 1.05; letter-spacing: -0.02em; color: var(--fg-1); }
+.t-h1, h1     { font-family: var(--font-display); font-weight: 700; font-size: 40px;  line-height: 1.1;  letter-spacing: -0.02em; color: var(--fg-1); }
+.t-h2, h2     { font-family: var(--font-display); font-weight: 700; font-size: 24px;  line-height: 1.2;  letter-spacing: -0.02em; color: var(--fg-1); }
+.t-h3, h3     { font-family: var(--font-display); font-weight: 700; font-size: 20px;  line-height: 1.25; color: var(--fg-1); }
+.t-subtitle   { font-family: var(--font-display); font-weight: 500; font-size: 24px;  line-height: 1.3;  color: var(--fg-1); }
+
+/* Body (Inter) */
+.t-large-bold { font-family: var(--font-body); font-weight: 700; font-size: 20px; line-height: 1.4; }
+.t-large      { font-family: var(--font-body); font-weight: 500; font-size: 20px; line-height: 1.4; }
+.t-body-bold, b, strong { font-family: var(--font-body); font-weight: 700; font-size: 16px; line-height: 1.4; }
+.t-body, p    { font-family: var(--font-body); font-weight: 500; font-size: 16px; line-height: 1.4; color: var(--fg-2); }
+.t-body-reg   { font-family: var(--font-body); font-weight: 400; font-size: 16px; line-height: 1.4; }
+
+.t-button     { font-family: var(--font-body); font-weight: 700; font-size: 14px; line-height: 1.0; letter-spacing: 0.04em; }
+.t-medium     { font-family: var(--font-body); font-weight: 500; font-size: 14px; line-height: 1.4; }
+.t-medium-bold{ font-family: var(--font-body); font-weight: 700; font-size: 14px; line-height: 1.4; }
+
+.t-small      { font-family: var(--font-body); font-weight: 400; font-size: 12px; line-height: 1.4; color: var(--fg-3); }
+.t-small-med  { font-family: var(--font-body); font-weight: 500; font-size: 12px; line-height: 1.4; color: var(--fg-2); }
+.t-small-bold { font-family: var(--font-body); font-weight: 700; font-size: 12px; line-height: 1.4; }
+
+.t-label      { font-family: var(--font-body); font-weight: 700; font-size: 10px; line-height: 1.0; letter-spacing: 0.02em; text-transform: uppercase; color: var(--fg-3); }
+.t-label-sm   { font-family: var(--font-body); font-weight: 700; font-size: 8px;  line-height: 1.0; letter-spacing: 0.02em; text-transform: uppercase; color: var(--fg-3); }
+
+/* Brand wordmark */
+.t-wordmark   { font-family: var(--font-mark); font-weight: 700; font-size: 20px; line-height: 1.0; letter-spacing: 0.04em; color: var(--color-secondary-700); }
+
+a { color: var(--fg-link); text-decoration: none; }
+a:hover { color: var(--fg-link-hover); text-decoration: underline; }
+
+/* Reset niceties so kits/cards behave */
+*, *::before, *::after { box-sizing: border-box; }
+button { font: inherit; cursor: pointer; }

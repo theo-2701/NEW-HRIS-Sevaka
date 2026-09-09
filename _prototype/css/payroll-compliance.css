@@ -1,0 +1,280 @@
+/* ===== SEVAKA HRIS — Payroll · Compliance · PKWT Compensation =====
+   Reuses pp-shell / pp-head / pp-panel (payroll-processing.css),
+   pc-toolbar / pc-period / pc-search / pc-iconbtn / pc-help / pc-menu
+   (payroll-components.css), ae-assign* (payroll-processing.css),
+   imp-file / imp-tips / imp-upload (payroll-processing.css),
+   modal--sheet / modal--filter / filter-block / check-red (employee-modals.css),
+   .pp-table + freeze (table-standard.css), fields (form-standard.css).
+   Only the bits unique to Compliance live here. Tokens: colors_and_type.css. */
+
+/* ---------- Pill tabs under the page title ---------- */
+.comp-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.comp-pill {
+  height: 28px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-vapor);
+  color: var(--fg-4);
+  font: 700 11px/1 var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard),
+              color var(--duration-2) var(--ease-standard);
+}
+.comp-pill:hover { background: var(--color-primary-100); color: var(--color-secondary-700); }
+.comp-pill.is-on {
+  background: linear-gradient(180deg, #bfe4f4 0%, #a9d8ef 100%);
+  color: var(--color-secondary-800);
+}
+
+/* ---------- Panel head: title + Create New ---------- */
+.comp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.comp-title { font: 700 24px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--fg-1); }
+
+/* ---------- Toolbar (period + filter on the left, tools on the right) ---------- */
+.comp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+}
+.comp-toolbar__spacer { flex: 1; }
+.comp-filterbtn { min-width: 96px; }
+
+/* ---------- Table: sky header, white body ---------- */
+.comp-table { min-width: 1060px; }
+.comp-table thead th {
+  background: linear-gradient(180deg, #9bd5ef 0%, #8ccbe9 100%);
+  color: #fff;
+  border-bottom: none;
+}
+.comp-table thead th:first-child { border-top-left-radius: var(--radius-lg); }
+.comp-table thead th.pp-table__act { border-top-right-radius: var(--radius-lg); }
+/* sort caret + header text in white */
+.comp-sort { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.comp-sort svg { width: 14px; height: 14px; color: #fff; opacity: 0.92; }
+
+/* keep the frozen identifier + action cells WHITE (matches the mockup) */
+.comp-table tbody td:first-child,
+.comp-table tbody td.pp-cell-act { background: #fff; }
+.comp-table tbody tr:hover td { background: var(--color-mist); }
+.comp-table tbody tr:hover td:first-child,
+.comp-table tbody tr:hover td.pp-cell-act { background: var(--color-mist); }
+
+/* employee identity cell */
+.comp-emp { display: flex; align-items: center; gap: 12px; }
+.comp-emp__avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+}
+.comp-emp__avatar svg { width: 100%; height: 100%; display: block; }
+.comp-emp__meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.comp-emp__name { font: 600 14px/1.3 var(--font-body); color: var(--fg-1); white-space: nowrap; }
+.comp-emp__sub { font: 500 12px/1.2 var(--font-body); color: var(--color-silver); white-space: nowrap; }
+
+.comp-table td { font: 500 14px/1.4 var(--font-body); color: var(--fg-2); }
+.comp-table td.is-ph { color: var(--fg-4); }
+
+/* ---------- Row action button + menu ---------- */
+.comp-actwrap { position: relative; display: inline-flex; }
+.comp-actmenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 172px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  display: none;
+  z-index: 50;
+}
+.comp-actwrap.is-open .comp-actmenu { display: block; }
+.comp-actmenu__item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 10px;
+  border: none; background: transparent; border-radius: 7px;
+  font: 500 14px/1 var(--font-body); color: var(--fg-2);
+  text-align: left; cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard);
+}
+.comp-actmenu__item:hover { background: var(--color-mist); }
+.comp-actmenu__item svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--color-silver); }
+.comp-actmenu__item.is-danger { color: var(--color-error-600); }
+.comp-actmenu__item.is-danger svg { color: var(--color-error-500); }
+
+/* ---------- Footer / pagination (Showing [10] from N · pager) ---------- */
+.comp-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-top: 18px;
+}
+.comp-showing { display: flex; align-items: center; gap: 10px; font: 500 14px/1 var(--font-body); color: var(--fg-3); }
+.comp-pagesize { position: relative; display: inline-flex; align-items: center; }
+.comp-pagesize select {
+  appearance: none; -webkit-appearance: none;
+  height: 34px; padding: 0 30px 0 12px;
+  background: var(--color-cloud); border: 1px solid var(--color-silver); border-radius: 8px;
+  font: 500 14px/1 var(--font-body); color: var(--fg-2); cursor: pointer;
+}
+.comp-pagesize svg { position: absolute; right: 9px; width: 16px; height: 16px; color: var(--fg-3); pointer-events: none; }
+
+.comp-pager { display: flex; align-items: center; gap: 6px; }
+.comp-pager__btn {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent; border-radius: 7px; color: var(--color-silver); cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard), color var(--duration-2) var(--ease-standard);
+}
+.comp-pager__btn:hover { background: var(--color-mist); color: var(--color-secondary-600); }
+.comp-pager__btn svg { width: 16px; height: 16px; }
+.comp-pagebox {
+  min-width: 44px; height: 34px; padding: 0 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--color-silver); border-radius: 8px;
+  font: 600 14px/1 var(--font-body); color: var(--fg-1);
+}
+.comp-pager__from { font: 500 14px/1 var(--font-body); color: var(--fg-3); }
+
+/* ---------- Stub view for the not-built tabs ---------- */
+.comp-stub {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 72px 24px; gap: 14px;
+}
+.comp-stub__icon {
+  width: 64px; height: 64px; border-radius: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-primary-50); color: var(--color-secondary-500);
+}
+.comp-stub__icon svg { width: 30px; height: 30px; }
+.comp-stub__title { font: 700 22px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--fg-1); }
+.comp-stub__sub { max-width: 460px; font: 500 14px/1.5 var(--font-body); color: var(--fg-3); }
+
+/* =========================================================================
+   EXPORT PAYMENT COMPENSATION SIMULATION modal — plain stacked fields
+   ========================================================================= */
+.modal--export { width: 620px; max-width: 95vw; }
+.comp-exfields { display: flex; flex-direction: column; gap: 18px; }
+.comp-exfields .fld { width: 100%; }
+.comp-exfields .ctl { width: 100%; }
+
+/* =========================================================================
+   BULK UPDATE / ADD COMPENSATION modal — template + tips + upload
+   ========================================================================= */
+.modal--bulk { width: 620px; max-width: 95vw; }
+.comp-bulk__heading { font: 700 20px/1.3 var(--font-display); letter-spacing: -0.01em; color: var(--fg-1); }
+.comp-bulk__sub { margin: 6px 0 20px; font: 500 14px/1.5 var(--font-body); color: var(--fg-2); }
+.comp-bulk__tipstitle { font: 700 16px/1.2 var(--font-body); color: var(--fg-1); margin: 22px 0 10px; }
+.comp-bulk__tips { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.comp-bulk__tips li { font: 500 14px/1.4 var(--font-body); color: var(--fg-2); }
+.comp-bulk__uplabel { font: 700 16px/1.2 var(--font-body); color: var(--fg-1); margin: 24px 0 8px; }
+.comp-bulk .imp-upload { width: 100%; }
+
+/* date control inside the export modal: pointer + readonly */
+.comp-exfields .ctl--date > input { pointer-events: none; }
+
+/* =========================================================================
+   CREATE / EDIT FORM — editable per-employee compensation table
+   ========================================================================= */
+.comp-formpanel .pc-formbody { display: flex; flex-direction: column; }
+.comp-formtitle { font: 700 24px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--fg-1); margin-top: 4px; }
+.comp-formrule { height: 1px; background: var(--border-1); margin: 16px 0 20px; }
+
+.comp-managetools { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.comp-managetools__spacer { flex: 1; }
+
+/* editable table */
+.comp-formtable { min-width: 1200px; }
+.comp-formtable thead th { vertical-align: middle; }
+.comp-formtable td { vertical-align: middle; }
+
+/* col 1 = checkbox (frozen left, no divider), col 2 = Employee ID (frozen, divider) */
+.comp-fcheckcol { width: 56px; }
+.comp-formtable tbody td:first-child { box-shadow: none; }
+.comp-formtable thead th:nth-child(2),
+.comp-formtable tbody td:nth-child(2) { position: sticky; left: 56px; }
+.comp-formtable thead th:nth-child(2) { z-index: 7; }
+.comp-formtable tbody td:nth-child(2) {
+  z-index: 4;
+  background: #fff;
+  box-shadow: inset -1px 0 0 #d7eaf4;
+}
+.comp-formtable tbody tr:hover td:nth-child(2) { background: var(--color-mist); }
+
+/* red-outlined checkbox (matches the mockup) */
+.comp-formtable .check-red__box { box-shadow: inset 0 0 0 1.5px var(--color-error-500); }
+.comp-formtable .check-red input:checked + .check-red__box { box-shadow: none; }
+
+.comp-fstatus { font: 500 14px/1.3 var(--font-body); color: var(--fg-2); white-space: nowrap; }
+.comp-fcell { min-width: 180px; }
+.comp-formtable .ctl--date { width: 100%; min-width: 180px; }
+
+/* work-duration field: input + "Month" suffix segment */
+.comp-monthfld {
+  display: flex; align-items: stretch;
+  height: 36px; min-width: 168px;
+  border-radius: 8px; overflow: hidden;
+  background: var(--color-cloud); border: 1px solid var(--color-silver);
+  transition: border-color var(--duration-2) var(--ease-standard), box-shadow var(--duration-2) var(--ease-standard);
+}
+.comp-monthfld:focus-within { border-color: var(--color-secondary-500); box-shadow: 0 0 0 4px rgba(2,132,199,.16); }
+.comp-monthfld input {
+  flex: 1; min-width: 0; border: none; background: transparent; outline: none;
+  padding: 0 12px; font: 500 12px/1.4 var(--font-body); color: var(--fg-2);
+}
+.comp-monthfld input::placeholder { color: var(--fg-4); }
+.comp-monthfld__suf {
+  display: inline-flex; align-items: center; flex-shrink: 0;
+  padding: 0 12px; background: var(--color-vapor); border-left: 1px solid var(--color-silver);
+  font: 700 12px/1 var(--font-body); color: var(--fg-2);
+}
+.comp-formtable .pp-money { min-width: 168px; }
+
+/* red filled remove button (per mockup) */
+.comp-rowdel {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 8px; cursor: pointer;
+  background: var(--color-error-500); color: #fff;
+  transition: background var(--duration-2) var(--ease-standard);
+}
+.comp-rowdel:hover { background: var(--color-error-600); }
+.comp-rowdel svg { width: 16px; height: 16px; }
+
+/* header (i) marker */
+.comp-info { display: inline-flex; align-items: center; gap: 6px; }
+.comp-info svg { width: 15px; height: 15px; color: #fff; opacity: 0.92; }
+
+/* form empty state */
+.comp-formempty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 8px; padding: 56px 24px;
+}
+.comp-formempty__icon { width: 52px; height: 52px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-primary-50); color: var(--color-secondary-500); }
+.comp-formempty__icon svg { width: 26px; height: 26px; }
+.comp-formempty__title { font: 700 18px/1.2 var(--font-display); color: var(--fg-1); }
+.comp-formempty__sub { font: 500 14px/1.5 var(--font-body); color: var(--fg-3); max-width: 380px; }
+
+/* =========================================================================
+   DATE PICKER MODAL (reuses .dp__* day-grid styles from add-employee.css)
+   ========================================================================= */
+.comp-datemodal { width: 372px; padding: 22px; }
+.comp-datemodal__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.comp-datemodal__title { font: 700 18px/1.2 var(--font-display); color: var(--fg-1); }
+.comp-datemodal__close {
+  width: 30px; height: 30px; border: none; background: transparent; border-radius: 8px;
+  color: var(--color-silver); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.comp-datemodal__close:hover { background: var(--color-mist); color: var(--fg-2); }
+.comp-datemodal__close svg { width: 18px; height: 18px; }
+/* the inner calendar uses .dp__head / .dp__weekdays / .dp__grid / .dp__day directly */
+.comp-datemodal .dp__head { margin-bottom: 12px; }

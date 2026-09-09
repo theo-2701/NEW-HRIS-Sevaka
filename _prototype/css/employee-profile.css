@@ -1,0 +1,224 @@
+/* ============================================================
+   SEVAKA HRIS — Employee Profile (ESS self-service surface)
+   FSD-001-PROFILE §1–§7 · UIC-001-PROFILE · TSD-001-PROFILE.
+   One page, left profile rail + 7 in-page sections (the "Home
+   Menu Accordion" A1 entry point). Built on colors_and_type.css
+   + app.css + employee-flows.css + form-standard.css. Tokens only.
+   ============================================================ */
+
+a { color: var(--fg-link); } a:hover { color: var(--fg-link-hover); }
+
+.ep-page { display: flex; flex-direction: column; gap: 16px; }
+
+/* ---- breadcrumb (static — home = dashboard) ---- */
+.crumbs { display: flex; align-items: center; gap: 8px; }
+.crumbs__item { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--font-body); color: var(--color-secondary-600); cursor: default; user-select: none; }
+.crumbs__item svg { width: 16px; height: 16px; }
+.crumbs__item--home { color: var(--color-secondary-500); }
+.crumbs__item--current { color: var(--color-secondary-800); font-weight: 700; }
+.crumbs__sep { color: var(--color-fog); font: 400 14px/1 var(--font-body); user-select: none; }
+
+/* ---- hero header ---- */
+.ep-hero { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 14px; box-shadow: var(--shadow-card-sm); padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.ep-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.ep-hero__title { font: 700 24px/1.15 var(--font-display); letter-spacing: -.02em; color: var(--fg-1); margin: 4px 0 0; }
+.ep-hero__sub { font: 500 13px/1.5 var(--font-body); color: var(--fg-3); margin-top: 4px; max-width: 680px; }
+
+/* endpoint hint chip (contract-driven build marker) */
+.ep-chip { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 999px; background: var(--color-secondary-950); color: #cfe8f6; font: 600 11px/1 var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace); letter-spacing: .01em; white-space: nowrap; }
+.ep-chip b { color: #fff; font-weight: 700; }
+.ep-chip svg { width: 13px; height: 13px; color: #7cc2e6; }
+
+/* actor / data-scope bar */
+.scope-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 10px; background: var(--color-primary-50); border: 1px solid var(--color-primary-200); }
+.scope-bar__lbl { font: 700 10px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--color-secondary-700); }
+.scope-pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 999px; background: #fff; border: 1px solid var(--color-primary-200); font: 600 11.5px/1 var(--font-body); color: var(--fg-2); cursor: pointer; transition: all var(--duration-2) var(--ease-standard); }
+.scope-pill svg { width: 14px; height: 14px; color: var(--color-secondary-500); }
+.scope-pill.is-on { background: var(--color-secondary-500); border-color: var(--color-secondary-500); color: #fff; }
+.scope-pill.is-on svg { color: #fff; }
+.scope-bar__hint { font: 500 11.5px/1.4 var(--font-body); color: var(--fg-3); margin-left: auto; }
+.scope-bar__hint code { font: 600 10.5px/1 var(--font-mono, ui-monospace, Menlo, monospace); color: var(--fg-4); background: var(--color-vapor); padding: 2px 5px; border-radius: 4px; }
+
+/* ---- single-column content (menu switching now lives in the global sidebar) ---- */
+.ep-layout { display: grid; grid-template-columns: 268px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 1080px) { .ep-layout { grid-template-columns: 1fr; } }
+.ep-single-col { display: block; }
+
+/* ---- outer frame: one container holding breadcrumb + identity + section (fewer dividers) ---- */
+.ep-frame { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 14px; box-shadow: var(--shadow-card-sm); padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ---- identity block: tinted panel inside the frame (no heavy card chrome) ---- */
+.ep-idcard { background: linear-gradient(180deg, var(--color-primary-50), #fff); border: 1px solid var(--color-primary-200); border-radius: 12px; overflow: hidden; }
+.ep-idcard__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; }
+.ep-idcard .scope-bar { border-radius: 0; border-width: 1px 0 0; background: transparent; }
+.ep-idhdr__status { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--color-success-50, #e7f9f1); color: var(--color-success-700, #0f9d63); font: 700 11px/1 var(--font-body); letter-spacing: .01em; }
+
+/* section content sits flush inside the frame — drop its own card chrome to avoid double borders/dividers */
+.ep-frame .ep-content { gap: 16px; }
+.ep-frame .ep-content .ep-card { border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+.ep-frame .ep-content .ep-card__head { padding: 0 0 12px; }
+.ep-frame .ep-content .ep-card__body { padding: 12px 0 0; }
+/* ---- identity header (moved out of the removed left rail) ---- */
+.ep-idhdr { display: flex; align-items: center; gap: 16px; }
+.ep-idhdr__ava { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font: 700 22px/1 var(--font-display); color: #fff; box-shadow: 0 0 0 3px #fff, 0 2px 6px rgba(2,99,149,.25); flex: none; }
+.ep-idhdr__name { font: 700 24px/1.15 var(--font-display); letter-spacing: -.02em; color: var(--fg-1); margin: 0; }
+.ep-idhdr__role { font: 500 13px/1.4 var(--font-body); color: var(--fg-3); margin-top: 2px; }
+.ep-idhdr__meta { display: flex; gap: 8px; margin-top: 8px; }
+.ep-idhdr__pill { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--color-primary-50); color: var(--color-secondary-700); font: 700 11px/1 var(--font-body); letter-spacing: .02em; }
+.ep-idhdr__pill i { width: 13px; height: 13px; }
+
+/* ---- left rail: person card + accordion nav ---- */
+.ep-rail { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 14px; box-shadow: var(--shadow-card-sm); overflow: hidden; position: sticky; top: 16px; }
+.ep-person { padding: 20px 18px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; background: linear-gradient(180deg, var(--color-primary-50), #fff); border-bottom: 1px solid var(--border-1); }
+.ep-person__ava { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; font: 700 26px/1 var(--font-display); color: #fff; box-shadow: 0 0 0 3px #fff, 0 2px 6px rgba(2,99,149,.25); }
+.ep-person__name { font: 700 17px/1.2 var(--font-display); letter-spacing: -.01em; color: var(--fg-1); }
+.ep-person__role { font: 500 12px/1.4 var(--font-body); color: var(--fg-3); }
+.ep-person__meta { display: flex; align-items: center; gap: 6px; font: 600 11.5px/1 var(--font-mono, ui-monospace, Menlo, monospace); color: var(--fg-3); }
+
+.ep-nav { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.ep-nav__group-lbl { font: 700 10px/1 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--fg-4); padding: 12px 12px 6px; }
+.ep-nav__item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: none; background: transparent; border-radius: 8px; font: 600 13px/1.2 var(--font-body); color: var(--fg-2); text-align: left; cursor: pointer; transition: background var(--duration-2) var(--ease-standard), color var(--duration-2) var(--ease-standard); }
+.ep-nav__item svg { width: 16px; height: 16px; color: var(--fg-4); flex-shrink: 0; transition: color var(--duration-2); }
+.ep-nav__item:hover { background: var(--color-mist); }
+.ep-nav__item.is-on { background: var(--color-secondary-500); color: #fff; }
+.ep-nav__item.is-on svg { color: #fff; }
+.ep-nav__item .ep-nav__count { margin-left: auto; font: 700 10.5px/1 var(--font-body); background: var(--color-vapor); color: var(--fg-3); border-radius: 999px; padding: 3px 7px; }
+.ep-nav__item.is-on .ep-nav__count { background: rgba(255,255,255,.24); color: #fff; }
+
+/* ---- content sections ---- */
+.ep-content { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ep-sec { display: none; flex-direction: column; gap: 16px; }
+.ep-sec.is-on { display: flex; animation: epfade 200ms var(--ease-standard); }
+@keyframes epfade { from { opacity: 0; } to { opacity: 1; } }
+
+.ep-card { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 14px; box-shadow: var(--shadow-card-sm); overflow: hidden; }
+.ep-card__head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border-1); }
+.ep-card__head svg.ep-card__ic { width: 18px; height: 18px; color: var(--color-secondary-500); flex-shrink: 0; }
+.ep-card__title { font: 700 16px/1.2 var(--font-display); color: var(--fg-1); margin: 0; }
+.ep-card__desc { font: 500 12px/1.45 var(--font-body); color: var(--fg-3); margin: 3px 0 0; }
+.ep-card__head .ep-card__actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.ep-card__body { padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* two detail cards side by side (HOT + COLD) */
+.ep-twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .ep-twocol { grid-template-columns: 1fr; } }
+.ep-block { border: 1px solid var(--border-1); border-radius: 12px; padding: 16px 18px; background: var(--bg-surface); }
+.ep-block--cold { background: var(--color-mist); }
+
+/* detail sub-block inside a card body */
+.ep-block__head { font: 700 11px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ep-block__head svg { width: 15px; height: 15px; color: var(--color-secondary-500); }
+.ep-block__head .ep-tablbl { font: 500 10.5px/1 var(--font-mono, ui-monospace, Menlo, monospace); color: var(--fg-4); text-transform: none; letter-spacing: 0; }
+
+/* key/value: profile detail uses wider label column */
+.ep-kv { grid-template-columns: 180px 1fr; }
+.ep-kv .kv__v .mono-val { font-family: var(--font-mono, ui-monospace, Menlo, monospace); letter-spacing: .03em; }
+.pii-hidden { color: var(--fg-4); font-style: italic; }
+
+/* reveal button (masked PII) */
+.ep-reveal { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--color-fog); background: #fff; font: 700 11px/1 var(--font-body); color: var(--color-secondary-700); cursor: pointer; transition: all var(--duration-2) var(--ease-standard); }
+.ep-reveal svg { width: 13px; height: 13px; }
+.ep-reveal:hover { border-color: var(--color-secondary-500); background: var(--color-primary-50); }
+
+/* single-field detail (formal education) */
+.ep-single { display: flex; align-items: center; gap: 16px; padding: 20px; border: 1px solid var(--border-1); border-radius: 12px; background: var(--color-mist); }
+.ep-single__ic { width: 48px; height: 48px; border-radius: 12px; background: var(--color-primary-100); display: grid; place-items: center; color: var(--color-secondary-600); flex-shrink: 0; }
+.ep-single__ic svg { width: 24px; height: 24px; }
+.ep-single__lbl { font: 600 11px/1 var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--fg-3); }
+.ep-single__val { font: 700 22px/1.15 var(--font-display); letter-spacing: -.01em; color: var(--fg-1); margin-top: 5px; }
+
+/* jenjang badge */
+.ep-jenjang { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 14px; border-radius: 999px; background: var(--color-secondary-500); color: #fff; font: 700 12px/1 var(--font-body); letter-spacing: .03em; }
+
+/* ---- list toolbar: search + relationship filter (compact, right-aligned) ---- */
+.ep-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.ep-toolbar--split { justify-content: space-between; }
+.ep-search { width: 240px; flex: none; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; background: var(--color-cloud); border: 1px solid var(--border-1); }
+.ep-search svg { width: 16px; height: 16px; color: var(--fg-4); flex-shrink: 0; }
+.ep-search input { flex: 1; min-width: 0; border: none; background: transparent; outline: none; font: 500 13px/1 var(--font-body); color: var(--fg-1); }
+.ep-search input::placeholder { color: var(--fg-4); }
+.ep-relfilter { width: 190px; flex: none; height: 36px; border: 1px solid var(--border-1); border-radius: 8px; background: var(--color-cloud); }
+.ep-relfilter .ctl__value { font: 500 13px/1 var(--font-body); color: var(--fg-1); }
+
+/* ---- grid table (reuses .dtable) — add scroll wrapper ---- */
+.ep-tablewrap { border: 1px solid var(--border-1); border-radius: 12px; overflow: hidden; background: var(--bg-surface); }
+.ep-tablewrap.dtable-wrap--scroll { overflow-x: auto; }
+.ep-tablewrap.dtable-wrap--act { overflow: auto hidden; }
+.ep-tablewrap .dtable td { white-space: nowrap; }
+.ep-tablewrap .dtable th { white-space: nowrap; }
+.ep-tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font: 700 10px/1 var(--font-body); letter-spacing: .04em; text-transform: uppercase; background: var(--color-vapor); color: var(--fg-2); }
+.ep-tag--ec { background: var(--color-error-100); color: var(--color-error-800); }
+.ep-tag--rel { background: var(--color-primary-200); color: var(--color-secondary-800); }
+.ep-cert { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1 var(--font-body); color: var(--color-secondary-700); }
+.ep-cert svg { width: 14px; height: 14px; }
+.ep-cert--none { color: var(--fg-4); }
+.ep-expired { color: var(--color-error-700); font-weight: 700; }
+
+/* empty state */
+.ep-empty { padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ep-empty__ic { width: 48px; height: 48px; border-radius: 12px; background: var(--color-primary-100); display: grid; place-items: center; color: var(--color-secondary-500); margin-bottom: 4px; }
+.ep-empty__ic svg { width: 24px; height: 24px; }
+.ep-empty__t { font: 700 14px/1.3 var(--font-display); color: var(--fg-1); }
+.ep-empty__s { font: 500 12.5px/1.5 var(--font-body); color: var(--fg-3); max-width: 380px; }
+
+/* ---- GAP banner (element without a backing column/contract) ---- */
+.gap-legend { display: flex; align-items: flex-start; gap: 9px; padding: 11px 14px; border-radius: 10px; background: var(--color-warning-50); border: 1px solid var(--color-warning-200); font: 500 11.5px/1.5 var(--font-body); color: var(--color-warning-950); }
+.gap-legend svg { width: 15px; height: 15px; color: var(--color-warning-700); flex-shrink: 0; margin-top: 1px; }
+.gap-tag { display: inline-flex; align-items: center; gap: 5px; height: 18px; padding: 0 7px; border-radius: 5px; background: var(--color-warning-500); color: #fff; font: 700 8.5px/1 var(--font-body); letter-spacing: .04em; text-transform: uppercase; }
+.gap-legend code { font: 600 10.5px/1 var(--font-mono, ui-monospace, Menlo, monospace); background: rgba(180,120,10,.12); padding: 2px 5px; border-radius: 4px; }
+
+/* closed / final decision variant — no longer a pending gap */
+.gap-legend--closed { background: var(--color-mist); border-color: var(--border-1); color: var(--fg-2); }
+.gap-legend--closed svg { color: var(--color-secondary-600); }
+.gap-legend--closed .gap-tag { background: var(--color-secondary-600); }
+.gap-legend--closed code { background: var(--color-vapor); }
+
+/* ---- form grid inside modals ---- */
+.ep-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ep-form .fld--wide { grid-column: 1 / -1; }
+.ep-form .fld { display: flex; flex-direction: column; }
+.ep-locked-note { display: inline-flex; align-items: center; gap: 5px; font: 600 10.5px/1 var(--font-body); color: var(--color-warning-800); }
+.ep-locked-note svg { width: 12px; height: 12px; }
+.fld.is-locked .ctl { background: var(--color-vapor); pointer-events: none; opacity: .72; }
+.fld__err { font: 600 11px/1.3 var(--font-body); color: var(--color-error-700); display: none; align-items: center; gap: 5px; margin-top: 4px; }
+.fld__err svg { width: 13px; height: 13px; }
+.fld.is-err .fld__err { display: flex; }
+.fld.is-err .ctl { border-color: var(--color-error-500); box-shadow: 0 0 0 4px rgba(239,68,68,.16); }
+
+/* month+year split field */
+.ep-monthyear { display: grid; grid-template-columns: 1fr 96px; gap: 8px; }
+
+/* toggle row (is_emergency_contact) */
+.ep-toggle { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--color-mist); border: 1px solid var(--border-1); }
+.ep-toggle__text { flex: 1; }
+.ep-toggle__t { font: 700 13px/1.2 var(--font-body); color: var(--fg-1); }
+.ep-toggle__d { font: 500 11.5px/1.4 var(--font-body); color: var(--fg-3); margin-top: 2px; }
+.ep-switch { position: relative; width: 42px; height: 24px; border-radius: 999px; background: var(--color-fog); border: none; cursor: pointer; flex-shrink: 0; transition: background var(--duration-2) var(--ease-standard); }
+.ep-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform var(--duration-2) var(--ease-standard); }
+.ep-switch.is-on { background: var(--color-secondary-500); }
+.ep-switch.is-on::after { transform: translateX(18px); }
+
+/* endpoint chip variant on section head + small mono code */
+.ep-code { font: 600 11px/1 var(--font-mono, ui-monospace, Menlo, monospace); color: var(--fg-3); }
+
+/* status pill row for detail (marital / nationality) */
+.ep-pillrow { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* =============================================================================
+   Custom-select primitives (ported compact — page doesn't load add-employee.css).
+   form-standard.css owns the 36px box / fill / border / focus; these add the
+   inline flex layout, chevron, and dropdown popover.
+   ========================================================================== */
+.ctl { position: relative; display: flex; align-items: center; }
+.ctl > input, .ctl > textarea { flex: 1; min-width: 0; height: 100%; border: none; background: transparent; outline: none; }
+.ctl--area { align-items: stretch; }
+.ctl--area > textarea { flex: 1; min-height: 76px; resize: vertical; }
+.ctl--select { cursor: pointer; }
+.ctl__value { flex: 1; padding: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ctl__chev { width: 18px; height: 18px; margin-right: 10px; color: var(--fg-3); flex-shrink: 0; transition: transform var(--duration-2) var(--ease-standard); }
+.ctl--select.is-open .ctl__chev { transform: rotate(180deg); }
+.dropdown { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0; background: #fff; border: 1px solid var(--border-1); border-radius: 10px; box-shadow: var(--shadow-overlay); padding: 6px; max-height: 240px; overflow-y: auto; display: none; }
+.ctl--select.is-open .dropdown { display: block; }
+.dropdown__opt { padding: 9px 12px; border-radius: 6px; font: 500 13px/1.2 var(--font-body); color: var(--fg-1); cursor: pointer; }
+.dropdown__opt:hover { background: var(--color-mist); }
+.dropdown__opt.is-sel { background: var(--color-secondary-100); color: var(--color-secondary-700); font-weight: 600; }

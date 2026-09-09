@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Integration Contact</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/company.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.ic-card{background:var(--bg-surface);border:1px solid var(--border-1);border-radius:10px;box-shadow:var(--shadow-card-sm);padding:24px;max-width:720px;display:flex;flex-direction:column;gap:16px}.ic-foot{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid var(--border-1);padding-top:16px;margin-top:4px}.ic-meta{display:flex;gap:24px;flex-wrap:wrap;font:500 12px/1.5 var(--font-body);color:var(--fg-3);border-top:1px solid var(--border-1);padding-top:14px}.ic-meta strong{display:block;font:700 10px/1.6 var(--font-body);letter-spacing:.02em;text-transform:uppercase;color:var(--fg-4)}a{color:var(--fg-link);text-decoration:none}a:hover{text-decoration:underline}</style>
+</head>
+<body data-screen-label="Integration Contact">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Settings</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Company</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Integration Contact</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">Integration Contact</h1>
+                <p class="flow-sub">The external person the system writes to for this company — used by notification service for integration alerts. One contact per company; both fields are optional.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="note note--info" style="margin-bottom:16px"><i data-lucide="info"></i><span>Singleton record — there is no list, no create and no delete. Saving overwrites the single row; clearing both fields empties it. When empty, integration alerts for this company are skipped. Read and write are both limited to <strong>Super Admin</strong> and <strong>System Admin</strong>.</span></div>
+            <form class="ic-card" id="icForm" autocomplete="off">
+              <div class="fld"><label class="fld__label" for="icName">Contact name <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label><div class="ctl"><input type="text" id="icName" maxlength="200" placeholder="e.g. Rina Handayani"></div></div>
+              <div class="fld"><label class="fld__label" for="icEmail">Contact email <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label><div class="ctl"><input type="text" id="icEmail" maxlength="255" placeholder="e.g. integrasi@perusahaan.co.id"></div><span class="fld__hint" id="icEmailHint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Where integration and payroll alarm notices are sent.</span></div>
+              <div class="ic-meta">
+                <div><strong>Status</strong><span id="icState">Not set</span></div>
+                <div><strong>Last updated</strong><span id="icWhen">—</span></div>
+                <div><strong>Updated by</strong><span id="icWho">—</span></div>
+              </div>
+              <div class="ic-foot"><button class="btn btn--secondary" type="button" id="icClear">Clear contact</button><button class="btn btn--primary" type="button" id="icSave">Save contact</button></div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="ovl" id="icClearConfirm"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:440px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Clear integration contact</h3><p class="ovl__desc">Empties both fields on the single record. The record itself is kept — it is never deleted.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <p class="co-muted" style="padding:4px 0">While the contact is empty, integration alerts for this company are skipped. You can fill it again at any time.</p>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="icClearGo">Clear contact</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company', activeItem: 'Integration Contact' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script>
+(function(){
+  var S = { contact_name: 'Rina Handayani', contact_email: 'integrasi@dikahadir.co.id', updated_at: '09 Aug 2026, 14:22', updated_by: 'Dwi Prakoso (System Admin)' };
+  var name = document.getElementById('icName'), email = document.getElementById('icEmail');
+  var state = document.getElementById('icState'), when = document.getElementById('icWhen'), who = document.getElementById('icWho');
+  var hint = document.getElementById('icEmailHint');
+  function render(){
+    name.value = S.contact_name || ''; email.value = S.contact_email || '';
+    var filled = !!(S.contact_name || S.contact_email);
+    state.textContent = filled ? 'Set' : 'Not set — alerts skipped';
+    when.textContent = filled ? S.updated_at : '—';
+    who.textContent = filled ? S.updated_by : '—';
+  }
+  function stamp(){ S.updated_at = '12 Aug 2026, 09:05'; S.updated_by = 'Dwi Prakoso (System Admin)'; }
+  function valid(v){ return !v || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v); }
+  document.getElementById('icSave').addEventListener('click', function(){
+    var e = email.value.trim();
+    if (!valid(e)) { email.closest('.ctl').classList.add('is-err'); hint.textContent = 'Enter a valid email address (422 from the server otherwise).'; hint.style.color = 'var(--color-error-600)'; return; }
+    email.closest('.ctl').classList.remove('is-err'); hint.textContent = 'Where integration and payroll alarm notices are sent.'; hint.style.color = 'var(--fg-3)';
+    S.contact_name = name.value.trim(); S.contact_email = e; stamp(); render();
+    var FF=window.F||window.Flow; if (FF && FF.toast) FF.toast('Integration contact saved.');
+  });
+  document.getElementById('icClear').addEventListener('click', function(){ var FO=window.F||window.Flow; FO&&FO.openModal?FO.openModal('icClearConfirm'):document.getElementById('icClearConfirm').classList.add('is-on'); });
+  document.getElementById('icClearGo').addEventListener('click', function(){
+    S.contact_name = ''; S.contact_email = ''; stamp(); S.updated_at = '12 Aug 2026, 09:05'; render();
+    var FC=window.F||window.Flow; FC&&FC.closeModal?FC.closeModal('icClearConfirm'):document.getElementById('icClearConfirm').classList.remove('is-on');
+    var FF2=window.F||window.Flow; if (FF2 && FF2.toast) FF2.toast('Integration contact cleared.');
+  });
+  render();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

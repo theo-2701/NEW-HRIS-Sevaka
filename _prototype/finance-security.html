@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Finance Security</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/daterange.css?v=3">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/finance.css?v=1">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Finance Security">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Finance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Finance Security</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Finance Security</h1>
+<p class="flow-sub">Three cross-module controls that belong to no single transaction module: dispute holds over any request type, the manual export trail, and the medical-attachment access trail.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newHoldBtn">Place dispute hold</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="note note--warn"><i data-lucide="triangle-alert"></i><span><strong>Documented gap — PROB-FRONTEND-014.</strong> This menu is fully backed by the technical contract, but has not yet been placed in the master navigation map of the architecture document. Recorded as-is; the position in the sidebar is provisional.</span></div>
+
+<div class="tabnav" id="kmTabs" style="margin-top:16px">
+<button class="tabnav__tab is-on" type="button" data-tab="holds">Dispute Hold<span class="tabnav__count" id="cntHold">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="export">Export Log<span class="tabnav__count" id="cntExp">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="medical">Medical Access Log<span class="tabnav__count" id="cntMed">0</span></button>
+</div>
+
+<!-- ===== KM-A2 / KM-B2 ===== -->
+<div class="tabpanel is-on" data-tabpanel="holds">
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltTarget"><span class="ctl__value">All target types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All target types</div><div class="dropdown__opt" data-val="BENEFIT_CLAIM">BENEFIT_CLAIM</div><div class="dropdown__opt" data-val="LOAN">LOAN</div><div class="dropdown__opt" data-val="CASH_ADVANCE">CASH_ADVANCE</div></div>
+</div>
+<div class="fin-tbar__tg"><button type="button" class="fin-switch is-on" id="fltActive" aria-label="Active holds only"></button><span>Active holds only</span></div>
+<div class="fin-tbar__sp"></div>
+<button class="tbar-info" type="button" id="btnAsym" title="Place versus release — why only releasing needs a reason" aria-label="Place versus release reference"><i data-lucide="info"></i></button>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll">
+<table class="dtable">
+<thead><tr><th>Target Type</th><th>Request No.</th><th>Status</th><th>Placed By</th><th>Placed At</th><th>Released By</th><th></th></tr></thead>
+<tbody id="holdBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgHold"></div>
+<p class="fld__hint" style="margin-top:10px">The default working list is <code>is_active=true</code> — released rows stay in the database as history and reappear when the toggle is switched off. A hold blocks the payable: marking it paid is refused with <strong>422 FIN_DISPUTE_HOLD_ACTIVE</strong>. A second active hold on the same target is refused with <strong>409</strong>.</p>
+
+</div>
+
+<!-- ===== KM-S1 ===== -->
+<div class="tabpanel" data-tabpanel="export">
+<div class="fin-tbar">
+<div class="rng fin-tbar__rng" id="fltExpRange" data-placeholder="Download date range">
+<button type="button" class="rng__ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="rng__val is-empty">Download date range</span></button>
+</div>
+<div class="fin-tbar__sp"></div>
+<button class="btn btn--secondary" id="newExportBtn">New export</button>
+</div>
+<div class="dtable-wrap">
+<table class="dtable">
+<thead><tr><th>Scope</th><th>Filter Criteria</th><th class="ta-r">Rows</th><th>Downloaded At</th><th>By</th></tr></thead>
+<tbody id="expBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgExp"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="lock"></i><span>Finance officer and super admin only — <strong>not</strong> the HR manager, because export is a finance CRUD-class capability. The file is streamed straight back as an attachment, never through the document service, and the trail row is written inside the same transaction that builds the file. Filter criteria may never contain a key that filters on the content of a medical attachment.</span></div>
+</div>
+
+<!-- ===== KM-S2 ===== -->
+<div class="tabpanel" data-tabpanel="medical">
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltMedEmp"><span class="ctl__value">All employees</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltMedEmpDd"></div>
+</div>
+<div class="rng fin-tbar__rng" id="fltMedRange" data-placeholder="Access date range">
+<button type="button" class="rng__ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="rng__val is-empty">Access date range</span></button>
+</div>
+<div class="fin-tbar__sp"></div>
+<button class="tbar-info" type="button" id="btnSod" title="Separation of duties — the opener of a document is not its auditor" aria-label="Separation of duties reference"><i data-lucide="info"></i></button>
+</div>
+<div class="dtable-wrap">
+<table class="dtable">
+<thead><tr><th>Claim No.</th><th>Subject Employee</th><th>Claim Item</th><th>Document</th><th>Accessed At</th><th>Opened By</th></tr></thead>
+<tbody id="medBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgMed"></div>
+
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ KM-A3 — place hold ============ -->
+<div class="ovl" id="holdForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Place dispute hold</h3><p class="ovl__desc">Pick the request under dispute. The target is validated to exist inside your own company.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="holdFormBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Target type <span class="req">*</span></label>
+<div class="ctl ctl--select" id="hfType"><span class="ctl__value" style="color:var(--fg-4)">Select target type</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="BENEFIT_CLAIM">BENEFIT_CLAIM</div><div class="dropdown__opt" data-val="LOAN">LOAN</div><div class="dropdown__opt" data-val="CASH_ADVANCE">CASH_ADVANCE</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Target request <span class="req">*</span></label>
+<div class="ctl ctl--select" id="hfTarget"><span class="ctl__value" style="color:var(--fg-4)">Select target type first</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="hfTargetDd"></div>
+</div>
+<span class="fld__hint">Displayed by request number; the payload carries the row id.</span>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span><strong>There is no reason field here — on purpose.</strong> Placing a hold does not demand a cause; releasing one does. The release fields stay null on a new row, enforced by a database check.</span></div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="hfSave" disabled>Place hold</button>
+</div>
+</div>
+</div>
+
+<!-- ============ KM-B3 — release hold ============ -->
+<div class="ovl" id="releaseForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Release dispute hold</h3><p class="ovl__desc">The release note is mandatory and is stored with your identity and the release time.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="rlKv"></div>
+<div class="fld">
+<label class="fld__label">Release reason <span class="req">*</span></label>
+<div class="ctl ctl--area"><textarea id="rlNote" rows="3" maxlength="2000" placeholder="Clarified with the employee — the original receipt was found"></textarea></div>
+<span class="fld__hint">One free-text field — not a coded reason plus note. Empty is refused by validation; sending <code>is_active: true</code> here is refused with <strong>422</strong>.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="rlConfirm" disabled>Release hold</button>
+</div>
+</div>
+</div>
+
+<!-- ============ New export ============ -->
+<div class="ovl" id="exportForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New export</h3><p class="ovl__desc">The file downloads directly; a trail row is written in the same transaction.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Scope <span class="req">*</span></label>
+<div class="ctl ctl--select" id="exScope"><span class="ctl__value" style="color:var(--fg-4)">Select scope</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="BENEFIT_CLAIM">BENEFIT_CLAIM</div><div class="dropdown__opt" data-val="LOAN">LOAN</div><div class="dropdown__opt" data-val="CASH_ADVANCE">CASH_ADVANCE</div><div class="dropdown__opt" data-val="DISBURSEMENT">DISBURSEMENT</div></div>
+</div>
+<span class="fld__hint">An unknown scope is refused with <strong>422 FIN_EXPORT_SCOPE_INVALID</strong>. This request carries an idempotency key, so a repeated submit cannot produce a second download row.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Start date <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="exStart" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">End date <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="exEnd" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="exRun" disabled>Download export</button>
+</div>
+</div>
+</div>
+
+<!-- ============ reference — place vs release asymmetry ============ -->
+<div class="ovl" id="asymModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Place versus release — a deliberate asymmetry</h3><p class="ovl__desc">Why placing a dispute hold asks for no reason while releasing one always does.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="ovl__body">
+<div class="ref">
+<table>
+<thead><tr><th>Aspect</th><th>Place</th><th>Release</th></tr></thead>
+<tbody>
+<tr><td>Reason required</td><td>No — there is no reason field in the form or the payload</td><td>Yes — a single free-text release note, empty is refused</td></tr>
+<tr><td>Who may act</td><td>Finance officer · HR manager · super admin</td><td>Exactly the same, including across roles — the releaser need not be the person who placed it</td></tr>
+<tr><td>Notification</td><td>None required</td><td>When a finance officer releases, the HR manager is <em>informed</em> — not asked to approve</td></tr>
+<tr><td>Why</td><td>Placing a hold is protective and low risk; demanding a reason would only slow the response to a fresh dispute</td><td>Releasing reopens the row to the normal retention sweep — a consequential decision that must leave an auditable reason</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ reference — separation of duties ============ -->
+<div class="ovl" id="sodModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Separation of duties — opener is not auditor</h3><p class="ovl__desc">Two roles deliberately split over one class of data: the health attachment of a receipt.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="ovl__body">
+<div class="ref">
+<table>
+<thead><tr><th>Role</th><th>Capability</th><th>Explicit prohibition</th></tr></thead>
+<tbody>
+<tr><td><strong>Opener</strong> — health data officer (also HR manager)</td><td>Opens the <em>content</em> of one receipt attachment. Every successful open writes a trail row <em>before</em> the result is returned; a refused attempt writes nothing.</td><td>Given no endpoint to review the trail — the role opens, it does not audit.</td></tr>
+<tr><td><strong>Auditor</strong> — HR manager (also super admin)</td><td>Reviews who has opened what, on this screen.</td><td>Cannot open attachment content from here; this board shows metadata only, never the document.</td></tr>
+</tbody>
+</table>
+</div>
+<p class="fld__hint" style="margin-top:12px">The finance officer is refused on both counts (403) even though they own the disbursement of the very same claim. The HR manager intersects both roles — this is functional separation, not a full maker-checker split.</p>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-security.js"></script>
+</body>
+</html>

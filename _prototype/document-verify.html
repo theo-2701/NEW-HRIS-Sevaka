@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA — Letter Verification</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Public Letter Verification" data-doc-page="verify">
+<div class="vf-page">
+  <div class="vf-brand"><span class="vf-brand__m">S</span><span class="vf-brand__t">SEVAKA</span></div>
+
+  <div class="vf-card" id="vfForm">
+    <div>
+      <h1>Letter verification</h1>
+      <p class="vf-sub">Confirm that a letter issued by <strong>PTDIKA</strong> is genuine. This page answers <em>match</em> or <em>no match</em> — nothing else. No sign-in, no token, no account.</p>
+    </div>
+    <div class="vf-tabs" id="vfMode">
+      <button type="button" class="vf-tab is-on" data-val="code">QR code</button>
+      <button type="button" class="vf-tab" data-val="no">Letter number</button>
+    </div>
+
+    <div id="vfCodePane" style="display:flex;flex-direction:column;gap:14px">
+      <div class="fld"><label class="fld__label">Verification code</label><div class="ctl"><input type="text" id="vfCode" value="K7M2-P4QX-9WTB" readonly></div>
+        <p class="fld__hint">Carried from the QR link. The form itself is the visual shape of one <code>GET /verify/{verification-code}</code> reply — which looks <strong>identical</strong> whether the code exists or never existed.</p></div>
+    </div>
+
+    <div id="vfNoPane" style="display:none;flex-direction:column;gap:14px">
+      <div class="fld"><label class="fld__label">Letter number <span class="req">*</span></label><div class="ctl"><input type="text" id="vfNo" placeholder="e.g. 002/HRD/VIII/2026"></div>
+        <p class="fld__hint">2–60 characters, sent in the body because it contains slashes. Printed separately from the QR code — that separation is the whole point.</p></div>
+    </div>
+
+    <div class="fld"><label class="fld__label">Name on the letter <span class="req">*</span></label><div class="ctl"><input type="text" id="vfName" placeholder="Full name exactly as printed"></div>
+      <p class="fld__hint">2–100 characters. <strong>Never stored</strong> — not on a match, not on a miss.</p></div>
+
+    <button class="btn btn--primary" id="vfCheck" style="height:44px">Verify</button>
+
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="shield"></i>One button, two outcomes — decided by the server</div>
+      <p>Five different causes land on the exact same “no match” answer: the code never existed · it belongs to another company · the letter is not issued yet · the number belongs to an <code>EDARAN</code> letter · the name does not match. Colouring them differently is forbidden. There is also no <code>404</code> here — answering “not found” would confirm that a code exists.</p>
+    </div>
+  </div>
+
+  <div class="vf-card" id="vfResult" style="display:none"></div>
+
+  <p class="vf-foot">Type this page’s address yourself, on the official domain — a QR code is only as strong as the page it points to (<code>DOC-60</code>). Rate limits apply per code and per company; the response never reveals whether a key exists.</p>
+</div>
+
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-verify.js"></script>
+</body>
+</html>

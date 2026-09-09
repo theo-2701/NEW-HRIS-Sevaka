@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Group Structure</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/payroll-history.css">
+  <link rel="stylesheet" href="css/company.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Group Structure">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Settings</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Company</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Group Structure</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Group Structure</h1>
+              <p class="flow-sub">Define the organisation's approval chain. A position's parent is <strong>another position</strong>, not an employee — an employee only fills a slot, and the slot stays when they leave.</p>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="gsTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="group">Group<span class="tabnav__count" id="gCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="level">Level<span class="tabnav__count" id="lCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="position">Position<span class="tabnav__count" id="pCount">0</span></button>
+          </div>
+
+          <!-- ===== GROUP ===== -->
+          <div class="tabpanel is-on" data-tabpanel="group">
+            <div class="co-tbar">
+              <div class="co-tbar__left"><button class="btn btn--primary" id="gAdd">Add group</button></div>
+              <div class="co-tbar__right"><div class="co-search"><i data-lucide="search"></i><input type="text" id="gSearch" placeholder="Search group name"></div></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Group Name</th><th class="ta-c">Default</th><th>Final Approver</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="gBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing"><span id="gShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize"><select id="gPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="gPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="gPageBox">1</span><span class="ph-pager__from" id="gPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="gNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+            <div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>The <strong>Default Group</strong> is a holding area — max one per tenant. Moving a position out of the Default Group is a <strong>hard-delete</strong> of the old position (logged as activity <code>D</code>).</span></div>
+          </div>
+
+          <!-- ===== LEVEL ===== -->
+          <div class="tabpanel" data-tabpanel="level">
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="lGroup" style="width:240px;height:40px"><span class="ctl__value">Struktur Utama</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">Struktur Utama</div><div class="dropdown__opt">Struktur Operasional</div></div>
+                </div>
+                <button class="btn btn--primary" id="lAdd">Add level</button>
+              </div>
+              <div class="co-tbar__right"><div class="co-search"><i data-lucide="search"></i><input type="text" id="lSearch" placeholder="Search level name"></div></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th class="ta-c">Level Order</th><th>Level Name</th><th class="ta-r"></th></tr></thead>
+              <tbody id="lBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing"><span id="lShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize"><select id="lPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="lPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="lPageBox">1</span><span class="ph-pager__from" id="lPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="lNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== POSITION ===== -->
+          <div class="tabpanel" data-tabpanel="position">
+            <div class="note note--warn" style="margin-bottom:14px"><i data-lucide="triangle-alert"></i><span>In the tree below every node is a <strong>position</strong>. The parent link is the <strong>approval chain (position → position)</strong> — never an employee. A slot with no employee is <strong>vacant</strong>.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="pGroup" style="width:240px;height:40px"><span class="ctl__value">Group: Struktur Utama</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">Group: Struktur Utama</div><div class="dropdown__opt">Group: Struktur Operasional</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><button class="btn btn--primary" id="pAdd">Add position</button></div>
+            </div>
+            <div class="co-tree" id="pTree"></div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== GROUP EDIT ===== -->
+<div class="ovl" id="gEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="gTitle">Add group</h3><p class="ovl__desc">Maps to <code>cnf_group_struct_main</code>. Only one group may be the tenant default.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="gForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Group name <span class="req">*</span></label><div class="ctl"><input type="text" id="gName" maxlength="60" placeholder="e.g. Struktur Utama"></div></div>
+    <div class="fld"><label class="fld__label">Final approver</label>
+      <div class="ctl ctl--select" id="gApprover"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt">Dirut — Bpk. Wibowo (D001)</div><div class="dropdown__opt">Wadirut — Ibu Sari (D002)</div></div>
+      </div>
+    </div>
+    <label class="co-switch"><input type="checkbox" id="gDefault"><span class="co-switch__track"></span><span class="co-switch__label">Set as default group (holding area)</span></label>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="gSave">Save group</button></div>
+</div></div>
+
+<!-- ===== LEVEL EDIT ===== -->
+<div class="ovl" id="lEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="lTitle">Add level</h3><p class="ovl__desc">Maps to <code>cnf_group_struct_level</code>, scoped to the selected group.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="lForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Level order <span class="req">*</span></label><div class="ctl"><input type="number" id="lOrder" min="1" value="1"></div><span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">1 = highest.</span></div>
+      <div class="fld"><label class="fld__label">Level name <span class="req">*</span></label><div class="ctl"><input type="text" id="lName" maxlength="60" placeholder="e.g. Divisi"></div></div>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="lSave">Save level</button></div>
+</div></div>
+
+<!-- ===== POSITION EDIT ===== -->
+<div class="ovl" id="pEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="pTitle">Add position</h3><p class="ovl__desc">Maps to <code>cnf_group_struct_pos</code>. The <strong>parent is a position</strong>, not an employee.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="pForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Position name <span class="req">*</span></label><div class="ctl"><input type="text" id="pName" maxlength="60" placeholder="e.g. Manager Keuangan"></div><span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Structural job title (not a payroll grade).</span></div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Level <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="pLevel"><span class="ctl__value" style="color:var(--fg-4)">Select level</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">Direksi</div><div class="dropdown__opt">Divisi</div><div class="dropdown__opt">Departemen</div></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Parent position <span style="font-weight:500;color:var(--fg-4)">(approval chain)</span></label>
+        <div class="ctl ctl--select" id="pParent"><span class="ctl__value" style="color:var(--fg-4)">Select parent position</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">Direktur Utama</div><div class="dropdown__opt">Direktur Keuangan</div><div class="dropdown__opt">Direktur Operasional</div></div>
+        </div>
+        <span class="fld__hint" style="font:500 12px/1.4 var(--font-body);color:var(--color-error-600)">Parent is a POSITION, not an employee — parent level_order must be ≤ child.</span>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">Employee <span style="font-weight:500;color:var(--fg-4)">(optional — leave empty for vacant)</span></label>
+      <div class="lov" id="pEmp" data-value="">
+        <div class="lov__trigger"><span class="lov__val">Vacant (no employee)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="lov__panel"><div class="lov__search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="Search here"></div><div class="lov__list"></div></div>
+      </div>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">On assign, the backend snapshots employee_info + supervisor_info. One employee fills at most one position per group.</span>
+    </div>
+    <div class="fld"><label class="fld__label">Status</label>
+      <label class="co-switch"><input type="checkbox" id="pActive" checked><span class="co-switch__track"></span><span class="co-switch__label">Active</span></label>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="pSave">Save position</button></div>
+</div></div>
+
+<!-- ===== ASSIGN EMPLOYEE ===== -->
+<div class="ovl" id="aEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Assign employee</h3><p class="ovl__desc" id="aDesc">Fill a vacant slot. The employee & supervisor snapshots are frozen server-side (activity <code>U</code>).</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="aForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Employee <span class="req">*</span></label>
+      <div class="lov" id="aEmp" data-value="">
+        <div class="lov__trigger is-placeholder"><span class="lov__val">Select employee</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+        <div class="lov__panel"><div class="lov__search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="Search here"></div><div class="lov__list"></div></div>
+      </div>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="aSave">Assign</button></div>
+</div></div>
+
+<!-- ===== POSITION HISTORY ===== -->
+<div class="ovl" id="hView"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Position history</h3><p class="ovl__desc">Append-only log from <code>log_group_struct_pos</code> (activity I / U / D).</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="dtable-wrap"><table class="dtable">
+    <thead><tr><th class="ta-c">Activity</th><th>Detail</th><th>When</th></tr></thead>
+    <tbody id="hBody"></tbody>
+  </table></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company', activeItem: 'Group Structure' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/company-group-structure.js"></script>
+</body>
+</html>

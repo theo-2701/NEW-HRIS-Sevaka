@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Document Templates</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-modals.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Document Templates" data-doc-page="templates">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Company Management</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Files</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Document Templates</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">Document Templates</h1>
+                <p class="flow-sub">The letter-draft library. <strong>ROLE_HR_MANAGER</strong> writes and maintains drafts; <strong>ROLE_SUPER_ADMIN</strong> is the second pair of hands that approves a draft before any letter can be issued from it. ROLE_HR_STAFF has zero access here — it only <em>picks</em> templates, through <code>A15</code>.</p>
+              </div>
+              <div class="flow-head__actions"><button class="btn btn--primary" id="tplNew">New template</button></div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Template Name</th><th>Target</th><th>Signer Scope</th><th>Self-Requestable</th><th>Requires Approval</th><th>Active Version</th><th class="ta-r"></th></tr></thead>
+              <tbody id="tplBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="tplFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="git-branch"></i>Draft lifecycle — <code>template_version_state</code></div>
+              <p><code>MENUNGGU_PERSETUJUAN</code> → <code>DISETUJUI</code> or <code>DITOLAK</code>. Approval fields stay <code>NULL</code> until a decision lands. The <code>active_version_id</code> pointer moves <strong>only</strong> when the approved draft is the newest one; older approved drafts stay approved forever, so an old letter can still be re-born from them. <code>DITOLAK</code> is terminal — the only way forward is writing a new version from scratch.</p>
+            </div>
+            <div class="doc-note" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="scan-eye"></i>Honest scope limits</div>
+              <p>Deactivated templates cannot be found through this grid (<code>A8a</code> lists <code>is_active=true</code> only) — they are readable through <code>A8e</code> if you hold the id. There is <strong>no “reactivate” address</strong>; the absence is deliberate. A rejection reason (<code>reject_reason</code>) is written to the event log and no address returns it (<code>PROB-SERVICE-433</code>). The permission matrix in <code>STD</code> still has no <code>Document</code> column (<code>PROB-SERVICE-342</code>).</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== S2 · DETAIL + DRAFT HISTORY (A8e) ===== -->
+<div class="ovl" id="tplDetail"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="tdTitle">Template detail</h3><p class="ovl__desc"><code>GET /document-templates/{template-id}</code> — every draft is served with its <strong>full body</strong>, because the second pair of hands judges by comparing.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="kv" id="tdKv"></div>
+    <div id="tdVersions" style="display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button><button class="btn btn--primary" id="tdNewVersion">New draft version</button></div>
+</div></div>
+
+<!-- ===== S3 · CREATE TEMPLATE (A8b) ===== -->
+<div class="ovl" id="tplCreate"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title">New template</h3><p class="ovl__desc"><code>POST /document-templates</code> — ROLE_HR_MANAGER only. Version 1 is born <code>MENUNGGU_PERSETUJUAN</code> and <code>active_version_id</code> stays <code>NULL</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Template name <span class="req">*</span></label><div class="ctl"><input type="text" id="tcName" maxlength="120" placeholder="e.g. Surat Keputusan Perpanjangan Kontrak"></div></div>
+      <div class="fld"><label class="fld__label">Category <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="tcCat"><span class="ctl__value" style="color:var(--fg-4)">Select category</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="tcCatDD"></div>
+        </div>
+        <p class="fld__hint"><code>PICKER → A6a</code> — the cross-page category list, not <code>A16</code>: this form is inhabited by ROLE_HR_MANAGER only.</p>
+      </div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Letter target <span class="req">*</span></label>
+        <div class="radio-row" id="tcTarget"><label class="radio"><input type="radio" name="tcTarget" value="PERORANGAN" checked><span class="radio__dot"></span>PERORANGAN</label><label class="radio"><input type="radio" name="tcTarget" value="EDARAN"><span class="radio__dot"></span>EDARAN</label></div>
+        <p class="fld__hint">Attached to the template, never chosen by the issuer.</p>
+      </div>
+      <div class="fld"><label class="fld__label">Signer scope <span class="req">*</span></label>
+        <div class="radio-row" id="tcScope"><label class="radio"><input type="radio" name="tcScope" value="KANTOR_PUSAT" checked><span class="radio__dot"></span>KANTOR_PUSAT</label><label class="radio"><input type="radio" name="tcScope" value="CABANG"><span class="radio__dot"></span>CABANG</label></div>
+      </div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Self-requestable</label><label class="co-switch"><input type="checkbox" id="tcSelf"><span class="co-switch__track"></span><span class="co-switch__label">Employees may request it themselves</span></label></div>
+      <div class="fld"><label class="fld__label">Requires approval</label><label class="co-switch"><input type="checkbox" id="tcReq"><span class="co-switch__track"></span><span class="co-switch__label">Issuance passes a gate</span></label></div>
+    </div>
+    <div class="fld"><label class="fld__label">Draft body <span class="req">*</span></label><div class="ctl ctl--area"><textarea id="tcBody" rows="8" placeholder="SURAT ...&#10;Nomor: {{letter_no}}&#10;Nama: %%nama_karyawan%%"></textarea></div>
+      <p class="fld__hint">Max 100,000 characters and max 200 <code>%%marker%%</code> placeholders. Template-engine expressions are rejected (<code>422</code>).</p></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="slash"></i>Five fields deliberately not accepted</div>
+      <p><code>category_origin</code> · <code>confidentiality_class</code> · <code>is_active</code> · <code>id</code> · <code>has_pending_change</code> — sending any of them returns a named-field <code>422</code>, never a silent ignore. Also server-owned: <code>company_code</code>, <code>active_version_id</code>, <code>version_no</code> (always 1).</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="tcSave">Save template</button></div>
+</div></div>
+
+<!-- ===== S4 · NEW DRAFT VERSION (A8c) ===== -->
+<div class="ovl" id="tplVersion"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:640px">
+  <div class="ovl__head"><div><h3 class="ovl__title">New draft version</h3><p class="ovl__desc"><code>POST /document-templates/{template-id}/versions</code> — the whole body, not a patch.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="doc-note" id="tvInfo"></div>
+    <div class="fld"><label class="fld__label">Draft body <span class="req">*</span></label><div class="ctl ctl--area"><textarea id="tvBody" rows="10"></textarea></div></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="lock"></i>The active-version pointer is not touched</div>
+      <p>Issuance running right now keeps using the old approved draft, undisturbed, until this one is approved. Two simultaneous edits collide with <code>409</code>.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="tvSubmit">Submit draft</button></div>
+</div></div>
+
+<!-- ===== S5 · SECOND-HANDS DECISION (A9) ===== -->
+<div class="ovl" id="tplApprove"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="taTitle">Decide on draft</h3><p class="ovl__desc"><code>POST .../versions/{version-no}/approve</code> — ROLE_SUPER_ADMIN only. “Reviewer ≠ author” is enforced by the server (<code>422</code>).</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="doc-hands" id="taHands"></div>
+    <div class="doc-body" id="taBody"></div>
+    <div class="fld"><label class="fld__label">Decision <span class="req">*</span></label>
+      <div class="radio-row" id="taDecision"><label class="radio"><input type="radio" name="taDecision" value="DISETUJUI" checked><span class="radio__dot"></span>DISETUJUI</label><label class="radio"><input type="radio" name="taDecision" value="DITOLAK"><span class="radio__dot"></span>DITOLAK</label></div>
+    </div>
+    <div class="fld" id="taReasonFld" style="display:none"><label class="fld__label">Rejection reason <span class="req">*</span></label><div class="ctl ctl--area"><textarea id="taReason" rows="3" placeholder="Required when DITOLAK, forbidden when DISETUJUI"></textarea></div>
+      <p class="fld__hint">Stored in the event log only — no address ever returns it (<code>PROB-SERVICE-433</code>).</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button><button class="btn btn--primary" id="taSubmit">Submit decision</button></div>
+</div></div>
+
+<!-- ===== S6 · DEACTIVATE (A8d) ===== -->
+<div class="ovl" id="tplOff"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:480px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Deactivate template</h3><p class="ovl__desc"><code>POST .../deactivate</code> — no second pair of hands, no request body, idempotent. There is no way back: no “reactivate” address exists.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <p class="co-muted" id="toMsg" style="padding:4px 0"></p>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="toDo">Deactivate</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true, activeGroup:'Company Management', activeItem:'Document Templates' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-templates.js"></script>
+</body>
+</html>

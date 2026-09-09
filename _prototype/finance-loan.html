@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Loan</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=5">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Loan">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Finance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Loan</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Loan</h1>
+<p class="flow-sub">Four screens serve four roles: the employee submits principal + tenor, the direct manager forwards a decision, the employee acknowledges the schedule sent by the funding party, and the back office monitors every request — including the ones parked while waiting on that external party.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newLoanBtn">New loan request</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="lnTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="request">Loan Request<span class="tabnav__count" id="cntMine">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="approval" data-roles="ROLE_DEPT_MANAGER">Loan Approval<span class="tabnav__count" id="cntApr">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="ack">Schedule Acknowledgement<span class="tabnav__count" id="cntAck">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="admin" data-roles="ROLE_FINANCE_OFFICER,ROLE_HR_MANAGER">Loan Administration<span class="tabnav__count" id="cntAll">0</span></button>
+</div>
+
+<!-- ===== LN-A2 — borrowing room + my requests ===== -->
+<div class="tabpanel is-on" data-tabpanel="request">
+<div class="rolechip">Owner ROLE_EMPLOYEE<span class="rolechip__sep"></span>Scope: own rows<span class="rolechip__sep"></span>Read + write</div>
+<div class="fin-cards">
+<div class="fcard fcard--hero"><span class="fcard__t">Available borrowing room</span><span class="fcard__v" id="roomV">—</span><span class="fcard__f">Grade limit − outstanding − reserved. A per-employee exception, when one exists, replaces the grade row.</span></div>
+<div class="fcard"><span class="fcard__t">Grade limit</span><span class="fcard__v" id="limitV">—</span><span class="fcard__f" id="limitF">—</span></div>
+<div class="fcard"><span class="fcard__t">Outstanding</span><span class="fcard__v" id="outV">—</span><span class="fcard__f">Running obligation across active loans.</span></div>
+<div class="fcard"><span class="fcard__t">Reserved</span><span class="fcard__v" id="resV">—</span><span class="fcard__f">Held by requests still awaiting an outcome.</span></div>
+</div>
+<div class="note note--info" style="margin-top:16px"><i data-lucide="info"></i><span>Scheme for this company: <strong>interest-bearing</strong> · tenor mode <code>EMPLOYEE_CHOICE</code> with pattern <code>MULTIPLE_OF_THREE</code> (3, 6, 9 … 24). The tenor is always sent by the client; the interest amount is never computed by HRIS on an interest-bearing company — it arrives from the funding party.</span></div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:16px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th class="ta-r">Principal</th><th class="ta-c">Tenor</th><th class="ta-r">Interest</th><th class="ta-r">Total Obligation</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+<tbody id="mineBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgMine"></div>
+</div>
+
+<!-- ===== LN-B2 — approval queue (ROLE_DEPT_MANAGER) ===== -->
+<div class="tabpanel" data-tabpanel="approval">
+<div class="rolechip">Owner ROLE_DEPT_MANAGER<span class="rolechip__sep"></span>Scope: own department<span class="rolechip__sep"></span>Decision only (202)</div>
+<div class="note note--info"><i data-lucide="users"></i><span>Queue of the <strong>direct manager</strong> — its own screen, scoped to the requests awaiting your decision and filtered to <code>SUBMITTED</code> only. The decision is taken with your own principal token; a service token is refused with 403. The back office never holds this door.</span></div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:16px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Employee</th><th class="ta-r">Principal</th><th class="ta-c">Tenor</th><th class="ta-r">Reservation</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+<tbody id="aprBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgApr"></div>
+</div>
+
+<!-- ===== LN-C2 — schedule acknowledgement ===== -->
+<div class="tabpanel" data-tabpanel="ack">
+<div class="rolechip">Owner ROLE_EMPLOYEE<span class="rolechip__sep"></span>Scope: own rows<span class="rolechip__sep"></span>ACK / DECLINE</div>
+<div class="note note--warn"><i data-lucide="triangle-alert"></i><span>Acknowledgement is given <strong>inside the application after a full login</strong> — never from a link in a notification. Each call appends a new row; DECLINE releases the reservation and the employee may submit again as a new request.</span></div>
+<div id="ackWrap" style="margin-top:16px"></div>
+</div>
+
+<!-- ===== LN-S1 — loan administration ===== -->
+<div class="tabpanel" data-tabpanel="admin">
+<div class="rolechip rolechip--read">Owner ROLE_FINANCE_OFFICER · ROLE_HR_MANAGER<span class="rolechip__sep"></span>Scope: whole company<span class="rolechip__sep"></span>Read only</div>
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltStatus" data-multi="1"><span class="ctl__value">Filter status</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltStatusDd"></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<button class="tbar-info" type="button" id="btnLegend" title="Status reference — what each loan status means" aria-label="Status reference"><i data-lucide="info"></i></button>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltNo" placeholder="Search request no."></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Employee</th><th class="ta-r">Principal</th><th class="ta-c">Tenor</th><th class="ta-r">Interest</th><th class="ta-r">Total Obligation</th><th class="ta-r">Reservation</th><th>Status</th><th>Schedule Source</th><th></th></tr></thead>
+<tbody id="allBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgAll"></div>
+
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ status reference (legend) ============ -->
+<div class="ovl" id="legendModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Status reference</h3><p class="ovl__desc">The ten statuses a loan request can hold, what each one means, and where it appears.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="ovl__body">
+<div class="ref">
+<table><thead><tr><th>Status</th><th>Meaning</th><th>Where it appears</th></tr></thead><tbody id="refBody"></tbody></table>
+</div>
+<div class="note note--info" style="margin-top:16px"><i data-lucide="lock"></i><span><strong>Who can change what.</strong> A finance officer cannot alter principal or tenor, and cannot cancel or withdraw on an employee's behalf — cancel, withdraw and early settlement stay with the employee who owns the loan. Installment start date and arrears handling follow the schedule and are visible there, not edited on this screen.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ LN-A3 — new loan request ============ -->
+<div class="ovl" id="loanForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New loan request</h3><p class="ovl__desc">Principal is checked against the remaining borrowing room and the active-loan count before the row is written.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="loanFormBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="sumbox">
+<div class="sumbox__head"><i data-lucide="wallet"></i>Borrowing room</div>
+<div class="sumbox__row"><span class="sumbox__k">Grade limit</span><span class="sumbox__v" id="lfLimit">—</span></div>
+<div class="sumbox__row"><span class="sumbox__k">Outstanding + reserved</span><span class="sumbox__v" id="lfUsed">—</span></div>
+<div class="sumbox__row"><span class="sumbox__k">Available</span><span class="sumbox__v" id="lfRoom">—</span></div>
+</div>
+<div class="fld">
+<label class="fld__label">Principal amount <span class="req">*</span></label>
+<div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="lfAmount" placeholder="0" inputmode="numeric"></div>
+<span class="fld__hint">A principal above the available borrowing room cannot be submitted.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Tenor <span class="req">*</span></label>
+<div class="ctl ctl--select" id="lfTenor"><span class="ctl__value" style="color:var(--fg-4)">Select tenor</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="lfTenorDd"></div>
+</div>
+<span class="fld__hint">Available tenors follow your company setting — multiples of three, up to 24 months.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Loan scheme</label>
+<div class="ctl is-disabled"><input type="text" value="Interest-bearing — schedule received from the funding party" disabled></div>
+<span class="fld__hint">Set by your company — it cannot be changed on a request.</span>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="lfSubmit" disabled>Submit request</button>
+</div>
+</div>
+</div>
+
+<!-- ============ LN-B3 — decision ============ -->
+<div class="ovl" id="loanDecision">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="ldTitle">Loan decision</h3><p class="ovl__desc">Taken with your own principal token — a service token is refused with 403.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="ldKv"></div>
+<div class="k9"><i data-lucide="clock"></i><span><strong>The status is not written here.</strong> Both branches return 202 Accepted — "forwarded, awaiting the process".</span></div>
+<div id="ldReject" style="display:none;flex-direction:column;gap:14px">
+<div class="fld">
+<label class="fld__label">Rejection reason <span class="req">*</span></label>
+<div class="ctl ctl--select" id="ldReason"><span class="ctl__value" style="color:var(--fg-4)">Select reason</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="ldReasonDd"></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Note <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+<div class="ctl ctl--area"><textarea id="ldNote" rows="2" maxlength="500" placeholder="Recorded with the decision"></textarea></div>
+<span class="fld__hint">Medical detail is forbidden in this note.</span>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+<button class="btn btn--danger" id="ldRejectBtn">Reject</button>
+<button class="btn btn--primary" id="ldApproveBtn">Approve</button>
+</div>
+</div>
+</div>
+
+<!-- ============ LN-C2 — schedule acknowledgement ============ -->
+<div class="ovl" id="ackModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Acknowledge repayment schedule</h3><p class="ovl__desc">Principal, interest and tenor as received from the funding party. One endpoint, two outcomes: <code>ACK</code> approves the loan, <code>DECLINE</code> releases the reservation.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="sumbox" id="ackSum"></div>
+<div class="note note--info"><i data-lucide="shield-check"></i><span>Sent from inside the application after a full login — the request is never accepted from a notification link.</span></div>
+<div class="note note--info"><i data-lucide="git-branch"></i><span><strong>Decline is a contracted outcome, not a cancellation.</strong> <code>POST .../schedule-acknowledgements</code> carries <code>outcome: ACK | DECLINE</code>; <code>DECLINE</code> writes <code>loan_status = DECLINED_BY_EMPLOYEE</code>, releases the reservation and lets you submit a new request. <strong>Cancel</strong> is a different action on a different status — it only exists while the request is still <code>SUBMITTED</code> — and <strong>Withdraw</strong> applies once <code>AWAITING_CALCULATION</code> passes its threshold. Calling either outcome outside <code>AWAITING_ACKNOWLEDGEMENT</code> is refused with <strong>422 FIN_LOAN_NOT_AWAITING_ACKNOWLEDGEMENT</strong>.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary btn--danger-text" id="ackDecline">Decline schedule</button>
+<button class="btn btn--primary" id="ackConfirm">Acknowledge</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };
+// Signed-in session — the one place a developer wires the real login token.
+// Every user is ROLE_EMPLOYEE first; managerial roles stack on top. Tabs carrying
+// data-roles are REMOVED (not disabled) when the session lacks the role, so an
+// employee-only login sees just Loan Request + Schedule Acknowledgement.
+window.SEVAKA_SESSION = { employee_id: 'emp-budi', roles: ['ROLE_EMPLOYEE', 'ROLE_DEPT_MANAGER', 'ROLE_FINANCE_OFFICER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-loan.js"></script>
+</body>
+</html>

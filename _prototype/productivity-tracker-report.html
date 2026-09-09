@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Tracker Report</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/daterange.css?v=3">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Tracker Report">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Timesheet</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Tracker Report</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Tracker Report</h1>
+<p class="flow-sub">A supervisor's read-only report — detail rows, not aggregates. Not self-service: only a manager in the employee's supervision chain, or HR, may open it (<code>403 PROD_NOT_IN_SUPERVISION_CHAIN</code> otherwise).</p>
+</div>
+<div class="flow-head__actions">
+<span class="pv-persona"><span class="pv-persona__lbl">Acting as</span><span class="pv-tag" style="height:26px">RINA AMELIA · ROLE_DEPT_MANAGER</span></span>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="sec-head" style="margin-top:4px">
+<span class="sec-head__t">Time records in my chain</span><span class="sec-head__c" id="trCount">0</span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note" data-filter-sum="trFilter">No filter applied</span>
+<button class="icon-act" type="button" id="trDownload" title="Export this report (CSV / XLSX)" aria-label="Export this report"><i data-lucide="download"></i></button>
+<button class="btn btn--secondary" type="button" data-filter-open="trFilter">Filter</button>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Code</th><th>Employee</th><th>Work date</th><th>Task</th><th>Activity</th><th class="ta-r">Duration</th><th>Origin</th></tr></thead>
+<tbody id="trBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgTr"></div>
+
+<div class="note note--info" style="margin-top:18px"><i data-lucide="shield-alert"></i>
+<span><strong>Read-only by contract.</strong> There is no create, edit or delete on this surface — corrections belong to the owner on Activities. Each row read here writes exactly one access-trail entry; a refused read writes none, which is what makes the trail usable as evidence in an IDOR/BOLA test. Columns follow the contract grid — code, employee, work date, task, duration, origin — plus activity type, which the search shape adds on this surface. Clock times stay on Activities, where the owner can act on them.</span></div>
+<div class="note note--warn" style="margin-top:12px"><i data-lucide="download"></i>
+<span>The export format (CSV / XLSX) is a presentation-layer concern outside the data contract — the export icon above the grid is a real placeholder for it, not an invented feature.</span></div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ FILTER ============ -->
+<div class="ovl" id="trFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter report</h3><p class="ovl__desc">Same search shape as Activities, plus activity type.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Employee</label><div class="ctl ctl--select" id="rfEmp"><span class="ctl__value">Everyone in my chain</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="rfEmpDD"></div></div></div>
+<div class="fld"><label class="fld__label">Task</label><div class="ctl ctl--select" id="rfTask"><span class="ctl__value">All tasks</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="rfTaskDD"></div></div></div>
+<div class="fld"><label class="fld__label">Activity type</label><div class="ctl ctl--select" id="rfAct"><span class="ctl__value">All activity types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="rfActDD"></div></div></div>
+<div class="fld"><label class="fld__label">Origin</label><div class="ctl ctl--select" id="rfOrigin"><span class="ctl__value">All origins</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="rfOriginDD"></div></div></div>
+<div class="fld"><label class="fld__label">Work date between</label>
+<div class="rng" id="rfRange" data-placeholder="Select date range"><button class="rng__ctl" type="button"><span class="rng__val is-empty">Select date range</span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="rfReset">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0002', roles:['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-tracker-report.js"></script>
+</body>
+</html>

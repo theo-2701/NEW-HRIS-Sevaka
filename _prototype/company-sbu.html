@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — SBU</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/payroll-history.css">
+  <link rel="stylesheet" href="css/company.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="SBU">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Settings</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Company</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">SBU</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">SBU <span style="font:500 16px/1 var(--font-body);color:var(--fg-3)">— Strategic Business Unit</span></h1>
+              <p class="flow-sub">Strategic business units under their groups. Structure mirrors Cost Center — with <strong>no annual budget</strong> field (SBU has no budget column).</p>
+            </div>
+            <div class="flow-head__actions"><button class="btn btn--primary" id="sbuAdd">Add SBU</button></div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="sbuTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="list">SBU<span class="tabnav__count" id="sbuCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="group">Group<span class="tabnav__count" id="sgCount">0</span></button>
+          </div>
+
+          <div class="tabpanel is-on" data-tabpanel="list">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Menu visibility follows company setup: hidden from the sidebar when <strong>SBU_ASSIGNMENT_MODE</strong> is DISABLED. SBU has no annual budget column (unlike Cost Center).</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="sbuStatus" style="width:180px;height:40px">
+                  <span class="ctl__value">All status</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All status</div><div class="dropdown__opt">Active</div><div class="dropdown__opt">Inactive</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><div class="co-search"><i data-lucide="search"></i><input type="text" id="sbuSearch" placeholder="Search code or name"></div></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Code</th><th>Name</th><th>Group</th><th>Parent</th><th>PIC</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="sbuBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing"><span id="sbuShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize"><select id="sbuPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="sbuPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="sbuPageBox">1</span><span class="ph-pager__from" id="sbuPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="sbuNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabpanel" data-tabpanel="group">
+            <div class="co-tbar"><div class="co-tbar__left"></div><div class="co-tbar__right"><button class="btn btn--secondary" id="sgAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Add group</button></div></div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Group Name</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="sgBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing"><span id="sgShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize"><select id="sgPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="sgPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="sgPageBox">1</span><span class="ph-pager__from" id="sgPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="sgNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== SBU EDIT ===== -->
+<div class="ovl" id="sbuEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="sbuTitle">Add SBU</h3><p class="ovl__desc">Maps to <code>mst_sbu</code>. Code is unique among active SBUs. There is no budget field.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="sbuForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Code <span class="req">*</span></label><div class="ctl"><input type="text" id="sbuCode" maxlength="50" placeholder="e.g. SBU-RTL-01"></div></div>
+      <div class="fld"><label class="fld__label">Name <span class="req">*</span></label><div class="ctl"><input type="text" id="sbuName" maxlength="200" placeholder="e.g. Toko Bandung"></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Group <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="sbuGroup"><span class="ctl__value" style="color:var(--fg-4)">Select group</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt">Retail</div><div class="dropdown__opt">Distribusi</div><div class="dropdown__opt">Manufaktur</div></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Parent SBU <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+        <div class="ctl ctl--select" id="sbuParent"><span class="ctl__value" style="color:var(--fg-4)">None</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt is-sel">None</div><div class="dropdown__opt">SBU-RTL-00 · Retail Jakarta</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">PIC <span style="font-weight:500;color:var(--fg-4)">(responsible employee)</span></label>
+      <div class="ctl ctl--select" id="sbuPic"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt">Budi Santoso (EMP-0012)</div><div class="dropdown__opt">Sari Melati (EMP-0021)</div></div>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">Status</label><label class="co-switch"><input type="checkbox" id="sbuActive" checked><span class="co-switch__track"></span><span class="co-switch__label" id="sbuActiveLabel">Active — assignable to employees</span></label></div>
+    <div class="note note--info"><i data-lucide="info"></i><span>SBU has <strong>no annual budget</strong> column — this is a design fact, not a GAP.</span></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="sbuSave">Save SBU</button></div>
+</div></div>
+
+<!-- ===== GROUP EDIT ===== -->
+<div class="ovl" id="sgEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="sgTitle">Add group</h3><p class="ovl__desc">Maps to <code>cnf_sbu_group</code>. Name ≤ 60 chars, unique among active.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="sgForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="fld"><label class="fld__label">Group name <span class="req">*</span></label><div class="ctl"><input type="text" id="sgName" maxlength="60" placeholder="e.g. Retail"></div></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="sgSave">Save group</button></div>
+</div></div>
+
+<!-- ===== DELETE ===== -->
+<div class="ovl" id="delConfirm"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:440px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Delete record</h3><p class="ovl__desc">Soft-delete — hidden from the grid but kept for audit.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <p class="co-muted" id="delMsg" style="padding:4px 0">Are you sure?</p>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="delConfirmBtn">Delete</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company', activeItem: 'SBU' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/company-sbu.js"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — ESS Payroll Info</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/finance.css">
+  <link rel="stylesheet" href="css/company.css">
+  <link rel="stylesheet" href="css/payroll-doc.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="ESS Payroll Info">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Self-Service</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Payroll</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Payroll Info</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Payroll Info</h1>
+              <p class="flow-sub">A plain list of the periods whose payslip is ready for you — no search criteria, one row per handed-over period.</p>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+          <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Signed in as <strong>Dewi Lestari</strong> — <code>ROLE_EMPLOYEE</code>. A period appears here only once it has been <strong>handed over</strong> and holds a result row for you; periods still being calculated, reviewed or locked simply are not listed. This screen belongs to the employee — a manager reaches payslips through the <a href="payroll-doc-payslip.html">Payslip</a> menu.</span></div>
+          <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+            <thead><tr><th>Period</th><th>Month</th><th class="ta-r">Net prepared</th><th class="ta-r"></th></tr></thead>
+            <tbody id="infoBody"></tbody>
+          </table></div>
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Payroll', activeItem: 'Payroll Info' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/payroll-doc-data.js"></script>
+<script src="js/payroll-doc-ess.js"></script>
+</body>
+</html>

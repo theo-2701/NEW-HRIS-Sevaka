@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Notification · Inbox</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/company.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+.nt-row{cursor:pointer}
+/* Notification column is far too wide to freeze usefully — only the Action column stays frozen here. */
+#ntTable thead th:first-child,#ntTable tbody td:first-child{position:static;box-shadow:none}
+/* Row state is carried by ONE custom property on the tr, so every cell — including the
+   still-frozen Action cell — paints from a single background declaration. */
+#ntTable tbody tr{--nt-bg:#fff}
+#ntTable tbody tr.is-unread{--nt-bg:var(--color-secondary-50,#E6F3F9)}
+#ntTable tbody tr.nt-row:hover{--nt-bg:var(--color-vapor)}
+#ntTable tbody tr.is-focus{--nt-bg:var(--color-primary-100)}
+#ntTable tbody td,#ntTable tbody td:first-child,#ntTable tbody td:last-child{background:var(--nt-bg)}
+
+.nt-row td{transition:background-color 180ms cubic-bezier(.2,0,0,1)}
+.nt-msg__t{font:700 14px/1.35 var(--font-body);color:var(--fg-1)}
+.nt-msg__b{font:400 12px/1.5 var(--font-body);color:var(--fg-3);margin-top:2px;max-width:520px;text-wrap:pretty}
+.nt-type{display:inline-block;font:700 10px/1 var(--font-body);letter-spacing:.04em;padding:6px 8px;border-radius:8px;background:var(--color-vapor);color:var(--color-secondary-800)}
+.nt-when{font:500 13px/1.4 var(--font-body);color:var(--fg-2);white-space:nowrap}
+.nt-when small{display:block;font:400 11px/1.4 var(--font-body);color:var(--fg-4);margin-top:2px}
+.nt-none{font:400 12px/1.4 var(--font-body);color:var(--fg-4)}
+.nt-hint{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font:400 12px/1.5 var(--font-body);color:var(--fg-3)}
+.nt-hint i{width:14px;height:14px;flex:0 0 14px;margin-top:2px;color:var(--color-secondary-500)}
+</style>
+</head>
+<body data-screen-label="Notification Inbox" data-theme="ocean">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Company Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Notification</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Inbox</h1>
+<p class="flow-sub">Notifications addressed to you only. Rows are created by the service from platform events — this screen reads them and marks them read; there is no create, edit or delete.</p>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+<div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Scope <strong>notification:inbox:read</strong> / <strong>notification:inbox:write</strong> — every role, object-level (own data only). Rows belonging to another employee or another active company return <strong>404 NOT_FOUND</strong> and never appear here.</span></div>
+
+<div class="co-tbar">
+<div class="co-tbar__left">
+<div class="ctl ctl--select" id="ntStatus" style="width:200px;height:40px">
+<span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="false">Unread</div><div class="dropdown__opt" data-val="true">Read</div></div>
+</div>
+<div class="ctl ctl--select" id="ntSort" style="width:240px;height:40px">
+<span class="ctl__value">Newest first</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="created_at:desc">Newest first</div><div class="dropdown__opt" data-val="created_at:asc">Oldest first</div><div class="dropdown__opt" data-val="is_read:asc">Unread first</div><div class="dropdown__opt" data-val="is_read:desc">Read first</div></div>
+</div>
+</div>
+<div class="co-tbar__right" style="display:flex;align-items:center;gap:12px"><span class="co-muted" id="ntUnread">0 unread</span><button class="rowbtn rowbtn--ghost" type="button" id="ntReset" title="Prototype only — not part of the contract. Restores the positive-scenario dataset (2 unread).">Reset demo data</button></div>
+</div>
+
+<div class="dtable-wrap dtable-wrap--scroll"><table class="dtable emp-table" id="ntTable">
+<thead><tr><th>Notification</th><th>Type</th><th>Received</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+<tbody id="ntBody"></tbody>
+</table></div>
+<div class="ph-foot" id="pgNt"></div>
+
+</div>
+
+<div class="nt-hint"><i data-lucide="mouse-pointer-click"></i><span>Click a row (outside the linked-record button) to mark it read — <code>PUT /api/v1/notifications/inbox/{id}/read</code>. The call is idempotent: a second click returns <strong>200</strong> unchanged, never an error, and <code>is_read</code> never returns to false.</span></div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: true, notifDot: true, activeGroup: 'Company Management', activeItem: 'Notification' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/notification-inbox.js"></script>
+</body>
+</html>

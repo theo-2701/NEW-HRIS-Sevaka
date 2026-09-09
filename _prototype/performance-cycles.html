@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Performance — Cycles &amp; Settings</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/document.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.pf-cap{margin-top:3px;font:400 12px/1.4 Inter;color:var(--fg-4,#94A3B8)}.pf-crumb{display:flex;align-items:center;gap:8px;margin:0 0 10px;font:700 11px/1 Inter;letter-spacing:.06em;text-transform:uppercase}.pf-crumb a{color:var(--color-secondary-700,#02618f);text-decoration:none}.pf-crumb a:hover{text-decoration:underline;text-underline-offset:3px}.pf-crumb__sep{color:var(--fg-4,#94A3B8)}.pf-crumb__now{color:var(--fg-3,#334155);text-transform:none;letter-spacing:0;font:600 12px/1 Inter}.pf-fsel{display:flex;align-items:center;gap:8px}.pf-fsel__l{font:600 12px/1 Inter;color:var(--fg-3,#334155);white-space:nowrap}.pf-fsel select{height:36px;min-width:150px;padding:0 30px 0 12px;background:var(--bg-field,#FAFCFE) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg>") no-repeat right 9px center/16px;border:1px solid var(--color-silver,#CBD5E1);border-radius:8px;font:500 13px/1 Inter;color:var(--fg-1,#0F172A);appearance:none;cursor:pointer}.pf-fsel select:focus{outline:none;border-color:var(--color-secondary-500,#0284c7);box-shadow:0 0 0 3px rgba(2,132,199,.14)}.pf-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pf-kpi__c{background:var(--color-white);border:1px solid var(--border-1,#EAECF0);border-radius:10px;padding:16px}.pf-kpi__l{font:700 10px/1.4 Inter;letter-spacing:.02em;text-transform:uppercase;color:var(--fg-4,#94A3B8)}.pf-kpi__v{font:700 24px/1.3 'Plus Jakarta Sans';color:var(--color-obsidian,#111827);margin-top:6px}.pf-kpi__s{font:400 12px/1.4 Inter;color:var(--fg-4,#94A3B8);margin-top:4px}.pf-detail{display:none}.pf-detail.is-on{display:block}.pf-list.is-off{display:none}.pf-step{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--color-primary-50,#f3fafd);border:1px solid var(--border-1,#EAECF0);border-radius:12px;padding:18px 20px}.pf-step__i{position:relative;display:flex;flex-direction:column;gap:8px;padding:0 4px}.pf-step__i::before{content:"";position:absolute;top:11px;left:0;right:0;height:2px;background:var(--border-1,#EAECF0)}.pf-step__i:first-child::before{left:50%}.pf-step__i:last-child::before{right:50%}.pf-step__i.is-done::before,.pf-step__i.is-on::before{background:var(--color-secondary-500,#0284c7)}.pf-step__d{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;background:var(--color-white);border:2px solid var(--border-1,#EAECF0);display:flex;align-items:center;justify-content:center;font:700 11px/1 Inter;color:var(--fg-4,#94A3B8)}.pf-step__i.is-done .pf-step__d{background:var(--color-secondary-500,#0284c7);border-color:var(--color-secondary-500,#0284c7);color:#fff}.pf-step__i.is-on .pf-step__d{border-color:var(--color-secondary-500,#0284c7);color:var(--color-secondary-700,#02618f);box-shadow:0 0 0 4px rgba(2,132,199,.14)}.pf-step__d svg{width:13px;height:13px}.pf-step__t{font:700 13px/1.3 'Plus Jakarta Sans';color:var(--fg-4,#94A3B8)}.pf-step__i.is-done .pf-step__t,.pf-step__i.is-on .pf-step__t{color:var(--color-obsidian,#111827)}.pf-step__m{font:400 12px/1.4 Inter;color:var(--fg-4,#94A3B8)}.pf-links{display:flex;gap:12px;flex-wrap:wrap}.pf-link{display:flex;align-items:center;gap:8px;border:1px solid var(--border-1,#EAECF0);background:var(--color-white);border-radius:10px;padding:12px 16px;font:600 13px/1 Inter;color:var(--fg-link,#0284c7);cursor:pointer}.pf-link:hover{background:var(--color-vapor,#F1F5F9)}a{color:var(--fg-link,#0284c7);text-decoration:none}a:hover{text-decoration:underline}</style>
+</head>
+<body data-screen-label="Performance — Cycles &amp; Settings" data-perf-page="cycles">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <!-- ===== A1 · LIST PERIODE ===== -->
+        <section class="rc-card pf-list" id="pfList">
+          <div class="rc-sec">
+            <span class="rc-sec__title">Review Periods</span>
+            <div class="rc-head-actions" data-roles="ROLE_HR_MANAGER">
+              <button class="btn btn--primary" type="button" id="pfOpenBtn">Open Period</button>
+            </div>
+          </div>
+          <p class="doc-lead">A review period is the freezing anchor for every review sheet beneath it — <code>scale_length</code> and the assessment-structure pointer are copied into the row the moment the period is opened, and never re-read afterwards. Periods are never deleted; they only move through the three phases.</p>
+          <div class="doc-tbar">
+            <div class="pf-fsel"><span class="pf-fsel__l">Phase</span><select id="pfPhase"><option value="ALL">All phases</option><option value="FILLING">Filling</option><option value="SIGNING">Signing</option><option value="CLOSED">Closed</option></select></div>
+            <div class="doc-tbar__sp"></div>
+            <div class="ctl ctl--search" style="width:260px"><input id="pfSearch" type="text" placeholder="Search period name"></div>
+          </div>
+          <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+            <thead><tr><th>Period Name</th><th>Phase</th><th>Scale</th><th>Opened</th><th class="ta-r"></th></tr></thead>
+            <tbody id="pfBody"></tbody>
+          </table></div>
+          <div class="ph-foot" id="pfFoot"></div>
+          <div class="doc-note" style="margin-top:20px">
+            <div class="doc-note__h"><i data-lucide="slash"></i>No delete, no inline edit</div>
+            <p>The grid carries a single row action. A period is never removed and never edited in place — it only transitions phase from its detail screen, and the button for a transition is <strong>rendered only when that transition is legal</strong> rather than shown disabled.</p>
+          </div>
+        </section>
+
+        <!-- ===== B1/B2/B3 · DETAIL PER PHASE ===== -->
+        <section class="rc-card pf-detail" id="pfDetail">
+          <nav class="pf-crumb"><a href="#" id="pfBack">Cycles &amp; Settings</a><span class="pf-crumb__sep">/</span><a href="#" id="pfBack2">Review Periods</a><span class="pf-crumb__sep">/</span><span class="pf-crumb__now" id="pfdCrumb">—</span></nav>
+          <div class="rc-sec">
+            <span class="rc-sec__title" id="pfdTitle">—</span>
+            <div class="rc-head-actions" id="pfdActions" data-roles="ROLE_HR_MANAGER"></div>
+          </div>
+          <div class="pf-step" id="pfdFlow"></div>
+          <div class="kv" id="pfdKv" style="margin-top:20px"></div>
+          <div id="pfdGapWrap" style="margin-top:24px">
+            <div class="pf-links">
+              <button class="pf-link" type="button" data-gap="not_assessable"><i data-lucide="user-x"></i><span id="pfdGapA">Not Yet Assessable (0)</span></button>
+              <button class="pf-link" type="button" data-gap="out_of_assessment"><i data-lucide="user-minus"></i><span id="pfdGapB">Out of Assessment (0)</span></button>
+            </div>
+          </div>
+          <div class="doc-note" id="pfdNote" style="margin-top:24px"></div>
+        </section>
+
+        <!-- ===== B4/B5 · ELIGIBILITY GAPS ===== -->
+        <section class="rc-card pf-detail" id="pfGaps">
+          <nav class="pf-crumb"><a href="#" id="pfGapHome">Cycles &amp; Settings</a><span class="pf-crumb__sep">/</span><a href="#" id="pfGapList">Review Periods</a><span class="pf-crumb__sep">/</span><a href="#" id="pfGapBack"><span id="pfGapCrumb">Period</span></a><span class="pf-crumb__sep">/</span><span class="pf-crumb__now">Eligibility Gaps</span></nav>
+          <div class="rc-sec"><span class="rc-sec__title">Eligibility Gaps</span></div>
+          <p class="doc-lead">Two different concepts, so two separate tables — never merged. Both lists are <strong>computed live</strong> on every call and stored nowhere; nobody appearing here owns a review-sheet row for this period.</p>
+          <div class="subtabs"><span class="seg"><button type="button" class="seg__btn is-on" data-sub="na">Not Yet Assessable</button><button type="button" class="seg__btn" data-sub="oa">Out of Assessment</button></span></div>
+          <div class="subpanel is-on" data-subpanel="na">
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>Employee</th><th>Reason</th></tr></thead>
+              <tbody id="pfNaBody"></tbody>
+            </table></div>
+            <p class="fld__hint"><code>not_assessable[]</code> — one reason only: <code>NO_ASSESSOR_IN_STRUCTURE</code>. The employee is not yet present in the assessment structure, so no assessor can be resolved.</p>
+          </div>
+          <div class="subpanel" data-subpanel="oa">
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>Employee</th><th>Reason</th></tr></thead>
+              <tbody id="pfOaBody"></tbody>
+            </table></div>
+            <p class="fld__hint"><code>out_of_assessment[]</code> — two reasons: <code>APPROVER_CHAIN_EXHAUSTED</code> (top of the structure, final approver NULL or self) and <code>NOT_INCLUDED_MID_PERIOD</code> (joined after the period was opened and not added by HR).</p>
+          </div>
+          <div class="doc-note" style="margin-top:20px">
+            <div class="doc-note__h"><i data-lucide="alert-triangle"></i>An honest limit, not a bug</div>
+            <p>The <code>APPROVER_CHAIN_EXHAUSTED</code> computation does <strong>not</strong> check whether the company still has at least one active HR Manager — that lookup crosses schemas and was never decided as an automatic gate. An employee at the top of the structure whose final approver <em>is</em> filled in is legitimate and appears in neither table.</p>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== A2 · OPEN PERIOD ===== -->
+<div class="ovl" id="pfOpenM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:540px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Open period</h3><p class="ovl__desc"><code>POST /review-periods</code> — one field in the body, nothing more.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Period name <span class="req">*</span></label>
+      <div class="ctl"><input id="pfName" type="text" maxlength="100" placeholder="e.g. Semester 1 2026"></div>
+      <p class="fld__hint">1–100 characters, free format. It is purely a display label.</p></div>
+    <div class="pf-kpi" style="grid-template-columns:repeat(2,1fr)">
+      <div class="pf-kpi__c"><div class="pf-kpi__l">Not yet assessable</div><div class="pf-kpi__v" id="pfPrevA">1</div><div class="pf-kpi__s">eligibility preview · computed now</div></div>
+      <div class="pf-kpi__c"><div class="pf-kpi__l">Out of assessment</div><div class="pf-kpi__v" id="pfPrevB">1</div><div class="pf-kpi__s">APPROVER_CHAIN_EXHAUSTED only</div></div>
+    </div>
+    <p class="fld__hint">Preview read against the <strong>current</strong> assessment structure, before any period row exists — <code>NOT_INCLUDED_MID_PERIOD</code> cannot appear yet. It informs; it never blocks.</p>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="lock"></i>What the system freezes for you</div>
+      <p>The gate passes only when <strong>no other period of this company sits in <code>FILLING</code></strong>. The system then reads the <code>performance.*</code> settings — assessment structure, period length, score scale — and <strong>copies</strong> the scale and the structure pointer onto the new row. A missing setting, a scale below 2, or a structure pointer no longer present in the group structure all reject the request.</p>
+      <p style="margin-top:8px">Opening succeeds even when both eligibility lists are non-empty — they inform, they never block.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="pfOpenDo">Open period</button></div>
+</div></div>
+
+<!-- ===== A3 · ELIGIBILITY SUMMARY (terminal 201) ===== -->
+<div class="ovl" id="pfSumM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Period opened</h3><p class="ovl__desc">Response <code>201</code> — the eligibility summary is computed at this moment and stored nowhere.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="pfSumKv"></div>
+    <div class="pf-kpi" style="grid-template-columns:repeat(2,1fr)">
+      <div class="pf-kpi__c"><div class="pf-kpi__l">Not yet assessable</div><div class="pf-kpi__v" id="pfSumA">0</div><div class="pf-kpi__s">not_assessable_count</div></div>
+      <div class="pf-kpi__c"><div class="pf-kpi__l">Out of assessment</div><div class="pf-kpi__v" id="pfSumB">0</div><div class="pf-kpi__s">out_of_assessment_count</div></div>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--primary" data-close>Back to list</button></div>
+</div></div>
+
+<!-- ===== B1 · START SIGNING ===== -->
+<div class="ovl" id="pfSignM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Start signing</h3><p class="ovl__desc"><code>POST /{id}/start-signing</code> — an explicit HR trigger, never condition-driven automation.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="doc-note"><div class="doc-note__h"><i data-lucide="info"></i>No completeness gate</div><p>This transition does <strong>not</strong> check whether every sheet already carries an initial score. Moving to <code>SIGNING</code> also does not forbid the <em>next</em> period from sitting in <code>FILLING</code> — a signing tail is expected, not an error.</p></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="pfSignDo">Start signing</button></div>
+</div></div>
+
+<!-- ===== B2 · CLOSE PERIOD ===== -->
+<div class="ovl" id="pfCloseM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Close period</h3><p class="ovl__desc"><code>POST /{id}/close</code> — <code>CLOSED</code> is terminal, there is no reopen path.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="doc-note"><div class="doc-note__h"><i data-lucide="alert-triangle"></i>Terminal, and no approval gate</div><p>There is no "every sheet is signed" gate here. Unfinished sheets inherit the historical no-score state rather than being blocked at this step. On close, the sheet snapshots are formed and the period can never be reopened.</p></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="pfCloseDo">Close period</button></div>
+</div></div>
+
+<script>window.SEVAKA_SESSION = { roles: ['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER','ROLE_HR_STAFF','ROLE_HR_MANAGER'] };</script>
+<script src="js/performance-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script>
+(function(){
+  var F = window.Flow || window.F;
+  var PERIODS = [
+    { id:'RP-2026-S1', name:'Semester 1 2026', phase:'SIGNING', scale:5, opened:'05 Jan 2026', by:'Hesti Wulandari', signing:'15 Mar 2026', closed:'',
+      structure:'Struktur Penilaian Utama',
+      na:[{n:'Ahmad Fauzi', r:'NO_ASSESSOR_IN_STRUCTURE'}],
+      oa:[{n:'Wayan Sudira', r:'APPROVER_CHAIN_EXHAUSTED'},{n:'Fajar Setiawan', r:'NOT_INCLUDED_MID_PERIOD'}] },
+    { id:'RP-2025-S2', name:'Semester 2 2025', phase:'CLOSED', scale:5, opened:'01 Jul 2025', by:'Hesti Wulandari', signing:'10 Dec 2025', closed:'04 Jan 2026 17:00 WIB',
+      structure:'Struktur Penilaian Utama', na:[], oa:[] }
+  ];
+  var PHB = { FILLING:'sb--green', SIGNING:'sb--amber', CLOSED:'sb--grey' };
+  function badge(p){ return '<span class="sb '+(PHB[p]||'sb--grey')+'"><span class="sb__dot"></span>'+p+'</span>'; }
+  var phaseFilter='ALL', q='', cur=null;
+
+  function rows(){
+    return PERIODS.filter(function(p){
+      return (phaseFilter==='ALL'||p.phase===phaseFilter) && (!q||p.name.toLowerCase().indexOf(q)>-1||p.id.toLowerCase().indexOf(q)>-1);
+    });
+  }
+  var pg = F.pager('pfFoot', 10, draw, 'periods');
+  function draw(){
+    var all = rows(); pg.state.total = all.length;
+    var view = pg.slice ? pg.slice(all) : all;
+    document.getElementById('pfBody').innerHTML = view.map(function(p){
+      return '<tr><td><a href="#" class="pf-open" data-id="'+p.id+'">'+p.name+'</a><div class="td-sub">'+p.id+'</div></td>'+
+        '<td>'+badge(p.phase)+'</td><td>'+p.scale+'</td>'+
+        '<td>'+p.opened+'<div class="td-sub">'+p.by+'</div></td>'+
+        '<td class="ta-r"><div class="rowacts"><button class="rowbtn" data-id="'+p.id+'">View Detail</button></div></td></tr>';
+    }).join('') || '<tr><td colspan="5" class="dtable__empty">No period matches this filter.</td></tr>';
+    if (pg.paint) pg.paint();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function showDetail(id){
+    cur = PERIODS.filter(function(p){return p.id===id;})[0]; if(!cur) return;
+    document.getElementById('pfList').classList.add('is-off');
+    document.getElementById('pfGaps').classList.remove('is-on');
+    document.getElementById('pfDetail').classList.add('is-on');
+    document.getElementById('pfdCrumb').textContent = cur.name;
+    document.getElementById('pfGapCrumb').textContent = cur.name;
+    document.getElementById('pfdTitle').textContent = cur.name;
+    var ORDER = ['FILLING','SIGNING','CLOSED'], ci = ORDER.indexOf(cur.phase);
+    var META = { FILLING:'Sheets being filled', SIGNING:'Approval rounds running', CLOSED:'Snapshots formed · terminal' };
+    var CHK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>';
+    document.getElementById('pfdFlow').innerHTML = ORDER.map(function(s,i){
+      var st = i<ci ? 'is-done' : i===ci ? 'is-on' : '';
+      var when = s==='FILLING' ? cur.opened : s==='SIGNING' ? (cur.signing||'') : (cur.closed||'');
+      return '<div class="pf-step__i '+st+'"><span class="pf-step__d">'+(i<ci?CHK:(i+1))+'</span>'+
+        '<span class="pf-step__t">'+s.charAt(0)+s.slice(1).toLowerCase()+'</span>'+
+        '<span class="pf-step__m">'+(when || META[s])+'</span></div>';
+    }).join('');
+    var kv = [['Period ID', cur.id],['Phase', badge(cur.phase)],['Score scale', cur.scale+' (frozen at open)'],
+      ['Assessment structure', cur.structure+'<div class="pf-cap">name resolved live · pointer frozen at open</div>'],['Opened', cur.opened+' · '+cur.by]];
+    if (cur.phase!=='FILLING') kv.push(['Signing started', cur.signing+' · '+cur.by]);
+    if (cur.phase==='CLOSED') kv.push(['Closed', cur.closed+' · '+cur.by]);
+    document.getElementById('pfdKv').innerHTML = kv.map(function(r){
+      return '<div class="kv__k">'+r[0]+'</div><div class="kv__v">'+r[1]+'</div>';
+    }).join('');
+    var act = document.getElementById('pfdActions');
+    if (act) act.innerHTML = cur.phase==='FILLING' ? '<button class="btn btn--primary" id="pfToSign">Start Signing</button>'
+      : cur.phase==='SIGNING' ? '<button class="btn btn--primary" id="pfToClose">Close Period</button>' : '';
+    document.getElementById('pfdGapWrap').style.display = cur.phase==='CLOSED' ? 'none' : '';
+    document.getElementById('pfdGapA').textContent = 'Not Yet Assessable ('+cur.na.length+')';
+    document.getElementById('pfdGapB').textContent = 'Out of Assessment ('+cur.oa.length+')';
+    var note = document.getElementById('pfdNote');
+    note.innerHTML = cur.phase==='FILLING'
+      ? '<div class="doc-note__h"><i data-lucide="pencil-line"></i>Filling phase</div><p>Only one period per company may sit in <code>FILLING</code>. The single legal transition from here is <strong>Start Signing</strong> — an explicit HR action.</p>'
+      : cur.phase==='SIGNING'
+      ? '<div class="doc-note__h"><i data-lucide="pen-tool"></i>Signing phase</div><p>Sheets travel through their approval rounds while the period sits here. The single legal transition is <strong>Close Period</strong>. The next period may already be in <code>FILLING</code> at the same time.</p>'
+      : '<div class="doc-note__h"><i data-lucide="archive"></i>Closed — terminal</div><p>No transition button exists at all: this state has no outgoing edge and no reopen path. <strong>Sheet snapshot: formed.</strong></p>';
+    if (window.lucide) lucide.createIcons();
+  }
+  function showGaps(){
+    document.getElementById('pfDetail').classList.remove('is-on');
+    document.getElementById('pfGaps').classList.add('is-on');
+    document.getElementById('pfNaBody').innerHTML = cur.na.map(function(r){
+      return '<tr><td>'+r.n+'</td><td><span class="sb sb--grey">'+r.r+'</span></td></tr>';
+    }).join('') || '<tr><td colspan="2" class="dtable__empty">Nobody is waiting on the assessment structure.</td></tr>';
+    document.getElementById('pfOaBody').innerHTML = cur.oa.map(function(r){
+      return '<tr><td>'+r.n+'</td><td><span class="sb sb--grey">'+r.r+'</span></td></tr>';
+    }).join('') || '<tr><td colspan="2" class="dtable__empty">Nobody falls outside the assessment.</td></tr>';
+    if (window.lucide) lucide.createIcons();
+  }
+  function backToList(){
+    document.getElementById('pfDetail').classList.remove('is-on');
+    document.getElementById('pfGaps').classList.remove('is-on');
+    document.getElementById('pfList').classList.remove('is-off');
+  }
+
+  document.getElementById('pfBody').addEventListener('click', function(e){
+    var b = e.target.closest('.rowbtn, .pf-open'); if(!b) return; e.preventDefault(); showDetail(b.dataset.id);
+  });
+  document.getElementById('pfDetail').addEventListener('click', function(e){
+    if (e.target.closest('#pfToSign')) F.openModal('pfSignM');
+    if (e.target.closest('#pfToClose')) F.openModal('pfCloseM');
+    if (e.target.closest('.pf-link')) showGaps();
+    if (e.target.closest('#pfBack')) { e.preventDefault(); backToList(); }
+  });
+  document.getElementById('pfGapBack').addEventListener('click', function(e){ e.preventDefault(); showDetail(cur.id); });
+  ['pfGapHome','pfGapList','pfBack2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('click', function(e){ e.preventDefault(); backToList(); }); });
+  document.getElementById('pfPhase').addEventListener('change', function(e){ phaseFilter = e.target.value; pg.reset(); draw(); });
+  document.getElementById('pfSearch').addEventListener('input', function(e){ q = e.target.value.trim().toLowerCase(); pg.reset(); draw(); });
+
+  var openBtn = document.getElementById('pfOpenBtn');
+  if (openBtn) openBtn.addEventListener('click', function(){ F.openModal('pfOpenM'); });
+  document.getElementById('pfOpenDo').addEventListener('click', function(){
+    var name = document.getElementById('pfName').value.trim();
+    if (!name) { F.toast('Period name is required (1–100 characters).','warn'); return; }
+    var filling = PERIODS.filter(function(p){return p.phase==='FILLING';})[0];
+    if (filling) { F.toast('“'+filling.name+'” is still in FILLING — start its signing phase first.','warn'); return; }
+    var row = { id:'RP-NEW', name:name, phase:'FILLING', scale:5, opened:'24 Aug 2026', by:'Hesti Wulandari',
+      signing:'', closed:'', structure:'Struktur Penilaian Utama',
+      na:[{n:'Ahmad Fauzi', r:'NO_ASSESSOR_IN_STRUCTURE'}],
+      oa:[{n:'Wayan Sudira', r:'APPROVER_CHAIN_EXHAUSTED'},{n:'Fajar Setiawan', r:'NOT_INCLUDED_MID_PERIOD'}] };
+    PERIODS.unshift(row);
+    F.closeModal('pfOpenM'); document.getElementById('pfName').value='';
+    document.getElementById('pfSumKv').innerHTML =
+      '<div class="kv__k">Period</div><div class="kv__v">'+row.name+'</div>'+
+      '<div class="kv__k">Phase</div><div class="kv__v">'+badge('FILLING')+'</div>'+
+      '<div class="kv__k">Frozen scale</div><div class="kv__v">5</div>'+
+      '<div class="kv__k">Frozen structure</div><div class="kv__v">'+row.structure+'</div>';
+    document.getElementById('pfSumA').textContent = row.na.length;
+    document.getElementById('pfSumB').textContent = row.oa.length;
+    draw(); F.openModal('pfSumM');
+  });
+  document.getElementById('pfSignDo').addEventListener('click', function(){
+    cur.phase='SIGNING'; cur.signing='24 Aug 2026'; F.closeModal('pfSignM');
+    F.toast('“'+cur.name+'” moved to SIGNING.'); showDetail(cur.id); draw();
+  });
+  document.getElementById('pfCloseDo').addEventListener('click', function(){
+    cur.phase='CLOSED'; cur.closed='24 Aug 2026 17:00 WIB'; F.closeModal('pfCloseM');
+    F.toast('“'+cur.name+'” is closed. Sheet snapshots formed.'); showDetail(cur.id); draw();
+  });
+
+  draw();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

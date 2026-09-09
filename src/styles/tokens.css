@@ -1,0 +1,91 @@
+/* =========================================================================
+   SEVAKA HRIS — Design tokens (non-utility)
+   Port 1:1 dari _prototype/css/colors_and_type.css.
+   Nilai yang MENGHASILKAN utility Tailwind ada di `@theme` (index.css);
+   file ini menampung @font-face + token yang tidak punya utility
+   (gradient tombol, soft-press shadow, motion).
+   JANGAN menambah hex baru di sini tanpa update design system.
+   ========================================================================= */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Inter-VariableFont_opsz_wght.ttf') format('truetype-variations');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Inter-Italic-VariableFont_opsz_wght.ttf') format('truetype-variations');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-VariableFont_wght.ttf') format('truetype-variations');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: italic;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf') format('truetype-variations');
+}
+
+:root {
+  /* ---------- Elevation khusus (dipakai lewat class, bukan utility) ---------- */
+  --shadow-press:
+    inset 1px 1px 2px 0 rgba(255, 255, 255, 0.3),
+    inset -1px -2px 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 10px 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 2px 0 #026a9f,
+    inset 2px 2px 4px 0 rgba(17, 24, 39, 0.24);
+
+  /* ---------- Primary button (recessed glow) ---------- */
+  --shadow-primary:
+    inset 0 0 8px 0 #026a9f,
+    inset -1px -2px 2px 0 rgba(2, 106, 159, 0.24),
+    inset 1px 1px 2px 0 rgba(2, 106, 159, 0.24);
+  --bg-primary-btn: linear-gradient(0deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.16) 95.83%), #026a9f;
+  --shadow-primary-hover:
+    inset 0 0 8px 0 #026395,
+    inset -1px -2px 2px 0 rgba(2, 99, 149, 0.24),
+    inset 1px 1px 2px 0 rgba(2, 99, 149, 0.24);
+  --bg-primary-btn-hover: linear-gradient(0deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.16) 95.83%), #026395;
+  --shadow-primary-press:
+    inset 2px 2px 4px 0 rgba(0, 0, 0, 0.24),
+    inset 0 0 8px 0 #026395,
+    inset -1px -2px 2px 0 rgba(2, 99, 149, 0.24),
+    inset 1px 1px 2px 0 rgba(2, 99, 149, 0.24);
+  --bg-primary-btn-press: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 4.17%, rgba(255, 255, 255, 0) 100%), #026395;
+
+  /* ---------- Danger button ---------- */
+  --shadow-danger:
+    inset 0 0 8px 0 #bf3636,
+    inset -1px -2px 2px 0 rgba(191, 54, 54, 0.24),
+    inset 1px 1px 2px 0 rgba(191, 54, 54, 0.24);
+  --bg-danger-btn: linear-gradient(0deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.16) 95.83%), #bf3636;
+  --shadow-danger-hover:
+    inset 0 0 8px 0 #8f2929,
+    inset -1px -2px 2px 0 rgba(143, 41, 41, 0.24),
+    inset 1px 1px 2px 0 rgba(143, 41, 41, 0.24);
+  --bg-danger-btn-hover: linear-gradient(0deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.16) 95.83%), #8f2929;
+  --shadow-danger-press:
+    inset 2px 2px 4px 0 rgba(0, 0, 0, 0.24),
+    inset 0 0 8px 0 #8f2929,
+    inset -1px -2px 2px 0 rgba(143, 41, 41, 0.24),
+    inset 1px 1px 2px 0 rgba(143, 41, 41, 0.24);
+  --bg-danger-btn-press: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 4.17%, rgba(255, 255, 255, 0) 100%), #8f2929;
+
+  /* ---------- Scrim modal ---------- */
+  --bg-scrim: rgba(17, 24, 39, 0.22);
+  --blur-scrim: blur(8px) saturate(1.05);
+
+  /* ---------- Shell metrics ---------- */
+  --topnav-h: 64px;
+  --sidebar-w: 84px;
+}

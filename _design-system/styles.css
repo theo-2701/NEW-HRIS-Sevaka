@@ -1,0 +1,18 @@
+/* =========================================================================
+   SEVAKA HRIS — Design System entry point
+   -------------------------------------------------------------------------
+   One stylesheet to link. Pulls in the tokens + base type, then the
+   standardized component layers. Order matters: tokens first, then the
+   component standards that consume them.
+
+       <link rel="stylesheet" href="styles.css">
+
+   Layers
+     colors_and_type.css  tokens, type ramp, base elements, breadcrumb
+     form-standard.css     fields, choose-file, RP-money, action/add/remove buttons
+     table-standard.css    wide-table freeze-column pattern
+   ========================================================================= */
+
+@import "colors_and_type.css";
+@import "form-standard.css";
+@import "table-standard.css";

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Tax Simulation</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/payroll-processing.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/payroll-tax-simulation.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Tax Simulation">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="app__main app__main--wizard">
+      <div class="pp-shell">
+
+        <!-- ===================== PAGE HEADER ===================== -->
+        <header class="pp-head">
+          <h1 class="pp-head__title">Tax Simulation</h1>
+          <div class="pp-tabs" id="tsTabs">
+            <button class="tab-pill is-on" type="button" data-tstab="calculator">Salary Tax Calculator</button>
+            <button class="tab-pill" type="button" data-tstab="recalculate">Tax Recalculate</button>
+          </div>
+        </header>
+
+        <!-- ===================== SALARY TAX CALCULATOR ===================== -->
+        <div class="ts-view" data-tsview="calculator" data-screen-label="Salary Tax Calculator">
+          <section class="pp-panel">
+            <div class="ts-body">
+              <h2 class="ts-title">Salary Tax Calculator</h2>
+              <div class="ts-rule"></div>
+
+              <h3 class="ts-sec">Set Information</h3>
+
+              <div class="ts-stack">
+
+                <!-- Tax calculator method -->
+                <div class="ts-radioblock">
+                  <span class="ts-radioblock__label">Tax calculator</span>
+                  <div class="radio-row" id="tsMethod">
+                    <label class="radio"><input type="radio" name="tsMethod" value="ter" checked><span class="radio__dot"></span>TER (Tarif Efektif Rata-Rata)</label>
+                    <label class="radio"><input type="radio" name="tsMethod" value="nonter"><span class="radio__dot"></span>Non TER (Tarif Efektif Rata-Rata)</label>
+                  </div>
+                </div>
+
+                <!-- Join date (Non TER only) -->
+                <div class="fld ts-span2 is-hidden" id="tsJoinField">
+                  <label class="fld__label">Join date</label>
+                  <div class="ctl ctl--date" id="tsJoinDate">
+                    <input type="text" placeholder="Select months" readonly>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+
+                <!-- PTKP + Tax configuration -->
+                <div class="ts-grid">
+                  <div class="fld">
+                    <label class="fld__label">PTKP</label>
+                    <div class="ctl ctl--select" data-ts-select="ptkp">
+                      <span class="ctl__value">Select PTKP status</span>
+                      <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      <div class="dropdown"></div>
+                    </div>
+                  </div>
+                  <div class="fld">
+                    <label class="fld__label">Tax configuration</label>
+                    <div class="ctl ctl--select" data-ts-select="config">
+                      <span class="ctl__value">Select tax configuration</span>
+                      <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      <div class="dropdown"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Has NPWP -->
+                <label class="pp-check ts-check">
+                  <input type="checkbox" id="tsNpwp">
+                  <span class="pp-check__box"></span>
+                  Has NPWP
+                </label>
+
+                <!-- Money grid -->
+                <div class="ts-grid">
+                  <div class="ts-field">
+                    <span class="ts-field__label">Basic salary</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsBasic"></div>
+                  </div>
+                  <div class="ts-field">
+                    <span class="ts-field__label">Total allowance taxable</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsAlwTax"></div>
+                  </div>
+
+                  <div class="ts-field">
+                    <span class="ts-field__label">Total deduction taxable</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsDedTax"></div>
+                  </div>
+                  <div class="ts-field">
+                    <span class="ts-field__label">Total allowance non taxable</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsAlwNon"></div>
+                  </div>
+
+                  <div class="ts-field">
+                    <span class="ts-field__label">Total deduction non taxable</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsDedNon"></div>
+                  </div>
+                  <div class="ts-field">
+                    <span class="ts-field__label">THR</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsThr"></div>
+                  </div>
+
+                  <div class="ts-field">
+                    <span class="ts-field__label">Bonus</span>
+                    <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsBonus"></div>
+                  </div>
+                </div>
+
+                <div class="ts-rule ts-rule--lg"></div>
+
+                <!-- ===== BPJSTK ===== -->
+                <label class="pp-check ts-check">
+                  <input type="checkbox" id="tsHasTk">
+                  <span class="pp-check__box"></span>
+                  Has BPJSTK
+                </label>
+
+                <div class="ts-bpjs is-hidden" id="tsTkBlock">
+                  <div class="ts-info">
+                    <div class="ts-info__line">JHT: 3,7% by company &amp; 2% by employee</div>
+                    <div class="ts-info__line">JKM: 0,3%</div>
+                  </div>
+
+                  <div class="ts-grid">
+                    <div class="ts-field">
+                      <span class="ts-field__label">BPJS TK Rate</span>
+                      <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsTkRate"></div>
+                    </div>
+                    <div class="ts-field">
+                      <span class="ts-field__label">JKK Rate</span>
+                      <div class="radio-row ts-raterow" id="tsJkk">
+                        <label class="radio"><input type="radio" name="tsJkk" value="0.24"><span class="radio__dot"></span>0,24%</label>
+                        <label class="radio"><input type="radio" name="tsJkk" value="0.54"><span class="radio__dot"></span>0,54%</label>
+                        <label class="radio"><input type="radio" name="tsJkk" value="0.89"><span class="radio__dot"></span>0,89%</label>
+                        <label class="radio"><input type="radio" name="tsJkk" value="1.27"><span class="radio__dot"></span>1,27%</label>
+                        <label class="radio"><input type="radio" name="tsJkk" value="1.74"><span class="radio__dot"></span>1,74%</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ts-checkgroup">
+                    <label class="pp-check ts-check">
+                      <input type="checkbox" id="tsJhtCo">
+                      <span class="pp-check__box"></span>
+                      JHT by company
+                    </label>
+                    <div class="ts-checkrow">
+                      <label class="pp-check ts-check">
+                        <input type="checkbox" id="tsJp">
+                        <span class="pp-check__box"></span>
+                        2% by company &amp; 1% by employee
+                      </label>
+                      <p class="ts-checknote">Max for JP rate 11.086.300</p>
+                    </div>
+                    <label class="pp-check ts-check">
+                      <input type="checkbox" id="tsJpCo">
+                      <span class="pp-check__box"></span>
+                      JP by company
+                    </label>
+                  </div>
+                </div>
+
+                <div class="ts-rule ts-rule--lg"></div>
+
+                <!-- ===== BPJS Kesehatan ===== -->
+                <label class="pp-check ts-check">
+                  <input type="checkbox" id="tsHasKes">
+                  <span class="pp-check__box"></span>
+                  Has BPJS Kesehatan
+                </label>
+
+                <div class="ts-bpjs is-hidden" id="tsKesBlock">
+                  <div class="ts-info">
+                    <div class="ts-info__line">BPJS Kesehatan: 4% by company &amp; 1% by employee</div>
+                    <div class="ts-info__sub">Max for BPJS Kesehatan rate 12.000.000</div>
+                  </div>
+
+                  <div class="ts-grid">
+                    <div class="ts-field">
+                      <span class="ts-field__label">BPJS Kesehatan rate</span>
+                      <div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" inputmode="numeric" placeholder="0" data-money id="tsKesRate"></div>
+                    </div>
+                  </div>
+
+                  <div class="ts-checkgroup">
+                    <label class="pp-check ts-check">
+                      <input type="checkbox" id="tsKesCo">
+                      <span class="pp-check__box"></span>
+                      BPJS Kesehatan by company
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <footer class="ts-shellfoot" id="tsFoot">
+            <button class="btn btn--secondary" type="button" id="tsReset">Reset</button>
+            <button class="btn btn--primary" type="button" id="tsCalc">Calculate</button>
+          </footer>
+        </div>
+
+        <!-- ===================== TAX RECALCULATE ===================== -->
+        <div class="ts-view is-hidden" data-tsview="recalculate" data-screen-label="Tax Recalculate">
+          <section class="pp-panel tr-panel">
+            <div class="tr-body">
+              <h2 class="ts-title">Tax Recalculate</h2>
+              <div class="ts-rule"></div>
+
+              <!-- Period -->
+              <div class="tr-fieldlabel">Period</div>
+              <div class="tr-period">
+                <div class="ctl ctl--select" data-tr-select="month">
+                  <span class="ctl__value">Select month</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"></div>
+                </div>
+                <div class="ctl ctl--select" data-tr-select="year">
+                  <span class="ctl__value">Select year</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"></div>
+                </div>
+              </div>
+
+              <!-- DTP toggle -->
+              <label class="pp-check tr-dtp">
+                <input type="checkbox" id="trDtp">
+                <span class="pp-check__box"></span>
+                Recalculate for tax average DTP or forecast employee transfer DTP
+              </label>
+
+              <!-- Select employee -->
+              <h3 class="tr-sectitle">Select Employee to Recalculate</h3>
+              <div class="tr-selrow">
+                <button class="btn btn--secondary tr-selbtn" type="button" id="trSelectBtn">Select Employee</button>
+                <label class="pp-check">
+                  <input type="checkbox" id="trSelAll">
+                  <span class="pp-check__box"></span>
+                  Select all employee
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <footer class="ts-shellfoot">
+            <button class="btn btn--secondary" type="button" id="trReset">Reset</button>
+            <button class="btn btn--primary" type="button" id="trRecalc">Recalculate</button>
+          </footer>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===================== TAX CALCULATE RESULT MODAL ===================== -->
+<div class="modal-scrim" id="tcScrim" aria-hidden="true">
+  <div class="modal tc-modal" role="dialog" aria-modal="true" aria-labelledby="tcTitle">
+    <header class="tc-modal__head">
+      <h2 class="tc-modal__title" id="tcTitle">Tax Calculate</h2>
+      <button class="tc-modal__close" type="button" data-close-tc aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="tc-modal__body">
+      <!-- Salary -->
+      <div class="tc-row">
+        <span class="tc-row__label">Salary</span>
+        <span class="tc-row__val" id="tcSalary">IDR 0</span>
+      </div>
+      <div class="tc-line"></div>
+
+      <!-- Allowance -->
+      <div class="tc-group">
+        <h3 class="tc-grouptitle">Allowance</h3>
+        <div class="tc-row"><span class="tc-row__label">JHT by company</span><span class="tc-row__val" id="tcJhtCo">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">JP by company</span><span class="tc-row__val" id="tcJpCo">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">BPJS K by company</span><span class="tc-row__val" id="tcKesCo">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">THR</span><span class="tc-row__val" id="tcThr">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">Bonus</span><span class="tc-row__val" id="tcBonus">IDR 0</span></div>
+        <div class="tc-row tc-row--total"><span class="tc-row__label">Total allowance</span><span class="tc-row__val" id="tcTotalAlw">IDR 0</span></div>
+      </div>
+      <div class="tc-line"></div>
+
+      <!-- Deduction -->
+      <div class="tc-group">
+        <h3 class="tc-grouptitle">Deduction</h3>
+        <div class="tc-row"><span class="tc-row__label">JHT by employee</span><span class="tc-row__val" id="tcJhtEmp">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">JP by employee</span><span class="tc-row__val" id="tcJpEmp">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">BPJS K by employee</span><span class="tc-row__val" id="tcKesEmp">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">PPH 21 by employee</span><span class="tc-row__val" id="tcPph">IDR 0</span></div>
+        <div class="tc-row"><span class="tc-row__label">PPH 21 bonus by employee</span><span class="tc-row__val" id="tcPphBonus">IDR 0</span></div>
+        <div class="tc-row tc-row--total"><span class="tc-row__label">Total deduction</span><span class="tc-row__val" id="tcTotalDed">IDR 0</span></div>
+      </div>
+      <div class="tc-line tc-line--dashed"></div>
+    </div>
+
+    <footer class="tc-thp">
+      <span class="tc-thp__label">Take Home Pay</span>
+      <span class="tc-thp__val" id="tcThp">IDR 0</span>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== RESET CONFIRM MODAL ===================== -->
+<div class="modal-scrim" id="tsResetScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="tsResetTitle">
+    <button class="modal__close" type="button" data-close-reset aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="tsResetTitle">Reset Calculator?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">All values you entered will be cleared and the form returns to its default state. Do you want to continue?</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-reset>Cancel</button>
+      <button class="btn btn--primary" type="button" id="tsResetConfirm">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SELECT EMPLOYEE MODAL ===================== -->
+<div class="modal-scrim" id="trEmpScrim" aria-hidden="true">
+  <div class="modal ae-assign" role="dialog" aria-modal="true" aria-labelledby="trEmpTitle">
+    <header class="ae-assign__head">
+      <h2 class="ae-assign__title" id="trEmpTitle">Select Employee</h2>
+      <button class="pp-modal__close" type="button" data-tr-close-emp aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="ae-assign__body">
+      <!-- ===== LEFT COLUMN ===== -->
+      <div class="ae-assign__col">
+        <!-- LIST VIEW -->
+        <div class="ae-assign__pane is-active" data-trside="left" data-trpane="list">
+          <div class="ae-assign__colhead">
+            <h3>View <span id="trViewShown">0</span> of <span id="trViewTotal">0</span> employee(s)</h3>
+            <button class="ae-assign__link" type="button" id="trSelectAllLink">Select all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="trSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <button class="ae-assign__filterbtn" type="button" id="trOpenFilter">Filter</button>
+          </div>
+          <div class="ae-assign__list" id="trLeftList"></div>
+        </div>
+
+        <!-- FILTER VIEW -->
+        <div class="ae-assign__pane" data-trside="left" data-trpane="filter">
+          <div class="ae-filterhead">
+            <button class="ae-back" type="button" id="trBackToList">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+              Filter
+            </button>
+            <button class="ae-assign__link" type="button" id="trResetFilter">Reset Filter</button>
+          </div>
+          <div class="ae-filterscroll">
+            <div class="fld tr-filterfld">
+              <label class="fld__label">Branch</label>
+              <div class="ctl ctl--select" data-tr-filter="branch">
+                <span class="ctl__value">Select branch</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld tr-filterfld">
+              <label class="fld__label">Organization</label>
+              <div class="ctl ctl--select" data-tr-filter="org">
+                <span class="ctl__value">Select organization</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld tr-filterfld">
+              <label class="fld__label">Job Level</label>
+              <div class="ctl ctl--select" data-tr-filter="level">
+                <span class="ctl__value">Select job level</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld tr-filterfld">
+              <label class="fld__label">Job position</label>
+              <div class="ctl ctl--select" data-tr-filter="position">
+                <span class="ctl__value">Select job position</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld tr-filterfld">
+              <label class="fld__label">Employment status</label>
+              <div class="ctl ctl--select" data-tr-filter="status">
+                <span class="ctl__value">Select employment status</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <button class="ae-applyfilter tr-applyfilter" type="button" id="trApplyFilter">Apply Filter</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ae-assign__rule"></div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div class="ae-assign__col">
+        <!-- SELECTED VIEW -->
+        <div class="ae-assign__pane is-active" data-trside="right" data-trpane="selected">
+          <div class="ae-assign__colhead">
+            <h3><span id="trSelCount">0</span> employee(s) selected</h3>
+            <button class="ae-assign__link" type="button" id="trClearSelection">Clear selection</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="trSelSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+          </div>
+          <div class="ae-assign__list" id="trSelList"></div>
+        </div>
+
+        <!-- LIST MIRROR (shown while filtering) -->
+        <div class="ae-assign__pane" data-trside="right" data-trpane="list">
+          <div class="ae-assign__colhead">
+            <h3>View <span id="trViewShown2">0</span> of <span id="trViewTotal2">0</span> employee(s)</h3>
+            <button class="ae-assign__link" type="button" id="trSelectAllLink2">Select all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="trSearch2" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+          </div>
+          <div class="ae-assign__list" id="trRightList"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="ae-assign__foot">
+      <button class="btn btn--secondary" type="button" data-tr-close-emp>Cancel</button>
+      <button class="btn btn--primary" type="button" id="trEmpSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== RECALCULATE CONFIRM MODAL ===================== -->
+<div class="modal-scrim" id="trConfirmScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="trConfirmTitle">
+    <button class="modal__close" type="button" data-tr-close-confirm aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="trConfirmTitle">Recalculate Tax?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">Recalculating tax will update your Tax Detail Report. Do you want to continue?</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-tr-close-confirm>Cancel</button>
+      <button class="btn btn--primary" type="button" id="trConfirmContinue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="ts-toast" id="tsToast" aria-live="polite">
+  <span class="ts-toast__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+  <span id="tsToastMsg">Tax calculated.</span>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'payroll', activeItem: 'Tax simulation' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/payroll-tax-simulation.js"></script>
+
+</body>
+</html>

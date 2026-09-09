@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — On Call Activity</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=2">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — On Call Activity">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">On Call</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">On Call Activity</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">On Call Activity</h1>
+<p class="flow-sub">A filtered read over the same overtime rows as the Overtime menu — only those born automatically from attendance falling inside an approved standby window. Terminal screen: nothing here leads anywhere else.</p>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+<div class="note note--info"><i data-lucide="lock"></i><span>Read-only, with no manual add anywhere. A call-out that genuinely happened is recorded automatically from attendance — never typed by anyone. Approving or rejecting a call-out is not duplicated here either: that surface stays a single door in the Overtime menu.</span></div>
+<div class="fin-tbar" style="margin-top:14px">
+<button class="btn btn--secondary" id="fltBtn">Filter</button>
+<span class="cell-dim" id="fltSum" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltName" placeholder="Search employee"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Employee</th><th>Overtime Date</th><th>Category</th><th>Standby Window</th><th class="ta-r">Requested</th><th class="ta-r">Approved</th><th>Status</th><th>Extra Approval</th><th>Recorded</th></tr></thead>
+<tbody id="actBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgAct"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>A window that has never issued a call-out simply has no row here — not an empty one. The requested side is always blank: these rows are born automatically and never pass through a written request for hours. The approved side is copied from the window's ceiling and flows into the same overtime daily summary as a human request.</span></div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+<div class="ovl" id="actFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter call-out activity</h3><p class="ovl__desc">Only the fields the search contract accepts are offered here — including the standby-window filter that serves this menu.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld">
+<label class="fld__label">Standby window</label>
+<div class="ctl ctl--select" id="fltWindow"><span class="ctl__value">All standby windows</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltWindowDd"><div class="dropdown__opt is-sel" data-val="">All standby windows</div></div>
+</div>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Status</label>
+<div class="ctl ctl--select" id="fltStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="AUTO_APPROVED">Auto-approved</div><div class="dropdown__opt" data-val="APPROVED">Approved</div><div class="dropdown__opt" data-val="PENDING_APPROVAL">Pending approval</div><div class="dropdown__opt" data-val="REJECTED">Rejected</div><div class="dropdown__opt" data-val="CANCELLED">Cancelled</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Category</label>
+<div class="ctl ctl--select" id="fltCat"><span class="ctl__value">All categories</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All categories</div><div class="dropdown__opt" data-val="WORKDAY">Workday</div><div class="dropdown__opt" data-val="WEEKLY_REST">Weekly rest</div><div class="dropdown__opt" data-val="PUBLIC_HOLIDAY">Public holiday</div></div>
+</div>
+</div>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Overtime date from</label>
+<div class="ctl ctl--date"><input type="text" id="fltFrom" placeholder="DD MMM YYYY"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">Overtime date to</label>
+<div class="ctl ctl--date"><input type="text" id="fltTo" placeholder="DD MMM YYYY"><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="fmReset">Reset</button>
+<button class="btn btn--primary" data-close>Done</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-oncall-activity.js"></script>
+</body>
+</html>

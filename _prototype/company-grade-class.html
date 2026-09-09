@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Grade & Class</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/payroll-history.css">
+  <link rel="stylesheet" href="css/company.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Grade & Class">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Settings</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Company</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Grade &amp; Class</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Grade &amp; Class</h1>
+              <p class="flow-sub">One self-referencing table, two tiers. A <strong>Grade</strong> is a pay band (salary range optional); a <strong>Class</strong> sits under a parent Grade and its salary range is required.</p>
+            </div>
+            <div class="flow-head__actions">
+              <div class="co-addmenu" id="addMenu">
+                <button class="btn btn--primary" id="addBtn" type="button">Add grade<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="co-addmenu__pop">
+                  <button class="co-addmenu__item" type="button" data-add="single"><i data-lucide="plus"></i><span id="addSingleLbl">Add grade</span></button>
+                  <button class="co-addmenu__item" type="button" data-add="bulk"><i data-lucide="upload"></i>Add bulk (import)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="gcTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="grade">Grade<span class="tabnav__count" id="grCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="class">Class<span class="tabnav__count" id="clCount">0</span></button>
+          </div>
+
+          <div class="tabpanel is-on" data-tabpanel="grade">
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="grStatus" style="width:180px;height:40px">
+                  <span class="ctl__value">All statuses</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All statuses</div><div class="dropdown__opt">Active</div><div class="dropdown__opt">Inactive</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><div class="co-search"><i data-lucide="search"></i><input type="text" id="grSearch" placeholder="Search grade code / name"></div></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Grade Name</th><th>Code</th><th class="ta-r">Salary Range</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="grBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing"><span id="grShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize"><select id="grPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="grPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="grPageBox">1</span><span class="ph-pager__from" id="grPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="grNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabpanel" data-tabpanel="class">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>A Class always references a <strong>Parent Grade</strong> and <strong>requires</strong> a salary range where <code>to ≥ from</code> (Mandatory-by-Value).</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="clStatus" style="width:180px;height:40px">
+                  <span class="ctl__value">All statuses</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All statuses</div><div class="dropdown__opt">Active</div><div class="dropdown__opt">Inactive</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><div class="co-search"><i data-lucide="search"></i><input type="text" id="clSearch" placeholder="Search class code / name"></div></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Class Name</th><th>Code</th><th>Parent Grade</th><th class="ta-r">Salary Range</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="clBody"></tbody>
+            </table></div>
+            <div class="ph-foot">
+              <div class="ph-showing"><span id="clShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize"><select id="clPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="clPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="clPageBox">1</span><span class="ph-pager__from" id="clPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="clNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== EDIT (Grade or Class) ===== -->
+<div class="ovl" id="gcEdit"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="gcTitle">Add grade</h3><p class="ovl__desc">Maps to <code>mst_job_grade</code>. A parent grade turns this record into a Class.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="gcForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Name <span class="req">*</span></label><div class="ctl"><input type="text" id="gcName" maxlength="25" placeholder="e.g. G-3 Staff"></div></div>
+      <div class="fld"><label class="fld__label">Code <span class="req">*</span></label><div class="ctl"><input type="text" id="gcCode" maxlength="25" placeholder="e.g. G3"></div></div>
+    </div>
+    <div class="fld" id="gcParentFld"><label class="fld__label">Parent grade <span id="gcParentReq" class="req" style="display:none">*</span><span id="gcParentOpt" style="font-weight:500;color:var(--fg-4)"> (empty = this is a Grade)</span></label>
+      <div class="ctl ctl--select" id="gcParent"><span class="ctl__value" style="color:var(--fg-4)">None — this is a Grade</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt is-sel" data-val="">None — this is a Grade</div><div class="dropdown__opt" data-val="G1">G-1 Executive</div><div class="dropdown__opt" data-val="G2">G-2 Manager</div><div class="dropdown__opt" data-val="G3">G-3 Staff</div></div>
+      </div>
+      <span class="fld__hint is-hidden" id="gcParentLock" style="font:500 12px/1.4 var(--font-body);color:var(--color-error-600)">Because Parent Grade is set, this record is a Class — the parent cannot be changed after creation.</span>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Salary range from <span id="gcFromReq" class="req" style="display:none">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="gcFrom" placeholder="0"></div></div>
+      <div class="fld"><label class="fld__label">Salary range to <span id="gcToReq" class="req" style="display:none">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="gcTo" placeholder="0"></div></div>
+    </div>
+    <div class="note note--warn is-hidden" id="gcErr"><i data-lucide="triangle-alert"></i><span id="gcErrMsg">Salary range is required for a Class and <code>to</code> must be ≥ <code>from</code>.</span></div>
+    <div class="fld"><label class="fld__label">Status</label>
+      <label class="co-switch"><input type="checkbox" id="gcActive" checked><span class="co-switch__track"></span><span class="co-switch__label">Active — shown in grade dropdowns</span></label>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="gcSave">Save</button></div>
+</div></div>
+
+<!-- ===== BULK IMPORT ===== -->
+<div class="ovl" id="gcBulk"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Add bulk (import)</h3><p class="ovl__desc">Bulk-create grades &amp; classes from a spreadsheet via <code>POST /job-grades/import</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column">
+    <p class="import-step__sub" style="margin-top:0">Follow these steps to bulk-create grade &amp; class records in SEVAKA.</p>
+    <h4 class="import-tips__title">Download and complete the template</h4>
+    <p class="import-step__sub">To upload data accurately, use only the provided template customized for the SEVAKA system.</p>
+    <div class="import-file">
+      <span class="import-file__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+      <span class="import-file__name">Template_Bulk_Grade_Class.xlsx</span>
+      <button class="import-file__dl" type="button" id="gcTplLink" aria-label="Download template"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
+    </div>
+    <h4 class="import-tips__title">Few tips:</h4>
+    <ul class="import-tips__list">
+      <li>Follow the template guidelines to avoid upload errors.</li>
+      <li>A row with an empty parent code is created as a Grade; a row with a parent code becomes a Class (salary range required).</li>
+      <li>Rows with a duplicate active code are skipped and reported after upload.</li>
+    </ul>
+    <div class="import-upload-label">Upload spreadsheet <span class="req">*</span></div>
+    <label class="imp-upload" id="gcBulkBox">
+      <span class="imp-upload__btn">Choose File</span>
+      <span class="imp-upload__name" id="gcBulkName">No file selected</span>
+      <button class="imp-upload__clear is-hidden" type="button" id="gcBulkClear" aria-label="Remove file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <input type="file" accept=".xlsx,.csv" hidden id="gcBulkInput">
+    </label>
+    <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3);margin-top:6px">File must be in XLSX format with a maximum size of 5 MB.</span>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="gcBulkSave">Import records</button></div>
+</div></div>
+
+<!-- ===== DELETE ===== -->
+<div class="ovl" id="delConfirm"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:440px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Delete record</h3><p class="ovl__desc">Soft-delete — hidden from the grid but kept for audit.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <p class="co-muted" id="delMsg" style="padding:4px 0">Are you sure?</p>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="delConfirmBtn">Delete</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company', activeItem: 'Grade & Class' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/company-grade-class.js"></script>
+</body>
+</html>

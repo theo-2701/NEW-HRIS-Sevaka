@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — My Submissions</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="My Submissions">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Forms &amp; Survey</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">My Submissions</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">My Submissions</h1>
+<p class="flow-sub">Forms aimed at you, and your own answers. Owner-only throughout — <strong>including against HR</strong>: nobody else may edit what you wrote.</p>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="sec-head" style="margin-top:4px">
+<span class="sec-head__t">Forms available to me</span><span class="sec-head__c" id="msCount">0</span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note">Anonymous forms are deliberately absent from this list — they are filled from the note below. A closed form reappears here only if HR opened a window for you.</span>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Form</th><th>Obligation</th><th>Due</th><th>My status</th><th>Submitted</th><th></th></tr></thead>
+<tbody id="msBody"></tbody>
+</table>
+</div>
+
+<div class="note note--warn" style="margin-top:18px"><i data-lucide="triangle-alert"></i>
+<span><strong>Worth knowing.</strong> A per-section form only reaches you through the company position tree — an employee with no structural position never sees one in this list. That is architecture, not a missing row.</span></div>
+
+<div class="sec-head" style="margin-top:26px"><span class="sec-head__t">Filling an anonymous form</span><span class="subtabs__sp"></span><span class="sec-head__note">Kept apart from the list on purpose.</span></div>
+<div class="card" style="padding:20px;margin-top:10px">
+<div style="display:flex;flex-direction:column;gap:14px">
+<p style="font:500 13px/1.6 var(--font-body);color:var(--fg-2);margin:0;max-width:760px">An anonymous form never appears as a row above, because "my status" cannot exist for it — the system deliberately keeps no link between you and the answer. You open it, answer, and submit; after that the answer is beyond reach, yours included.</p>
+<div class="note note--danger"><i data-lucide="alert-triangle"></i><span><strong>Read before you submit: it cannot be edited afterwards.</strong> Editing an anonymous submission is always refused — there is no owner to check against.</span></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="user-x"></i>Open anonymous form</div>
+<div class="pv-row"><span class="pv-row__k" id="anTitle">Survei Anonim Kepuasan Fasilitas Kantor</span><span class="pv-row__v"><button class="rowbtn" type="button" id="anOpen">Fill in</button></span></div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ EDIT MY ANSWERS ============ -->
+<div class="ovl" id="msEdit">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="meTitle">My answers</h3><p class="ovl__desc">Question wording comes from the frozen copy stored with your answer — not from today's form definition.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div id="meBody" style="display:flex;flex-direction:column;gap:16px"></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="history"></i>Edit trail</div>
+<div id="meHist"></div>
+</div>
+<div class="note note--info"><i data-lucide="shield"></i><span>Only items that genuinely changed are written; an identical value writes no history at all, and <code>submitted_at</code> never moves. HR has no edit button for this record — by contract, not by convention.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="meSave">Save changes</button>
+</div>
+</div>
+</div>
+
+<!-- ============ ANONYMOUS FILL ============ -->
+<div class="ovl" id="msAnon">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="maTitle">Anonymous form</h3><p class="ovl__desc">Your identity is not stored against these answers, and they cannot be edited once sent.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--warn"><i data-lucide="alert-triangle"></i><span>Submitting is final — an anonymous answer has no owner to authorise a later edit.</span></div>
+<div id="maBody" style="display:flex;flex-direction:column;gap:16px"></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="maSend">Submit anonymously</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0001', roles:['ROLE_EMPLOYEE'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-my-submissions.js"></script>
+</body>
+</html>

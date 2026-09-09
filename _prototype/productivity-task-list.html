@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Task List (Group for Payroll)</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Task List">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Group for Payroll</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Task List</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Task List</h1>
+<p class="flow-sub">Maps a work <strong>category</strong> to a paid work group — paid-ness is attached to the category, never ticked task by task. HR writes; everyone with productivity access reads.</p>
+</div>
+<div class="flow-head__actions">
+<div class="pv-persona"><span class="pv-persona__lbl">Acting as</span>
+<span class="seg" id="tlPersona">
+<button class="seg__btn is-on" type="button" data-persona="HESTI">Hesti · HR</button>
+<button class="seg__btn" type="button" data-persona="DEDI">Dedi · Employee</button>
+</span></div>
+<button class="btn btn--primary" id="tlNewBtn">Map category</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tbar">
+<span class="seg" id="tlState">
+<button class="seg__btn is-on" type="button" data-st="active">Active</button>
+<button class="seg__btn" type="button" data-st="inactive">Inactive</button>
+<button class="seg__btn" type="button" data-st="all">All</button>
+</span>
+<button class="btn btn--secondary" type="button" data-filter-open="tlFilter">Filter</button>
+<span class="sec-head__note" data-filter-sum="tlFilter">No filter applied</span>
+<span class="tbar__sp"></span>
+<label class="tbar__srch"><i data-lucide="search"></i><input type="search" id="tlSrch" placeholder="Search category or paid work group"></label>
+</div>
+<div class="sec-head" style="margin-top:12px">
+<span class="sec-head__t" id="tlTitle">Active mappings</span><span class="sec-head__c" id="tlCount">0</span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note" id="tlNote">One active mapping per category — the uniqueness gate enforces it.</span>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Category</th><th>Paid work group</th><th>Status</th><th>Created</th><th></th></tr></thead>
+<tbody id="tlBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgTl"></div>
+
+<div class="note note--info" style="margin-top:18px"><i data-lucide="info"></i>
+<span><strong>Unmapped categories are absent on purpose.</strong> A category with no active mapping — <em>Rapat &amp; Koordinasi</em>, for instance — is not rendered as an empty row. Hours logged under it freeze with a null paid-group snapshot: recorded, reported, never handed to payroll. Fail-closed by design.</span></div>
+<div class="note note--warn" style="margin-top:12px"><i data-lucide="route"></i>
+<span><strong>Moving a category takes two steps.</strong> The foreign keys of an existing row can never be swapped — deactivate the old mapping, then create a new one. That is what keeps the historic paid-group snapshot on already-recorded hours meaningful.</span></div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ FILTER ============ -->
+<div class="ovl" id="tlFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter mappings</h3><p class="ovl__desc">Narrow the grid by paid work group, or change the sort order. Free-text search lives above the table.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Paid work group</label><div class="ctl ctl--select" id="tfGrp"><span class="ctl__value">All groups</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfGrpDD"></div></div></div>
+<div class="fld"><label class="fld__label">Sort by</label><div class="ctl ctl--select" id="tfSort" data-nosum><span class="ctl__value">created_at (default)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tfSortDD"><div class="dropdown__opt" data-val="created_at">created_at (default)</div><div class="dropdown__opt" data-val="category">Category name</div><div class="dropdown__opt" data-val="group">Paid work group</div></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="tfClear">Clear</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<!-- ============ MAP FORM ============ -->
+<div class="ovl" id="tlForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Map a category</h3><p class="ovl__desc">Both fields are required. Only active paid work groups are offered.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger" id="tlGate" style="display:none"><i data-lucide="octagon-alert"></i><span><strong>422 PROD_MAPPING_CATEGORY_ALREADY_ACTIVE</strong><br><span id="tlGateMsg"></span></span></div>
+<div class="fld"><label class="fld__label">Work category <span class="req">*</span></label><div class="ctl ctl--select" id="tlCat"><span class="ctl__value" style="color:var(--fg-4)">Select category</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tlCatDD"></div></div></div>
+<div class="fld"><label class="fld__label">Paid work group <span class="req">*</span></label><div class="ctl ctl--select" id="tlGrp"><span class="ctl__value" style="color:var(--fg-4)">Select group</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="tlGrpDD"></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="tlSave" disabled>Save mapping</button>
+</div>
+</div>
+</div>
+
+<!-- ============ DEACTIVATE ============ -->
+<div class="ovl" id="tlOff">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Deactivate mapping</h3><p class="ovl__desc">Not a delete — the row survives forever so historic paid hours keep pointing at something real.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="unlink"></i>Mapping</div>
+<div class="pv-row"><span class="pv-row__k">Category</span><span class="pv-row__v" id="offCat">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Paid work group</span><span class="pv-row__v" id="offGrp">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Effect on recorded hours</span><span class="pv-row__v">None — intentionally</span></div>
+<div class="pv-row"><span class="pv-row__k">Effect on new hours</span><span class="pv-row__v">Freeze as null until remapped</span></div>
+</div>
+<div class="fld"><label class="fld__label">Reason <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+<div class="ctl ctl--area"><textarea id="offReason" rows="2" placeholder="e.g. Kategori dipindah ke Kelompok Berbayar — Lapangan"></textarea></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="offConfirm">Deactivate</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0003', roles:['ROLE_EMPLOYEE','ROLE_HR_MANAGER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-task-list.js"></script>
+</body>
+</html>

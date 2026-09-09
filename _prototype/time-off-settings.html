@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Time Off Settings</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=1">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — Time Off Settings">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Off</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Settings</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Time Off Settings</h1>
+<p class="flow-sub">The three rule sets a leave request is measured against: the catalogue of leave types, the accrual policy that grants entitlement month by month, and the blackout periods that hold requests back. Statutory leave types are seeded by the system and are immune to both blackout modes.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newTypeBtn">New leave type</button>
+<button class="btn btn--primary is-hidden" id="newPolicyBtn">New accrual policy</button>
+<button class="btn btn--primary is-hidden" id="newBlackoutBtn">New blackout period</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="setTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="types">Leave Type<span class="tabnav__count" id="cntType">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="accrual">Accrual Policy<span class="tabnav__count" id="cntPol">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="blackout">Blackout Period<span class="tabnav__count" id="cntBo">0</span></button>
+</div>
+
+<!-- ===== B2 — leave type ===== -->
+<div class="tabpanel is-on" data-tabpanel="types">
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltTActive"><span class="ctl__value">All states</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All states</div><div class="dropdown__opt" data-val="1">Active only</div><div class="dropdown__opt" data-val="0">Inactive only</div></div>
+</div>
+<div class="ctl ctl--select fin-tbar__sel" id="fltTStat"><span class="ctl__value">All origins</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All origins</div><div class="dropdown__opt" data-val="1">Statutory</div><div class="dropdown__opt" data-val="0">Tenant-defined</div></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltTQ" placeholder="Search code or name"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Code</th><th>Leave Name</th><th>Flags</th><th class="ta-r">Min Advance</th><th>Origin</th><th></th></tr></thead>
+<tbody id="typeBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgType"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>The six flags are independent, never flattened into one label. <strong>Unpaid and deducts balance together is refused</strong> — charging both the entitlement and the salary for the same day is paying twice. Retiring a type from new use is the <strong>Active</strong> flag, not delete: a statutory type cannot be deleted at all, and any type still referenced by a policy, a request or a ledger row is refused too.</span></div>
+</div>
+
+<!-- ===== D2 — accrual policy ===== -->
+<div class="tabpanel" data-tabpanel="accrual">
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltPType"><span class="ctl__value">All leave types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltPTypeDd"></div>
+</div>
+<div class="ctl ctl--select fin-tbar__sel" id="fltPElig"><span class="ctl__value">Entitled and not</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">Entitled and not</div><div class="dropdown__opt" data-val="1">Entitled only</div><div class="dropdown__opt" data-val="0">Not entitled only</div></div>
+</div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Leave Type</th><th>Employment Type</th><th>Entitled</th><th class="ta-r">Rate / Month</th><th class="ta-r">Balance Cap</th><th>Carry-Over</th><th>Effective From</th><th>Effective Until</th><th></th></tr></thead>
+<tbody id="polBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgPol"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>A running policy is never edited into a new shape — it is <strong>ended</strong> with an end date and replaced by a new row. The monthly accrual process only reads rows whose end date is empty or still covers the current month, so the ended row stops being used from the following month while everything it already granted stays untouched.</span></div>
+</div>
+
+<!-- ===== F2 — blackout ===== -->
+<div class="tabpanel" data-tabpanel="blackout">
+<div class="note note--warn"><i data-lucide="shield-check"></i><span>Statutory leave types — Cuti Tahunan and Sakit in this tenant — are <strong>immune to both modes</strong>. That check runs at the submit gate in Time Off Request, not on this screen.</span></div>
+<div class="fin-tbar" style="margin-top:14px">
+<div class="ctl ctl--select fin-tbar__sel" id="fltBMode"><span class="ctl__value">All modes</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All modes</div><div class="dropdown__opt" data-val="HARD">Machine-rejected</div><div class="dropdown__opt" data-val="SOFT">Extra approval</div></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltBQ" placeholder="Search period name"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Period Name</th><th>Dates</th><th>Mode</th><th>Scope</th><th>Reason</th><th></th></tr></thead>
+<tbody id="boBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgBo"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>Both dates are mandatory — a period without an end date would be a permanent ban, deliberately not allowed. Where two periods overlap, <strong>machine-rejected wins</strong> over extra-approval.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ B3 / C3 — leave type form ============ -->
+<div class="ovl" id="typeForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="tfTitle">New leave type</h3><p class="ovl__desc">A saved type becomes selectable on the request form immediately, as long as its Active flag is on.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="tfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="note note--warn is-hidden" id="tfStatBanner"><i data-lucide="shield-check"></i><span>This is a <strong>statutory</strong> leave type, seeded by the system to satisfy labour law. Its statutory standing and its code cannot be changed here, and the row cannot be deleted — retire it from new use with the Active flag instead. The other flags and the advance notice remain editable.</span></div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Leave code <span class="req">*</span></label>
+<div class="ctl" id="tfCodeCtl"><input type="text" id="tfCode" placeholder="e.g. CUTI-TAHUNAN" maxlength="30"></div>
+<span class="fld__hint" id="tfCodeHint">2–30 characters, capitals and digits, hyphen allowed. Unique among active rows.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Leave name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="tfName" placeholder="Input text here" maxlength="150"></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Flags <span class="req">*</span></label>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 24px">
+<label class="fchk"><input type="checkbox" id="tfPaid"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Paid</span></label>
+<label class="fchk"><input type="checkbox" id="tfBalance"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Deducts balance</span></label>
+<label class="fchk"><input type="checkbox" id="tfDoc"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Document required</span></label>
+<label class="fchk"><input type="checkbox" id="tfApproval"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Maker–checker (unticked = auto-approve)</span></label>
+<label class="fchk"><input type="checkbox" id="tfExtra"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Can raise an extra approval layer</span></label>
+<label class="fchk"><input type="checkbox" id="tfActive" checked><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Active</span></label>
+</div>
+<span class="fld__hint">Six independent flags. Unpaid + deducts balance is a refused combination.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Minimum advance days <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="tfAdvance" value="0" min="0" step="1"></div>
+<span class="fld__hint">Whole number ≥ 0 — the minimum lead time before the start date.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Statutory</label>
+<div class="ctl ctl--ro"><input type="text" id="tfStatutory" value="No" readonly tabindex="-1"></div>
+<span class="fld__hint">Read-only. Only born from system provisioning and never changeable afterwards.</span>
+</div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="tfSave">Save leave type</button>
+</div>
+</div>
+</div>
+
+<!-- ============ D3 — accrual policy form ============ -->
+<div class="ovl" id="polForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New accrual policy</h3><p class="ovl__desc">One live policy per leave type × employment type — overlapping date ranges on the same pair are refused.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="pfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Leave type <span class="req">*</span></label>
+<div class="ctl ctl--select" id="pfType"><span class="ctl__value" style="color:var(--fg-4)">Select leave type</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="pfTypeDd"></div>
+</div>
+<span class="fld__hint">Only types that deduct balance appear — a type without entitlement needs no policy.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Employment type <span class="req">*</span></label>
+<div class="ctl ctl--select" id="pfWork"><span class="ctl__value">Tetap</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="Tetap">Tetap</div></div>
+</div>
+<span class="fld__hint">The catalogue belongs to the personnel service; this tenant currently exposes one value.</span>
+</div>
+</div>
+<label class="fchk"><input type="checkbox" id="pfEligible"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Entitled to accrual — off by default; a new employee group must be switched on explicitly.</span></label>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Rate per month <span class="req" id="pfRateStar" style="display:none">*</span></label>
+<div class="ctl"><input type="number" id="pfRate" step="0.25" min="0" placeholder="e.g. 1.00" disabled></div>
+<span class="fld__hint">Mandatory when entitled, must be empty when not.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Balance cap</label>
+<div class="ctl"><input type="number" id="pfCap" step="1" min="1" placeholder="Leave empty for no ceiling"></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Carry-over policy <span class="req">*</span></label>
+<div class="ctl ctl--select" id="pfCarry"><span class="ctl__value">Forfeit</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="FORFEIT">Forfeit — the remainder lapses at year end</div><div class="dropdown__opt" data-val="CARRY_CAPPED">Carry capped — a limited number of days rolls over</div><div class="dropdown__opt" data-val="CARRY_FULL">Carry full — the whole remainder rolls over</div></div>
+</div>
+</div>
+<div class="item__grid is-hidden" id="pfCarryWrap">
+<div class="fld">
+<label class="fld__label">Maximum days carried <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="pfCarryMax" step="1" min="1" placeholder="e.g. 6"></div>
+</div>
+<div class="fld">
+<label class="fld__label">Carry-over expiry <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="pfCarryExp" placeholder="MM-DD, e.g. 03-31" maxlength="5"></div>
+<span class="fld__hint">Month and day only — the deadline the carried days expire on.</span>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Effective from <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="pfFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="pfSave">Save policy</button>
+</div>
+</div>
+</div>
+
+<!-- ============ E3 — end a policy ============ -->
+<div class="ovl" id="polEnd">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">End this accrual policy</h3><p class="ovl__desc">Filling in the end date is the only legitimate way to stop a policy — editing the rate or the cap on a running row is not.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="peKv"></div>
+<div class="fld">
+<label class="fld__label">Effective until <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="peUntil" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+<span class="fld__hint">Must be on or after the start date. The accrual process stops reading this row from the following month.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="peSave">End policy</button>
+</div>
+</div>
+</div>
+
+<!-- ============ F3 — blackout form ============ -->
+<div class="ovl" id="boForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="bfTitle">New blackout period</h3><p class="ovl__desc">The period name is what an employee reads as the reason their request was held or refused — write a sentence, not a label.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="bfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Period name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="bfName" placeholder="Input text here" maxlength="150"></div>
+</div>
+<div class="fld">
+<label class="fld__label">Reason</label>
+<div class="ctl ctl--area"><textarea id="bfReason" rows="2" placeholder="Input text here" maxlength="300"></textarea></div>
+<span class="fld__hint">Optional; 5–300 characters when filled.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Start date <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="bfStart" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">End date <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="bfEnd" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+<span class="fld__hint">Mandatory — an open-ended period would be a permanent ban.</span>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Mode <span class="req">*</span></label>
+<div class="ctl ctl--select" id="bfMode"><span class="ctl__value">Machine-rejected</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="HARD">Machine-rejected — the request is refused at the submit gate and no row is ever created</div><div class="dropdown__opt" data-val="SOFT">Extra approval — the request goes through but must clear an additional layer</div></div>
+</div>
+</div>
+<label class="fchk"><input type="checkbox" id="bfScoped"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Limit to one organisational unit</span></label>
+<div class="fld is-hidden" id="bfScopeWrap">
+<label class="fld__label">Unit <span class="req">*</span></label>
+<div class="ctl ctl--select" id="bfScope"><span class="ctl__value" style="color:var(--fg-4)">Select unit</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="bfScopeDd"></div>
+</div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="bfSave">Save blackout period</button>
+</div>
+</div>
+</div>
+
+<!-- ============ generic delete ============ -->
+<div class="ovl" id="setDelete">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="sdTitle">Delete this row?</h3><p class="ovl__desc" id="sdDesc">Soft delete.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="sdKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep it</button>
+<button class="btn btn--danger" id="sdConfirm">Delete</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-off-settings.js"></script>
+</body>
+</html>

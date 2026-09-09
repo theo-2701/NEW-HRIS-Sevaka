@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — New Joiner</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    .nj-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nj-tab { border: none; background: var(--color-mist); cursor: pointer; height: 30px; padding: 0 13px; border-radius: 999px; font: 700 12px/1 var(--font-body); color: var(--fg-3); display: inline-flex; align-items: center; gap: 7px; transition: all var(--duration-2) var(--ease-standard); }
+    .nj-tab.is-on { background: var(--color-secondary-700); color: #fff; }
+    .nj-tab__n { font-weight: 700; opacity: .7; }
+    .nj-tab.is-on .nj-tab__n { opacity: 1; }
+    .nj-form .ctl--date > input { pointer-events: auto; }
+    .nj-branch { border: 1px dashed var(--border-2, #cbd5e1); border-radius: 10px; padding: 15px; background: var(--color-mist); }
+  </style>
+</head>
+<body data-screen-label="New Joiner">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">New Joiner</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">New Joiner</h1>
+              <p class="flow-sub">Submit a candidate against a position, approve through a checker, then materialise into an employee when the contract is signed. Approval reserves the seat until it expires.</p>
+            </div>
+            <div class="flow-head__actions">
+              <button class="btn btn--primary" id="newCandBtn">Add candidate</button>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+        <div class="kpi" style="margin-top:4px">
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="inbox"></i>In pipeline</span><span class="kpi__value" id="kpiPipeline">4</span><span class="kpi__foot">Submitted &amp; in approval</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="badge-check"></i>Approved · awaiting sign</span><span class="kpi__value" id="kpiApproved">2</span><span class="kpi__foot">Seat reserved until expiry</span></div>
+          <div class="kpi__tile kpi__tile--success"><span class="kpi__label"><i data-lucide="user-round-check"></i>Materialised (30d)</span><span class="kpi__value" id="kpiMat">3</span><span class="kpi__foot">Now employees in WAITING</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="hourglass"></i>Expiring in 7d</span><span class="kpi__value">1</span><span class="kpi__foot">Sign contract to keep seat</span></div>
+        </div>
+
+        <div class="sec-head" style="margin-top:22px">
+          <span class="sec-head__t">Candidates</span>
+          <span class="sec-head__sp"></span>
+          <div class="nj-tabs" id="njTabs"></div>
+        </div>
+
+        <div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:12px">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th>Candidate</th><th>Position</th><th>Nationality</th>
+                <th>Intended join</th><th>Status</th><th>Maker</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="njBody"></tbody>
+          </table>
+        </div>
+        <div class="ph-foot" id="pgNj"></div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ NJ-CREATE ============ -->
+<div class="ovl" id="njCreate">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Add candidate</h3><p class="ovl__desc">You are the maker. Identity fields depend on nationality. Saving stores the candidate as a DRAFT.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <form class="nj-form" id="njForm" autocomplete="off" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="fld">
+          <label class="fld__label">Position <span class="req">*</span></label>
+          <div class="ctl ctl--select" id="njPos"><span class="ctl__value" style="color:var(--fg-4)">Select open position</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown">
+              <div class="dropdown__opt">Backend Engineer — Engineering HQ</div>
+              <div class="dropdown__opt">Staff Finance — BR-Papua</div>
+              <div class="dropdown__opt">HRBP — People Ops HQ</div>
+              <div class="dropdown__opt">Sales Executive — BR-Surabaya</div>
+            </div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Requisition <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+          <div class="ctl ctl--select" id="njReq"><span class="ctl__value" style="color:var(--fg-4)">Vacant (no requisition)</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown">
+              <div class="dropdown__opt">Vacant (no requisition)</div>
+              <div class="dropdown__opt">REQ-0230 — Engineering HQ</div>
+              <div class="dropdown__opt">REQ-0231 — Finance BR-Papua</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fld">
+        <label class="fld__label">Candidate name <span class="req">*</span></label>
+        <div class="ctl"><input type="text" id="njName" maxlength="150" placeholder="Full legal name"></div>
+      </div>
+
+      <div class="fld">
+        <label class="fld__label">Nationality <span class="req">*</span></label>
+        <div class="radio-branch">
+          <label class="rb is-on" data-nat="CITIZEN"><span class="rb__dot"></span><span><span class="rb__t">Citizen (WNI)</span><span class="rb__d">Requires 16-digit KTP</span></span></label>
+          <label class="rb" data-nat="FOREIGNER"><span class="rb__dot"></span><span><span class="rb__t">Foreigner (WNA)</span><span class="rb__d">Requires passport number</span></span></label>
+        </div>
+      </div>
+
+      <div class="nj-branch" id="branchCitizen">
+        <div class="fld" style="margin:0">
+          <label class="fld__label">KTP number <span class="req">*</span></label>
+          <div class="ctl"><input type="text" id="njKtp" inputmode="numeric" maxlength="16" placeholder="16 digits"></div>
+          <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)"><span id="ktpCount">0</span>/16 digits · sent as transient (never persisted raw)</span>
+        </div>
+      </div>
+      <div class="nj-branch is-hidden" id="branchForeigner">
+        <div class="fld" style="margin:0">
+          <label class="fld__label">Passport number <span class="req">*</span></label>
+          <div class="ctl"><input type="text" id="njPass" maxlength="15" placeholder="e.g. A1234567" style="text-transform:uppercase"></div>
+          <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">6–15 chars, letters &amp; digits only.</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="fld">
+          <label class="fld__label">Candidate email <span class="req">*</span></label>
+          <div class="ctl"><input type="email" id="njEmail" placeholder="name@email.com"></div>
+          <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">For the account invitation.</span>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Intended join date <span class="req">*</span></label>
+          <div class="ctl ctl--date"><input type="date" id="njJoin">
+            <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+          <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Today or later.</span>
+        </div>
+      </div>
+    </form>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--secondary" id="njSubmit" disabled>Save as draft</button>
+      <button class="btn btn--primary" id="njSubmitNow" disabled>Save &amp; submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NJ-APPROVE ============ -->
+<div class="ovl" id="njApprove">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Review candidate</h3><p class="ovl__desc">Approving reserves the seat and auto-rejects rival candidates on the same position.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="njApproveKv"></div>
+    <div class="note note--warn" id="njSibNote"><i data-lucide="users"></i><span></span></div>
+    <div class="fld">
+      <label class="fld__label">Checker note <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+      <div class="ctl ctl--area"><textarea id="njApproveNote" rows="2" maxlength="150" placeholder="Recorded with the decision"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--danger" id="njRejectBtn">Reject</button>
+      <button class="btn btn--primary" id="njApproveBtn">Approve &amp; reserve seat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NJ-MATERIALIZE ============ -->
+<div class="ovl" id="njMat">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Materialise — contract signed</h3><p class="ovl__desc">Creates the global identity and writes work data. The candidate becomes an employee in WAITING.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="njMatKv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="fld">
+        <label class="fld__label">Join date <span class="req">*</span></label>
+        <div class="ctl ctl--date nj-form"><input type="date" id="njMatDate">
+          <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Job grade <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="njMatGrade"><span class="ctl__value" style="color:var(--fg-4)">Select job grade</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt">Class II-C · Pelaksana</div>
+            <div class="dropdown__opt">Class III-A · Staff</div>
+            <div class="dropdown__opt">Class III-B · Staff</div>
+            <div class="dropdown__opt">Class IV-A · Specialist</div>
+            <div class="dropdown__opt">Class V-A · Supervisor</div>
+          </div>
+        </div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Class-level row only — written to emp_work_detail.job_grade_id.</span>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Signed contract <span class="req">*</span></label>
+        <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name" id="njMatFileName">No file selected</span><input type="file" hidden id="njMatFile"></label>
+      </div>
+    </div>
+    <div class="note note--info"><i data-lucide="shield-check"></i><span>An idempotency key is sent so a retried submit cannot create a duplicate employee.</span></div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="njMatBtn" disabled>Materialise employee</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'New Joiner' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/new-joiner.js"></script>
+<script src="js/kpi-status.js"></script>
+</body>
+</html>

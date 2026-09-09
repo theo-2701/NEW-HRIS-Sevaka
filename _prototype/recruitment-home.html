@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA Recruitment — Home</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/recruitment.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Recruitment — Home">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <h1 class="rc-page-title">Home</h1>
+
+        <section class="rc-card">
+          <div class="rc-sec">
+            <span class="rc-sec__title">Upcoming Interviews <span class="rc-info"><i data-lucide="info"></i></span></span>
+            <div class="rc-seg" id="ivSeg" data-screen-label="Upcoming Interviews filter">
+              <button class="rc-seg__btn is-on" type="button" data-range="today">Today</button>
+              <button class="rc-seg__btn" type="button" data-range="week">This Week</button>
+            </div>
+          </div>
+
+          <!-- ===== Today ===== -->
+          <div class="rc-daygroup" data-day="today">
+            <div class="rc-daygroup__head">
+              <span class="rc-daygroup__label">Today</span>
+              <span class="rc-daygroup__date">Tue, 29 Jul 2026</span>
+              <span class="rc-daygroup__count">3 interviews</span>
+            </div>
+            <div class="rc-iv-list">
+
+              <div class="rc-iv rc-iv--now">
+                <div class="rc-iv__time"><span class="rc-iv__hh">09:30</span><span class="rc-iv__dur">45 min</span></div>
+                <div class="rc-iv__who">
+                  <span class="rc-avatar" style="background:#0284c7">AW</span>
+                  <span class="rc-iv__names"><span class="rc-iv__name">Arif Wibowo</span><span class="rc-iv__role">Backend Engineer</span></span>
+                </div>
+                <div class="rc-iv__stage"><span class="sb sb--blue"><span class="sb__dot"></span>Technical</span></div>
+                <div class="rc-iv__mode"><i data-lucide="video"></i>Google Meet</div>
+                <div class="rc-iv__panel">
+                  <div class="rc-iv__interviewers rc-stack">
+                    <span class="rc-avatar" style="background:#6ba23f" title="Tony Stark">TS</span>
+                    <span class="rc-avatar" style="background:#d97706" title="Rina D.">RD</span>
+                  </div>
+                  <button class="rc-ivbtn rc-ivbtn--primary" type="button">Join</button>
+                </div>
+              </div>
+
+              <div class="rc-iv">
+                <div class="rc-iv__time"><span class="rc-iv__hh">11:00</span><span class="rc-iv__dur">30 min</span></div>
+                <div class="rc-iv__who">
+                  <span class="rc-avatar" style="background:#7c3aed">SP</span>
+                  <span class="rc-iv__names"><span class="rc-iv__name">Salsabila Putri</span><span class="rc-iv__role">UI/UX Designer</span></span>
+                </div>
+                <div class="rc-iv__stage"><span class="sb sb--amber"><span class="sb__dot"></span>HR Screening</span></div>
+                <div class="rc-iv__mode"><i data-lucide="map-pin"></i>Meeting Room 3</div>
+                <div class="rc-iv__panel">
+                  <div class="rc-iv__interviewers rc-stack">
+                    <span class="rc-avatar" style="background:#0e9488" title="Maya L.">ML</span>
+                  </div>
+                  <button class="rc-ivbtn rc-ivbtn--secondary" type="button">View Detail</button>
+                </div>
+              </div>
+
+              <div class="rc-iv">
+                <div class="rc-iv__time"><span class="rc-iv__hh">14:00</span><span class="rc-iv__dur">60 min</span></div>
+                <div class="rc-iv__who">
+                  <span class="rc-avatar" style="background:#0e4a73">RF</span>
+                  <span class="rc-iv__names"><span class="rc-iv__name">Reza Fahlevi</span><span class="rc-iv__role">Sales Executive</span></span>
+                </div>
+                <div class="rc-iv__stage"><span class="sb sb--green"><span class="sb__dot"></span>Final</span></div>
+                <div class="rc-iv__mode"><i data-lucide="video"></i>Zoom</div>
+                <div class="rc-iv__panel">
+                  <div class="rc-iv__interviewers rc-stack">
+                    <span class="rc-avatar" style="background:#6ba23f" title="Tony Stark">TS</span>
+                    <span class="rc-avatar" style="background:#0284c7" title="Budi H.">BH</span>
+                    <span class="rc-stack__more">+1</span>
+                  </div>
+                  <button class="rc-ivbtn rc-ivbtn--secondary" type="button">View Detail</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ===== Tomorrow (This Week) ===== -->
+          <div class="rc-daygroup" data-day="week" hidden>
+            <div class="rc-daygroup__head">
+              <span class="rc-daygroup__label">Tomorrow</span>
+              <span class="rc-daygroup__date">Wed, 30 Jul 2026</span>
+              <span class="rc-daygroup__count">2 interviews</span>
+            </div>
+            <div class="rc-iv-list">
+
+              <div class="rc-iv">
+                <div class="rc-iv__time"><span class="rc-iv__hh">10:00</span><span class="rc-iv__dur">45 min</span></div>
+                <div class="rc-iv__who">
+                  <span class="rc-avatar" style="background:#be123c">DM</span>
+                  <span class="rc-iv__names"><span class="rc-iv__name">Dinda Maharani</span><span class="rc-iv__role">Product Manager</span></span>
+                </div>
+                <div class="rc-iv__stage"><span class="sb sb--indigo"><span class="sb__dot"></span>Panel</span></div>
+                <div class="rc-iv__mode"><i data-lucide="map-pin"></i>HQ · Level 8</div>
+                <div class="rc-iv__panel">
+                  <div class="rc-iv__interviewers rc-stack">
+                    <span class="rc-avatar" style="background:#6ba23f" title="Tony Stark">TS</span>
+                    <span class="rc-avatar" style="background:#d97706" title="Rina D.">RD</span>
+                    <span class="rc-stack__more">+2</span>
+                  </div>
+                  <button class="rc-ivbtn rc-ivbtn--secondary" type="button">View Detail</button>
+                </div>
+              </div>
+
+              <div class="rc-iv">
+                <div class="rc-iv__time"><span class="rc-iv__hh">13:30</span><span class="rc-iv__dur">30 min</span></div>
+                <div class="rc-iv__who">
+                  <span class="rc-avatar" style="background:#0284c7">BS</span>
+                  <span class="rc-iv__names"><span class="rc-iv__name">Bagus Santoso</span><span class="rc-iv__role">DevOps Engineer</span></span>
+                </div>
+                <div class="rc-iv__stage"><span class="sb sb--blue"><span class="sb__dot"></span>Technical</span></div>
+                <div class="rc-iv__mode"><i data-lucide="video"></i>Google Meet</div>
+                <div class="rc-iv__panel">
+                  <div class="rc-iv__interviewers rc-stack">
+                    <span class="rc-avatar" style="background:#0e4a73" title="Andi P.">AP</span>
+                    <span class="rc-avatar" style="background:#0e9488" title="Maya L.">ML</span>
+                  </div>
+                  <button class="rc-ivbtn rc-ivbtn--secondary" type="button">View Detail</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ===== Candidates Overview ===== -->
+          <div class="rc-overview">
+            <div class="rc-overview__head">
+              <span class="rc-overview__title">Candidates Overview</span>
+              <a class="rc-overview__link" href="#" onclick="event.preventDefault()">View details</a>
+            </div>
+            <div class="rc-overview__grid">
+              <div class="rc-stat">
+                <span class="rc-stat__label">New candidates <span class="rc-info"><i data-lucide="info"></i></span></span>
+                <span class="rc-stat__val"><i data-lucide="users"></i>10</span>
+              </div>
+              <div class="rc-stat">
+                <span class="rc-stat__label">Unscheduled interview <span class="rc-info"><i data-lucide="info"></i></span></span>
+                <span class="rc-stat__val"><i data-lucide="users"></i>77</span>
+              </div>
+              <div class="rc-stat">
+                <span class="rc-stat__label">Unresponsive offering <span class="rc-info"><i data-lucide="info"></i></span></span>
+                <span class="rc-stat__val"><i data-lucide="users"></i>3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== Job Openings Overview ===== -->
+          <div class="rc-overview">
+            <div class="rc-overview__head">
+              <span class="rc-overview__title">Job Openings Overview</span>
+              <a class="rc-overview__link" href="recruitment-job-listings.html">View details</a>
+            </div>
+            <div class="rc-overview__grid">
+              <div class="rc-stat">
+                <span class="rc-stat__label">Closing date <span class="rc-info"><i data-lucide="info"></i></span></span>
+                <span class="rc-stat__val"><i data-lucide="briefcase"></i>10</span>
+              </div>
+              <div class="rc-stat">
+                <span class="rc-stat__label">In draft <span class="rc-info"><i data-lucide="info"></i></span></span>
+                <span class="rc-stat__val"><i data-lucide="briefcase"></i>77</span>
+              </div>
+              <div class="rc-stat">
+                <span class="rc-stat__label">Low performance <span class="rc-info"><i data-lucide="info"></i></span></span>
+                <span class="rc-stat__val"><i data-lucide="briefcase"></i>3</span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.RC_PAGE = { active: 'home' };</script>
+<script src="js/recruitment-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+  // Upcoming-interviews range toggle: Today shows only today; This Week adds the rest.
+  (function () {
+    var seg = document.getElementById('ivSeg');
+    if (!seg) return;
+    var week = document.querySelector('.rc-daygroup[data-day="week"]');
+    seg.querySelectorAll('.rc-seg__btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        seg.querySelectorAll('.rc-seg__btn').forEach(function (x) { x.classList.remove('is-on'); });
+        b.classList.add('is-on');
+        if (week) week.hidden = b.getAttribute('data-range') !== 'week';
+      });
+    });
+  })();
+</script>
+</body>
+</html>

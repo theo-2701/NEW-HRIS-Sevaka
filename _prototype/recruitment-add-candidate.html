@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Recruitment — Add Candidate</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<link rel="stylesheet" href="css/recruitment-create.css">
+<link rel="stylesheet" href="css/recruitment-detail.css">
+<link rel="stylesheet" href="css/recruitment-candidate.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Recruitment — Add Candidate">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body rc-body">
+<aside class="rc-sidebar" id="rcSidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="rc-card">
+<div class="ac-head">
+<div>
+<a class="crumb" href="recruitment-job-listing-detail.html">Senior Backend Engineer</a>
+<h1 class="rc-detail-title">Add Candidate</h1>
+</div>
+<button class="ac-guide" type="button" id="acGuide"><i data-lucide="circle-help"></i>Guidebook</button>
+</div>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Job application</h2>
+<div class="ac-grid">
+<div class="cj-fld"><label class="cj-fld__label">Applied job position <span class="req">*</span></label><div class="ctl ctl--select cj-locked" aria-disabled="true"><span class="ctl__value">Senior Backend Engineer</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Hiring stage <span class="req">*</span></label><div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select hiring stage</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><button class="dropdown__opt" type="button">New candidates</button><button class="dropdown__opt" type="button">Screening</button><button class="dropdown__opt" type="button">Interview</button><button class="dropdown__opt" type="button">Assessment</button><button class="dropdown__opt" type="button">Offering</button></div></div></div>
+</div>
+<div class="ac-note">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+<div>
+<span class="ac-note__title">Application submission policy</span>
+<p class="ac-note__text">To ensure a fair and efficient review process, candidates are limited to one application for this specific job listing. If candidates have already applied for this position, they will be eligible to submit a new application after a period of 6 months.</p>
+</div>
+</div>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Personal information</h2>
+<div class="ac-grid">
+<div class="cj-fld"><label class="cj-fld__label">First name <span class="req">*</span></label><div class="ctl"><input type="text" placeholder="e.g john"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Last name <span class="req">*</span></label><div class="ctl"><input type="text" placeholder="e.g calvin"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Email address <span class="req">*</span></label><div class="ctl"><input type="email" placeholder="you@example.com"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Phone number <span class="req">*</span></label><div class="ctl ac-phone"><span class="ac-phone__cc">+62</span><input type="tel" placeholder="800 0000-0000"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Place of birth <span class="req">*</span></label><div class="ctl"><input type="text" placeholder="e.g Jakarta"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Date of birth <span class="req">*</span></label><div class="ctl ctl--date"><input type="text" placeholder="Select date of birth" readonly data-date><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Gender</label><div class="ac-radios"><label class="ac-radio"><input type="radio" name="acGender" checked><span class="ac-radio__dot"></span>Male</label><label class="ac-radio"><input type="radio" name="acGender"><span class="ac-radio__dot"></span>Female</label></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Marital status</label><div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select marital status</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><button class="dropdown__opt" type="button">Single</button><button class="dropdown__opt" type="button">Married</button><button class="dropdown__opt" type="button">Divorced</button><button class="dropdown__opt" type="button">Widowed</button></div></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Blood type</label><div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select blood type</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><button class="dropdown__opt" type="button">A</button><button class="dropdown__opt" type="button">B</button><button class="dropdown__opt" type="button">AB</button><button class="dropdown__opt" type="button">O</button><button class="dropdown__opt" type="button">Other</button></div></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Religion</label><div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select religion</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><button class="dropdown__opt" type="button">Islam</button><button class="dropdown__opt" type="button">Catholicism</button><button class="dropdown__opt" type="button">Protestantism</button><button class="dropdown__opt" type="button">Hinduism</button><button class="dropdown__opt" type="button">Buddhism</button><button class="dropdown__opt" type="button">Confucianism</button><button class="dropdown__opt" type="button">Other</button></div></div></div>
+</div>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Identity &amp; address</h2>
+<div class="ac-grid">
+<div class="cj-fld ac-full"><label class="cj-fld__label">NIK (NPWP 16 digits) <span class="req">*</span></label><div class="ctl"><input type="text" inputmode="numeric" placeholder="00.000.000.0-000.000"></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Citizen ID address <span class="req">*</span></label><div class="ctl ctl--area"><textarea rows="3" id="acCitizenAddr" placeholder="Input your citizen ID address here"></textarea></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Residential address <span class="req">*</span></label><div class="ctl ctl--area"><textarea rows="3" id="acResAddr" placeholder="Input your residential address here"></textarea></div>
+<label class="cj-inline-check" style="margin-top:6px"><span class="checkbox"><input type="checkbox" id="acSameAddr"><span class="checkbox__box"></span></span>Same as citizen ID address</label></div>
+</div>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Formal education</h2>
+<div class="ac-list" id="acFormalList"></div>
+<p class="ac-empty" id="acFormalEmpty">No formal education yet</p>
+<button class="add-filter" type="button" data-add="formal"><i data-lucide="circle-plus"></i>Add Formal Education</button>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Informal education</h2>
+<div class="ac-list" id="acInformalList"></div>
+<p class="ac-empty" id="acInformalEmpty">No informal education yet</p>
+<button class="add-filter" type="button" data-add="informal"><i data-lucide="circle-plus"></i>Add Informal Education</button>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Work experience</h2>
+<div class="ac-list" id="acWorkList"></div>
+<p class="ac-empty" id="acWorkEmpty">No work experience yet</p>
+<button class="add-filter" type="button" data-add="work"><i data-lucide="circle-plus"></i>Add Work Experience</button>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Compensation</h2>
+<div class="ac-grid">
+<div class="cj-fld"><label class="cj-fld__label">Current salary per month <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" placeholder="0"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Expected salary per month <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">IDR</span><input type="text" placeholder="0"></div></div>
+</div>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Please upload these documents</h2>
+<p class="ac-sec__desc">Upload a profile picture (PNG, JPG, JPEG), a portfolio, and a resume (PNG, JPG, JPEG, PDF). Each file must not exceed 10 MB</p>
+<div class="ac-upload">
+<div class="cj-fld"><label class="cj-fld__label">Profile picture <span class="req">*</span></label><label class="file-ctl"><span class="file-ctl__btn">CHOOSE FILE</span><span class="file-ctl__name">No file selected</span><input type="file" accept="image/*" hidden></label></div>
+<div class="cj-fld"><label class="cj-fld__label">Portfolio <span class="req">*</span></label>
+<div class="ac-radios" style="min-height:30px"><label class="ac-radio"><input type="radio" name="acPortfolio" value="file" checked><span class="ac-radio__dot"></span>File upload</label><label class="ac-radio"><input type="radio" name="acPortfolio" value="link"><span class="ac-radio__dot"></span>Online portfolio</label></div>
+<label class="file-ctl" id="acPortFile"><span class="file-ctl__btn">CHOOSE FILE</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label>
+<div class="ctl" id="acPortLink" hidden><input type="url" placeholder="Input link here"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Resume <span class="req">*</span></label><label class="file-ctl"><span class="file-ctl__btn">CHOOSE FILE</span><span class="file-ctl__name">No file selected</span><input type="file" hidden></label></div>
+</div>
+</section>
+
+<section class="ac-sec">
+<h2 class="ac-sec__title">Additional notes</h2>
+<div class="cj-fld"><label class="cj-fld__label">Applied job position</label><div class="ctl ctl--area"><textarea rows="4" placeholder="Input text here"></textarea></div></div>
+</section>
+
+<div class="ac-foot">
+<label class="cj-inline-check" style="margin-top:0"><span class="checkbox"><input type="checkbox" id="acAnother"><span class="checkbox__box"></span></span>Add another candidate</label>
+<div class="ac-foot__right"><a class="btn btn--secondary" href="recruitment-job-listing-detail.html">Cancel</a><button class="btn btn--primary" type="button" id="acSave">Save</button></div>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</div>
+
+<!-- ===== Add Formal Education ===== -->
+<div class="ovl ovl--form" id="mAcFormal"><div class="ovl__scrim" data-close></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head"><div><h3 class="ovl__title" data-title-add="Add Formal Education" data-title-edit="Edit Formal Education">Add Formal Education</h3></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+<div class="ac-grid" style="padding:20px 24px" data-form="formal">
+<div class="cj-fld ac-full"><label class="cj-fld__label">Institution name <span class="req">*</span></label><div class="ctl"><input type="text" data-f="institution" placeholder="Input institution name here"></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Degree <span class="req">*</span></label><div class="ctl ctl--select" data-f="degree"><span class="ctl__value" style="color:var(--fg-4)">Select degree</span><svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><button class="dropdown__opt" type="button">Elementary School</button><button class="dropdown__opt" type="button">Junior High School</button><button class="dropdown__opt" type="button">Senior High School</button><button class="dropdown__opt" type="button">Diploma 1 (D1)</button><button class="dropdown__opt" type="button">Diploma 3 (D3)</button><button class="dropdown__opt" type="button">Diploma 4 (D4)</button><button class="dropdown__opt" type="button">Bachelor Degree (S1)</button><button class="dropdown__opt" type="button">Master Degree (S2)</button><button class="dropdown__opt" type="button">Doctoral Degree (S3)</button></div></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Field of study</label><div class="ctl"><input type="text" data-f="field" placeholder="Input field of study here"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Start year <span class="req">*</span></label><div class="ctl ctl--select ac-yr" data-f="startYear" data-years><span class="ctl__value" style="color:var(--fg-4)">Select start year</span><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div class="dropdown"></div></div></div>
+<div class="cj-fld"><label class="cj-fld__label">End year (or expected) <span class="req">*</span></label><div class="ctl ctl--select ac-yr" data-f="endYear" data-years><span class="ctl__value" style="color:var(--fg-4)">Select end year</span><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div class="dropdown"></div></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Grade</label><div class="ctl"><input type="text" data-f="grade" placeholder="Input grade here"></div></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" type="button" data-save="formal">Save</button></div>
+</div></div>
+
+<!-- ===== Add Informal Education ===== -->
+<div class="ovl ovl--form" id="mAcInformal"><div class="ovl__scrim" data-close></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head"><div><h3 class="ovl__title" data-title-add="Add Informal Education" data-title-edit="Edit Informal Education">Add Informal Education</h3></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+<div class="ac-grid" style="padding:20px 24px" data-form="informal">
+<div class="cj-fld ac-full"><label class="cj-fld__label">Name <span class="req">*</span></label><div class="ctl"><input type="text" data-f="name" placeholder="Input informal education name here"></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Issuing organization <span class="req">*</span></label><div class="ctl"><input type="text" data-f="org" placeholder="Input issuing organization here"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Issue date <span class="req">*</span></label><div class="ctl ctl--date"><input type="text" data-f="issueDate" placeholder="Select issue date" readonly data-date><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Expiration date <span class="req">*</span></label><div class="ctl ctl--date"><input type="text" data-f="expDate" placeholder="Select expiration date" readonly data-date><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Duration</label><div class="ctl ac-dur"><input type="number" min="0" data-f="duration" placeholder="0"><div class="ctl--select ac-dur__unit" data-f="durationUnit"><span class="ctl__value">Day(s)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><div class="dropdown"><button class="dropdown__opt is-sel" type="button">Day(s)</button><button class="dropdown__opt" type="button">Week(s)</button><button class="dropdown__opt" type="button">Month(s)</button><button class="dropdown__opt" type="button">Hour(s)</button></div></div></div></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" type="button" data-save="informal">Save</button></div>
+</div></div>
+
+<!-- ===== Add Work Experience ===== -->
+<div class="ovl ovl--form" id="mAcWork"><div class="ovl__scrim" data-close></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head"><div><h3 class="ovl__title" data-title-add="Add Work Experience" data-title-edit="Edit Work Experience">Add Work Experience</h3></div><button class="ovl__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button></div>
+<div class="ac-grid" style="padding:20px 24px" data-form="work">
+<div class="cj-fld ac-full"><label class="cj-fld__label">Job position <span class="req">*</span></label><div class="ctl"><input type="text" data-f="position" placeholder="Input job position name here"></div></div>
+<div class="cj-fld ac-full"><label class="cj-fld__label">Company name <span class="req">*</span></label><div class="ctl"><input type="text" data-f="company" placeholder="Input company name here"></div></div>
+<div class="cj-fld"><label class="cj-fld__label">Start date <span class="req">*</span></label><div class="ctl ctl--date"><input type="text" data-f="startDate" placeholder="Select start date" readonly data-date><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<div class="cj-fld"><label class="cj-fld__label">End date <span class="req">*</span></label><div class="ctl ctl--date"><input type="text" data-f="endDate" placeholder="Select end date" readonly data-date><svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<label class="cj-inline-check ac-full" style="margin-top:0"><span class="checkbox"><input type="checkbox" data-f="current"><span class="checkbox__box"></span></span>I'm currently working here</label>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close type="button">Cancel</button><button class="btn btn--primary" type="button" data-save="work">Save</button></div>
+</div></div>
+
+<script>window.RC_PAGE = { active: 'jobs' };</script>
+<script src="js/recruitment-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/recruitment-candidate.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Document Category Settings</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-modals.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Document Category Settings" data-doc-page="categories">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Company Management</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Files</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Category Settings</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">Document Category Settings</h1>
+                <p class="flow-sub">Two levers decide how open every document in a category is: the category markers, and the category → reader-role map. Both end at <strong>one</strong> second-hands gate and <strong>one</strong> <code>has_pending_change</code> flag — two proposals on the same category cannot coexist (<code>409</code>).</p>
+              </div>
+              <div class="flow-head__actions"><button class="btn btn--primary" id="ctNew">New category</button></div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="doc-note doc-note--gap" style="margin-bottom:18px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>PROB-SERVICE-407 — HIGH, OPEN</div>
+              <p>This sub-module has <strong>no menu row anywhere</strong>. It is complete as a contract but was never discussed as a screen surface; inventing a menu row is forbidden (G5) — where it lives is the principal’s decision. The screen is reachable in this prototype only.</p>
+            </div>
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="ctInactive" style="width:280px;height:40px">
+                <span class="ctl__value">Active categories only</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt is-sel" data-val="false">Active categories only</div><div class="dropdown__opt" data-val="true">Include deactivated categories</div></div>
+              </div>
+              <span class="doc-fsum"><code>include_inactive</code> — a visibility flag, the only query parameter this address takes.</span>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Category</th><th>Origin</th><th>Class</th><th>Retention</th><th>Max Size</th><th>Allowed MIME</th><th>Self-Service</th><th>Pending</th><th class="ta-r"></th></tr></thead>
+              <tbody id="ctBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="ctFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="git-compare-arrows"></i>Tightening and loosening are two different stories</div>
+              <p><strong>Tightening</strong> (deactivate, shorten access, narrow readers) takes effect immediately: <code>200</code>, plus one <code>log_document_category_change</code> row per moved attribute. <strong>Loosening</strong> (e.g. shortening retention, widening readers) only <em>gives birth to a proposal</em>: the response still carries the <strong>values in force</strong>, <code>has_pending_change=true</code>, and a second attempt is <code>409</code>. Flattening them into one branching form would violate G3.</p>
+            </div>
+            <div class="doc-note doc-note--gap" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>PROB-SECURITY-092 — OPEN</div>
+              <p><code>acknowledged_impact_count</code> is sent by the client and the server does not recount it at save time. It is a consistency proof between two reads, not a witness statement.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== S2 · CREATE CATEGORY (A6b) ===== -->
+<div class="ovl" id="ctCreate"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title">New category</h3><p class="ovl__desc"><code>POST /document-categories</code> — ROLE_HR_MANAGER, <strong>no second pair of hands</strong>: a brand-new category holds zero documents.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Category code <span class="req">*</span></label><div class="ctl"><input type="text" id="ccCode" placeholder="e.g. berkas_serah_terima_aset"></div><p class="fld__hint">Immutable once created. A duplicate is <code>409</code>.</p></div>
+      <div class="fld"><label class="fld__label">Category name <span class="req">*</span></label><div class="ctl"><input type="text" id="ccName" placeholder="e.g. Berkas Serah Terima Aset"></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Max file size <span class="req">*</span></label><div class="ctl"><input type="text" id="ccSize" value="5" inputmode="numeric"><span class="cell-dim" style="padding-right:12px">MB</span></div><p class="fld__hint">Ceiling 25 MB.</p></div>
+      <div class="fld"><label class="fld__label">Allowed file types <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="ccMime"><span class="ctl__value">application/pdf</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt is-sel" data-val="application/pdf">application/pdf</div><div class="dropdown__opt" data-val="application/pdf, image/jpeg, image/png">application/pdf, image/jpeg, image/png</div></div>
+        </div>
+        <p class="fld__hint">Required. <code>image/svg+xml</code> and compressed archives are rejected.</p></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Retention regime <span class="req">*</span></label>
+        <div class="radio-row" id="ccRegime"><label class="radio"><input type="radio" name="ccRegime" value="TEMPORARY" checked><span class="radio__dot"></span>TEMPORARY</label><label class="radio"><input type="radio" name="ccRegime" value="PERMANENT"><span class="radio__dot"></span>PERMANENT</label></div>
+      </div>
+      <div class="fld" id="ccDaysFld"><label class="fld__label">Retention days <span class="req">*</span></label><div class="ctl"><input type="text" id="ccDays" value="730" inputmode="numeric"></div><p class="fld__hint">Required when TEMPORARY, forbidden when PERMANENT.</p></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Replaceable</label><label class="co-switch"><input type="checkbox" id="ccRepl"><span class="co-switch__track"></span><span class="co-switch__label">A new version may replace the file</span></label></div>
+      <div class="fld"><label class="fld__label">Regenerable</label><label class="co-switch"><input type="checkbox" id="ccRegen"><span class="co-switch__track"></span><span class="co-switch__label">The system may re-create the file</span></label></div>
+    </div>
+    <div class="fld"><label class="fld__label">Shown in self-service</label><label class="co-switch"><input type="checkbox" id="ccSelf" checked><span class="co-switch__track"></span><span class="co-switch__label">Listed on the employee’s own Files screen</span></label></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="slash"></i>Five fields deliberately not accepted</div>
+      <p><code>category_origin</code> · <code>confidentiality_class</code> · <code>is_active</code> · <code>id</code> · <code>has_pending_change</code> — sending any of them returns a named-field <code>422</code>. The constraint forces <code>category_origin=PERUSAHAAN</code> and <code>confidentiality_class=BIASA</code> for anything created here; <code>INDUK</code> categories are seeded, never born from an address.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="ccSave">Create category</button></div>
+</div></div>
+
+<!-- ===== S3 · TIGHTEN (A6c, immediate) ===== -->
+<div class="ovl" id="ctTighten"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="ttTitle">Tighten category</h3><p class="ovl__desc"><code>PUT /document-categories/{category-id}</code> — a tightening direction takes effect the moment it is saved. No second pair of hands.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Active</label><label class="co-switch"><input type="checkbox" id="ttActive"><span class="co-switch__track"></span><span class="co-switch__label" id="ttActiveLabel">Deactivate this category</span></label>
+      <p class="fld__hint">Deactivating <strong>replaces delete</strong> — Document Service has no Delete (<code>DOC-37</code>). The row leaves the default list; the toggle above the grid brings it back into view.</p></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="arrow-down-narrow-wide"></i>Other directions that also tighten</div>
+      <p>Lengthening retention, shrinking max size, narrowing allowed MIME types, hiding from self-service, removing a reader role. All of them land on the same immediate path: <code>200</code> + one log row per moved attribute + event <code>KATEGORI_DIUBAH</code>.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="ttSave">Apply now</button></div>
+</div></div>
+
+<!-- ===== S4 · LOOSEN (A6c, proposal) ===== -->
+<div class="ovl" id="ctLoosen"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="tlTitle">Loosen category — raises a proposal</h3><p class="ovl__desc">Same address, different story. The answer is <code>200</code> (never <code>201</code>) and it carries the values <strong>still in force</strong>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Retention days in force</label><div class="ctl"><input type="text" id="tlCurrent" disabled></div></div>
+      <div class="fld"><label class="fld__label">Proposed retention days <span class="req">*</span></label><div class="ctl"><input type="text" id="tlDays" value="730" inputmode="numeric"></div><p class="fld__hint">Shortening the retention loosens the category.</p></div>
+    </div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="calculator"></i>Impact — safeguard 1 of 3</div>
+      <p>Documents affected: <strong id="tlImpact">0</strong>. The server computed this number; the proposer sends it back as <code>acknowledged_impact_count</code>. The approver sees it again and it must be <strong>identical</strong> (safeguard 3). Omitting it when a loosening attribute is present is a <code>422</code>.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="tlSave">Raise proposal</button></div>
+</div></div>
+
+<!-- ===== S5 · SECOND-HANDS DECISION (A6d) ===== -->
+<div class="ovl" id="ctDecide"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Decide on proposal</h3><p class="ovl__desc"><code>POST /document-categories/{category-id}/approve</code> — ROLE_SUPER_ADMIN only, and a different <strong>person</strong> from the proposer. Signed in as Rina Amelia · NIK 20210715.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="cdKv"></div>
+    <div class="fld"><label class="fld__label">Decision <span class="req">*</span></label>
+      <div class="radio-row" id="cdDecision"><label class="radio"><input type="radio" name="cdDecision" value="SETUJU" checked><span class="radio__dot"></span>SETUJU</label><label class="radio"><input type="radio" name="cdDecision" value="TOLAK"><span class="radio__dot"></span>TOLAK</label></div>
+    </div>
+    <div class="fld" id="cdReasonFld" style="display:none"><label class="fld__label">Rejection reason <span class="req">*</span></label><div class="ctl ctl--area"><textarea id="cdReason" rows="3" placeholder="e.g. masa simpan 3 tahun terlalu pendek untuk surat keputusan"></textarea></div>
+      <p class="fld__hint">Echoed back in the response, then gone — nothing is stored.</p></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="check-check"></i>What each branch does</div>
+      <p><strong>SETUJU</strong>: the values are applied, one <code>log_document_category_change</code> row per attribute (<code>created_by</code>=proposer, <code>approved_by</code>=approver), event <code>KATEGORI_DIUBAH</code>, flag cleared. <strong>TOLAK</strong>: the proposal is thrown away and the flag is cleared — zero rows born. Zero Kafka, zero workflow engine.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button><button class="btn btn--primary" id="cdSubmit">Submit decision</button></div>
+</div></div>
+
+<!-- ===== S6 · READER ROLES (A7) ===== -->
+<div class="ovl" id="ctReaders"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="crTitle">Reader roles</h3><p class="ovl__desc"><code>PUT /document-categories/{category-id}/readers</code> — the <strong>whole list is replaced</strong>, never added to or removed from one by one.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="doc-roles" id="crRoles"></div>
+    <div id="crGuard"></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="calculator"></i>Impact</div>
+      <p>Documents affected: <strong id="crImpact">0</strong> — sent back as <code>acknowledged_impact_count</code>. The proposal is gated by the same <code>A6d</code> door, and the flag sits on the <strong>category</strong> row. Nothing in <code>map_document_category_reader</code> moves until the approval lands.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="crSave">Replace reader list</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true, activeGroup:'Document — no menu row yet', activeItem:'Category Settings' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-categories.js"></script>
+</body>
+</html>

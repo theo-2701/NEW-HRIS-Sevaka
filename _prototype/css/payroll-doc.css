@@ -1,0 +1,49 @@
+/* SEVAKA HRIS — Payroll (document version) page extras. Everything else comes from the house layers. */
+.pd-card{background:var(--color-white);border:1px solid #EAECF0;border-radius:10px;box-shadow:var(--shadow-card-sm);padding:18px 20px;margin-top:16px}
+.pd-card__head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+.pd-card__t{font:700 15px/1.3 var(--font-display);color:var(--fg-1)}
+.pd-card__s{font:500 12px/1.55 var(--font-body);color:var(--fg-3);margin-top:3px}
+.pd-acts{display:flex;gap:8px;flex-wrap:wrap}
+.pd-grid{display:grid;gap:14px}
+.pd-grid--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pd-grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pd-grid--4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pd-stat{border:1px solid var(--color-vapor);border-radius:10px;padding:12px 14px;background:var(--color-mist)}
+.pd-stat__k{font:700 10px/1.2 var(--font-body);letter-spacing:.02em;text-transform:uppercase;color:var(--fg-3)}
+.pd-stat__v{font:700 20px/1.2 var(--font-display);color:var(--fg-1);margin-top:6px}
+.pd-stat__n{font:500 11.5px/1.5 var(--font-body);color:var(--fg-3);margin-top:4px}
+.pd-gate{display:inline-flex;align-items:center;gap:5px;font:600 12px/1 var(--font-body)}
+.pd-gate svg{width:15px;height:15px}
+.pd-gate--ok{color:#047857}
+.pd-gate--no{color:var(--fg-4)}
+.pd-gates{display:flex;gap:12px;flex-wrap:wrap}
+.pd-tl__i{display:grid;grid-template-columns:170px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid var(--color-vapor)}
+.pd-tl__i:last-child{border-bottom:none}
+.pd-tl__d{font:500 12px/1.5 var(--font-body);color:var(--fg-3)}
+.pd-tl__b{font:600 13px/1.5 var(--font-body);color:var(--fg-1)}
+.pd-tl__r{font:500 12.5px/1.55 var(--font-body);color:var(--fg-2);margin-top:3px}
+.pd-check{display:flex;flex-direction:column;gap:10px;margin:2px 0 6px}
+.pd-check__i{display:flex;gap:10px;align-items:flex-start;font:500 13px/1.5 var(--font-body);color:var(--fg-2)}
+.pd-check__i svg{width:17px;height:17px;flex:none;margin-top:1px}
+.pd-check__i--ok svg{color:var(--color-success-500)}
+.pd-check__i--no svg{color:var(--color-error-500)}
+.pd-slip{border:1px solid #EAECF0;border-radius:12px;overflow:hidden;background:var(--color-white)}
+.pd-slip__head{padding:18px 20px;background:var(--color-primary-50,#F3FAFD);border-bottom:1px solid #EAECF0}
+.pd-slip__grp{padding:14px 20px;border-bottom:1px solid var(--color-vapor)}
+.pd-slip__gt{font:700 10px/1.2 var(--font-body);letter-spacing:.02em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px}
+.pd-slip__row{display:grid;grid-template-columns:1fr 160px;gap:12px;padding:7px 0;align-items:baseline}
+.pd-slip__nm{font:600 13px/1.5 var(--font-body);color:var(--fg-1)}
+.pd-slip__cz{display:block;font:400 11.5px/1.5 var(--font-body);color:var(--fg-3)}
+.pd-slip__am{text-align:right;font:600 13.5px/1.4 var(--font-body);color:var(--fg-1)}
+.pd-slip__am--minus{color:#b91c1c}
+.pd-slip__sub{display:grid;grid-template-columns:1fr 160px;gap:12px;padding:8px 0 0;border-top:1px solid var(--color-vapor);margin-top:6px;font:700 12.5px/1.4 var(--font-body);color:var(--fg-2)}
+.pd-slip__foot{padding:18px 20px;background:var(--color-mist);display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+.pd-net{font:700 26px/1.1 var(--font-display);color:var(--fg-1)}
+.pd-enc{font:500 12.5px/1.65 var(--font-body);color:var(--fg-2);max-width:60ch}
+.pd-json{background:var(--color-mist);border:1px solid var(--color-vapor);border-radius:8px;padding:12px 14px;font:500 12px/1.75 ui-monospace,Menlo,monospace;color:var(--fg-2);white-space:pre-wrap;overflow-x:auto}
+.pd-sel{display:flex;align-items:center;gap:10px;font:600 12.5px/1 var(--font-body);color:var(--fg-2)}
+.pd-radios{display:flex;flex-direction:column;gap:10px}
+.pd-radio{display:flex;gap:10px;align-items:flex-start;font:500 13px/1.5 var(--font-body);color:var(--fg-1);cursor:pointer}
+.pd-radio input{margin-top:2px;accent-color:var(--color-secondary-500)}
+.pd-radio.is-off{color:var(--fg-4);cursor:not-allowed}
+.pd-radio__h{display:block;font:400 12px/1.5 var(--font-body);color:var(--fg-3)}

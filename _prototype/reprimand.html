@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Reprimand</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    .rp-form .ctl--date > input { pointer-events: auto; }
+    .snap { background: var(--color-mist); border: 1px solid var(--border-1); border-radius: 12px; padding: 4px 16px; }
+    .snap__head { display: flex; align-items: center; gap: 8px; padding: 12px 0 8px; font: 700 12px/1 var(--font-body); letter-spacing: .04em; text-transform: uppercase; color: var(--fg-3); }
+    .snap__head svg { width: 15px; height: 15px; color: var(--color-secondary-500); }
+    .snap__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+    .snap__row { display: flex; align-items: baseline; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--color-vapor); }
+    .snap__row:nth-last-child(-n+1) { border-bottom: none; }
+    .snap__k { font: 500 12px/1.3 var(--font-body); color: var(--fg-3); }
+    .snap__v { font: 700 13px/1.3 var(--font-body); color: var(--fg-1); }
+    .standing-pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border-radius: 999px; font: 700 11px/1 var(--font-body); letter-spacing: .04em; }
+    .standing--clean { background: var(--color-success-100); color: var(--color-success-900); }
+    .standing--sp1 { background: var(--color-warning-100); color: var(--color-warning-800); }
+    .standing--sp2 { background: var(--flow-orange-bg); color: var(--flow-orange-fg); }
+    .standing--final { background: var(--color-error-100); color: var(--color-error-800); }
+    .proj { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--color-secondary-50); border: 1px solid var(--color-primary-200); border-radius: 12px; }
+    .proj__arrow { color: var(--color-secondary-500); }
+    .proj__arrow svg { width: 22px; height: 22px; }
+    .proj__col { display: flex; flex-direction: column; gap: 5px; }
+    .proj__lbl { font: 600 10px/1 var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--fg-3); }
+  </style>
+</head>
+<body data-screen-label="Reprimand">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Reprimand</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Reprimand</h1>
+              <p class="flow-sub">Issue disciplinary notices through a maker&rarr;checker review. The category snapshot is frozen server-side at issue time, and standing is derived from that snapshot — never from live config.</p>
+            </div>
+            <div class="flow-head__actions">
+              <button class="btn btn--primary" id="newRpBtn">Issue reprimand</button>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+        <div class="kpi" style="margin-top:4px">
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="file-check-2"></i>Active reprimands</span><span class="kpi__value" id="kpiActive">4</span><span class="kpi__foot">Currently in effect</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="clock"></i>In approval</span><span class="kpi__value" id="kpiApproval">1</span><span class="kpi__foot">Awaiting checker</span></div>
+          <div class="kpi__tile kpi__tile--danger"><span class="kpi__label"><i data-lucide="octagon-alert"></i>At final warning</span><span class="kpi__value" id="kpiFinal">1</span><span class="kpi__foot">Terminal-level standing</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="calendar-clock"></i>Expiring in 30d</span><span class="kpi__value">2</span><span class="kpi__foot">Validity ending soon</span></div>
+        </div>
+
+        <div class="tabnav" id="rpTabs">
+          <button class="tabnav__tab is-on" type="button" data-tab="standing">Employee Standing</button>
+          <button class="tabnav__tab" type="button" data-tab="history">Reprimand History<span class="tabnav__count" id="rpCount">6</span></button>
+        </div>
+
+        <div class="tabpanel is-on" data-tabpanel="standing">
+          <div class="sec-head"><span class="sec-head__note">Derived from active reprimand snapshots — never from live config.</span></div>
+          <div class="dtable-wrap dtable-wrap--scroll" style="margin-top:10px">
+            <table class="dtable">
+              <thead><tr><th>Employee</th><th>Unit</th><th class="ta-c">Active points</th><th>Standing</th><th>Latest reprimand</th></tr></thead>
+              <tbody id="standingBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tabpanel" data-tabpanel="history">
+          <div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+            <table class="dtable">
+              <thead><tr><th>Employee</th><th>Category</th><th>Issued</th><th>Expires</th><th>Status</th><th>Maker</th><th></th></tr></thead>
+              <tbody id="rpBody"></tbody>
+            </table>
+          </div>
+          <div class="ph-foot" id="pgRp"></div>
+        </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ RP-CREATE ============ -->
+<div class="ovl" id="rpCreate">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Issue reprimand</h3><p class="ovl__desc">You are the maker. You cannot issue a reprimand against yourself.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <form class="rp-form" id="rpForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+      <div class="fld">
+        <label class="fld__label">Employee <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="rpEmp"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt">Eka Saputra — Staff Finance, BR-Papua</div>
+            <div class="dropdown__opt">Dimas Prabowo — Backend Engineer, HQ</div>
+            <div class="dropdown__opt">Nadia Rahman — Sales Executive, BR-Surabaya</div>
+            <div class="dropdown__opt">Fajar Nugroho — Ops Coordinator, BR-Jakarta</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 200px;gap:16px">
+        <div class="fld">
+          <label class="fld__label">Category <span class="req">*</span></label>
+          <div class="ctl ctl--select" id="rpCat"><span class="ctl__value" style="color:var(--fg-4)">Select SP category</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown">
+              <div class="dropdown__opt" data-val="VERBAL">Verbal warning</div>
+              <div class="dropdown__opt" data-val="SP1">SP1 — first written warning</div>
+              <div class="dropdown__opt" data-val="SP2">SP2 — second written warning</div>
+              <div class="dropdown__opt" data-val="SP3">SP3 — final written warning</div>
+            </div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Issued date <span class="req">*</span></label>
+          <div class="ctl ctl--date"><input type="date" id="rpDate">
+            <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Reason <span class="req">*</span></label>
+        <div class="ctl ctl--area"><textarea id="rpReason" rows="3" maxlength="150" placeholder="Describe the incident (sensitive — hidden on cross-subject grids)"></textarea></div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)"><span id="rpReasonCount">0</span>/150 · PII-sensitive</span>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Supporting document <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+        <label class="file-ctl"><span class="file-ctl__btn">Choose File</span><span class="file-ctl__name" id="rpFileName">No file selected</span><input type="file" hidden id="rpFile"></label>
+      </div>
+
+      <div class="snap" id="rpSnap" style="display:none">
+        <div class="snap__head"><i data-lucide="lock"></i>Server snapshot (frozen at issue — read-only)</div>
+        <div class="snap__grid">
+          <div class="snap__row"><span class="snap__k">Demerit point</span><span class="snap__v" id="snapPoint">—</span></div>
+          <div class="snap__row"><span class="snap__k">Level order</span><span class="snap__v" id="snapLevel">—</span></div>
+          <div class="snap__row"><span class="snap__k">Validity</span><span class="snap__v" id="snapValidity">—</span></div>
+          <div class="snap__row"><span class="snap__k">Expiry date</span><span class="snap__v" id="snapExpiry">—</span></div>
+          <div class="snap__row"><span class="snap__k">Terminal</span><span class="snap__v" id="snapTerminal">—</span></div>
+        </div>
+      </div>
+    </form>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="rpSubmit" disabled>Submit for approval</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RP-APPROVE ============ -->
+<div class="ovl" id="rpApprove">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Review reprimand</h3><p class="ovl__desc">Checker must differ from both the maker and the subject.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="rpApproveKv"></div>
+    <div>
+      <div class="snap__head" style="padding-bottom:8px"><i data-lucide="trending-up"></i>Standing projection</div>
+      <div class="proj">
+        <div class="proj__col"><span class="proj__lbl">Current</span><span id="projFrom"></span></div>
+        <span class="proj__arrow"><i data-lucide="arrow-right"></i></span>
+        <div class="proj__col"><span class="proj__lbl">After approval</span><span id="projTo"></span></div>
+      </div>
+    </div>
+    <div class="fld">
+      <label class="fld__label">Checker note <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+      <div class="ctl ctl--area"><textarea id="rpApproveNote" rows="2" maxlength="150" placeholder="Recorded with the decision"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--danger" id="rpRevokeBtn">Revoke</button>
+      <button class="btn btn--primary" id="rpApproveBtn">Approve reprimand</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'Reprimand List' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/reprimand.js"></script>
+<script src="js/kpi-status.js"></script>
+</body>
+</html>

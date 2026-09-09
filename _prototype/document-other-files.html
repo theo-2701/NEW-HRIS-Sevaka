@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Other Files</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-modals.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/daterange.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Other Files" data-doc-page="other">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Company Management</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Files</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Other Files</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">Other Files</h1>
+                <p class="flow-sub">Documents attached to an <strong>object</strong> — asset, vendor or branch — never to a person or to the company itself. <code>owner_type=OBJEK_LAIN</code>. Fully read-only, and zero calls to employee-service, so there is no two-long fail-closed chain here.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="doc-tbar">
+              <button class="btn btn--secondary" type="button" data-filter-open="docFilterM">Filter</button>
+              <span class="doc-fsum" data-filter-sum="docFilterM"></span>
+              <div class="doc-tbar__sp"></div>
+              <div class="co-search"><i data-lucide="search"></i><input type="text" id="docSearch" placeholder="Search file name"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>File Name</th><th>Object Kind</th><th>Category</th><th>Class</th><th>Scan</th><th>Size</th><th>Created</th><th class="ta-r"></th></tr></thead>
+              <tbody id="docBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="docFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="list-tree"></i>OF-2 · <code>owner_object_kind</code> classification</div>
+              <p><code>ASET → company.mst_asset</code> · <code>VENDOR → company.mst_vendor</code> · <code>CABANG → company.mst_branch</code> — each one a <code>PICKER → company-service</code>. Pure classification; this screen has no concept of a “document owner”, so the owner-opens-own-file path (<code>DOC-30</code>) does not apply.</p>
+            </div>
+            <div class="doc-note" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="mail-x"></i>The letter block is always <code>null</code> here</div>
+              <p>Letters are always owned by an employee or by the company, never by an object. <code>A2</code>/<code>A4</code> are identical across all four file screens — drawing a second variant is forbidden.</p>
+            </div>
+            <div class="doc-note doc-note--gap" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>Stated difference against the Figma frame</div>
+              <p>Frame <code>S1</code> in Main-Frame draws only two filters (object kind, object). The <strong>Category</strong> control has been in the <code>A3</code> contract since TSD 0.1 and its source address (<code>A16</code>) landed in TSD 0.3 — visual debt, not contract debt (<code>PROB-SERVICE-406</code> category side is CLOSE).</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== FILTER (grid) ===== -->
+<div class="ovl" id="docFilterM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Filter</h3><p class="ovl__desc">Object kind is only legitimate while <code>owner_type=OBJEK_LAIN</code>; the object itself stays optional here, unlike Employee Files where the owner is mandatory.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Object kind</label><div class="ctl ctl--select" id="docKind" style="width:200px;height:40px">
+                <span class="ctl__value">All object kinds</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt is-sel">All object kinds</div><div class="dropdown__opt" data-val="ASET">ASET</div><div class="dropdown__opt" data-val="VENDOR">VENDOR</div><div class="dropdown__opt" data-val="CABANG">CABANG</div></div>
+              </div>
+              </div>
+    <div class="fld"><label class="fld__label">Object</label><div class="ctl ctl--select" id="docObject" style="width:220px;height:40px">
+                <span class="ctl__value">All objects</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt is-sel">All objects</div><div class="dropdown__opt" data-val="0198b7c8-0002-7d40-8b00-000000000002">CV Mitra Sejahtera</div><div class="dropdown__opt" data-val="0198b7c8-0003-7d40-8b00-000000000003">PT Bina Karya Logistik</div><div class="dropdown__opt" data-val="0198b7c8-0004-7d40-8b00-000000000004">Kantor Cabang Bandung</div></div>
+              </div>
+              <p class="fld__hint"><code>PICKER → company-service</code>: <code>ASET</code>, <code>VENDOR</code> or <code>CABANG</code> master.</p></div>
+    <div class="fld"><label class="fld__label">Category</label><div class="ctl ctl--select" id="docCategory" style="width:210px;height:40px">
+                <span class="ctl__value">All categories</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+              </div>
+    <div class="fld"><label class="fld__label">Created between</label><div class="rng" id="docRange" data-placeholder="Created between"><button class="rng__ctl" type="button"><span class="rng__val is-empty">Created between</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div>
+            </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-filter-reset="docFilterM">Reset</button><button class="btn btn--primary" data-close>Apply</button></div>
+</div></div>
+
+<!-- ===== A4 · DETAIL + VERSION HISTORY ===== -->
+<div class="ovl" id="docDetail"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="dtTitle">Document detail</h3><p class="ovl__desc"><code>GET /documents/{document-id}</code> — a flat object, not wrapped in <code>data</code>. Version history is append-only and served whole, without pagination.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="kv" id="dtKv"></div>
+    <div>
+      <div class="fld__label" style="margin-bottom:8px">Version history</div>
+      <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+        <thead><tr><th>Version</th><th>File name</th><th>MIME</th><th>Size</th><th>Scan</th><th>Storage</th><th>Created</th></tr></thead>
+        <tbody id="dtVersions"></tbody>
+      </table></div>
+    </div>
+    <div id="dtLetter" style="display:none">
+      <div class="fld__label" style="margin-bottom:8px">Letter block — filled only when <code>origin=DILAHIRKAN_SISTEM</code></div>
+      <div class="kv" id="dtLetterKv"></div>
+      <div class="doc-note" style="margin-top:12px">
+        <div class="doc-note__h"><i data-lucide="git-merge"></i>A11 / A12 are executed here</div>
+        <p>Approving or cancelling a single letter carries <code>{letter-id}</code> from this block — not from the Letter Issuance page, which only demonstrates the form.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ovl__foot">
+    <button class="btn btn--secondary" id="dtApprove" style="display:none">Approve issuance</button>
+    <button class="btn btn--danger" id="dtCancel" style="display:none">Cancel letter</button>
+    <button class="btn btn--secondary" data-close>Close</button>
+    <button class="btn btn--primary" id="dtOpen">Open File Content</button>
+  </div>
+</div></div>
+
+<!-- ===== A2 · FILE CONTENT ===== -->
+<div class="ovl" id="docContent"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="ctTitle">File content</h3><p class="ovl__desc" id="ctDesc"></p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="doc-heads" id="ctHeads"></div>
+    <div class="doc-viewer" id="ctViewer"></div>
+    <div class="doc-note" id="ctLog"><div class="doc-note__h"><i data-lucide="history"></i>Access trail</div></div>
+    <div class="doc-note doc-note--hard">
+      <div class="doc-note__h"><i data-lucide="alert-triangle"></i>Hard frontend limit — PROB-FRONTEND-029</div>
+      <p><code>A2</code> is header-only. Bytes must never be written to app storage (localStorage / IndexedDB / service worker); in-memory URLs are released when the screen closes; a sensitive file is re-fetched on every opening and never held between screens. User-requested downloads are the one exception.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<!-- ===== A12 · CANCEL LETTER ===== -->
+<div class="ovl" id="docCancel"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Cancel letter</h3><p class="ovl__desc"><code>POST /letters/{letter-id}/cancel</code> — the reason is stored and may be shown here, but is forbidden on the public verification page.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="fld"><label class="fld__label">Cancellation reason <span class="req">*</span></label><div class="ctl ctl--area"><textarea id="ccReason" rows="3" maxlength="500" placeholder="1–500 characters"></textarea></div></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Back</button><button class="btn btn--danger" id="docCancelDo">Cancel letter</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true, activeGroup:'Company Management', activeItem:'Other Files' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-files.js"></script>
+</body>
+</html>

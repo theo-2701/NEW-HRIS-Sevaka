@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Performance — KPI Master &amp; Weight</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/document.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.kpi-lock{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-primary-50,#f3fafd);border:1px solid var(--border-1,#EAECF0);padding:6px 12px;font:600 12px/1 Inter;color:var(--color-secondary-700,#02618f)}.idchip{font:600 11px/1 Inter;color:var(--fg-3,#334155);background:var(--color-vapor,#F1F5F9);border-radius:6px;padding:4px 6px}a{color:var(--fg-link,#0284c7);text-decoration:none}a:hover{text-decoration:underline}.radio-row{display:flex;align-items:center;gap:28px;min-height:36px;flex-wrap:wrap}.radio{display:inline-flex;align-items:center;gap:10px;cursor:pointer;position:relative;font:500 13px/1.2 var(--font-body);color:var(--fg-1);user-select:none}.radio input{position:absolute;opacity:0;pointer-events:none}.radio__dot{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--color-silver);background:var(--color-cloud);flex:none;transition:box-shadow var(--duration-2) var(--ease-standard)}.radio input:checked+.radio__dot{box-shadow:inset 0 0 0 5px var(--color-secondary-500)}.radio input:focus-visible+.radio__dot{outline:2px solid var(--color-secondary-500);outline-offset:2px}</style>
+</head>
+<body data-screen-label="Performance — KPI Master &amp; Weight" data-perf-page="kpi">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <div class="rc-sec">
+            <span class="rc-sec__title">KPI Master &amp; Weight</span>
+            <div class="rc-head-actions" id="kpHeadAct" data-roles="ROLE_HR_MANAGER">
+              <button class="btn btn--primary" type="button" id="kpCreate">Create Item</button>
+            </div>
+          </div>
+          <p class="doc-lead">HR maintains the list of things being assessed per job grade. Every row carries a target type and an HR-locked raw weight. Supervisors never write to this table — they only browse the <strong>active</strong> rows of their subordinates' grade before copying a row onto a review sheet.</p>
+
+          <div class="subtabs">
+            <div class="seg" id="kpTab">
+              <button type="button" class="seg__opt is-on" data-val="hr" data-sub="hr">Manage Master (HR)</button>
+              <button type="button" class="seg__opt" data-val="browse" data-sub="browse">Browse (Supervisor)</button>
+            </div>
+          </div>
+
+          <!-- KPM-1 · HR manage -->
+          <div data-sub-panel="hr">
+            <div class="doc-tbar">
+              <button class="btn btn--secondary" type="button" id="kpFilterBtn">Filter</button>
+              <span class="doc-fsum" id="kpFsum">All grades · all statuses · newest first</span>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <p class="fld__hint" id="kpSum" style="margin:0 0 12px"></p>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>ID</th><th>Item Name</th><th>Job Grade</th><th>Target Type</th><th class="ta-r">Weight</th><th>Status</th><th class="ta-r"></th></tr></thead>
+              <tbody id="kpBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="kpFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="slash"></i>Two columns deliberately absent</div>
+              <p>The grid never carries <code>used_in_sheet_count</code> — counting usage per row would turn one search into N+1 queries. That number appears only inside the Edit and Delete modals. Raw weights are also free positive numbers: they are <strong>not</strong> required to add up to 100, because the percentage share is computed by the sheet, not here — the running total above is a reading aid only.</p>
+              <p style="margin-top:8px">The search contract accepts exactly three inputs — <code>job_grade_id</code>, <code>is_active</code> and <code>sort_by</code> (<code>created_at</code> · <code>job_grade_id</code> · <code>is_active</code>) — so this toolbar carries no free-text box and no target-type filter. Nothing is filtered client-side either; the earlier free-text search was outside the contract and has been removed.</p>
+            </div>
+          </div>
+
+          <!-- KPM-5 · Supervisor browse -->
+          <div data-sub-panel="browse" hidden>
+            <div class="doc-tbar">
+              <div class="fld" style="width:280px;margin:0"><div class="ctl ctl--select" id="kpGrade"><span class="ctl__value">Staff Grade 3</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="Staff Grade 3">Staff Grade 3</div><div class="dropdown__opt" data-val="Staff Grade 2">Staff Grade 2</div><div class="dropdown__opt" data-val="Supervisor Grade 1">Supervisor Grade 1</div></div>
+              </div></div>
+              <span class="kpi-lock"><i data-lucide="lock"></i>Locked: is_active = true</span>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>ID</th><th>Item Name</th><th>Job Grade</th><th>Target Type</th><th class="ta-r">Weight</th></tr></thead>
+              <tbody id="kpBrowseBody"></tbody>
+            </table></div>
+            <p class="fld__hint">Read-only: no Status column and no row action, because a supervisor cannot write to this table. The job grade must be picked <strong>manually</strong> — the employee work-detail grade field is not realised yet, so it cannot be resolved from a subordinate's profile.</p>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="arrow-right"></i>Where this leads</div>
+              <p>Copying a selected row onto a subordinate's sheet as a <code>MASTER</code>-origin line belongs to <a href="performance-sheets.html">Review Sheets</a> — the same endpoint as the HR tab, a different actor, not a different contract.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- FILTER + SORT (3 criteria → modal) -->
+<div class="ovl" id="kpFilterM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Filter &amp; sort</h3><p class="ovl__desc"><code>POST /kpi-items/search</code> — the three inputs the contract accepts, all optional, all in the request body.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Job grade</label>
+      <div class="ctl ctl--select" id="fGrade"><span class="ctl__value">All grades</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt" data-val="">All grades</div><div class="dropdown__opt" data-val="Staff Grade 3">Staff Grade 3</div><div class="dropdown__opt" data-val="Staff Grade 2">Staff Grade 2</div><div class="dropdown__opt" data-val="Supervisor Grade 1">Supervisor Grade 1</div></div>
+      </div><p class="fld__hint"><code>job_grade_id</code></p></div>
+    <div class="fld"><label class="fld__label">Status</label>
+      <div class="ctl ctl--select" id="fActive"><span class="ctl__value">All statuses</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt" data-val="">All statuses</div><div class="dropdown__opt" data-val="1">AKTIF</div><div class="dropdown__opt" data-val="0">NONAKTIF</div></div>
+      </div><p class="fld__hint"><code>is_active</code></p></div>
+    <div class="fld"><label class="fld__label">Sort by</label>
+      <div class="ctl ctl--select" id="fSort" data-nosum><span class="ctl__value">Newest first</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt" data-val="created_at:DESC">Newest first</div><div class="dropdown__opt" data-val="created_at:ASC">Oldest first</div><div class="dropdown__opt" data-val="job_grade_id:ASC">Job grade</div><div class="dropdown__opt" data-val="is_active:DESC">Status</div></div>
+      </div><p class="fld__hint"><code>sort_by</code> whitelist: <code>created_at</code> · <code>job_grade_id</code> · <code>is_active</code>.</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" id="kpFilterReset">Reset</button><button class="btn btn--primary" type="button" id="kpFilterApply">Apply</button></div>
+</div></div>
+
+<!-- KPM-2 / KPM-3 · CREATE / EDIT -->
+<div class="ovl" id="kpFormM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="kfTitle">Create item</h3><p class="ovl__desc" id="kfDesc"><code>POST /kpi-items</code> with a mandatory <code>Idempotency-Key</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="kfUsage" hidden></div>
+    <div class="fld"><label class="fld__label">Item name <span class="req">*</span></label>
+      <div class="ctl"><input id="kfName" type="text" maxlength="255" placeholder="e.g. Menyelesaikan tiket dukungan"></div>
+      <p class="fld__hint"><code>item_name</code> — up to 255 characters, not blank.</p></div>
+    <div class="fld"><label class="fld__label">Job grade <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="kfGrade"><span class="ctl__value" style="color:var(--fg-4)">Select job grade</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt" data-val="Staff Grade 3">Staff Grade 3</div><div class="dropdown__opt" data-val="Staff Grade 2">Staff Grade 2</div><div class="dropdown__opt" data-val="Supervisor Grade 1">Supervisor Grade 1</div></div>
+      </div><p class="fld__hint">The grade <em>name snapshot</em> is written automatically from this pick, in the same transaction. Leave the pick untouched on edit and the old snapshot stays, even if the grade has since been renamed — that is deliberate.</p></div>
+    <div class="fld"><label class="fld__label">Target type <span class="req">*</span></label>
+      <div class="radio-row" id="kfType">
+        <label class="radio"><input type="radio" name="kfType" value="NUMERIC" checked><span class="radio__dot"></span>NUMERIC</label>
+        <label class="radio"><input type="radio" name="kfType" value="NARRATIVE"><span class="radio__dot"></span>NARRATIVE</label>
+      </div>
+      <p class="fld__hint">Frozen onto the sheet once a row is used — the sheet keeps its own copy.</p></div>
+    <div class="fld"><label class="fld__label">Raw weight <span class="req">*</span></label>
+      <div class="ctl"><input id="kfWeight" type="text" inputmode="decimal" placeholder="0.00"></div>
+      <p class="fld__hint"><code>numeric(6,2)</code> — at least 0, at most 9999.99. It does not have to total 100.</p></div>
+    <div class="fld"><label class="fld__label">Status</label>
+      <div class="radio-row" id="kfActive">
+        <label class="radio"><input type="radio" name="kfActive" value="1" checked><span class="radio__dot"></span>AKTIF — supervisors can pick it</label>
+        <label class="radio"><input type="radio" name="kfActive" value="0"><span class="radio__dot"></span>NONAKTIF</label>
+      </div></div>
+    <div class="doc-note" id="kfEditNote" hidden>
+      <div class="doc-note__h"><i data-lucide="info"></i>Edits do not travel into running sheets</div>
+      <p>A change takes effect immediately for future copies, but never touches review-sheet lines that already copied this row — each sheet uses its own copy. Every field is optional on update, yet an empty payload is a <code>422</code>: send at least one.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="kfSave">Save</button></div>
+</div></div>
+
+<!-- KPM-4 · SOFT DELETE -->
+<div class="ovl" id="kpDelM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:540px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Delete item</h3><p class="ovl__desc"><code>DELETE /kpi-items/{id}</code> — a soft delete: the audit columns are stamped, the row survives.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="kdKv"></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="info"></i>Usage is information, not a gate</div>
+      <p id="kdUse">This row is used by running sheets — that does not block anything.</p>
+      <p style="margin-top:8px">Deleting and the <code>AKTIF</code>/<code>NONAKTIF</code> flag are two independent mechanisms: this call does <strong>not</strong> touch the status flag. To keep the row but take it off the supervisor's picking surface, set its status to <code>NONAKTIF</code> in Edit instead.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--danger" id="kdDo">Delete item</button></div>
+</div></div>
+
+<script>window.SEVAKA_SESSION = { roles: ['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER','ROLE_HR_STAFF','ROLE_HR_MANAGER'] };</script>
+<script src="js/performance-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script>
+(function(){
+  var F = window.Flow || window.F;
+  var ITEMS = [
+    { id:'KPI-001', uuid:'9b2c1a10', tail:'0001', name:'Menyelesaikan tiket dukungan', grade:'Staff Grade 3', type:'NUMERIC',   w:'40.00', active:true,  used:3 },
+    { id:'KPI-002', uuid:'9b2c1a10', tail:'0002', name:'Kolaborasi tim',               grade:'Staff Grade 3', type:'NARRATIVE', w:'30.00', active:true,  used:3 },
+    { id:'KPI-003', uuid:'9b2c1a10', tail:'0003', name:'Ketepatan waktu pelaporan',    grade:'Staff Grade 3', type:'NUMERIC',   w:'20.00', active:true,  used:0 },
+    { id:'KPI-004', uuid:'9b2c1a10', tail:'0004', name:'Kepatuhan SOP lama',           grade:'Staff Grade 3', type:'NARRATIVE', w:'10.00', active:false, used:0 }
+  ];
+  var flt = { grade:'', active:'' }, sort='created_at:DESC', editing=null, before=null;
+
+  function typeBadge(t){ return '<span class="sb '+(t==='NUMERIC'?'sb--blue':'sb--indigo')+'"><span class="sb__dot"></span>'+t+'</span>'; }
+  function statusBadge(a){ return '<span class="sb '+(a?'sb--green':'sb--grey')+'"><span class="sb__dot"></span>'+(a?'AKTIF':'NONAKTIF')+'</span>'; }
+
+  function rows(){
+    var out = ITEMS.filter(function(i){
+      return (!flt.grade||i.grade===flt.grade) && (flt.active===''||String(i.active?1:0)===flt.active);
+    });
+    var p = sort.split(':'), dir = p[1]==='ASC' ? 1 : -1;
+    out.sort(function(a,b){
+      var av,bv;
+      if (p[0]==='job_grade_id') { av=a.grade; bv=b.grade; }
+      else if (p[0]==='is_active') { av=a.active?1:0; bv=b.active?1:0; }
+      else { av=a.tail; bv=b.tail; }
+      return av<bv ? -dir : av>bv ? dir : 0;
+    });
+    return out;
+  }
+  function summary(all){
+    var act = all.filter(function(i){ return i.active; });
+    var sum = act.reduce(function(s,i){ return s + parseFloat(i.w); }, 0);
+    var scope = flt.grade ? flt.grade : 'all grades';
+    document.getElementById('kpSum').innerHTML = act.length
+      ? 'Σ raw weight of the <strong>'+act.length+'</strong> active row'+(act.length===1?'':'s')+' shown ('+scope+') = <strong>'+sum.toFixed(2)+'</strong> — a reading aid, not a rule: the sheet turns raw weights into percentage shares.'
+      : 'No active row in this view.';
+  }
+  var pg = F.pager('kpFoot', 10, draw, 'items');
+  function draw(){
+    var all = rows(); pg.state.total = all.length; summary(all);
+    var view = pg.slice ? pg.slice(all) : all;
+    document.getElementById('kpBody').innerHTML = view.map(function(i){
+      return '<tr><td><span class="idchip" title="'+i.uuid+'-0000-7000-8000-00000000'+i.tail+'">'+i.uuid+'…'+i.tail+'</span></td>'+
+        '<td>'+i.name+'<div class="td-sub">'+i.id+'</div></td><td>'+i.grade+'</td><td>'+typeBadge(i.type)+'</td>'+
+        '<td class="ta-r">'+i.w+'</td><td>'+statusBadge(i.active)+'</td>'+
+        '<td class="ta-r">'+F.rowMenu([
+          {label:'Edit', icon:'pencil', attr:'data-edit="'+i.id+'"'},
+          {label:'Delete item', icon:'trash-2', attr:'data-del="'+i.id+'"', danger:true}
+        ])+'</td></tr>';
+    }).join('') || '<tr><td colspan="7" class="dtable__empty">No item matches this filter.</td></tr>';
+    if (pg.paint) pg.paint();
+    if (window.lucide) lucide.createIcons();
+  }
+  function drawBrowse(){
+    var g = document.querySelector('#kpGrade .ctl__value').textContent.trim();
+    var list = ITEMS.filter(function(i){ return i.grade===g && i.active; });
+    document.getElementById('kpBrowseBody').innerHTML = list.map(function(i){
+      return '<tr><td><span class="idchip">'+i.uuid+'…'+i.tail+'</span></td><td>'+i.name+'</td><td>'+i.grade+'</td><td>'+typeBadge(i.type)+'</td><td class="ta-r">'+i.w+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="dtable__empty">No active item for this grade.</td></tr>';
+    if (window.lucide) lucide.createIcons();
+  }
+
+  document.getElementById('kpTab').addEventListener('segchange', function(e){
+    var v = e.detail.value;
+    document.querySelectorAll('[data-sub-panel]').forEach(function(p){ p.hidden = p.dataset.subPanel !== v; });
+    var ha = document.getElementById('kpHeadAct');
+    if (ha) ha.style.display = v==='hr' ? '' : 'none';
+    if (v==='browse') drawBrowse();
+  });
+  document.getElementById('kpGrade').addEventListener('select', drawBrowse);
+
+  function fsum(){
+    var bits = [];
+    bits.push(flt.grade || 'All grades');
+    bits.push(flt.active==='' ? 'all statuses' : (flt.active==='1'?'AKTIF':'NONAKTIF'));
+    bits.push(document.querySelector('#fSort .ctl__value').textContent.trim().toLowerCase());
+    document.getElementById('kpFsum').textContent = bits.join(' · ');
+  }
+  document.getElementById('kpFilterBtn').addEventListener('click', function(){ F.openModal('kpFilterM'); });
+  document.getElementById('kpFilterApply').addEventListener('click', function(){
+    var g = document.querySelector('#fGrade .dropdown__opt.is-sel');
+    flt.grade = g ? (g.dataset.val || '') : flt.grade;
+    var s = document.querySelector('#fActive .dropdown__opt.is-sel');
+    flt.active = s ? s.dataset.val : flt.active;
+    var so = document.querySelector('#fSort .dropdown__opt.is-sel');
+    sort = so ? so.dataset.val : sort;
+    fsum(); F.closeModal('kpFilterM'); pg.reset(); draw();
+  });
+  document.getElementById('kpFilterReset').addEventListener('click', function(){
+    flt = { grade:'', active:'' }; sort = 'created_at:DESC';
+    [['fGrade','All grades'],['fActive','All statuses'],['fSort','Newest first']].forEach(function(p){
+      var c = document.getElementById(p[0]);
+      c.querySelector('.ctl__value').textContent = p[1];
+      c.querySelectorAll('.dropdown__opt').forEach(function(o,idx){ o.classList.toggle('is-sel', idx===0); });
+    });
+    fsum(); pg.reset(); draw();
+  });
+
+  function setRadio(id, val){
+    document.getElementById(id).querySelectorAll('input[type=radio]').forEach(function(r){ r.checked = r.value === val; });
+  }
+  function getRadio(id){
+    var r = document.querySelector('#'+id+' input[type=radio]:checked');
+    return r ? r.value : '';
+  }
+  function openForm(item){
+    editing = item || null;
+    document.getElementById('kfTitle').textContent = item ? 'Edit item' : 'Create item';
+    document.getElementById('kfDesc').innerHTML = item
+      ? '<code>PUT /kpi-items/{kpi-item-id}</code> — every field optional, at least one required.'
+      : '<code>POST /kpi-items</code> with a mandatory <code>Idempotency-Key</code>.';
+    document.getElementById('kfEditNote').hidden = !item;
+    var usage = document.getElementById('kfUsage');
+    usage.hidden = !item;
+    if (item) usage.innerHTML = '<div class="kv__k">Used in</div><div class="kv__v">'+item.used+' running sheet'+(item.used===1?'':'s')+' — read-only, never sent</div>';
+    document.getElementById('kfName').value = item ? item.name : '';
+    document.querySelector('#kfGrade .ctl__value').textContent = item ? item.grade : 'Select job grade';
+    document.querySelector('#kfGrade .ctl__value').style.color = item ? '' : 'var(--fg-4)';
+    setRadio('kfType', item ? item.type : 'NUMERIC');
+    document.getElementById('kfWeight').value = item ? item.w : '';
+    setRadio('kfActive', item ? (item.active?'1':'0') : '1');
+    before = item ? { name:item.name, grade:item.grade, type:item.type, w:item.w, active:item.active } : null;
+    F.openModal('kpFormM');
+  }
+  document.getElementById('kpCreate').addEventListener('click', function(){ openForm(null); });
+  document.getElementById('kfSave').addEventListener('click', function(){
+    var name = document.getElementById('kfName').value.trim();
+    var grade = document.querySelector('#kfGrade .ctl__value').textContent.trim();
+    var w = document.getElementById('kfWeight').value.trim();
+    if (!name || grade === 'Select job grade' || !w) { F.toast('Item name, job grade and raw weight are required.','warn'); return; }
+    if (isNaN(parseFloat(w)) || parseFloat(w) < 0 || parseFloat(w) > 9999.99) { F.toast('Raw weight must be between 0 and 9999.99.','warn'); return; }
+    var type = getRadio('kfType');
+    var active = getRadio('kfActive') === '1';
+    if (editing) {
+      if (before && name===before.name && grade===before.grade && type===before.type && parseFloat(w).toFixed(2)===before.w && active===before.active) {
+        F.toast('Nothing changed — an empty update is rejected (422): change at least one field.','warn'); return;
+      }
+      editing.name = name; editing.grade = grade; editing.type = type; editing.w = parseFloat(w).toFixed(2); editing.active = active;
+      F.toast('Item updated. Running sheets keep their own copy.');
+    } else {
+      ITEMS.push({ id:'KPI-'+String(ITEMS.length+1).padStart(3,'0'), uuid:'9b2c1a10', tail:'000'+(ITEMS.length+1), name:name, grade:grade, type:type, w:parseFloat(w).toFixed(2), active:active, used:0 });
+      F.toast('Item created — used in 0 sheets.');
+    }
+    F.closeModal('kpFormM'); draw();
+  });
+
+  document.getElementById('kpBody').addEventListener('click', function(e){
+    var ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-del]');
+    if (ed) { openForm(ITEMS.filter(function(i){return i.id===ed.dataset.edit;})[0]); }
+    if (dl) {
+      editing = ITEMS.filter(function(i){return i.id===dl.dataset.del;})[0];
+      document.getElementById('kdKv').innerHTML =
+        '<div class="kv__k">Item</div><div class="kv__v">'+editing.name+'</div>'+
+        '<div class="kv__k">Job grade</div><div class="kv__v">'+editing.grade+'</div>'+
+        '<div class="kv__k">Target type</div><div class="kv__v">'+typeBadge(editing.type)+'</div>'+
+        '<div class="kv__k">Raw weight</div><div class="kv__v">'+editing.w+'</div>';
+      document.getElementById('kdUse').textContent = 'Used in ' + editing.used + ' running sheet' + (editing.used===1?'':'s') + ' — it does not block this deletion.';
+      F.openModal('kpDelM');
+    }
+  });
+  document.getElementById('kdDo').addEventListener('click', function(){
+    ITEMS = ITEMS.filter(function(i){ return i !== editing; });
+    F.closeModal('kpDelM'); F.toast('Item soft-deleted — deleted_by / deleted_at stamped; is_active untouched.'); draw();
+  });
+
+  draw();
+  fsum();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

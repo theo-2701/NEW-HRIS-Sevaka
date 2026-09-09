@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Calendar</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=1">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — Calendar">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Calendar</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Calendar</h1>
+<p class="flow-sub">Two resources answer one question — <strong>is this date a working day?</strong> Holidays carry two layers: a national layer seeded automatically from government decrees, and a regional/company layer entered by HR that only takes effect after maker–checker approval. Work calendars set the weekly working pattern and always apply forward.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newHolidayBtn">New holiday</button>
+<button class="btn btn--primary is-hidden" id="newWcBtn">New work pattern</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="calTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="holiday">Holiday<span class="tabnav__count" id="cntHol">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="workcal">Work Calendar<span class="tabnav__count" id="cntWc">0</span></button>
+</div>
+
+<!-- ===== A2 — holiday list ===== -->
+<div class="tabpanel is-on" data-tabpanel="holiday">
+<div class="fin-tbar">
+<button class="btn btn--secondary" data-filter-open="fltMHol">Filter</button>
+<span class="cell-dim" data-filter-sum="fltMHol" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltHolName" placeholder="Search holiday name"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Date</th><th>Holiday Name</th><th>Type</th><th>Scope</th><th>Source</th><th>Status</th><th></th></tr></thead>
+<tbody id="holBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgHol"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>National rows are seeded by the system — locked, always approved on arrival, and never editable from this screen. A row entered here is born <strong>Draft</strong> and affects nothing; there is no separate submit endpoint — <strong>saving the edit form on a Draft row is the submission</strong>, and the date only becomes a real holiday once a <strong>different</strong> HR admin approves it. A live row already holds its date × type × scope slot — including a rejected one, which must be deleted before the slot is free again (<code>409</code>).</span></div>
+</div>
+
+<!-- ===== D2 — work calendar ===== -->
+<div class="tabpanel" data-tabpanel="workcal">
+<div class="subtabs">
+<span class="seg"><button type="button" class="seg__btn is-on" data-sub="patterns">Working patterns</button><button type="button" class="seg__btn" data-sub="effective">Effective calendar</button></span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note">Patterns are prospective — a running pattern is never edited, it is ended and replaced.</span>
+</div>
+<div class="subpanel is-on" data-subpanel="patterns">
+<div class="fin-tbar" style="margin-bottom:14px">
+<div class="ctl ctl--select fin-tbar__sel" id="fltWcScope"><span class="ctl__value">All scope levels</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All scope levels</div><div class="dropdown__opt" data-val="COMPANY">Company</div><div class="dropdown__opt" data-val="UNIT">Unit</div><div class="dropdown__opt" data-val="LOCATION">Location</div></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltWcName" placeholder="Search pattern name"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll">
+<table class="dtable">
+<thead><tr><th>Pattern Name</th><th>Scope</th><th>Working Days</th><th>Effective From</th><th>Effective Until</th><th></th></tr></thead>
+<tbody id="wcBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgWc"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>Only the pattern name and the end date can be changed after saving. Scope, the seven weekday toggles and the start date are frozen — changing how a week works means a new row taking effect from a future date, so past assessments are never rewritten. Two active patterns on the same scope may not overlap (<code>409</code>).</span></div>
+</div>
+<div class="subpanel" data-subpanel="effective">
+<div class="fin-tbar" style="margin-bottom:14px">
+<div class="ctl ctl--select fin-tbar__sel" id="effEmp"><span class="ctl__value">Rina Wulandari</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="effEmpDd"></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<span class="sec-head__note">Resolution order: personal roster → unit / location pattern → company pattern, minus the holidays in force.</span>
+</div>
+<div class="tm-cal" id="effCal"></div>
+</div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ A3 / B3 — holiday create & edit ============ -->
+<div class="ovl" id="holForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><div style="display:flex;align-items:center;gap:8px"><h3 class="ovl__title" id="hfTitle">New holiday</h3><span id="hfStatusBadge"></span></div><p class="ovl__desc" id="hfDesc">Regional and company holidays only — the national layer is seeded by the system and cannot be created here.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="hfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Holiday date <span class="req">*</span> <span class="tm-lock is-hidden" id="hfDateLock"><i data-lucide="lock"></i>locked</span></label>
+<div class="ctl ctl--date" id="hfDateCtl"><input type="text" id="hfDate" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+<span class="fld__hint">Frozen after the row is created — a wrong date means a new row.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Holiday type <span class="req">*</span> <span class="tm-lock is-hidden" id="hfTypeLock"><i data-lucide="lock"></i>locked</span></label>
+<div class="ctl ctl--select" id="hfType"><span class="ctl__value" style="color:var(--fg-4)">Select type</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="REGIONAL">Regional</div><div class="dropdown__opt" data-val="COMPANY">Company</div></div>
+</div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Holiday name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="hfName" placeholder="Input text here" maxlength="150"></div>
+</div>
+<div class="item__grid is-hidden" id="hfScopeWrap">
+<div class="fld">
+<label class="fld__label">Scope level <span class="req">*</span> <span class="tm-lock is-hidden" id="hfScopeLock"><i data-lucide="lock"></i>locked</span></label>
+<div class="ctl ctl--select" id="hfScopeLevel"><span class="ctl__value" style="color:var(--fg-4)">Select scope level</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="UNIT">Unit</div><div class="dropdown__opt" data-val="LOCATION">Location</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Scope <span class="req">*</span></label>
+<div class="ctl ctl--select" id="hfScopeRef"><span class="ctl__value" style="color:var(--fg-4)">Select scope level first</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="hfScopeRefDd"></div>
+</div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Source / legal basis</label>
+<div class="ctl"><input type="text" id="hfSource" placeholder="e.g. SE HR Cabang Jakarta" maxlength="200"></div>
+<span class="fld__hint">Optional. Together with the name, this is the only field still editable after the row exists.</span>
+</div>
+<div class="fld">
+<label class="fchk"><input type="checkbox" id="hfJoint"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></span><span class="fchk__lbl">Mark this date as joint leave (cuti bersama)</span></label>
+<span class="fld__hint">Frozen once the row exists — a wrong flag means a new row.</span>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="hfSave">Save as draft</button>
+</div>
+</div>
+</div>
+
+<!-- ============ B5 — checker decision ============ -->
+<div class="ovl" id="holDecision">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Holiday approval</h3><p class="ovl__desc">The maker of a row can never decide it. A decision returns <code>200 accepted</code> — the status is written once the approval process finishes, not the moment this dialog closes.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="hdKv"></div>
+<div class="fld">
+<label class="fld__label">Decision note <span class="req" id="hdReqStar" style="display:none">*</span></label>
+<div class="ctl ctl--area"><textarea id="hdNote" rows="3" placeholder="Input text here"></textarea></div>
+<span class="fld__hint" id="hdHint">Optional when approving; mandatory when rejecting.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--danger" id="hdReject">Reject</button>
+<button class="btn btn--primary" id="hdApprove">Approve</button>
+</div>
+</div>
+</div>
+
+<!-- ============ holiday detail ============ -->
+<div class="ovl" id="holDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Holiday detail</h3><p class="ovl__desc">Read-only.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="hxKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ holiday delete ============ -->
+<div class="ovl" id="holDelete">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Delete this holiday?</h3><p class="ovl__desc">Soft delete. Deleting a rejected row is also how its date × type × scope slot is released for a fresh submission.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="hdelKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep holiday</button>
+<button class="btn btn--danger" id="hdelConfirm">Delete holiday</button>
+</div>
+</div>
+</div>
+
+<!-- ============ D3 / E3 — work calendar create & edit ============ -->
+<div class="ovl" id="fltMHol">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter holidays</h3><p class="ovl__desc">Narrow the register by approval status, type, or date range.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Approval status</label>
+<div class="ctl ctl--select" id="fltHolStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="DRAFT">Draft</div><div class="dropdown__opt" data-val="PENDING_APPROVAL">Pending approval</div><div class="dropdown__opt" data-val="APPROVED">Approved</div><div class="dropdown__opt" data-val="REJECTED">Rejected</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Holiday type</label>
+<div class="ctl ctl--select" id="fltHolType"><span class="ctl__value">All types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All types</div><div class="dropdown__opt" data-val="NATIONAL">National</div><div class="dropdown__opt" data-val="REGIONAL">Regional</div><div class="dropdown__opt" data-val="COMPANY">Company</div></div>
+</div>
+</div>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Date from</label>
+<div class="ctl ctl--date"><input type="text" id="fltHolFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">Date to</label>
+<div class="ctl ctl--date"><input type="text" id="fltHolTo" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="fltHolReset">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+<div class="ovl" id="wcForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="wfTitle">New work pattern</h3><p class="ovl__desc">No formal approval on this resource — a saved pattern applies as soon as its start date arrives.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="wfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Pattern name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="wfName" placeholder="Input text here" maxlength="150"></div>
+</div>
+<div class="fld">
+<label class="fld__label">Scope level <span class="req">*</span> <span class="tm-lock is-hidden" id="wfScopeLock"><i data-lucide="lock"></i>locked</span></label>
+<div class="ctl ctl--select" id="wfScopeLevel"><span class="ctl__value" style="color:var(--fg-4)">Select scope level</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="COMPANY">Company</div><div class="dropdown__opt" data-val="UNIT">Unit</div><div class="dropdown__opt" data-val="LOCATION">Location</div></div>
+</div>
+</div>
+</div>
+<div class="fld" id="wfScopeRefWrap">
+<label class="fld__label">Scope <span class="req">*</span></label>
+<div class="ctl ctl--select" id="wfScopeRef"><span class="ctl__value" style="color:var(--fg-4)">Company-wide</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="wfScopeRefDd"></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Working days <span class="req">*</span> <span class="tm-lock is-hidden" id="wfDaysLock"><i data-lucide="lock"></i>locked</span></label>
+<div class="tm-dayrow" id="wfDays"></div>
+<span class="fld__hint">All seven days are explicit — there is no implied default. Frozen after saving.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Effective from <span class="req">*</span> <span class="tm-lock is-hidden" id="wfFromLock"><i data-lucide="lock"></i>locked</span></label>
+<div class="ctl ctl--date" id="wfFromCtl"><input type="text" id="wfFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">Effective until</label>
+<div class="ctl ctl--date"><input type="text" id="wfUntil" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+<span class="fld__hint">Empty means open-ended. Filling this in is the standard way to end a pattern without deleting it.</span>
+</div>
+</div>
+<div class="note note--warn is-hidden" id="wfLastCompany"><i data-lucide="triangle-alert"></i><span>This is the only active company-wide pattern. It cannot be ended until a replacement company pattern exists.</span></div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="wfSave">Save pattern</button>
+</div>
+</div>
+</div>
+
+<!-- ============ work calendar delete ============ -->
+<div class="ovl" id="wcDelete">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Delete this work pattern?</h3><p class="ovl__desc">Soft delete — only for a row created by mistake. Ending a pattern that has already been in force is done with the end date instead.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="wdelKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep pattern</button>
+<button class="btn btn--danger" id="wdelConfirm">Delete pattern</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-calendar.js"></script>
+</body>
+</html>

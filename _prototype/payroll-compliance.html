@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Compliance</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/payroll-processing.css?v=3">
+  <link rel="stylesheet" href="css/payroll-history.css?v=2">
+  <link rel="stylesheet" href="css/payroll-components.css">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/payroll-compliance.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Compliance">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="app__main app__main--wizard">
+      <div class="pp-shell">
+
+        <!-- ===================== PAGE HEADER ===================== -->
+        <header class="pp-head">
+          <h1 class="pp-head__title">Compliance</h1>
+          <div class="comp-tabs" id="compTabs">
+            <button class="comp-pill is-on" type="button" data-comptab="pkwt">PKWT Compensation</button>
+            <button class="comp-pill" type="button" data-comptab="npp">NPP Transaction</button>
+            <button class="comp-pill" type="button" data-comptab="pph">PPH 21 DTP</button>
+            <button class="comp-pill" type="button" data-comptab="bpjs">BPJS New Rate</button>
+          </div>
+        </header>
+
+        <!-- ===================== PKWT COMPENSATION VIEW ===================== -->
+        <div class="comp-view" data-compview="pkwt" data-screen-label="PKWT Compensation">
+          <section class="pp-panel" data-compstate="list">
+            <div class="pc-body">
+
+              <!-- Header row -->
+              <div class="comp-head">
+                <h2 class="comp-title">PKWT Compensation</h2>
+                <button class="btn btn--primary" type="button" id="compCreateNew">Create New</button>
+              </div>
+
+              <!-- Toolbar -->
+              <div class="comp-toolbar">
+                <div class="pc-period" id="compPeriod">
+                  <span class="pc-period__val is-placeholder">All Period</span>
+                  <span class="pc-period__cal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </span>
+                  <div class="pc-menu pc-menu--left" id="compPeriodMenu">
+                    <button class="pc-menu__item" type="button" data-period="All Period">All Period</button>
+                    <button class="pc-menu__item" type="button" data-period="This month">This month</button>
+                    <button class="pc-menu__item" type="button" data-period="Last 3 months">Last 3 months</button>
+                    <button class="pc-menu__item" type="button" data-period="This year (2026)">This year (2026)</button>
+                  </div>
+                </div>
+
+                <button class="btn btn--secondary comp-filterbtn" type="button" id="compFilterBtn">Filter</button>
+
+                <div class="comp-toolbar__spacer"></div>
+
+                <button class="pc-iconbtn" type="button" id="compExportBtn" aria-label="Export" title="Export simulation">
+                  <i data-lucide="file-output"></i>
+                </button>
+                <button class="pc-iconbtn" type="button" id="compBulkBtn" aria-label="Bulk update" title="Bulk update / add">
+                  <i data-lucide="file-input"></i>
+                </button>
+                <button class="pc-help" type="button" aria-label="Help" title="What is this?">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                </button>
+                <div class="pc-search">
+                  <input type="text" id="compSearch" placeholder="Search here">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="pp-table-wrap">
+                <table class="pp-table comp-table">
+                  <thead>
+                    <tr>
+                      <th><span class="comp-sort">Employee <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="comp-sort">Start Contract Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="comp-sort">End Contract Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="comp-sort">Work Duration (Month) <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="comp-sort">Amount <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="comp-sort">Payroll Period <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th class="pp-table__act"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="compRows"></tbody>
+                </table>
+              </div>
+
+              <!-- Footer / pagination -->
+              <div class="comp-foot">
+                <div class="comp-showing">
+                  <span>Showing</span>
+                  <span class="comp-pagesize">
+                    <select aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </span>
+                  <span>from <span id="compShowingTotal">0</span> row</span>
+                </div>
+                <div class="comp-pager">
+                  <button class="comp-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                  <button class="comp-pager__btn" type="button" aria-label="First page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg></button>
+                  <span class="comp-pagebox">1</span>
+                  <span class="comp-pager__from">from 1</span>
+                  <button class="comp-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                  <button class="comp-pager__btn" type="button" aria-label="Last page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 17 5-5-5-5"/><path d="m6 17 5-5-5-5"/></svg></button>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- ===== CREATE / EDIT FORM ===== -->
+          <section class="pp-panel comp-formpanel is-hidden" data-compstate="form" data-screen-label="Create PKWT Compensation">
+            <div class="pc-formbody">
+              <button class="crumb" type="button" id="compFormCrumb">PKWT Compensation</button>
+              <h2 class="comp-formtitle" id="compFormTitle">Create PKWT Compensation</h2>
+              <div class="comp-formrule"></div>
+
+              <div class="comp-managetools">
+                <button class="pc-addbtn" type="button" id="compFormAddEmp">Add Employee</button>
+                <div class="comp-managetools__spacer"></div>
+                <button class="pc-iconbtn" type="button" id="compFormBulk" aria-label="Bulk update" title="Bulk update / add"><i data-lucide="file-input"></i></button>
+                <button class="pc-iconbtn" type="button" aria-label="Export" title="Export"><i data-lucide="file-output"></i></button>
+                <div class="pc-search">
+                  <input type="text" id="compFormSearch" placeholder="Search here">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <div class="pp-table-wrap">
+                <table class="pp-table comp-table comp-formtable">
+                  <thead>
+                    <tr>
+                      <th class="comp-fcheckcol"><label class="check-red"><input type="checkbox" id="compFormCheckAll"><span class="check-red__box"></span></label></th>
+                      <th><span class="comp-sort">Employee ID <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="comp-sort">Employment Status <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th>Start Contract Date</th>
+                      <th>End Contract Date</th>
+                      <th>Work Duration</th>
+                      <th><span class="comp-info">Amount <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></th>
+                      <th class="pp-table__act"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="compFormRows"></tbody>
+                </table>
+                <div class="comp-formempty" id="compFormEmpty">
+                  <span class="comp-formempty__icon"><i data-lucide="users"></i></span>
+                  <div class="comp-formempty__title">No employees added yet</div>
+                  <div class="comp-formempty__sub">Click <b>Add Employee</b> to choose who gets a PKWT compensation, then fill the contract details.</div>
+                </div>
+              </div>
+
+              <div class="comp-foot">
+                <div class="comp-showing">
+                  <span>Showing</span>
+                  <span class="comp-pagesize">
+                    <select aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </span>
+                  <span>from <span id="compFormTotal">0</span> row</span>
+                </div>
+                <div class="comp-pager">
+                  <button class="comp-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                  <span class="comp-pagebox">1</span>
+                  <span class="comp-pager__from">from 1</span>
+                  <button class="comp-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                </div>
+              </div>
+            </div>
+
+            <footer class="pp-foot">
+              <button class="btn btn--secondary" type="button" id="compFormCancel">Cancel</button>
+              <button class="btn btn--primary" type="button" id="compFormSave">Save</button>
+            </footer>
+          </section>
+        </div>
+
+        <!-- ===================== STUB VIEWS ===================== -->
+        <div class="comp-view is-hidden" data-compview="npp" data-screen-label="NPP Transaction">
+          <section class="pp-panel">
+            <div class="comp-stub">
+              <span class="comp-stub__icon"><i data-lucide="landmark"></i></span>
+              <div class="comp-stub__title">NPP Transaction</div>
+              <div class="comp-stub__sub">Track Nomor Pendaftaran Perusahaan (NPP) changes for BPJS reporting per branch. This module is not part of the current prototype.</div>
+            </div>
+          </section>
+        </div>
+
+        <div class="comp-view is-hidden" data-compview="pph" data-screen-label="PPH 21 DTP">
+          <section class="pp-panel">
+            <div class="comp-stub">
+              <span class="comp-stub__icon"><i data-lucide="receipt"></i></span>
+              <div class="comp-stub__title">PPH 21 DTP</div>
+              <div class="comp-stub__sub">Manage PPh 21 Ditanggung Pemerintah (government-borne income tax) eligibility and reporting. This module is not part of the current prototype.</div>
+            </div>
+          </section>
+        </div>
+
+        <div class="comp-view is-hidden" data-compview="bpjs" data-screen-label="BPJS New Rate">
+          <section class="pp-panel">
+            <div class="comp-stub">
+              <span class="comp-stub__icon"><i data-lucide="percent"></i></span>
+              <div class="comp-stub__title">BPJS New Rate</div>
+              <div class="comp-stub__sub">Apply updated BPJS Kesehatan &amp; Ketenagakerjaan contribution rates across payroll runs. This module is not part of the current prototype.</div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===================== ALL FILTER MODAL ===================== -->
+<div class="modal-scrim" id="compFilterScrim" aria-hidden="true">
+  <div class="modal modal--sheet modal--filter" role="dialog" aria-modal="true" aria-labelledby="compFilterTitle">
+    <div class="modal__head">
+      <button class="modal__close" type="button" data-close-filter aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <h2 class="modal__title" id="compFilterTitle">All Filter</h2>
+    </div>
+
+    <div class="modal__scroll">
+      <!-- EMPTY STATE -->
+      <div id="compFilterEmpty">
+        <div class="filter-empty">
+          <span class="filter-empty__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h18l-7 8.5v6l-4 2v-8z"/></svg>
+          </span>
+          <div class="filter-empty__title">No filters have been set yet</div>
+          <div class="filter-empty__sub">Your filter will be displayed here</div>
+          <div class="filter-addwrap">
+            <button class="add-filter" type="button" id="compFilterAddEmpty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+              Add Filter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILLED STATE -->
+      <div id="compFilterFilled" class="is-hidden">
+        <div class="filter-list" id="compFilterList"></div>
+        <div class="filter-add-row">
+          <div class="filter-addwrap">
+            <button class="add-filter" type="button" id="compFilterAddMore">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+              Add Filter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-foot">
+      <button class="sheet-foot__link is-hidden" type="button" id="compFilterReset">Reset filter</button>
+      <span class="sheet-foot__spacer"></span>
+      <button class="btn btn--secondary" type="button" data-close-filter>Cancel</button>
+      <button class="btn btn--primary" type="button" id="compFilterApply">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SELECT EMPLOYEE MODAL ===================== -->
+<div class="modal-scrim" id="compEmpScrim" aria-hidden="true">
+  <div class="modal ae-assign" role="dialog" aria-modal="true" aria-labelledby="compEmpTitle">
+    <header class="ae-assign__head">
+      <h2 class="ae-assign__title" id="compEmpTitle">Select Employee</h2>
+      <button class="pp-modal__close" type="button" data-close-compemp aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="ae-assign__body">
+      <!-- ===== LEFT COLUMN ===== -->
+      <div class="ae-assign__col">
+        <!-- LIST PANE -->
+        <div class="ae-assign__pane is-active" data-emppane="list">
+          <div class="ae-assign__colhead">
+            <h3>View <span id="compEmpViewShown">0</span> of <span id="compEmpViewTotal">0</span> employee(s)</h3>
+            <button class="ae-assign__link" type="button" id="compEmpSelectAll">Select all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="compEmpSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <button class="ae-assign__filterbtn" type="button" id="compEmpFilterBtn">Filter</button>
+          </div>
+          <div class="ae-assign__list" id="compEmpLeftList"></div>
+        </div>
+
+        <!-- FILTER PANE -->
+        <div class="ae-assign__pane" data-emppane="filter">
+          <div class="ae-filterhead">
+            <button class="ae-back" type="button" id="compEmpFilterBack">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+              Filter
+            </button>
+            <button class="ae-assign__link" type="button" id="compEmpFilterReset">Reset Filter</button>
+          </div>
+          <div class="ae-filterscroll">
+            <div class="fld">
+              <label class="fld__label">Branch</label>
+              <div class="ctl ctl--select" data-emp-filter="branch" data-ph="Select branch">
+                <span class="ctl__value">Select branch</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld__label">Organization</label>
+              <div class="ctl ctl--select" data-emp-filter="org" data-ph="Select organization">
+                <span class="ctl__value">Select organization</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld__label">Job Level</label>
+              <div class="ctl ctl--select" data-emp-filter="level" data-ph="Select job level">
+                <span class="ctl__value">Select job level</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld__label">Job position</label>
+              <div class="ctl ctl--select" data-emp-filter="position" data-ph="Select job position">
+                <span class="ctl__value">Select job position</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld__label">Employment status</label>
+              <div class="ctl ctl--select" data-emp-filter="status" data-ph="Select employment status">
+                <span class="ctl__value">Select employment status</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld__label">End employment status range</label>
+              <div class="ctl ctl--select" data-emp-filter="endrange" data-ph="Select end employment status range">
+                <span class="ctl__value">Select end employment status range</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+            </div>
+            <button class="ae-applyfilter" type="button" id="compEmpFilterApply">Apply Filter</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ae-assign__rule"></div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div class="ae-assign__col">
+        <div class="ae-assign__pane is-active">
+          <div class="ae-assign__colhead">
+            <h3><span id="compEmpSelCount">0</span> employee(s) selected</h3>
+            <button class="ae-assign__link" type="button" id="compEmpClear">Clear selection</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="compEmpSelSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+          </div>
+          <div class="ae-assign__list" id="compEmpRightList"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="ae-assign__foot">
+      <button class="btn btn--secondary" type="button" data-close-compemp>Cancel</button>
+      <button class="btn btn--primary" type="button" id="compEmpSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== EXPORT MODAL ===================== -->
+<div class="modal-scrim" id="compExportScrim" aria-hidden="true">
+  <div class="modal modal--sheet modal--export" role="dialog" aria-modal="true" aria-labelledby="compExportTitle">
+    <div class="modal__head">
+      <button class="modal__close" type="button" data-close-export aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <h2 class="modal__title" id="compExportTitle">Export Payment Compensation Simulation</h2>
+    </div>
+
+    <div class="modal__scroll">
+      <div class="comp-exfields">
+        <div class="fld">
+          <label class="fld__label">Period</label>
+          <div class="ctl ctl--date" id="compExportPeriod">
+            <input type="text" placeholder="Select period" readonly>
+            <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Job position</label>
+          <div class="ctl ctl--select" data-export-select="position">
+            <span class="ctl__value">Select job position</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"></div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Organization</label>
+          <div class="ctl ctl--select" data-export-select="org">
+            <span class="ctl__value">Select organization</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"></div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Branch</label>
+          <div class="ctl ctl--select" data-export-select="branch">
+            <span class="ctl__value">Select branch</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"></div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Status</label>
+          <div class="ctl ctl--select" data-export-select="status">
+            <span class="ctl__value has-value">1 selected status</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"></div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">PKWT status</label>
+          <div class="ctl ctl--select" data-export-select="pkwt">
+            <span class="ctl__value">select PKWT status</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-foot">
+      <span class="sheet-foot__spacer"></span>
+      <button class="btn btn--secondary" type="button" data-close-export>Cancel</button>
+      <button class="btn btn--primary" type="button" id="compExportSubmit">Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BULK UPDATE / ADD MODAL ===================== -->
+<div class="modal-scrim" id="compBulkScrim" aria-hidden="true">
+  <div class="modal modal--sheet modal--bulk comp-bulk" role="dialog" aria-modal="true" aria-labelledby="compBulkTitle">
+    <div class="modal__head">
+      <button class="modal__close" type="button" data-close-bulk aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <h2 class="modal__title" id="compBulkTitle">Bulk Update/Add Compensation</h2>
+    </div>
+
+    <div class="modal__scroll">
+      <h3 class="comp-bulk__heading">Download and complete the template</h3>
+      <p class="comp-bulk__sub">Download template below and write your data changes.</p>
+
+      <button class="imp-file" type="button" id="compBulkDownload">
+        <span class="imp-file__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/></svg>
+        </span>
+        <span class="imp-file__name">Template_pkwt_compensation.xlsx</span>
+        <span class="imp-file__dl" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        </span>
+      </button>
+
+      <h3 class="comp-bulk__tipstitle">Few tips:</h3>
+      <ul class="comp-bulk__tips">
+        <li>Make sure employee ID is exist</li>
+        <li>Make sure all mandatory field inserted</li>
+        <li>Check sheet 'instruction' on spreadsheet to read instruction</li>
+      </ul>
+
+      <div class="comp-bulk__uplabel">Upload spreadsheet</div>
+      <label class="imp-upload" id="compBulkUpload">
+        <span class="imp-upload__btn">Choose File</span>
+        <span class="imp-upload__name" id="compBulkName">No file selected</span>
+        <input type="file" id="compBulkInput" accept=".xlsx,.xls,.csv" hidden>
+      </label>
+    </div>
+
+    <div class="sheet-foot">
+      <span class="sheet-foot__spacer"></span>
+      <button class="btn btn--secondary" type="button" data-close-bulk>Cancel</button>
+      <button class="btn btn--primary" type="button" id="compBulkSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== DELETE CONFIRM MODAL ===================== -->
+<div class="modal-scrim" id="compDeleteScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="compDeleteTitle">
+    <button class="modal__close" type="button" data-close-delete aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="compDeleteTitle">Delete PKWT Compensation?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">This will remove the PKWT compensation record for this employee. You cannot undo this action.</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-delete>Cancel</button>
+      <button class="btn btn--danger" type="button" id="compDeleteConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== DATE PICKER MODAL ===================== -->
+<div class="modal-scrim" id="compDateScrim" aria-hidden="true">
+  <div class="modal comp-datemodal" role="dialog" aria-modal="true" aria-labelledby="compDateTitle">
+    <div class="comp-datemodal__head">
+      <h2 class="comp-datemodal__title" id="compDateTitle">Select Date</h2>
+      <button class="comp-datemodal__close" type="button" data-close-date aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="dp__head">
+      <button class="dp__nav" type="button" id="compDatePrev" aria-label="Previous month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="dp__title" id="compDateLabel">June 2026</span>
+      <button class="dp__nav" type="button" id="compDateNext" aria-label="Next month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="dp__weekdays"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+    <div class="dp__grid" id="compDateGrid"></div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="pc-toast" id="compToast" aria-live="polite">
+  <span class="pc-toast__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+  <span id="compToastMsg">Saved.</span>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'payroll', activeItem: 'Compliance' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/payroll-compliance.js"></script>
+<script src="js/table-scroll.js"></script>
+
+</body>
+</html>

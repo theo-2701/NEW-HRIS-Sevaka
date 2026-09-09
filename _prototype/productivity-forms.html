@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Forms</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/daterange.css?v=3">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Forms">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Forms &amp; Survey</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Forms</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Forms</h1>
+<p class="flow-sub">HR composes forms and reads what comes back. What you may read depends on the form's sensitivity, not on your title — and HR never writes an answer on someone else's behalf.</p>
+</div>
+<div class="flow-head__actions">
+<div class="pv-persona"><span class="pv-persona__lbl">Acting as</span>
+<span class="seg" id="fmPersona">
+<button class="seg__btn is-on" type="button" data-persona="HESTI">Hesti · HR Manager</button>
+<button class="seg__btn" type="button" data-persona="SARI">Sari · HR Staff</button>
+<button class="seg__btn" type="button" data-persona="RINA">Rina · Dept Manager</button>
+</span></div>
+<button class="btn btn--primary" id="fmNewBtn">New form</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="note note--info" id="fmRegime" style="margin-top:4px"><i data-lucide="info"></i><span id="fmRegimeMsg"></span></div>
+
+<div class="tbar" style="margin-top:18px">
+<button class="btn btn--secondary" type="button" data-filter-open="fmFilter">Filter</button>
+<span class="sec-head__note" data-filter-sum="fmFilter">No filter applied</span>
+<span class="tbar__sp"></span>
+<label class="tbar__srch"><i data-lucide="search"></i><input type="search" id="fmSrch" placeholder="Search form title"></label>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Form</th><th>Obligation</th><th>Identity</th><th>Audience</th><th>Sensitive</th><th>Due</th><th>Status</th><th class="ta-c">Answers in</th><th></th></tr></thead>
+<tbody id="fmBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgFm"></div>
+
+<div class="note note--warn" style="margin-top:18px"><i data-lucide="triangle-alert"></i>
+<span><strong>Structural limit worth saying out loud.</strong> For a <code>PER_BAGIAN</code> form, matching relies entirely on the company position tree: an employee without a structural position never appears as a target and never appears in "not yet answered". Not a bug — an architectural consequence.</span></div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ FILTER ============ -->
+<div class="ovl" id="fmFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter forms</h3><p class="ovl__desc">Every field here exists in the form search contract. Free-text title search lives above the table.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Status</label><div class="ctl ctl--select" id="ffState"><span class="ctl__value" style="color:var(--fg-4)">Any</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="">Any</div><div class="dropdown__opt" data-val="TERBUKA">TERBUKA</div><div class="dropdown__opt" data-val="DITUTUP">DITUTUP</div></div></div></div>
+<div class="fld"><label class="fld__label">Obligation</label><div class="ctl ctl--select" id="ffOb"><span class="ctl__value" style="color:var(--fg-4)">Any</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="">Any</div><div class="dropdown__opt" data-val="WAJIB">WAJIB</div><div class="dropdown__opt" data-val="SUKARELA">SUKARELA</div></div></div></div>
+<div class="fld"><label class="fld__label">Identity mode</label><div class="ctl ctl--select" id="ffId"><span class="ctl__value" style="color:var(--fg-4)">Any</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="">Any</div><div class="dropdown__opt" data-val="BER_IDENTITAS">BER_IDENTITAS</div><div class="dropdown__opt" data-val="ANONIM">ANONIM</div></div></div></div>
+<div class="fld"><label class="fld__label">Audience scope</label><div class="ctl ctl--select" id="ffAud"><span class="ctl__value" style="color:var(--fg-4)">Any</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="">Any</div><div class="dropdown__opt" data-val="SELURUH_KARYAWAN">SELURUH_KARYAWAN</div><div class="dropdown__opt" data-val="PER_BAGIAN">PER_BAGIAN</div></div></div></div>
+<div class="fld"><label class="fld__label">Sensitive</label><div class="ctl ctl--select" id="ffSens"><span class="ctl__value" style="color:var(--fg-4)">Any</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="">Any</div><div class="dropdown__opt" data-val="1">Sensitive only</div><div class="dropdown__opt" data-val="0">Non-sensitive only</div></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="ffReset">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<!-- ============ COMPOSER ============ -->
+<div class="ovl" id="fmForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New form</h3><p class="ovl__desc">A form is born <code>TERBUKA</code> — there is no draft state. Identity mode and the sensitive flag lock permanently once the first answer lands.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Form title <span class="req">*</span></label><div class="ctl"><input type="text" id="nfTitle" maxlength="150" placeholder="e.g. Survei Kepuasan Kerja Q3"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Identity mode <span class="req">*</span></label>
+<div class="radio-row" id="nfIdentity">
+<label class="radio"><input type="radio" name="nfIdentity" value="BER_IDENTITAS" checked><span class="radio__dot"></span>BER_IDENTITAS</label>
+<label class="radio"><input type="radio" name="nfIdentity" value="ANONIM"><span class="radio__dot"></span>ANONIM</label>
+</div></div>
+<div class="fld"><label class="fld__label">Obligation <span class="req">*</span></label>
+<div class="radio-row" id="nfObligation">
+<label class="radio"><input type="radio" name="nfObligation" value="SUKARELA" checked><span class="radio__dot"></span>SUKARELA</label>
+<label class="radio"><input type="radio" name="nfObligation" value="WAJIB"><span class="radio__dot"></span>WAJIB</label>
+</div>
+<span class="fld__hint" id="nfObHint">Mandatory forms require a response due date.</span></div>
+</div>
+<div class="note note--warn" id="nfGateNote" style="display:none"><i data-lucide="lock"></i><span><strong>Anonymous × mandatory is closed.</strong> Choosing <code>ANONIM</code> forces obligation to <code>SUKARELA</code> — an anonymous form cannot be chased per person, so it cannot be compulsory (<code>422 PROD_FORM_ANONYMOUS_CANNOT_BE_MANDATORY</code>).</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Audience scope <span class="req">*</span></label><div class="ctl ctl--select" id="nfScope"><span class="ctl__value">SELURUH_KARYAWAN</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="SELURUH_KARYAWAN">SELURUH_KARYAWAN</div><div class="dropdown__opt" data-val="PER_BAGIAN">PER_BAGIAN</div></div></div></div>
+<div class="fld" id="nfPosFld" style="display:none"><label class="fld__label">Positions <span class="req">*</span></label>
+<div class="radio-row" id="nfPos" style="gap:20px;flex-wrap:wrap">
+<label class="checkbox"><input type="checkbox" value="Engineering"><span class="checkbox__box"></span>Engineering</label>
+<label class="checkbox"><input type="checkbox" value="Field Operations"><span class="checkbox__box"></span>Field Operations</label>
+<label class="checkbox"><input type="checkbox" value="HR"><span class="checkbox__box"></span>HR</label>
+</div>
+<span class="fld__hint">Pick one or more position sub-trees — required when the scope is per section.</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Sensitive</label>
+<div class="radio-row" id="nfSensitive">
+<label class="radio"><input type="radio" name="nfSensitive" value="0" checked><span class="radio__dot"></span>No</label>
+<label class="radio"><input type="radio" name="nfSensitive" value="1"><span class="radio__dot"></span>Yes</label>
+</div></div>
+<div class="fld" id="nfDueFld" style="display:none"><label class="fld__label">Response due date <span class="req">*</span></label><div class="ctl ctl--date"><input type="date" id="nfDue">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<div class="fld" id="nfRetFld" style="display:none"><label class="fld__label">Retention (months) <span class="req">*</span></label><div class="ctl"><input type="number" id="nfRet" min="1" step="1" placeholder="e.g. 24"></div></div>
+</div>
+<div>
+<div class="sec-head"><span class="sec-head__t">Questions</span><span class="sec-head__c" id="nfQCount">1</span><span class="subtabs__sp"></span><span class="sec-head__note">At least one. Choice types must carry their options.</span></div>
+<div id="nfQuestions" style="margin-top:10px"></div>
+<button class="add-filter" type="button" id="nfAddQ" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add question</button>
+</div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="lock"></i>Server-authoritative</div>
+<div class="pv-row"><span class="pv-row__k">state</span><span class="pv-row__v">TERBUKA — always, from birth</span></div>
+<div class="pv-row"><span class="pv-row__k">submission_count · attributes_locked</span><span class="pv-row__v">Derived</span></div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="nfSave" disabled>Create form</button>
+</div>
+</div>
+</div>
+
+<!-- ============ EDIT FORM (PATCH) ============ -->
+<div class="ovl" id="fmEdit">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="efHeading">Edit form</h3><p class="ovl__desc">Wording, audience and dates stay editable for the life of the form. Identity mode and the sensitive flag do not — they freeze the moment the first answer lands.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--warn" id="efLockNote" style="display:none"><i data-lucide="lock"></i><span><strong>Attributes locked.</strong> This form already has answers, so identity mode and the sensitive flag are permanently fixed — forcing either is refused with <code>422 PROD_FORM_ATTRIBUTE_LOCKED</code>.</span></div>
+<div class="fld"><label class="fld__label">Form title <span class="req">*</span></label><div class="ctl"><input type="text" id="efTitle" maxlength="150"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Identity mode</label>
+<div class="radio-row" id="efIdentity">
+<label class="radio"><input type="radio" name="efIdentity" value="BER_IDENTITAS" checked><span class="radio__dot"></span>BER_IDENTITAS</label>
+<label class="radio"><input type="radio" name="efIdentity" value="ANONIM"><span class="radio__dot"></span>ANONIM</label>
+</div></div>
+<div class="fld"><label class="fld__label">Obligation</label>
+<div class="radio-row" id="efObligation">
+<label class="radio"><input type="radio" name="efObligation" value="SUKARELA" checked><span class="radio__dot"></span>SUKARELA</label>
+<label class="radio"><input type="radio" name="efObligation" value="WAJIB"><span class="radio__dot"></span>WAJIB</label>
+</div>
+<span class="fld__hint" id="efObHint">Mandatory forms require a response due date.</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Audience scope</label><div class="ctl ctl--select" id="efScope"><span class="ctl__value">SELURUH_KARYAWAN</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="SELURUH_KARYAWAN">SELURUH_KARYAWAN</div><div class="dropdown__opt" data-val="PER_BAGIAN">PER_BAGIAN</div></div></div></div>
+<div class="fld" id="efPosFld" style="display:none"><label class="fld__label">Positions <span class="req">*</span></label>
+<div class="radio-row" id="efPos" style="gap:20px;flex-wrap:wrap">
+<label class="checkbox"><input type="checkbox" value="Engineering"><span class="checkbox__box"></span>Engineering</label>
+<label class="checkbox"><input type="checkbox" value="Field Operations"><span class="checkbox__box"></span>Field Operations</label>
+<label class="checkbox"><input type="checkbox" value="HR"><span class="checkbox__box"></span>HR</label>
+</div>
+<span class="fld__hint">Every currently targeted section is pre-ticked — unticking one drops it from the audience.</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Sensitive</label>
+<div class="radio-row" id="efSensitive">
+<label class="radio"><input type="radio" name="efSensitive" value="0" checked><span class="radio__dot"></span>No</label>
+<label class="radio"><input type="radio" name="efSensitive" value="1"><span class="radio__dot"></span>Yes</label>
+</div></div>
+<div class="fld" id="efDueFld" style="display:none"><label class="fld__label">Response due date <span class="req">*</span></label><div class="ctl ctl--date"><input type="date" id="efDue">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div></div>
+<div class="fld" id="efRetFld" style="display:none"><label class="fld__label">Retention (months) <span class="req">*</span></label><div class="ctl"><input type="number" id="efRet" min="1" step="1"></div></div>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span>Closing a form is the same call with <code>state=DITUTUP</code>, and it only travels one way — reopening at form level does not exist. What exists instead is a per-person window, granted from the form's detail view.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="efSave">Save changes</button>
+</div>
+</div>
+</div>
+
+<!-- ============ QUESTION (add/edit) ============ -->
+<div class="ovl ovl--stack" id="fmQ">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="qmHeading">Add question</h3><p class="ovl__desc">Safe to do even on a form that already has answers — each answer keeps its own frozen copy of the question it was asked.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Question <span class="req">*</span></label><div class="ctl"><input type="text" id="qmText" placeholder="Question text"></div></div>
+<div class="fld"><label class="fld__label">Answer type <span class="req">*</span></label><div class="ctl ctl--select" id="qmType"><span class="ctl__value">ISIAN_TEKS</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="PILIHAN_SATU">PILIHAN_SATU — one option</div><div class="dropdown__opt" data-val="PILIHAN_BANYAK">PILIHAN_BANYAK — many options</div><div class="dropdown__opt" data-val="ISIAN_TEKS">ISIAN_TEKS — free text</div><div class="dropdown__opt" data-val="ANGKA">ANGKA — number</div><div class="dropdown__opt" data-val="TANGGAL">TANGGAL — date</div></div></div>
+<span class="fld__hint">Five answer types exist in the contract, and no more — there is no attachment, no rating widget, no employee picker.</span></div>
+<div class="fld" id="qmChoicesFld" style="display:none"><label class="fld__label">Options <span class="req">*</span></label>
+<div id="qmOpts" style="display:flex;flex-direction:column;gap:8px"></div>
+<button class="add-filter" type="button" id="qmAddOpt" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add option</button>
+<span class="fld__hint">A choice question with no option is refused — <code>ck_mst_form_question_choices_required</code>.</span></div>
+</div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="eye"></i>How the employee will see it</div>
+<div id="qmPreview" style="padding:14px 16px"></div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="qmSave">Save question</button>
+</div>
+</div>
+</div>
+
+<!-- ============ ONE SUBMISSION (HR read) ============ -->
+<div class="ovl" id="fmSub">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="fsTitle">Submission</h3><p class="ovl__desc" id="fsDesc">Read-only. Question wording is the copy frozen with the answer, not today's form.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Question (frozen copy)</th><th>Type</th><th>Answer</th></tr></thead><tbody id="fsBody"></tbody></table></div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="history"></i>Edit trail of this answer</div>
+<div id="fsHist"></div>
+</div>
+<div class="note note--info"><i data-lucide="footprints"></i><span>Opening this record wrote exactly one access-trail row — the write is a precondition of the read, not a side effect. HR reads here; there is no edit button, and no contract that would allow one.</span></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div>
+</div>
+
+<!-- ============ DETAIL (4 panels) ============ -->
+<div class="ovl" id="fmDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="fdTitle">Form detail</h3><p class="ovl__desc">Questions, answers as they came in, who has not answered yet, and the per-person reopen window.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="subtabs"><span class="seg">
+<button class="seg__btn is-on" type="button" data-sub="fdq">Questions</button>
+<button class="seg__btn" type="button" data-sub="fda">Answers in</button>
+<button class="seg__btn" type="button" data-sub="fdp">Not yet answered</button>
+</span>
+<span class="subtabs__sp"></span>
+<button class="btn btn--secondary" type="button" id="fdGrantOpen">Reopen window</button>
+</div>
+<div class="subpanel is-on" data-subpanel="fdq">
+<div class="sec-head"><span class="sec-head__t">Questions</span><span class="sec-head__c" id="fdQCount">0</span><span class="subtabs__sp"></span><button class="btn btn--secondary" type="button" id="fdQAdd">Add question</button></div>
+<div class="dtable-wrap dtable-wrap--act" style="margin-top:10px"><table class="dtable"><thead><tr><th>#</th><th>Question</th><th>Type</th><th>Options</th><th></th></tr></thead><tbody id="fdQBody"></tbody></table></div>
+<span class="fld__hint" style="margin-top:10px">Editing or removing a question stays allowed even after answers exist — every answer carries its own frozen copy of the question, and aggregation joins by id, never by matching text.</span>
+</div>
+<div class="subpanel" data-subpanel="fda">
+<div class="dtable-wrap dtable-wrap--act"><table class="dtable"><thead><tr><th>Submission</th><th>Respondent</th><th>Submitted</th><th class="ta-c">Items</th><th></th></tr></thead><tbody id="fdABody"></tbody></table></div>
+<div class="note note--info" style="margin-top:12px"><i data-lucide="footprints"></i><span>Every row returned here writes exactly one access-trail entry, in the same transaction. A refused read writes none. The submitter's audit <code>created_by</code> is never included in this grid.</span></div>
+</div>
+<div class="subpanel" data-subpanel="fdp">
+<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Employee</th><th>Position</th></tr></thead><tbody id="fdPBody"></tbody></table></div>
+<div class="note note--warn" style="margin-top:12px"><i data-lucide="triangle-alert"></i><span>Only meaningful for an identified <em>and</em> mandatory form. There is zero escalation from this list — it informs, it does not chase. Employees without a structural position never appear.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ REOPEN WINDOW (per person) ============ -->
+<div class="ovl ovl--stack" id="fmGrant">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="fgHeading">Reopen window</h3><p class="ovl__desc">The due date has passed, or the form is closed, and one person still needs to answer — a new joiner, someone on sick leave. This reopens the form for that one person only.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="fld"><label class="fld__label">Employee <span class="req">*</span></label><div class="ctl ctl--select" id="fgEmp"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fgEmpDD"></div></div></div>
+<div class="fld"><label class="fld__label">Reason <span class="req">*</span></label><div class="ctl"><input type="text" id="fgReason" placeholder="Why this person gets a second window"></div></div>
+</div>
+<div><button class="btn btn--primary" id="fgGrant">Open window</button></div>
+<div class="sec-head" style="margin-top:6px"><span class="sec-head__t">Windows already opened</span></div>
+<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Employee</th><th>Reason</th><th>Granted by</th><th>Granted at</th></tr></thead><tbody id="fdGBody"></tbody></table></div>
+<div class="note note--info"><i data-lucide="key"></i><span>A grant opens <strong>authority</strong>, not content: only the target may write their own answers — HR still never writes for them. Anonymous forms refuse a grant outright (<code>422 PROD_FORM_ANONYMOUS_IMMUTABLE</code>), and a form past its retention window refuses too.</span></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div>
+</div>
+
+<!-- ============ AGGREGATE ============ -->
+<div class="ovl" id="fmAgg">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="faTitle">Aggregate</h3><p class="ovl__desc">Numbers only. Free-text answers are counted, never shown.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="users"></i>Respondents</div>
+<div class="pv-row"><span class="pv-row__k">respondent_count</span><span class="pv-row__v" id="faCount">—</span></div>
+<div class="pv-row"><span class="pv-row__k">Minimum threshold</span><span class="pv-row__v">5 respondents <span class="pv-tag">INTERIM</span></span></div>
+</div>
+<div id="faBody"></div>
+<div class="note note--warn"><i data-lucide="triangle-alert"></i><span><strong>The threshold is provisional</strong> — pending a principal decision. Below it, the aggregate is refused with <code>422 PROD_FORM_AGGREGATE_BELOW_THRESHOLD</code> and the message never reveals the real count. A sensitive form has no aggregate surface at all.</span></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div>
+</div>
+
+<!-- ============ ANONYMOUS VIEW ============ -->
+<div class="ovl" id="fmAnon">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="fnTitle">Anonymous form — HR view</h3><p class="ovl__desc">Answers with no respondent column, and deliberately no per-person tooling.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Submitted</th><th class="ta-c">Items</th></tr></thead><tbody id="fnBody"></tbody></table></div>
+<div class="note note--info"><i data-lucide="eye-off"></i><span><strong>Zero buttons here, stated on purpose.</strong> No reopen window, no per-respondent filter, no edit. Filtering by respondent is refused with a <code>403</code> rather than an empty result — an empty result would itself leak whether a match was possible.</span></div>
+<div class="note note--warn"><i data-lucide="bell"></i><span>The audit column <code>created_by</code> is still written on an anonymous submission — that is system audit, not identity leakage; the domain respondent column stays empty. Invitations are still sent per person: the <em>answer</em> is anonymous, not the invitation.</span></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0003', roles:['ROLE_EMPLOYEE','ROLE_HR_MANAGER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-forms.js"></script>
+</body>
+</html>

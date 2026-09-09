@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Run Payroll</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/payroll-processing.css?v=3">
+  <link rel="stylesheet" href="css/payroll-thr.css">
+  <link rel="stylesheet" href="css/payroll-history.css?v=2">
+  <link rel="stylesheet" href="css/ebanking.css">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Run Payroll">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="app__main app__main--wizard">
+      <div class="pp-shell">
+
+        <!-- ===================== PAGE HEADER ===================== -->
+        <header class="pp-head" data-screen-label="Payroll Processing">
+          <h1 class="pp-head__title">Payroll Processing</h1>
+          <div class="pp-tabs" data-tabgroup="payroll">
+            <button class="tab-pill is-on" type="button" data-tab="history">Payroll History</button>
+            <button class="tab-pill" type="button" data-tab="run">Run Payroll</button>
+            <button class="tab-pill" type="button" data-tab="thr">Run THR</button>
+            <button class="tab-pill" type="button" data-tab="import">Import Payroll</button>
+            <button class="tab-pill" type="button" data-tab="settings">Settings</button>
+          </div>
+        </header>
+
+        <!-- ===================== HISTORY VIEW ===================== -->
+        <div class="pp-view" data-view="history">
+          <section class="pp-panel">
+            <div class="ph-body">
+
+              <div class="ph-head">
+                <h2 class="ph-title">Payroll History</h2>
+                <div class="ph-head__actions">
+                  <button class="btn btn--secondary ph-headbtn" type="button" id="phEbanking">Download E-Banking</button>
+                  <button class="btn btn--secondary ph-headbtn" type="button" id="phDisbursement">Disbursement</button>
+                </div>
+              </div>
+
+              <div class="ph-rule"></div>
+
+              <p class="ph-note">Showing payroll runs for the selected year. Click <a id="phRunLink">Run Payroll</a> to start a new period, or open a report to review a completed run.</p>
+
+              <!-- Toolbar -->
+              <div class="ph-toolbar">
+                <div class="ph-yearpick">
+                  <input type="text" id="phYear" value="2026" readonly aria-label="Year">
+                  <button class="ph-yearpick__cal" type="button" aria-label="Pick year">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </button>
+                </div>
+                <button class="ph-step" type="button" id="phYearPrev" aria-label="Previous year">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button class="ph-step" type="button" id="phYearNext" aria-label="Next year">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+
+                <div class="ph-toolbar__spacer"></div>
+
+                <button class="ph-iconbtn" type="button" aria-label="Insights" title="Open in SEVAKA Insights">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v17a1 1 0 0 0 1 1h17"/><path d="m7 14 3.5-4 3 2.5L19 6"/></svg>
+                </button>
+                <button class="ph-iconbtn" type="button" aria-label="Export" title="Export">
+                  <i data-lucide="file-output"></i>
+                </button>
+                <div class="ph-search">
+                  <input type="text" id="phSearch" placeholder="Search period">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="pp-table-wrap ph-table-wrap">
+                <table class="pp-table ph-table">
+                  <thead>
+                    <tr>
+                      <th>Payroll Period</th>
+                      <th>Payment Schedule</th>
+                      <th>Employees</th>
+                      <th>Total Net Pay</th>
+                      <th>Report</th>
+                      <th>Status</th>
+                      <th class="ph-actcol"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="phRows"></tbody>
+                </table>
+              </div>
+
+              <!-- Footer / pagination -->
+              <div class="ph-foot">
+                <div class="ph-showing">
+                  <span id="phShowing">Showing 1–8 of 8 payroll runs</span>
+                  <div class="ph-pagesize">
+                    <select id="phPageSize" aria-label="Rows per page">
+                      <option>10</option>
+                      <option>20</option>
+                      <option>50</option>
+                    </select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+                <div class="ph-pager">
+                  <button class="ph-pager__btn" type="button" aria-label="Previous page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  </button>
+                  <span class="ph-pagebox">1</span>
+                  <span class="ph-pager__from">of 1</span>
+                  <button class="ph-pager__btn" type="button" aria-label="Next page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </section>
+        </div>
+
+        <!-- ===================== RUN PAYROLL VIEW ===================== -->
+        <div class="pp-view is-hidden" data-view="run">
+        <!-- ===================== WHITE PANEL ===================== -->
+        <section class="pp-panel">
+          <header class="pp-panel__head">
+            <h2 class="pp-panel__title">Run Payroll</h2>
+            <div class="pp-panel__rule"></div>
+
+            <div class="stepper stepper--3" id="ppStepper">
+              <div class="step is-current" data-step="1">
+                <div class="step__dot"><span class="step__num">1</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 1</div>
+                <div class="step__sub">Set Up</div>
+              </div>
+              <div class="step" data-step="2">
+                <div class="step__dot"><span class="step__num">2</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 2</div>
+                <div class="step__sub">Review</div>
+              </div>
+              <div class="step" data-step="3">
+                <div class="step__dot"><span class="step__num">3</span></div>
+                <div class="step__label">Step 3</div>
+                <div class="step__sub">Summary</div>
+              </div>
+            </div>
+          </header>
+
+          <!-- ===================== STEP 1: SET UP ===================== -->
+          <div class="pp-step" data-step-view="1">
+          <div class="pp-body">
+            <div class="pp-section">
+              <div class="pp-section__title">Setup run payroll</div>
+              <div class="pp-section__sub">You can check payroll checklist <a id="openChecklist">here</a></div>
+            </div>
+
+            <!-- Government's regulation banner -->
+            <div class="pp-gov">
+              <span class="pp-gov__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              </span>
+              <div>
+                <div class="pp-gov__title">Government's regulation</div>
+                <div class="pp-gov__text">Starting from 1 January 2024, Tax Calculation will be calculated based on Tarif Efektif Rata-Rata (TER) Method on accordance to government's regulation</div>
+              </div>
+            </div>
+
+            <!-- Fields -->
+            <div class="pp-fields">
+              <div class="fld">
+                <label class="fld__label">Payroll period</label>
+                <div class="ctl ctl--date">
+                  <input type="text" value="Mar 2026" readonly data-month>
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+              </div>
+
+              <div class="fld">
+                <label class="fld__label">Payment schedule</label>
+                <div class="ctl ctl--select" data-select>
+                  <span class="ctl__value has-value">Default (25 Mar 2026)</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown">
+                    <div class="dropdown__opt is-sel">Default (25 Mar 2026)</div>
+                    <div class="dropdown__opt">End of month (31 Mar 2026)</div>
+                    <div class="dropdown__opt">Custom date</div>
+                  </div>
+                </div>
+              </div>
+
+              <label class="pp-check">
+                <input type="checkbox" id="customBpjs">
+                <span class="pp-check__box"></span>
+                Custom date for BPJS Kesehatan
+                <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+              </label>
+
+              <div class="fld is-hidden" id="bpjsDateField">
+                <label class="fld__label">BPJS date <span class="req">*</span></label>
+                <div class="ctl ctl--date">
+                  <input type="text" value="Mar 2026" readonly data-month>
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Who will be processed -->
+            <div class="pp-who-title">Who will be processed in this run payroll?</div>
+            <div class="pp-who-row">
+              <button class="btn btn--secondary" type="button" id="selectEmployee">Select Employee</button>
+              <label class="pp-check">
+                <input type="checkbox" id="selectAll">
+                <span class="pp-check__box"></span>
+                Select all employees
+              </label>
+            </div>
+
+            <div class="pp-selerror is-hidden" id="selError">
+              <span class="pp-selerror__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              </span>
+              Please select at least one employee to run payroll.
+            </div>
+
+            <div class="pp-selnote is-hidden" id="selNote">
+              <span class="pp-selnote__icon"><i data-lucide="info"></i></span>
+              <span><span id="selCount">0</span> employee selected and will be processed in this payroll. <a id="viewSelected">View employee</a></span>
+            </div>
+          </div>
+
+          <!-- ===================== FOOTER ===================== -->
+          <footer class="pp-foot">
+            <button class="btn btn--secondary" type="button" id="ppCancel">Cancel</button>
+            <button class="btn btn--primary" type="button" id="ppNext">Next</button>
+          </footer>
+          </div><!-- /step 1 -->
+
+          <!-- ===================== STEP 2: REVIEW ===================== -->
+          <div class="pp-step is-hidden" data-step-view="2" data-screen-label="Step 2 — Review">
+            <div class="pp-body pp-body--review">
+
+              <div class="pp-section">
+                <div class="pp-section__title">Review data</div>
+                <div class="pp-section__sub">You can review or manage employee payroll components.</div>
+              </div>
+
+              <!-- Summary row -->
+              <div class="pp-summary">
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Payment schedule</div>
+                  <div class="pp-summary__value">Default (25 Mar 2026)</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Payroll cut off period</div>
+                  <div class="pp-summary__value">1 Mar - 31 Mar 2026</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Employee</div>
+                  <div class="pp-summary__value" data-emp-count>3 employees</div>
+                </div>
+              </div>
+
+              <!-- Toolbar -->
+              <div class="pp-toolbar">
+                <div class="pp-seg" data-tabgroup="reviewtable">
+                  <button class="pp-seg__btn is-on" type="button" data-table="overview">Overview</button>
+                  <button class="pp-seg__btn" type="button" data-table="detail">Detail</button>
+                </div>
+                <button class="pp-toolbtn" type="button" id="resetSchedule">Reset This Payment Schedule</button>
+                <button class="pp-toolbtn" type="button" id="resetPeriod">Reset This Period</button>
+
+                <div class="pp-toolbar__spacer"></div>
+
+                <button class="pp-iconbtn" type="button" aria-label="Import" title="Import">
+                  <i data-lucide="file-input"></i>
+                </button>
+                <button class="pp-iconbtn" type="button" aria-label="Export" title="Export">
+                  <i data-lucide="file-output"></i>
+                </button>
+                <div class="pp-search">
+                  <input type="text" placeholder="Search here">
+                  <i data-lucide="search"></i>
+                </div>
+              </div>
+
+              <!-- ===== OVERVIEW TABLE ===== -->
+              <div class="pp-tableview is-active" data-tableview="overview">
+                <div class="pp-table-wrap">
+                  <table class="pp-table">
+                    <thead>
+                      <tr>
+                        <th class="pp-table__emp">
+                          <span class="pp-th-sort">Employee
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+                          </span>
+                        </th>
+                        <th>Basic Salary</th>
+                        <th>Allowance</th>
+                        <th>Additional Earnings</th>
+                        <th>Deduction</th>
+                        <th>Benefit</th>
+                        <th>
+                          <span class="pp-th-info">Total
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                          </span>
+                        </th>
+                        <th class="pp-table__act"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="overviewBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- ===== DETAIL TABLE ===== -->
+              <div class="pp-tableview" data-tableview="detail">
+                <div class="pp-detail-card">
+                  <div class="pp-detail-note">
+                    <span class="pp-detail-note__icon"><i data-lucide="info"></i></span>
+                    <span>This table is preview only, you can back to edit from overview tab.</span>
+                  </div>
+                  <div class="pp-table-wrap">
+                    <table class="pp-table pp-table--detail">
+                      <thead>
+                        <tr>
+                          <th class="pp-table__emp">
+                            <span class="pp-th-sort">Employee
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+                            </span>
+                          </th>
+                          <th>Basic Salary</th>
+                          <th>+Bonus</th>
+                          <th>+Overtime</th>
+                          <th>
+                            <span class="pp-th-info">Total
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                            </span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody id="detailBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <footer class="pp-foot">
+              <button class="btn btn--secondary" type="button" id="ppBack">Back</button>
+              <button class="btn btn--primary" type="button" id="ppRunPayroll">Run Payroll</button>
+            </footer>
+          </div><!-- /step 2 -->
+
+          <!-- ===================== STEP 3: PROCESS + SUMMARY ===================== -->
+          <div class="pp-step is-hidden" data-step-view="3" data-screen-label="Step 3 — Summary">
+
+            <!-- PROGRESS SUB-VIEW -->
+            <div class="pp-body pp-body--progress" data-sub="progress">
+              <div class="pp-progress">
+                <div class="pp-ringwrap">
+                  <svg class="pp-ring" viewBox="0 0 240 240" aria-hidden="true">
+                    <circle class="pp-ring__fill" cx="120" cy="120" r="110"></circle>
+                  </svg>
+                  <div class="pp-ring__pct" id="ppPct">0%</div>
+                </div>
+                <div class="pp-progress__title" id="ppProgTitle">Processing your payroll (0/3 employee)</div>
+                <div class="pp-progress__sub">Please wait while we set things up for you.</div>
+                <button class="btn btn--primary pp-progress__min" type="button" id="ppMinimize">Minimize</button>
+              </div>
+            </div>
+
+            <!-- SUMMARY SUB-VIEW -->
+            <div class="pp-body pp-body--summary is-hidden" data-sub="summary">
+              <div class="pp-section">
+                <div class="pp-section__title">Payroll calculation is completed</div>
+                <div class="pp-section__sub">Your data to run payroll has been succesfully set with the details below.</div>
+              </div>
+
+              <div class="pp-summary">
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Payment schedule</div>
+                  <div class="pp-summary__value">Default (25 Mar 2026)</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Payroll cut off period</div>
+                  <div class="pp-summary__value">1 Mar - 31 Mar 2026</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Employee</div>
+                  <div class="pp-summary__value" data-emp-count>3 employees</div>
+                </div>
+              </div>
+
+              <div class="pp-reports">
+                <button class="pp-report" type="button"><i data-lucide="file-text"></i>Salary Detail</button>
+                <button class="pp-report" type="button"><i data-lucide="receipt"></i>Payslip</button>
+                <button class="pp-report" type="button"><i data-lucide="file-text"></i>Tax Detail</button>
+                <button class="pp-report" type="button"><i data-lucide="layout-grid"></i>Other Report</button>
+              </div>
+
+              <div class="pp-next">
+                <div class="pp-next__title">Continue to the next step</div>
+                <div class="pp-next__sub">You can <b>request approval, lock or unlock the payroll, publish payslip, and payroll disbursement</b> through the payroll history page.</div>
+                <button class="btn btn--secondary pp-next__cta" type="button" id="goPayrollHistory">Go To Payrol History</button>
+              </div>
+            </div>
+
+          </div><!-- /step 3 -->
+        </section>
+
+        <!-- External footer (Step 3 only) -->
+        <footer class="pp-shellfoot is-hidden" id="ppShellFoot">
+          <button class="btn btn--secondary" type="button" id="goPayroll">Go To Payroll</button>
+        </footer>
+        </div><!-- /run view -->
+
+        <!-- ===================== THR VIEW ===================== -->
+        <div class="pp-view is-hidden" data-view="thr">
+        <section class="pp-panel">
+          <header class="pp-panel__head">
+            <h2 class="pp-panel__title">Run THR</h2>
+            <div class="pp-panel__rule"></div>
+
+            <div class="stepper stepper--3" id="thrStepper">
+              <div class="step is-current" data-step="1">
+                <div class="step__dot"><span class="step__num">1</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 1</div>
+                <div class="step__sub">Set Up</div>
+              </div>
+              <div class="step" data-step="2">
+                <div class="step__dot"><span class="step__num">2</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 2</div>
+                <div class="step__sub">Review</div>
+              </div>
+              <div class="step" data-step="3">
+                <div class="step__dot"><span class="step__num">3</span></div>
+                <div class="step__label">Step 3</div>
+                <div class="step__sub">Summary</div>
+              </div>
+            </div>
+          </header>
+
+          <!-- ===================== STEP 1: SET UP ===================== -->
+          <div class="pp-step" data-step-view="1" data-screen-label="Run THR — Step 1">
+          <div class="pp-body">
+            <div class="pp-section">
+              <div class="pp-section__title">Setup run THR</div>
+              <div class="pp-section__sub">You can check THR checklist <a id="thrOpenChecklist">here</a></div>
+            </div>
+
+            <!-- Payment date + Tax period -->
+            <div class="thr-fields-row">
+              <div class="fld">
+                <label class="fld__label">Payment date</label>
+                <div class="ctl ctl--date" data-thr-pick data-mode="day">
+                  <input type="text" readonly placeholder="Select payment date" id="thrPaymentDate">
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+              </div>
+              <div class="fld">
+                <label class="fld__label">Tax period</label>
+                <div class="ctl ctl--date" data-thr-pick data-mode="month">
+                  <input type="text" readonly placeholder="Select month and year" id="thrTaxPeriod">
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <p class="thr-note">Notes: Tax calculation for THR will be based on the month and year of selected <a id="thrTaxPeriodLink">Tax Period</a></p>
+
+            <!-- THR Date -->
+            <div class="fld thr-fld-thrdate">
+              <label class="fld__label">THR Date</label>
+              <div class="ctl ctl--date" data-thr-pick data-mode="day">
+                <input type="text" readonly placeholder="Select THR date" id="thrDate">
+                <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              </div>
+            </div>
+
+            <!-- Include in THP -->
+            <label class="pp-check thr-include">
+              <input type="checkbox" id="thrIncludeThp" checked>
+              <span class="pp-check__box"></span>
+              Include in THP
+            </label>
+
+            <!-- Tax settings -->
+            <div class="thr-subtitle">Tax settings</div>
+            <div class="radio-row thr-taxsettings">
+              <label class="radio"><input type="radio" name="thrTax" value="thr" checked><span class="radio__dot"></span>Tax calculate with THR</label>
+              <label class="radio"><input type="radio" name="thrTax" value="salary"><span class="radio__dot"></span>Tax calculate with Salary</label>
+              <label class="radio"><input type="radio" name="thrTax" value="non"><span class="radio__dot"></span>Non taxable</label>
+            </div>
+
+            <!-- Who will be processed -->
+            <div class="pp-who-title">Who will be processed in this run THR?</div>
+            <div class="pp-who-row">
+              <button class="btn btn--secondary" type="button" id="thrSelectEmployee">Select Employee</button>
+              <label class="pp-check">
+                <input type="checkbox" id="thrSelectAll">
+                <span class="pp-check__box"></span>
+                Select all employees
+              </label>
+            </div>
+
+            <div class="pp-selerror is-hidden" id="thrSelError">
+              <span class="pp-selerror__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              </span>
+              Please select at least one employee to run THR.
+            </div>
+
+            <div class="pp-selnote is-hidden" id="thrSelNote">
+              <span class="pp-selnote__icon"><i data-lucide="info"></i></span>
+              <span><span id="thrSelCount">0</span> employee selected and will be processed in this run THR. <a id="thrViewSelected">View employee</a></span>
+            </div>
+          </div>
+
+          <footer class="pp-foot">
+            <button class="btn btn--secondary" type="button" id="thrCancel">Cancel</button>
+            <button class="btn btn--primary" type="button" id="thrNext">Next</button>
+          </footer>
+          </div><!-- /thr step 1 -->
+
+          <!-- ===================== STEP 2: REVIEW ===================== -->
+          <div class="pp-step is-hidden" data-step-view="2" data-screen-label="Run THR — Step 2">
+            <div class="pp-body pp-body--review">
+
+              <div class="pp-section">
+                <div class="pp-section__title">Review data</div>
+                <div class="pp-section__sub">You can review or manage employee THR components.</div>
+              </div>
+
+              <!-- Summary row -->
+              <div class="pp-summary pp-summary--4">
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Payment date</div>
+                  <div class="pp-summary__value" data-thr-sum="payment">—</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">THR Date</div>
+                  <div class="pp-summary__value" data-thr-sum="thrdate">—</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Tax Period</div>
+                  <div class="pp-summary__value" data-thr-sum="tax">—</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Employee</div>
+                  <div class="pp-summary__value" data-thr-empcount>0 employees</div>
+                </div>
+              </div>
+
+              <!-- Toolbar -->
+              <div class="pp-toolbar">
+                <div class="pp-toolbar__spacer"></div>
+                <button class="pp-iconbtn" type="button" aria-label="Import" title="Import">
+                  <i data-lucide="file-input"></i>
+                </button>
+                <button class="pp-iconbtn" type="button" aria-label="Export" title="Export">
+                  <i data-lucide="file-output"></i>
+                </button>
+                <div class="pp-search">
+                  <input type="text" placeholder="Search here">
+                  <i data-lucide="search"></i>
+                </div>
+              </div>
+
+              <!-- THR table -->
+              <div class="pp-table-wrap">
+                <table class="pp-table pp-table--thr">
+                  <thead>
+                    <tr>
+                      <th class="pp-table__emp">
+                        <span class="pp-th-sort">Employee
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+                        </span>
+                      </th>
+                      <th>Total Allowance</th>
+                      <th>Length Of Service</th>
+                      <th>Total THR</th>
+                      <th>Religion</th>
+                    </tr>
+                  </thead>
+                  <tbody id="thrReviewBody"></tbody>
+                </table>
+              </div>
+
+            </div>
+
+            <footer class="pp-foot">
+              <button class="btn btn--secondary" type="button" id="thrBack">Back</button>
+              <button class="btn btn--primary" type="button" id="thrRunBtn">Run THR</button>
+            </footer>
+          </div><!-- /thr step 2 -->
+
+          <!-- ===================== STEP 3: PROCESS + SUMMARY ===================== -->
+          <div class="pp-step is-hidden" data-step-view="3" data-screen-label="Run THR — Step 3">
+
+            <!-- PROGRESS SUB-VIEW -->
+            <div class="pp-body pp-body--progress" data-thr-sub="progress">
+              <div class="pp-progress">
+                <div class="pp-ringwrap">
+                  <svg class="pp-ring" viewBox="0 0 240 240" aria-hidden="true">
+                    <circle class="pp-ring__fill" cx="120" cy="120" r="110"></circle>
+                  </svg>
+                  <div class="pp-ring__pct" id="thrPct">0%</div>
+                </div>
+                <div class="pp-progress__title" id="thrProgTitle">Processing your THR (0/0 employee)</div>
+                <div class="pp-progress__sub">Please wait while we set things up for you.</div>
+                <button class="btn btn--primary pp-progress__min" type="button" id="thrMinimize">Minimize</button>
+              </div>
+            </div>
+
+            <!-- SUMMARY SUB-VIEW -->
+            <div class="pp-body pp-body--summary is-hidden" data-thr-sub="summary">
+              <div class="pp-section">
+                <div class="pp-section__title">Payroll calculation is completed</div>
+                <div class="pp-section__sub">Your data to run THR has been succesfully set with the details below.</div>
+              </div>
+
+              <div class="pp-summary pp-summary--4">
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Payment date</div>
+                  <div class="pp-summary__value" data-thr-sum="payment">—</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">THR Date</div>
+                  <div class="pp-summary__value" data-thr-sum="thrdate">—</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Tax Period</div>
+                  <div class="pp-summary__value" data-thr-sum="tax">—</div>
+                </div>
+                <div class="pp-summary__cell">
+                  <div class="pp-summary__label">Employee</div>
+                  <div class="pp-summary__value" data-thr-empcount>0 employees</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /thr step 3 -->
+        </section>
+
+        <!-- External footer (Step 3 only) -->
+        <footer class="pp-shellfoot is-hidden" id="thrShellFoot">
+          <button class="btn btn--secondary" type="button" id="thrGoPayroll">Go To Payroll</button>
+        </footer>
+        </div><!-- /thr view -->
+
+        <!-- ===================== IMPORT VIEW ===================== -->
+        <div class="pp-view is-hidden" data-view="import" data-screen-label="Import Payroll">
+          <section class="pp-panel">
+            <div class="pp-body imp-body">
+
+              <header class="imp-head">
+                <h2 class="imp-title">Import Payroll</h2>
+                <div class="imp-rule"></div>
+              </header>
+
+              <!-- Download template -->
+              <div class="imp-block">
+                <h3 class="imp-blocktitle">Download and complete the template</h3>
+                <p class="imp-blocksub">Download template below and write your data changes.</p>
+
+                <button class="imp-file" type="button" id="impDownload">
+                  <span class="imp-file__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/></svg>
+                  </span>
+                  <span class="imp-file__name">Template_Salary_History.xlsx</span>
+                  <span class="imp-file__dl" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  </span>
+                </button>
+
+                <div class="imp-tips">
+                  <div class="imp-tips__title">Few tips:</div>
+                  <ul class="imp-tips__list">
+                    <li>Make sure your employee ID is correct</li>
+                    <li>Click column header on spreadsheet to read instruction</li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Upload -->
+              <div class="imp-block">
+                <div class="imp-uplabel">Upload spreadsheet</div>
+                <label class="imp-upload" id="impUploadBox">
+                  <span class="imp-upload__btn">Choose File</span>
+                  <span class="imp-upload__name" id="impFileName">No file selected</span>
+                  <button class="imp-upload__clear is-hidden" type="button" id="impClear" aria-label="Remove file">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </button>
+                  <input type="file" id="impFileInput" accept=".xlsx,.xls,.csv" hidden>
+                </label>
+              </div>
+
+            </div>
+
+            <footer class="pp-foot">
+              <button class="btn btn--secondary" type="button" id="impReset">Reset</button>
+              <button class="btn btn--primary" type="button" id="impSubmit">Submit</button>
+            </footer>
+          </section>
+        </div>
+
+        <!-- ===================== SETTINGS VIEW ===================== -->
+        <div class="pp-view is-hidden" data-view="settings">
+          <section class="pp-panel">
+            <div class="pp-stub">
+              <span class="pp-stub__icon"><i data-lucide="settings"></i></span>
+              <div class="pp-stub__title">Payroll Settings</div>
+              <div class="pp-stub__sub">Configure payment schedules, tax method, BPJS rates and payroll components. This module is not part of the current prototype.</div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===================== PAYROLL CHECKLIST MODAL ===================== -->
+<div class="modal-scrim" id="checklistScrim" aria-hidden="true">
+  <div class="modal pp-modal" role="dialog" aria-modal="true" aria-labelledby="checklistTitle">
+    <header class="pp-modal__head">
+      <h2 class="pp-modal__title" id="checklistTitle">Payroll Checklist</h2>
+      <button class="pp-modal__close" type="button" data-close-checklist aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="pp-modal__body">
+      <p class="pp-modal__lead">We recommend you check few things before run payroll.</p>
+
+      <div class="pp-checklist">
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="mail"></i></span>
+          <div class="pp-checklist__text">Checking all pending request need actions. <a href="inbox.html">Open inbox</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="user"></i></span>
+          <div class="pp-checklist__text">Checking all your employees has been transferred or resigned. <a href="employee-directory.html">View employee</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="clipboard-list"></i></span>
+          <div class="pp-checklist__text">Make sure you have done update the payroll component. <a>Update</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="landmark"></i></span>
+          <div class="pp-checklist__text">Ensure custom rate &amp; currency rates reflect the latest value. <a>View settings</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="calendar"></i></span>
+          <div class="pp-checklist__text">Checking employees attendance data is correct. <a>View attendance</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="users-round"></i></span>
+          <div class="pp-checklist__text">All employees data (including new employees) has been entered correctly and included in payroll. <a href="employee-directory.html">View employee</a></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="pp-modal__foot">
+      <label class="pp-check">
+        <input type="checkbox" id="dontShowChecklist">
+        <span class="pp-check__box"></span>
+        Don't show this again
+      </label>
+      <button class="btn btn--primary" type="button" id="runPayrollBtn">Run Payroll</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== ASSIGN EMPLOYEE MODAL ===================== -->
+<div class="modal-scrim" id="assignScrim" aria-hidden="true">
+  <div class="modal ae-assign" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+    <header class="ae-assign__head">
+      <h2 class="ae-assign__title" id="assignTitle">Assign Employee</h2>
+      <button class="pp-modal__close" type="button" data-close-assign aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="ae-assign__body">
+      <!-- ===== LEFT COLUMN ===== -->
+      <div class="ae-assign__col ae-assign__col--left">
+
+        <!-- LIST VIEW -->
+        <div class="ae-assign__pane is-active" data-pane="list">
+          <div class="ae-assign__colhead">
+            <h3>Employees</h3>
+            <button class="ae-assign__link" type="button" id="addAll">Add all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="empSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <button class="ae-assign__filterbtn" type="button" id="openFilter">Filter</button>
+          </div>
+          <div class="ae-assign__list" id="empList"></div>
+        </div>
+
+        <!-- FILTER VIEW -->
+        <div class="ae-assign__pane" data-pane="filter">
+          <div class="ae-filterhead">
+            <button class="ae-back" type="button" id="backToList">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+              Back to select employee
+            </button>
+            <button class="ae-assign__link is-hidden" type="button" id="resetFilter">Reset filter</button>
+          </div>
+
+          <div class="ae-filterscroll" id="filterScroll">
+            <!-- EMPTY STATE -->
+            <div id="ppFilterEmpty">
+              <div class="filter-empty">
+                <span class="filter-empty__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h18l-7 8.5v6l-4 2v-8z"/></svg>
+                </span>
+                <div class="filter-empty__title">No filters have been set yet</div>
+                <div class="filter-empty__sub">Your filter will be displayed here</div>
+                <div class="filter-addwrap">
+                  <button class="add-filter" type="button" id="ppFilterAddEmpty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                    Add Filter
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- FILLED STATE -->
+            <div id="ppFilterFilled" class="is-hidden">
+              <div class="filter-list" id="filterList"></div>
+            </div>
+          </div>
+
+          <div class="ae-filterfoot">
+            <div class="filter-addwrap">
+              <button class="add-filter add-filter--sm" type="button" id="ppFilterAddMore">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                Add Filter
+              </button>
+            </div>
+            <button class="ae-applyfilter" type="button" id="applyFilter">Apply Filter</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ae-assign__rule"></div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div class="ae-assign__col ae-assign__col--right">
+        <div class="ae-assign__colhead">
+          <h3>Assigned employees (<span id="assignedCount">0</span>)</h3>
+          <button class="ae-assign__link" type="button" id="clearSelection">Clear selection</button>
+        </div>
+        <div class="ae-assign__tools">
+          <div class="ae-srch">
+            <input type="text" id="assignedSearch" placeholder="Select date">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+        </div>
+        <div class="ae-assign__list" id="assignedList"></div>
+      </div>
+    </div>
+
+    <footer class="ae-assign__foot">
+      <button class="btn btn--secondary" type="button" data-close-assign>Cancel</button>
+      <button class="btn btn--primary" type="button" id="assignSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== CONTINUE RUN PAYROLL MODAL ===================== -->
+<div class="modal-scrim" id="continueScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="continueTitle">
+    <button class="modal__close" type="button" data-close-continue aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="continueTitle">Continue Run Payroll?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">All changes will be saved and payroll calculation will start.</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-continue>Cancel</button>
+      <button class="btn btn--primary" type="button" id="continueRun">Run</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== RESET THIS PERIOD MODAL ===================== -->
+<div class="modal-scrim" id="resetScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+    <button class="modal__close" type="button" data-close-reset aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="resetTitle">Reset This Period?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">All payroll data from all employees in this period will be reset. You cannot undo this action.</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-reset>Cancel</button>
+      <button class="btn btn--danger" type="button" id="resetConfirm">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== EDIT COMPONENT MODAL ===================== -->
+<div class="modal-scrim" id="editScrim" aria-hidden="true">
+  <div class="modal pp-editmodal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <header class="pp-modal__head">
+      <h2 class="pp-modal__title" id="editTitle">Edit Component</h2>
+      <button class="pp-modal__close" type="button" data-close-edit aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="pp-editmodal__body">
+      <div class="pp-editnote">
+        <span class="pp-editnote__icon"><i data-lucide="info"></i></span>
+        <span>The payroll component updated here only applies to the ongoing payroll process</span>
+      </div>
+
+      <div class="pp-editsearch">
+        <input type="text" placeholder="Search here">
+        <i data-lucide="search"></i>
+      </div>
+
+      <div class="pp-money-field">
+        <label class="pp-money-field__label">Bonus</label>
+        <div class="pp-money">
+          <span class="pp-money__cur">RP</span>
+          <input type="text" inputmode="numeric" value="0">
+        </div>
+      </div>
+
+      <button class="pp-addcomp" type="button">+ Additional Earnings</button>
+
+      <div class="pp-money-field">
+        <label class="pp-money-field__label">Overtime</label>
+        <div class="pp-money is-disabled">
+          <span class="pp-money__cur">RP</span>
+          <input type="text" inputmode="numeric" placeholder="0" disabled>
+        </div>
+      </div>
+    </div>
+
+    <footer class="pp-editmodal__foot">
+      <button class="btn btn--secondary" type="button" data-close-edit>Cancel</button>
+      <button class="btn btn--primary" type="button" id="editSave">Save</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== DOWNLOAD E-BANKING MODAL ===================== -->
+<div class="modal-scrim" id="ebScrim" aria-hidden="true">
+  <div class="modal eb-modal" role="dialog" aria-modal="true" aria-labelledby="ebTitle">
+    <header class="eb-modal__head">
+      <h2 class="eb-modal__title" id="ebTitle">Download E-Banking</h2>
+      <button class="pp-modal__close" type="button" data-eb-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="eb-modal__body">
+      <h3 class="eb-secheading">Set payroll history data</h3>
+
+      <!-- Salary type -->
+      <div class="eb-field">
+        <label class="eb-label">Salary type</label>
+        <div class="radio-row">
+          <label class="radio"><input type="radio" name="ebSalary" value="Salary" checked><span class="radio__dot"></span>Salary</label>
+          <label class="radio"><input type="radio" name="ebSalary" value="THR"><span class="radio__dot"></span>THR</label>
+        </div>
+      </div>
+
+      <!-- Period -->
+      <div class="eb-field">
+        <label class="eb-label">Period</label>
+        <div class="ctl ctl--select eb-ctl is-muted" id="ebPeriod">
+          <span class="ctl__value" data-placeholder="Select period">Select period</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="ebPeriodDD"></div>
+        </div>
+      </div>
+
+      <!-- Bank name -->
+      <div class="eb-field">
+        <label class="eb-label">Bank name</label>
+        <div class="ctl ctl--select eb-ctl" id="ebBank">
+          <span class="ctl__value" data-placeholder="Select bank">Select bank</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="ebBankDD"></div>
+        </div>
+      </div>
+
+      <!-- Bank-dependent fields (revealed once a bank is selected) -->
+      <div class="eb-bankdeps is-hidden" id="ebBankDeps">
+        <div class="eb-field">
+          <label class="eb-label">File type</label>
+          <div class="radio-row">
+            <label class="radio"><input type="radio" name="ebFile" value="txt" checked><span class="radio__dot"></span>Text (.txt)</label>
+            <label class="radio"><input type="radio" name="ebFile" value="csv"><span class="radio__dot"></span>CSV (.csv)</label>
+          </div>
+        </div>
+        <div class="eb-field">
+          <label class="eb-label">Format</label>
+          <div class="radio-row">
+            <label class="radio"><input type="radio" name="ebFormat" value="old" checked><span class="radio__dot"></span>Old</label>
+            <label class="radio"><input type="radio" name="ebFormat" value="new"><span class="radio__dot"></span>New</label>
+          </div>
+        </div>
+        <div class="eb-field">
+          <label class="eb-label">Transfer date</label>
+          <div class="ctl ctl--date eb-ctl" id="ebDate">
+            <input type="text" readonly placeholder="Select transfer date">
+            <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+        </div>
+        <div class="eb-field">
+          <label class="eb-label">Transfer to</label>
+          <label class="eb-check"><input type="checkbox" id="ebOtherBank"><span class="eb-check__box"></span>Other bank</label>
+        </div>
+      </div>
+
+      <div class="eb-rule"></div>
+
+      <h3 class="eb-secheading">Add filter to your payroll history</h3>
+      <p class="eb-subtle">All data will be shown if no filter selected</p>
+
+      <div class="eb-filterlist" id="ebFilterList"></div>
+
+      <div class="eb-addwrap">
+        <button class="eb-addfilter" type="button" id="ebAddFilter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+          Add Filter
+        </button>
+      </div>
+    </div>
+
+    <footer class="eb-modal__foot">
+      <button class="btn btn--secondary" type="button" data-eb-close>Cancel</button>
+      <button class="btn btn--primary" type="button" id="ebDownload">Download</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== PUBLISH / LOCK CONFIRM MODAL ===================== -->
+<div class="modal-scrim" id="plScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="plTitle">
+    <button class="modal__close" type="button" data-pl-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="plTitle">Publish Payslip?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body" id="plBody"></p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-pl-close>Cancel</button>
+      <button class="btn btn--primary" type="button" id="plPrimary">Lock &amp; Publish Payslip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THR CHECKLIST MODAL ===================== -->
+<div class="modal-scrim" id="thrChecklistScrim" aria-hidden="true">
+  <div class="modal pp-modal" role="dialog" aria-modal="true" aria-labelledby="thrChecklistTitle">
+    <header class="pp-modal__head">
+      <h2 class="pp-modal__title" id="thrChecklistTitle">THR Checklist</h2>
+      <button class="pp-modal__close" type="button" data-thr-close-checklist aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="pp-modal__body">
+      <p class="pp-modal__lead">We recommend you check a few things before run THR.</p>
+
+      <div class="pp-checklist">
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="heart-handshake"></i></span>
+          <div class="pp-checklist__text">Make sure each employee's religion data is filled correctly — THR eligibility &amp; schedule follow the religious holiday. <a href="employee-directory.html">View employee</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="calendar-clock"></i></span>
+          <div class="pp-checklist__text">Check employee length of service (masa kerja). THR is paid proportionally for those with less than 12 months. <a href="employee-directory.html">View employee</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="users-round"></i></span>
+          <div class="pp-checklist__text">Ensure all THR-eligible employees are active and none have been resigned or transferred. <a href="employee-directory.html">View employee</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="wallet"></i></span>
+          <div class="pp-checklist__text">Make sure the allowance components included in the THR calculation are up to date. <a>Update component</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="receipt"></i></span>
+          <div class="pp-checklist__text">Confirm the tax period and tax settings (TER method) are correct for this THR run. <a>View settings</a></div>
+        </div>
+        <div class="pp-checklist__row">
+          <span class="pp-checklist__icon"><i data-lucide="landmark"></i></span>
+          <div class="pp-checklist__text">Verify the payment date complies with regulation — THR must be paid no later than 7 days before the holiday (H-7).</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="pp-modal__foot">
+      <label class="pp-check">
+        <input type="checkbox" id="thrDontShowChecklist">
+        <span class="pp-check__box"></span>
+        Don't show this again
+      </label>
+      <button class="btn btn--primary" type="button" data-thr-close-checklist>Run THR</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== THR ASSIGN EMPLOYEE MODAL ===================== -->
+<div class="modal-scrim" id="thrAssignScrim" aria-hidden="true">
+  <div class="modal ae-assign" role="dialog" aria-modal="true" aria-labelledby="thrAssignTitle">
+    <header class="ae-assign__head">
+      <h2 class="ae-assign__title" id="thrAssignTitle">Assign Employee</h2>
+      <button class="pp-modal__close" type="button" data-thr-close-assign aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="ae-assign__body">
+      <!-- ===== LEFT COLUMN ===== -->
+      <div class="ae-assign__col ae-assign__col--left">
+
+        <!-- LIST VIEW -->
+        <div class="ae-assign__pane is-active" data-pane="list">
+          <div class="ae-assign__colhead">
+            <h3>Employees</h3>
+            <button class="ae-assign__link" type="button" id="thrAddAll">Add all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="thrEmpSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <button class="ae-assign__filterbtn" type="button" id="thrOpenFilter">Filter</button>
+          </div>
+          <div class="ae-assign__list" id="thrEmpList"></div>
+        </div>
+
+        <!-- FILTER VIEW -->
+        <div class="ae-assign__pane" data-pane="filter">
+          <div class="ae-filterhead">
+            <button class="ae-back" type="button" id="thrBackToList">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+              Back to select employee
+            </button>
+            <button class="ae-assign__link is-hidden" type="button" id="thrResetFilter">Reset filter</button>
+          </div>
+
+          <div class="ae-filterscroll" id="thrFilterScroll">
+            <!-- EMPTY STATE -->
+            <div id="thrFilterEmpty">
+              <div class="filter-empty">
+                <span class="filter-empty__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h18l-7 8.5v6l-4 2v-8z"/></svg>
+                </span>
+                <div class="filter-empty__title">No filters have been set yet</div>
+                <div class="filter-empty__sub">Your filter will be displayed here</div>
+                <div class="filter-addwrap">
+                  <button class="add-filter" type="button" id="thrAddFilterEmpty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                    Add Filter
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- FILLED STATE -->
+            <div id="thrFilterFilled" class="is-hidden">
+              <div class="filter-list" id="thrFilterList"></div>
+            </div>
+          </div>
+
+          <div class="ae-filterfoot">
+            <div class="filter-addwrap">
+              <button class="add-filter add-filter--sm" type="button" id="thrAddFilterMore">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                Add Filter
+              </button>
+            </div>
+            <button class="ae-applyfilter" type="button" id="thrApplyFilter">Apply Filter</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ae-assign__rule"></div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div class="ae-assign__col ae-assign__col--right">
+        <div class="ae-assign__colhead">
+          <h3>Assigned employees (<span id="thrAssignedCount">0</span>)</h3>
+          <button class="ae-assign__link" type="button" id="thrClearSelection">Clear selection</button>
+        </div>
+        <div class="ae-assign__tools">
+          <div class="ae-srch">
+            <input type="text" id="thrAssignedSearch" placeholder="Select date">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+        </div>
+        <div class="ae-assign__list" id="thrAssignedList"></div>
+      </div>
+    </div>
+
+    <footer class="ae-assign__foot">
+      <button class="btn btn--secondary" type="button" data-thr-close-assign>Cancel</button>
+      <button class="btn btn--primary" type="button" id="thrAssignSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== CONTINUE RUN THR MODAL ===================== -->
+<div class="modal-scrim" id="thrContinueScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="thrContinueTitle">
+    <button class="modal__close" type="button" data-thr-close-continue aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="thrContinueTitle">Continue Run THR?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">All changes will be saved and THR calculation will start.</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-thr-close-continue>Cancel</button>
+      <button class="btn btn--primary" type="button" id="thrContinueRun">Run</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== IMPORT PAYROLL SUCCESS MODAL ===================== -->
+<div class="modal-scrim" id="impScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="impModalTitle">
+    <button class="modal__close" type="button" data-imp-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="impModalTitle">Spreadsheet Uploaded</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">Your payroll data is being imported. We'll validate the rows and notify you once the import is complete.</p>
+    <div class="modal__foot">
+      <button class="btn btn--primary" type="button" data-imp-close>Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'payroll', activeItem: 'Payroll processing' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/payroll-processing.js"></script>
+<script src="js/payroll-thr.js"></script>
+<script src="js/payroll-history.js"></script>
+<script src="js/ebanking.js"></script>
+<script src="js/payroll-import.js"></script>
+<script src="js/table-scroll.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Payroll Component</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/payroll-processing.css?v=3">
+  <link rel="stylesheet" href="css/payroll-history.css?v=2">
+  <link rel="stylesheet" href="css/payroll-components.css">
+  <link rel="stylesheet" href="css/payroll-component-modals.css">
+  <link rel="stylesheet" href="css/payroll-ex-allowance.css">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Payroll Component">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="app__main app__main--wizard">
+      <div class="pp-shell">
+
+        <!-- ===================== PAGE HEADER ===================== -->
+        <header class="pp-head">
+          <h1 class="pp-head__title">Payroll Component</h1>
+          <div class="pp-tabs" id="pcTabs">
+            <button class="tab-pill is-on" type="button" data-pctab="update">Update Components</button>
+            <button class="tab-pill" type="button" data-pctab="exalw">Ex-Employee Allowance</button>
+            <button class="tab-pill" type="button" data-pctab="settings">Settings</button>
+          </div>
+        </header>
+
+        <!-- ===================== UPDATE COMPONENTS VIEW ===================== -->
+        <div class="pp-view" data-pcview="update" data-screen-label="Update Payroll Components">
+          <section class="pp-panel" data-pcstate="list">
+            <div class="pc-body">
+
+              <!-- Header row -->
+              <div class="pc-head">
+                <h2 class="pc-title">Update Payroll Components</h2>
+                <div class="pc-head__actions">
+                  <div class="pc-more">
+                    <button class="btn btn--secondary" type="button" id="pcMoreBtn">
+                      More
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="pc-menu" id="pcMoreMenu">
+                      <button class="pc-menu__item" type="button" data-more="settings"><i data-lucide="settings"></i>Settings</button>
+                      <button class="pc-menu__item" type="button" data-more="export"><i data-lucide="file-output"></i>Export Component List</button>
+                    </div>
+                  </div>
+                  <button class="btn btn--primary" type="button" id="pcUpdateBtn">Update Component</button>
+                </div>
+              </div>
+
+              <!-- Sub-tabs -->
+              <div class="pc-subtabs" id="pcSubtabs">
+                <button class="pc-subtab is-on" type="button" data-pcsub="history">Update History</button>
+                <button class="pc-subtab" type="button" data-pcsub="employee">Employee History</button>
+              </div>
+
+              <!-- ===== UPDATE HISTORY SUB-VIEW ===== -->
+              <div class="pc-subview is-active" data-pcsubview="history">
+                <div class="pc-toolbar">
+                  <div class="pc-period" id="pcPeriod">
+                    <span class="pc-period__val">All period</span>
+                    <span class="pc-period__cal">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    </span>
+                    <div class="pc-menu pc-menu--left" id="pcPeriodMenu">
+                      <button class="pc-menu__item" type="button" data-period="All period">All period</button>
+                      <button class="pc-menu__item" type="button" data-period="This month">This month</button>
+                      <button class="pc-menu__item" type="button" data-period="Last 3 months">Last 3 months</button>
+                      <button class="pc-menu__item" type="button" data-period="This year (2026)">This year (2026)</button>
+                    </div>
+                  </div>
+
+                  <div class="pc-toolbar__spacer"></div>
+
+                  <button class="pc-help" type="button" aria-label="Help" title="What is this?">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                  </button>
+                  <div class="pc-search">
+                    <input type="text" id="pcUpdSearch" placeholder="Search here">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  </div>
+                </div>
+
+                <div class="pp-table-wrap">
+                  <table class="pp-table pc-table">
+                    <thead>
+                      <tr>
+                        <th><span class="pc-sort">Transaction ID <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Type <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Effective Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Created By <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Description <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Employees <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Components Name <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th>Status</th>
+                        <th class="pp-table__act"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="pcUpdRows"></tbody>
+                  </table>
+                </div>
+
+                <div class="pc-foot ph-foot">
+                  <div class="ph-showing">
+                    <span id="pcUpdShowing">Showing 1–6 of 6</span>
+                    <div class="ph-pagesize">
+                      <select aria-label="Rows per page">
+                        <option>10</option><option>20</option><option>50</option>
+                      </select>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                    <span class="ph-pager__from">from 1 row</span>
+                  </div>
+                  <div class="ph-pager">
+                    <button class="ph-pager__btn" type="button" aria-label="Previous page">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <span class="ph-pagebox">1</span>
+                    <span class="ph-pager__from">from 1</span>
+                    <button class="ph-pager__btn" type="button" aria-label="Next page">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== EMPLOYEE HISTORY SUB-VIEW ===== -->
+              <div class="pc-subview" data-pcsubview="employee">
+                <div class="pc-toolbar">
+                  <div class="pc-select" id="pcCompSelect">
+                    <span class="pc-select__val">All payroll components</span>
+                    <span class="pc-select__sep"></span>
+                    <svg class="pc-select__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="pc-menu pc-menu--left" id="pcCompMenu">
+                      <button class="pc-menu__item" type="button" data-comp="All payroll components">All payroll components</button>
+                      <button class="pc-menu__item" type="button" data-comp="Allowance">Allowance</button>
+                      <button class="pc-menu__item" type="button" data-comp="Additional Earnings">Additional Earnings</button>
+                      <button class="pc-menu__item" type="button" data-comp="Deduction">Deduction</button>
+                      <button class="pc-menu__item" type="button" data-comp="Benefit">Benefit</button>
+                      <button class="pc-menu__item" type="button" data-comp="Basic Salary">Basic Salary</button>
+                    </div>
+                  </div>
+
+                  <div class="pc-daterange">
+                    <span class="pc-daterange__val">01 Mar 2026 - 31 Mar 2026</span>
+                    <span class="pc-daterange__sep"></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+
+                  <div class="pc-toolbar__spacer"></div>
+
+                  <button class="pc-iconbtn" type="button" aria-label="Export" title="Export">
+                    <i data-lucide="file-output"></i>
+                  </button>
+                  <button class="pc-help" type="button" aria-label="Help" title="What is this?">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                  </button>
+                  <div class="pc-search">
+                    <input type="text" id="pcEmpSearch" placeholder="Search here">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  </div>
+                </div>
+
+                <div class="pp-table-wrap">
+                  <table class="pp-table pc-table pc-table--emp pc-table--emphist">
+                    <thead>
+                      <tr>
+                        <th><span class="pc-sort">Transaction ID <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Employee <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Component Name <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Type <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Last Amount <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">New Amount <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">Effective Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                        <th><span class="pc-sort">End Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      </tr>
+                    </thead>
+                    <tbody id="pcEmpRows"></tbody>
+                  </table>
+                </div>
+
+                <div class="pc-foot ph-foot">
+                  <div class="ph-showing">
+                    <span id="pcEmpShowing">Showing 1–6 of 6</span>
+                    <div class="ph-pagesize">
+                      <select aria-label="Rows per page">
+                        <option>10</option><option>20</option><option>50</option>
+                      </select>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                    <span class="ph-pager__from">from 1 row</span>
+                  </div>
+                  <div class="ph-pager">
+                    <button class="ph-pager__btn" type="button" aria-label="Previous page">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <span class="ph-pagebox">1</span>
+                    <span class="ph-pager__from">from 1</span>
+                    <button class="ph-pager__btn" type="button" aria-label="Next page">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- ===== UPDATE COMPONENT FORM ===== -->
+          <section class="pp-panel pc-formpanel is-hidden" data-pcstate="form" data-screen-label="Update Component — Form">
+            <div class="pc-formbody">
+              <button class="crumb" type="button" id="pcFormCrumb">Update Payroll Component</button>
+              <h2 class="pc-formtitle">Update Component</h2>
+              <div class="pc-formrule"></div>
+
+              <h3 class="pc-formsec">Set Information</h3>
+
+              <!-- Type -->
+              <div class="pc-formfield">
+                <div class="pc-formlabel">Type</div>
+                <div class="radio-row" id="pcTypeRow">
+                  <label class="radio"><input type="radio" name="pcFormType" value="adjustment" checked><span class="radio__dot"></span>Adjustment</label>
+                  <label class="radio"><input type="radio" name="pcFormType" value="expired"><span class="radio__dot"></span>Expired</label>
+                </div>
+              </div>
+
+              <!-- Effective date -->
+              <div class="fld pc-formfield">
+                <label class="fld__label">Effective date <span class="req">*</span>
+                  <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                </label>
+                <div class="ctl ctl--date">
+                  <input type="text" value="20/12/2025" readonly>
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+              </div>
+
+              <!-- Applicable date (Adjustment only) -->
+              <div class="pc-formfield" data-adjust-only>
+                <div class="pc-formlabel">Applicable date</div>
+                <div class="pc-checkrow">
+                  <label class="pp-check">
+                    <input type="checkbox" id="pcEndDateChk">
+                    <span class="pp-check__box"></span>
+                    End date
+                    <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                  </label>
+                  <label class="pp-check">
+                    <input type="checkbox" id="pcBackpayChk">
+                    <span class="pp-check__box"></span>
+                    Backpay
+                    <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- End date field (shown when End date checked) -->
+              <div class="fld pc-formfield is-hidden" id="pcEndDateField" data-adjust-only>
+                <label class="fld__label">End date</label>
+                <div class="ctl ctl--date">
+                  <input type="text" placeholder="[End Date]" readonly>
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+              </div>
+
+              <!-- Attachment (Adjustment only) -->
+              <div class="pc-formfield" data-adjust-only>
+                <div class="pc-formlabel">Attachment</div>
+                <label class="imp-upload" id="pcAttachBox">
+                  <span class="imp-upload__btn">Choose File</span>
+                  <span class="imp-upload__name" id="pcAttachName">No file selected</span>
+                  <input type="file" id="pcAttachInput" accept=".jpg,.jpeg,.pdf" hidden>
+                </label>
+                <div class="pc-attach__help">File format is JPG, JPEG and PDF with maximum 10 MB</div>
+              </div>
+
+              <!-- Description -->
+              <div class="pc-formfield pc-formfield--full">
+                <div class="pc-formlabel pc-formlabel--counter">
+                  <span>Description</span>
+                  <span class="pc-counter"><span id="pcDescCount">0</span>/60</span>
+                </div>
+                <div class="ctl ctl--area">
+                  <textarea id="pcDesc" maxlength="60" placeholder="Input text here"></textarea>
+                </div>
+              </div>
+
+              <div class="pc-formrule pc-formrule--lg"></div>
+
+              <!-- Manage employee component -->
+              <h3 class="pc-formsec">Manage employee component</h3>
+              <p class="pc-managesub">Select employee and component, scroll inside the table to view more data.</p>
+
+              <div class="pc-managetools">
+                <button class="pc-addbtn" type="button" id="pcAddEmp">Add Employee</button>
+                <button class="pc-addbtn" type="button" id="pcAddComp">Add Component</button>
+                <div class="pc-managetools__spacer"></div>
+                <button class="pc-iconbtn" type="button" aria-label="Import" title="Import"><i data-lucide="file-input"></i></button>
+                <button class="pc-iconbtn" type="button" aria-label="Export" title="Export"><i data-lucide="file-output"></i></button>
+                <div class="pc-search">
+                  <input type="text" id="pcFormSearch" placeholder="Search here">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <div class="pp-table-wrap">
+                <table class="pp-table pc-table pc-table--emp">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Component</th>
+                      <th>Type</th>
+                      <th>Current Amount</th>
+                      <th>New Amount</th>
+                      <th class="pc-delcol pp-table__act"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="pcFormRows"></tbody>
+                </table>
+              </div>
+
+              <div class="pc-foot ph-foot">
+                <div class="ph-showing">
+                  <span id="pcFormShowing">Showing 1–3 of 3</span>
+                  <div class="ph-pagesize">
+                    <select aria-label="Rows per page">
+                      <option>10</option><option>20</option><option>50</option>
+                    </select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                  <span class="ph-pager__from">from 1 row</span>
+                </div>
+                <div class="ph-pager">
+                  <button class="ph-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                  <span class="ph-pagebox">1</span>
+                  <span class="ph-pager__from">from 1</span>
+                  <button class="ph-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                </div>
+              </div>
+            </div>
+
+            <footer class="pp-foot">
+              <button class="btn btn--secondary" type="button" id="pcFormCancel">Cancel</button>
+              <button class="btn btn--primary" type="button" id="pcFormNext">Next</button>
+            </footer>
+          </section>
+
+          <!-- ===== VIEW DETAIL (read-only transaction) ===== -->
+          <section class="pp-panel pc-detailpanel is-hidden" data-pcstate="detail" data-screen-label="Update Component — Detail">
+            <div class="pc-detailbody">
+              <div class="pcd-top">
+                <div>
+                  <button class="crumb" type="button" id="pcdCrumb">Update Payroll Component</button>
+                  <h2 class="pcd-title" id="pcdTitle">TRX-PC-260301</h2>
+                </div>
+                <div class="pcd-action" id="pcdAction">
+                  <button class="pcd-action__btn" type="button" id="pcdActionBtn">
+                    Action
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  <div class="pcd-action__menu" id="pcdActionMenu">
+                    <button class="pc-menu__item" type="button" data-pcd-act="edit"><i data-lucide="pencil"></i>Edit</button>
+                    <button class="pc-menu__item is-danger" type="button" data-pcd-act="delete"><i data-lucide="trash-2"></i>Delete</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pcd-rule"></div>
+
+              <div class="pcd-grid">
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Status</span>
+                  <span class="pcd-badge">ACTIVE</span>
+                </div>
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Transaction ID</span>
+                  <span class="pcd-field__val" id="pcdTrx">TRX-PC-260301</span>
+                </div>
+
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Type</span>
+                  <span class="pcd-field__val" id="pcdType">Adjustment</span>
+                </div>
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Description</span>
+                  <span class="pcd-field__val" id="pcdDesc">Penyesuaian tunjangan transport &amp; meal Q1 2026.</span>
+                </div>
+
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Effective date</span>
+                  <span class="pcd-field__val" id="pcdEff">01 Mar 2026</span>
+                </div>
+                <div class="pcd-field">
+                  <span class="pcd-field__label">End date</span>
+                  <span class="pcd-field__val is-ph" id="pcdEnd">—</span>
+                </div>
+
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Backpay date</span>
+                  <span class="pcd-field__val" id="pcdBackpay">01 Feb 2026</span>
+                </div>
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Created by</span>
+                  <span class="pcd-field__val" id="pcdBy">CP060 - Tony Stark</span>
+                </div>
+
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Created at</span>
+                  <span class="pcd-field__val" id="pcdAt">01 Mar 2026 09:24</span>
+                </div>
+                <div class="pcd-field">
+                  <span class="pcd-field__label">Attachment</span>
+                  <span class="pcd-field__val" id="pcdAttach"><a href="#" onclick="return false">SK-Adjustment-Q1.pdf</a></span>
+                </div>
+              </div>
+
+              <h3 class="pcd-emp-head">Update Employee Component</h3>
+
+              <div class="pcd-emptools">
+                <div class="pcd-mini" id="pcdCompSel">
+                  <span class="pcd-mini__val">All components</span>
+                  <span class="pcd-mini__sep"></span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="pcd-mini" id="pcdTypeSel">
+                  <span class="pcd-mini__val">All type</span>
+                  <span class="pcd-mini__sep"></span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="pcd-emptools__spacer"></div>
+                <button class="pc-iconbtn" type="button" aria-label="Import" title="Import"><i data-lucide="file-input"></i></button>
+                <button class="pc-iconbtn" type="button" aria-label="Export" title="Export"><i data-lucide="file-output"></i></button>
+                <div class="pc-search">
+                  <input type="text" id="pcdSearch" placeholder="Search here">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <div class="pp-table-wrap">
+                <table class="pp-table pc-table pc-table--emp">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Component</th>
+                      <th>Type</th>
+                      <th>Current Amount</th>
+                      <th>New Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pcdRows"></tbody>
+                </table>
+              </div>
+
+              <div class="pc-foot ph-foot">
+                <div class="ph-showing">
+                  <span id="pcdShowing">Showing 1–3 of 3</span>
+                  <div class="ph-pagesize">
+                    <select aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                  <span class="ph-pager__from">from 1 row</span>
+                </div>
+                <div class="ph-pager">
+                  <button class="ph-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                  <span class="ph-pagebox">1</span>
+                  <span class="ph-pager__from">from 1</span>
+                  <button class="ph-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="pp-view is-hidden" data-pcview="exalw" data-screen-label="Ex-Employee Allowance">
+
+          <!-- ===== LIST ===== -->
+          <section class="pp-panel" data-exastate="list">
+            <div class="pc-body">
+              <div class="pc-head">
+                <h2 class="pc-title">Ex-Employee Allowance</h2>
+                <div class="pc-head__actions">
+                  <button class="btn btn--primary" type="button" id="exaAddBtn">Add Ex-Employee Allowance</button>
+                </div>
+              </div>
+              <div class="exa-rule"></div>
+
+              <div class="pc-toolbar">
+                <div class="pc-toolbar__spacer"></div>
+                <button class="pc-help" type="button" aria-label="Help" title="What is this?">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                </button>
+                <div class="pc-search">
+                  <input type="text" id="exaListSearch" placeholder="Search here">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <div class="pp-table-wrap">
+                <table class="pp-table exa-table">
+                  <thead>
+                    <tr>
+                      <th class="exa-nocol">No</th>
+                      <th><span class="pc-sort">Transaction ID <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Month <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Year <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Number Of Employees <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Taxable <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th class="pp-table__act"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="exaListRows"></tbody>
+                </table>
+              </div>
+
+              <div class="pc-foot ph-foot">
+                <div class="ph-showing">
+                  <span id="exaListShowing">Showing 1–3 of 3</span>
+                  <div class="ph-pagesize">
+                    <select aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                  <span class="ph-pager__from">from 1 row</span>
+                </div>
+                <div class="ph-pager">
+                  <button class="ph-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                  <span class="ph-pagebox">1</span>
+                  <span class="ph-pager__from">from 1</span>
+                  <button class="ph-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== ADD / EDIT FORM ===== -->
+          <section class="pp-panel exa-formpanel is-hidden" data-exastate="form" data-screen-label="Ex-Employee Allowance — Form">
+            <div class="pc-formbody">
+              <button class="crumb" type="button" id="exaFormCrumb">Ex-Employee Allowance</button>
+              <h2 class="pc-formtitle" id="exaFormTitle">Add Ex-Employee Allowance</h2>
+              <div class="pc-formrule"></div>
+
+              <div class="exa-grid2">
+                <div class="fld">
+                  <label class="fld__label">Select year period</label>
+                  <div class="ctl ctl--select" data-exa-select="year">
+                    <span class="ctl__value">[Year]</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown"></div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Select month period</label>
+                  <div class="ctl ctl--select" data-exa-select="month">
+                    <span class="ctl__value">[Month]</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown"></div>
+                  </div>
+                </div>
+              </div>
+
+              <label class="pp-check exa-taxable">
+                <input type="checkbox" id="exaTaxable">
+                <span class="pp-check__box"></span>
+                Taxable
+              </label>
+
+              <div class="fld exa-field exa-field--full">
+                <label class="fld__label">Description</label>
+                <div class="ctl ctl--area">
+                  <textarea id="exaDesc" placeholder="Input text here"></textarea>
+                </div>
+              </div>
+
+              <div class="pc-formrule pc-formrule--lg"></div>
+
+              <div class="pc-managetools">
+                <button class="pc-addbtn" type="button" id="exaAddEmpBtn">Add Ex-Employee</button>
+                <div class="pc-managetools__spacer"></div>
+                <button class="pc-iconbtn" type="button" aria-label="Import" title="Import"><i data-lucide="file-input"></i></button>
+                <button class="pc-iconbtn" type="button" aria-label="Export" title="Export"><i data-lucide="file-output"></i></button>
+                <button class="pc-help" type="button" aria-label="Help" title="What is this?">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                </button>
+                <div class="pc-search">
+                  <input type="text" id="exaFormSearch" placeholder="Search here">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+
+              <div class="pp-table-wrap">
+                <table class="pp-table exa-emptable">
+                  <thead>
+                    <tr>
+                      <th class="exa-checkcol"><label class="pp-check exa-check"><input type="checkbox" id="exaFormCheckAll"><span class="pp-check__box"></span></label></th>
+                      <th class="exa-nocol">No</th>
+                      <th><span class="pc-sort">Employee ID <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Full Name <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Resign Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th><span class="pc-sort">Amount <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+                      <th class="pp-table__act"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="exaFormRows"></tbody>
+                </table>
+              </div>
+
+              <div class="pc-foot ph-foot">
+                <div class="ph-showing">
+                  <span id="exaFormShowing">Showing 0 of 0</span>
+                  <div class="ph-pagesize">
+                    <select aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                  <span class="ph-pager__from">from 1 row</span>
+                </div>
+                <div class="ph-pager">
+                  <button class="ph-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                  <span class="ph-pagebox">1</span>
+                  <span class="ph-pager__from">from 1</span>
+                  <button class="ph-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                </div>
+              </div>
+            </div>
+
+            <footer class="pp-foot">
+              <button class="btn btn--secondary" type="button" id="exaFormCancel">Cancel</button>
+              <button class="btn btn--primary" type="button" id="exaFormSave">Save</button>
+            </footer>
+          </section>
+        </div>
+
+        <!-- ===================== SETTINGS VIEW ===================== -->
+        <div class="pp-view is-hidden" data-pcview="settings" data-screen-label="Payroll Component Settings">
+          <section class="pp-panel">
+            <div class="pp-stub">
+              <span class="pp-stub__icon"><i data-lucide="settings"></i></span>
+              <div class="pp-stub__title">Component Settings</div>
+              <div class="pp-stub__sub">Define payroll component categories, taxability, BPJS treatment and default formulas. This module is not part of the current prototype.</div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===================== SELECT EMPLOYEE MODAL ===================== -->
+<div class="modal-scrim" id="pcSelEmpScrim" aria-hidden="true">
+  <div class="modal ae-assign" role="dialog" aria-modal="true" aria-labelledby="pcSelEmpTitle">
+    <header class="ae-assign__head">
+      <h2 class="ae-assign__title" id="pcSelEmpTitle">Select Employee</h2>
+      <button class="pp-modal__close" type="button" data-close-selemp aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="ae-assign__body">
+      <!-- LEFT COLUMN -->
+      <div class="ae-assign__col ae-assign__col--left">
+        <!-- LIST PANE -->
+        <div class="ae-assign__pane is-active" data-emppane="list">
+          <div class="ae-assign__colhead">
+            <h3>Employees</h3>
+            <button class="ae-assign__link" type="button" id="pcEmpSelectAll">Select all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="pcEmpAvailSearch" placeholder="Search Employee">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <button class="ae-assign__filterbtn" type="button" id="pcEmpFilterBtn">Filter</button>
+          </div>
+          <div class="ae-assign__list" id="pcEmpAvail"></div>
+        </div>
+
+        <!-- FILTER PANE -->
+        <div class="ae-assign__pane" data-emppane="filter">
+          <div class="pcf-head">
+            <button class="pcf-back" type="button" id="pcEmpFilterBack">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+              Filter
+            </button>
+            <button class="ae-assign__link" type="button" id="pcEmpFilterReset">Reset Filter</button>
+          </div>
+          <div class="pcf-scroll">
+            <div class="pcf-field"><div class="pcf-field__label">Branch</div><div class="pcf-select"><span class="pcf-select__val">Select branch</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Organization</div><div class="pcf-select"><span class="pcf-select__val">Select organization</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Job Level</div><div class="pcf-select"><span class="pcf-select__val">Select job level</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Job position</div><div class="pcf-select"><span class="pcf-select__val">Select job position</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Employment status</div><div class="pcf-select"><span class="pcf-select__val">Select employment status</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Join date after</div><div class="pcf-select"><span class="pcf-select__val">Select join date after</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Status</div><div class="pcf-select"><span class="pcf-select__val">Select status</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <button class="pcf-apply" type="button" id="pcEmpFilterApply">Apply Filter</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ae-assign__rule"></div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="ae-assign__col ae-assign__col--right">
+        <div class="ae-assign__colhead">
+          <h3 id="pcEmpRightTitle">Assigned employees (<span id="pcEmpAssignedCount">0</span>)</h3>
+          <button class="ae-assign__link" type="button" id="pcEmpRightLink">Clear selection</button>
+        </div>
+        <div class="ae-assign__tools">
+          <div class="ae-srch">
+            <input type="text" id="pcEmpAssignedSearch" placeholder="Search Employee">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+        </div>
+        <div class="ae-assign__list" id="pcEmpAssigned"></div>
+      </div>
+    </div>
+
+    <footer class="ae-assign__foot">
+      <button class="btn btn--secondary" type="button" data-close-selemp>Cancel</button>
+      <button class="btn btn--primary" type="button" id="pcEmpSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== SELECT COMPONENT MODAL ===================== -->
+<div class="modal-scrim" id="pcSelCompScrim" aria-hidden="true">
+  <div class="modal ae-assign" role="dialog" aria-modal="true" aria-labelledby="pcSelCompTitle">
+    <header class="ae-assign__head">
+      <h2 class="ae-assign__title" id="pcSelCompTitle">Select Component</h2>
+      <button class="pp-modal__close" type="button" data-close-selcomp aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="ae-assign__body">
+      <!-- LEFT COLUMN -->
+      <div class="ae-assign__col ae-assign__col--left">
+        <div class="ae-assign__pane is-active" data-comppane="list">
+          <div class="ae-assign__colhead">
+            <h3>Component</h3>
+            <button class="ae-assign__link" type="button" id="pcCompSelectAll">Select all</button>
+          </div>
+          <div class="ae-assign__tools">
+            <div class="ae-srch">
+              <input type="text" id="pcCompAvailSearch" placeholder="Search Component">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <button class="ae-assign__filterbtn" type="button" id="pcCompFilterBtn">Filter</button>
+          </div>
+          <div class="ae-assign__list" id="pcCompAvail"></div>
+        </div>
+
+        <!-- FILTER PANE -->
+        <div class="ae-assign__pane" data-comppane="filter">
+          <div class="pcf-head">
+            <button class="pcf-back" type="button" id="pcCompFilterBack">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+              Filter
+            </button>
+            <button class="ae-assign__link" type="button" id="pcCompFilterReset">Reset Filter</button>
+          </div>
+          <div class="pcf-scroll">
+            <div class="pcf-field"><div class="pcf-field__label">Type</div><div class="pcf-select"><span class="pcf-select__val">Select type</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <div class="pcf-field"><div class="pcf-field__label">Period</div><div class="pcf-select"><span class="pcf-select__val">Select period</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            <button class="pcf-apply" type="button" id="pcCompFilterApply">Apply Filter</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ae-assign__rule"></div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="ae-assign__col ae-assign__col--right">
+        <div class="ae-assign__colhead">
+          <h3>Selected component (<span id="pcCompSelCount">0</span>)</h3>
+          <button class="ae-assign__link" type="button" id="pcCompClear">Clear selection</button>
+        </div>
+        <div class="ae-assign__tools">
+          <div class="ae-srch">
+            <input type="text" id="pcCompSelSearch" placeholder="Search component">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+        </div>
+        <div class="ae-assign__list" id="pcCompSelected"></div>
+      </div>
+    </div>
+
+    <footer class="ae-assign__foot">
+      <button class="btn btn--secondary" type="button" data-close-selcomp>Cancel</button>
+      <button class="btn btn--primary" type="button" id="pcCompSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== DELETE TRANSACTION MODAL ===================== -->
+<div class="modal-scrim" id="pcDeleteScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="pcDeleteTitle">
+    <button class="modal__close" type="button" data-close-delete aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="pcDeleteTitle">Delete Transaction Update?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">Deleting transaction will affect your payroll back to the previous amount and cannot recover it.</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-delete>Cancel</button>
+      <button class="btn btn--danger" type="button" id="pcDeleteConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ADD EX-EMPLOYEE SELECT MODAL ===================== -->
+<div class="modal-scrim" id="exaSelScrim" aria-hidden="true">
+  <div class="modal exa-selmodal" role="dialog" aria-modal="true" aria-labelledby="exaSelTitle">
+    <header class="exa-selmodal__head">
+      <h2 class="exa-selmodal__title" id="exaSelTitle">Add Ex-Employee</h2>
+      <button class="pp-modal__close" type="button" data-close-exasel aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="exa-selmodal__body">
+      <div class="exa-selmodal__tools">
+        <div class="exa-selmodal__spacer"></div>
+        <button class="pc-help" type="button" aria-label="Help" title="What is this?">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <div class="pc-search">
+          <input type="text" id="exaSelSearch" placeholder="Search here">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table exa-emptable">
+          <thead>
+            <tr>
+              <th class="exa-checkcol"><label class="pp-check exa-check"><input type="checkbox" id="exaSelCheckAll"><span class="pp-check__box"></span></label></th>
+              <th class="exa-nocol">No</th>
+              <th><span class="pc-sort">Employee ID <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+              <th><span class="pc-sort">Full Name <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+              <th><span class="pc-sort">Resign Date <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg></span></th>
+            </tr>
+          </thead>
+          <tbody id="exaSelRows"></tbody>
+        </table>
+      </div>
+
+      <div class="pc-foot ph-foot">
+        <div class="ph-showing">
+          <span id="exaSelShowing">Showing 1–5 of 5</span>
+          <div class="ph-pagesize">
+            <select aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <span class="ph-pager__from">from 1 row</span>
+        </div>
+        <div class="ph-pager">
+          <button class="ph-pager__btn" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <span class="ph-pagebox">1</span>
+          <span class="ph-pager__from">from 1</span>
+          <button class="ph-pager__btn" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="exa-selmodal__foot">
+      <button class="btn btn--secondary" type="button" data-close-exasel>Cancel</button>
+      <button class="btn btn--primary" type="button" id="exaSelSubmit">Submit</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== DELETE EX-EMPLOYEE ALLOWANCE MODAL ===================== -->
+<div class="modal-scrim" id="exaDeleteScrim" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="exaDeleteTitle">
+    <button class="modal__close" type="button" data-close-exadel aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="exaDeleteTitle">Delete Ex-Employee Allowance?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">This will permanently delete the ex-employee allowance. Do you want to continue?</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-exadel>Cancel</button>
+      <button class="btn btn--danger" type="button" id="exaDeleteConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SAVED TOAST ===================== -->
+<div class="pc-toast" id="pcToast" aria-live="polite">
+  <span class="pc-toast__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+  <span id="pcToastMsg">Component update saved.</span>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'payroll', activeItem: 'Payroll components' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/payroll-components.js"></script>
+<script src="js/payroll-component-modals.js"></script>
+<script src="js/payroll-ex-allowance.js"></script>
+<script src="js/table-scroll.js"></script>
+
+</body>
+</html>
+
+<style id="__om-edit-overrides">
+#pcFormRows >[data-fi="0"] [viewBox="0 0 24 24"] { width: 8px !important }
+#pcFormRows >[data-fi="0"] [viewBox="0 0 24 24"] { width: 88px !important }
+#pcFormRows >[data-fi="0"] [viewBox="0 0 24 24"] { height: 18px !important }
+#pcFormRows >[data-fi="0"] [viewBox="0 0 24 24"] { width: 88px !important }
+#pcFormRows >[data-fi="0"] [viewBox="0 0 24 24"] { width: 18px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { font-weight: 100 !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { font-weight: 500 !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { width: 16px !important; height: 16px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { border-radius: 8px 0px 8px 8px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { border-radius: 8px 0px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { border-radius: 8px 9px 0px 0px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { border-radius: 8px 8px 0px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { width: 32px !important; height: 32px !important }
+#pcFormRows >[data-fi="0"] [aria-label="Remove row"] { width: 36px !important }
+</style>

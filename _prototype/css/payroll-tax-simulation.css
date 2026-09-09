@@ -1,0 +1,303 @@
+/* ===== SEVAKA HRIS — Payroll · Tax Simulation · Salary Tax Calculator =====
+   Reuses pp-shell / pp-head / pp-tabs / pp-panel / pp-foot (payroll-processing.css),
+   .fld / .ctl / .ctl--select / .dropdown / .ctl--date / .radio (add-employee.css),
+   .pp-check + .pp-money (payroll-processing.css), form field standard (form-standard.css). */
+
+.is-hidden { display: none !important; }
+
+/* ---------- Page views ---------- */
+.ts-view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.ts-view.is-hidden { display: none; }
+
+/* ---------- Panel scroll body ---------- */
+.ts-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 40px 36px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+.ts-body::-webkit-scrollbar { width: 10px; }
+.ts-body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 6px; border: 2px solid #fff; }
+
+.ts-title {
+  font: 700 24px/1.2 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+  margin: 0;
+}
+.ts-rule { height: 1px; background: var(--border-1); margin: 18px 0 22px; }
+.ts-rule--lg { margin: 28px 0; }
+
+.ts-sec {
+  font: 700 16px/1.2 var(--font-body);
+  color: var(--fg-1);
+  margin: 0 0 16px;
+}
+
+/* ---------- Field stack + grid ---------- */
+.ts-stack { display: flex; flex-direction: column; gap: 22px; }
+.ts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 24px;
+}
+.ts-grid .ts-span2 { grid-column: 1 / -1; }
+.ts-grid .fld { gap: 4px; }
+.ts-field { display: flex; flex-direction: column; gap: 4px; }
+.ts-field__label { font: 700 16px/1.2 var(--font-body); color: var(--fg-2); }
+
+/* ---------- "Tax calculator" radio row ---------- */
+.ts-radioblock { display: flex; flex-direction: column; gap: 4px; }
+.ts-radioblock__label { font: 700 16px/1.2 var(--font-body); color: var(--fg-2); }
+.ts-radioblock .radio-row { gap: 40px; min-height: 40px; }
+.ts-radioblock .radio { font: 500 15px/1.2 var(--font-body); color: var(--fg-1); }
+
+/* ---------- Inline checkbox rows (reuse .pp-check red-outline) ---------- */
+.ts-check { margin: 0; }
+.ts-checkrow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-direction: column;
+}
+.ts-checknote {
+  font: 700 10px/1.4 var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+  margin: 0 0 0 30px;
+}
+
+/* ---------- BPJS info banner ---------- */
+.ts-bpjs { margin-top: 18px; }
+.ts-bpjs.is-hidden { display: none; }
+.ts-info {
+  background: var(--color-primary-100);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 22px;
+}
+.ts-info__line { font: 500 14px/1.5 var(--font-body); color: var(--fg-2); }
+.ts-info__sub {
+  font: 700 11px/1.4 var(--font-body);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+  margin-top: 6px;
+}
+
+/* ---------- BPJS TK rate radios (compact pill row) ---------- */
+.ts-raterow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 28px;
+  min-height: 36px;
+  padding-top: 2px;
+}
+.ts-raterow .radio { font: 500 15px/1.2 var(--font-body); color: var(--fg-1); }
+
+/* checkbox group inside BPJS sections */
+.ts-checkgroup { display: flex; flex-direction: column; gap: 16px; margin-top: 22px; }
+
+/* ---------- External footer (Reset / Calculate) on mist ---------- */
+.ts-shellfoot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 0 2px;
+}
+.ts-shellfoot.is-hidden { display: none; }
+.ts-shellfoot .btn { min-width: 132px; }
+
+/* ---------- Tax Recalculate stub ---------- */
+.ts-stub {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 64px 40px;
+}
+.ts-stub__icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary-100);
+  color: var(--color-secondary-600);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ts-stub__icon svg { width: 30px; height: 30px; }
+.ts-stub__title { font: 700 20px/1.2 var(--font-display); color: var(--fg-1); }
+.ts-stub__sub { font: 500 15px/1.5 var(--font-body); color: var(--fg-3); max-width: 460px; }
+
+/* ---------- Join-date month picker ---------- */
+#tsJoinDate.is-open .dropdown { display: block; }
+.ts-monthdd { width: 280px; padding: 12px; }
+.ts-monthnav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ts-monthnav__btn {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-1); border-radius: var(--radius-md);
+  background: #fff; color: var(--color-secondary-600); cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard);
+}
+.ts-monthnav__btn:hover { background: var(--color-mist); }
+.ts-monthnav__btn svg { width: 16px; height: 16px; }
+.ts-monthnav__yr { font: 700 15px/1 var(--font-body); color: var(--fg-1); }
+.ts-monthgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ts-month {
+  height: 38px;
+  border: none; border-radius: var(--radius-md);
+  background: var(--color-mist);
+  font: 600 13px/1 var(--font-body); color: var(--fg-2);
+  cursor: pointer;
+  transition: background var(--duration-2) var(--ease-standard), color var(--duration-2) var(--ease-standard);
+}
+.ts-month:hover { background: var(--color-secondary-100); color: var(--color-secondary-700); }
+
+/* =========================================================================
+   TAX CALCULATE RESULT MODAL
+   ========================================================================= */
+.tc-modal {
+  width: 760px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+.tc-modal__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid var(--border-1);
+  flex-shrink: 0;
+}
+.tc-modal__title {
+  font: 700 26px/1.1 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+  margin: 0;
+}
+.tc-modal__close {
+  width: 30px; height: 30px;
+  border: none; background: transparent;
+  color: var(--fg-3); cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--duration-2) var(--ease-standard), color var(--duration-2) var(--ease-standard);
+}
+.tc-modal__close:hover { background: var(--color-mist); color: var(--fg-1); }
+.tc-modal__close svg { width: 22px; height: 22px; }
+
+.tc-modal__body {
+  padding: 8px 32px 12px;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+.tc-modal__body::-webkit-scrollbar { width: 10px; }
+.tc-modal__body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 6px; border: 2px solid #fff; }
+
+.tc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0;
+}
+.tc-row__label { font: 700 16px/1.3 var(--font-body); color: var(--fg-1); }
+.tc-row__val { font: 600 16px/1.3 var(--font-body); color: var(--fg-2); white-space: nowrap; }
+
+/* sub rows under a group are lighter */
+.tc-group .tc-row__label { font-weight: 600; }
+.tc-group .tc-row__val { font-weight: 500; }
+
+.tc-grouptitle {
+  font: 700 18px/1.2 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--fg-2);
+  margin: 8px 0 2px;
+}
+.tc-line { height: 1px; background: var(--border-1); margin: 6px 0; }
+.tc-line--dashed {
+  height: 0;
+  border-top: 1px dashed var(--border-2);
+  background: none;
+  margin: 12px 0 4px;
+}
+
+/* total rows inside a group */
+.tc-row--total .tc-row__label { font-weight: 700; color: var(--fg-1); }
+.tc-row--total .tc-row__val { font-weight: 700; color: var(--fg-1); }
+
+/* Take Home Pay footer */
+.tc-thp {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px;
+  padding: 22px 32px;
+  border-top: 1px solid var(--border-1);
+  background: var(--color-primary-50);
+  flex-shrink: 0;
+  border-bottom-left-radius: var(--radius-2xl);
+  border-bottom-right-radius: var(--radius-2xl);
+}
+.tc-thp__label { font: 700 20px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--fg-1); }
+.tc-thp__val { font: 700 22px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--color-secondary-700); white-space: nowrap; }
+
+/* =========================================================================
+   TAX RECALCULATE
+   ========================================================================= */
+/* Content-height panel (not flex-fill) so the footer sits just below it on mist */
+.tr-panel { flex: 0 0 auto; }
+.tr-body { padding: 28px 40px 32px; }
+
+.tr-fieldlabel { font: 700 16px/1.2 var(--font-body); color: var(--fg-2); margin-bottom: 8px; }
+.tr-period {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.tr-dtp { margin: 0; }
+.tr-sectitle { font: 700 18px/1.2 var(--font-body); color: var(--fg-1); margin: 26px 0 16px; }
+.tr-selrow { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.tr-selbtn { min-width: 0; padding: 0 22px; }
+
+/* Filter fields inside the Select Employee modal */
+.tr-filterfld { margin-bottom: 20px; }
+.tr-applyfilter { margin-top: 4px; }
+
+/* ---------- Toast ---------- */
+.ts-toast {
+  position: fixed;
+  top: 84px; right: 28px;
+  z-index: 400;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px;
+  background: #fff;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  font: 600 15px/1.3 var(--font-body);
+  color: var(--fg-1);
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  transition: opacity var(--duration-2) var(--ease-standard), transform var(--duration-2) var(--ease-standard);
+}
+.ts-toast.is-on { opacity: 1; transform: translateY(0); }
+.ts-toast__icon {
+  width: 26px; height: 26px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-success-500); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ts-toast__icon svg { width: 15px; height: 15px; }

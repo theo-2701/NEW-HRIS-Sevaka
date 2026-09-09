@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Masuk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-intro="splash" data-lang="id">
+
+<!-- ===================== INTRO SPLASH ===================== -->
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro__inner">
+    <div class="intro__mark"><span>S</span></div>
+    <div class="intro__word" id="introWord">
+      <span>S</span><span>E</span><span>V</span><span>A</span><span>K</span><span>A</span>
+    </div>
+    <div class="intro__tagline">Your Intelligent HR Companion</div>
+  </div>
+</div>
+
+<!-- ===================== AUTH STAGE ===================== -->
+<div class="auth-stage intro-pending" id="stage">
+
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-brand__s">S</div>
+      <div class="auth-brand__text">
+        <span class="auth-brand__name">SEVAKA</span>
+        <span class="auth-brand__sub">Human Resource Information System</span>
+      </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- LOGIN › L-EMAIL — Login Email (magic link 2FA)                -->
+    <!-- ============================================================= -->
+    <section class="auth-screen is-active" data-auth="lemail" data-screen-label="L-EMAIL Login Email">
+      <h1 class="auth-screen__title" data-i18n="lemail.title">Masuk</h1>
+      <p class="auth-screen__lead" data-i18n="lemail.lead">Gunakan email terdaftar Anda untuk masuk ke SEVAKA.</p>
+      <form class="auth-form" onsubmit="event.preventDefault(); AUTH.go('mls');">
+        <div class="field">
+          <label class="field__label" data-i18n="f.email">Email</label>
+          <input class="field__input" type="email" autocomplete="email" data-i18n-ph="ph.email" placeholder="Masukkan email Anda" required>
+        </div>
+        <div class="field field--pw">
+          <label class="field__label" data-i18n="f.password">Password</label>
+          <input class="field__input" type="password" autocomplete="current-password" data-i18n-ph="ph.password" placeholder="Masukkan password" required>
+          <button class="field__eye" type="button" aria-label="Tampilkan password" data-eye><i data-lucide="eye"></i></button>
+        </div>
+        <!-- Cloudflare Turnstile (anti-bot) — wajib -->
+        <div class="turnstile" data-turnstile tabindex="0" role="checkbox" aria-checked="false" aria-label="Verifikasi anti-bot">
+          <span class="turnstile__box"><span class="turnstile__spin"></span><i data-lucide="check"></i></span>
+          <span class="turnstile__label" data-i18n="ts.verify">Verifikasi Anda manusia</span>
+          <span class="turnstile__brand"><span class="turnstile__brandname">Turnstile</span><span class="turnstile__brandsub">Cloudflare</span></span>
+        </div>
+        <button class="auth-submit" type="submit" data-i18n="btn.masuk">Masuk</button>
+      </form>
+
+      <div class="auth-or" data-i18n="switch.or">atau masuk dengan</div>
+      <div class="auth-alts">
+        <button class="auth-btn" type="button" onclick="AUTH.go('luser')"><span data-i18n="switch.username">Username</span></button>
+        <button class="auth-btn" type="button" onclick="AUTH.go('lwa')"><span data-i18n="switch.wa">WhatsApp</span></button>
+      </div>
+
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('rp1')" data-i18n="link.forgot">Lupa Password?</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LOGIN › L-USER — Login Username (magic link 2FA, ch. fallback) -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="luser" data-screen-label="L-USER Login Username">
+      <h1 class="auth-screen__title" data-i18n="luser.title">Masuk dengan Username</h1>
+      <p class="auth-screen__lead" data-i18n="luser.lead">Tautan masuk akan dikirim ke email terdaftar akun Anda.</p>
+      <form class="auth-form" onsubmit="event.preventDefault(); AUTH.go('mls');">
+        <div class="field">
+          <label class="field__label" data-i18n="f.username">Username</label>
+          <input class="field__input" autocomplete="username" data-i18n-ph="ph.username" placeholder="Masukkan username" required>
+          <span class="field__hint" data-i18n="hint.username">Huruf kecil, diawali huruf.</span>
+        </div>
+        <div class="field field--pw">
+          <label class="field__label" data-i18n="f.password">Password</label>
+          <input class="field__input" type="password" autocomplete="current-password" data-i18n-ph="ph.password" placeholder="Masukkan password" required>
+          <button class="field__eye" type="button" aria-label="Tampilkan password" data-eye><i data-lucide="eye"></i></button>
+        </div>
+        <div class="turnstile" data-turnstile tabindex="0" role="checkbox" aria-checked="false" aria-label="Verifikasi anti-bot">
+          <span class="turnstile__box"><span class="turnstile__spin"></span><i data-lucide="check"></i></span>
+          <span class="turnstile__label" data-i18n="ts.verify">Verifikasi Anda manusia</span>
+          <span class="turnstile__brand"><span class="turnstile__brandname">Turnstile</span><span class="turnstile__brandsub">Cloudflare</span></span>
+        </div>
+        <button class="auth-submit" type="submit" data-i18n="btn.masuk">Masuk</button>
+      </form>
+
+      <div class="auth-or" data-i18n="switch.or">atau masuk dengan</div>
+      <div class="auth-alts">
+        <button class="auth-btn" type="button" onclick="AUTH.go('lemail')"><span data-i18n="switch.email">Email</span></button>
+        <button class="auth-btn" type="button" onclick="AUTH.go('lwa')"><span data-i18n="switch.wa">WhatsApp</span></button>
+      </div>
+
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('rp1')" data-i18n="link.forgot">Lupa Password?</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LOGIN › L-WA — Login WhatsApp (OTP 6-digit 2FA)               -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="lwa" data-screen-label="L-WA Login WhatsApp">
+      <h1 class="auth-screen__title" data-i18n="lwa.title">Masuk dengan WhatsApp</h1>
+      <p class="auth-screen__lead" data-i18n="lwa.lead">Kode verifikasi 6 digit akan dikirim ke WhatsApp Anda.</p>
+      <form class="auth-form" onsubmit="event.preventDefault(); AUTH.go('otp');">
+        <div class="field">
+          <label class="field__label" data-i18n="f.phone">Nomor Handphone</label>
+          <div class="field--phone">
+            <span class="field__prefix">+62</span>
+            <input class="field__input" type="tel" inputmode="numeric" placeholder="81234567890" required>
+          </div>
+        </div>
+        <div class="field field--pw">
+          <label class="field__label" data-i18n="f.password">Password</label>
+          <input class="field__input" type="password" autocomplete="current-password" data-i18n-ph="ph.password" placeholder="Masukkan password" required>
+          <button class="field__eye" type="button" aria-label="Tampilkan password" data-eye><i data-lucide="eye"></i></button>
+        </div>
+        <div class="turnstile" data-turnstile tabindex="0" role="checkbox" aria-checked="false" aria-label="Verifikasi anti-bot">
+          <span class="turnstile__box"><span class="turnstile__spin"></span><i data-lucide="check"></i></span>
+          <span class="turnstile__label" data-i18n="ts.verify">Verifikasi Anda manusia</span>
+          <span class="turnstile__brand"><span class="turnstile__brandname">Turnstile</span><span class="turnstile__brandsub">Cloudflare</span></span>
+        </div>
+        <button class="auth-submit" type="submit" data-i18n="btn.masuk">Masuk</button>
+      </form>
+
+      <div class="auth-or" data-i18n="switch.or">atau masuk dengan</div>
+      <div class="auth-alts">
+        <button class="auth-btn" type="button" onclick="AUTH.go('lemail')"><span data-i18n="switch.email">Email</span></button>
+        <button class="auth-btn" type="button" onclick="AUTH.go('luser')"><span data-i18n="switch.username">Username</span></button>
+      </div>
+
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('rp1')" data-i18n="link.forgot">Lupa Password?</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LOGIN › MLS — Magic-Link Sent (email / username 2FA)         -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="mls" data-screen-label="MLS Magic-Link Sent">
+      <div class="auth-illus">
+        <div class="auth-illus__circle"><i data-lucide="mail-check"></i></div>
+      </div>
+      <h1 class="auth-screen__title auth-screen__title--sm auth-screen__title--center" data-i18n="mls.title">Cek email Anda</h1>
+      <p class="auth-screen__lead auth-screen__lead--center" data-i18n="mls.lead">Kami mengirim tautan masuk ke <b>s***@ptdika.co.id</b>. Buka email dan klik tautan untuk melanjutkan. Tautan berlaku 15 menit.</p>
+
+      <button class="auth-submit auth-submit--demo" type="button" onclick="AUTH.go('av')" data-i18n="mls.simulate">Simulasikan klik tautan</button>
+
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('lemail')" data-i18n="link.backLogin">← Kembali ke halaman masuk</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LOGIN › AV — Auto-verify magic link                          -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="av" data-screen-label="AV Auto-verify">
+      <div class="auth-verify">
+        <div class="auth-verify__spinner"></div>
+        <h1 class="auth-screen__title auth-screen__title--sm auth-screen__title--center" data-i18n="av.title">Memverifikasi tautan masuk</h1>
+        <p class="auth-screen__lead auth-screen__lead--center" data-i18n="av.lead">Mohon tunggu, kami sedang memverifikasi identitas Anda…</p>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LOGIN › OTP — Input OTP 6-digit (whatsapp 2FA, TTL 5 menit)   -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="otp" data-screen-label="OTP Input OTP">
+      <h1 class="auth-screen__title auth-screen__title--sm" data-i18n="otp.title">Masukkan kode OTP</h1>
+      <p class="auth-screen__lead" data-i18n="otp.lead">Kami mengirim kode 6 digit ke WhatsApp <b>0812****7890</b>. Kode berlaku 5 menit.</p>
+
+      <div class="auth-form auth-form--otp">
+        <div class="otp-row" id="otpRow">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
+          <input class="otp-box" maxlength="1" inputmode="numeric" aria-label="Digit 2">
+          <input class="otp-box" maxlength="1" inputmode="numeric" aria-label="Digit 3">
+          <input class="otp-box" maxlength="1" inputmode="numeric" aria-label="Digit 4">
+          <input class="otp-box" maxlength="1" inputmode="numeric" aria-label="Digit 5">
+          <input class="otp-box" maxlength="1" inputmode="numeric" aria-label="Digit 6">
+        </div>
+
+        <button class="auth-submit" type="button" id="otpVerify" onclick="AUTH.go('dashboard')" disabled data-i18n="btn.verify">Verifikasi</button>
+      </div>
+
+      <div class="otp-resend">
+        <span id="otpResendWrap">
+          <span data-i18n="otp.resendIn">Kirim ulang dalam</span> <span class="otp-resend__count" id="otpCount">05:00</span>
+        </span>
+        <button class="otp-resend__link" id="otpResendBtn" type="button" disabled hidden onclick="AUTH.resendOtp()" data-i18n="otp.resendNow">Kirim ulang OTP</button>
+        <div class="otp-resend__note" data-i18n="otp.limit">Maksimal 3 permintaan per 15 menit.</div>
+      </div>
+
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('lwa')" data-i18n="link.backLogin">← Kembali ke halaman masuk</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LUPA PASSWORD › RP1 — input email                            -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="rp1" data-screen-label="RP1 Lupa Password">
+      <h1 class="auth-screen__title auth-screen__title--sm" data-i18n="rp1.title">Lupa Password</h1>
+      <p class="auth-screen__lead" data-i18n="rp1.lead">Masukkan email terdaftar Anda. Kami akan mengirim tautan untuk mengatur ulang password.</p>
+      <form class="auth-form" onsubmit="event.preventDefault(); AUTH.go('rpsent');">
+        <div class="field">
+          <label class="field__label" data-i18n="f.email">Email</label>
+          <input class="field__input" type="email" data-i18n-ph="ph.email" placeholder="Masukkan email Anda" required>
+        </div>
+        <button class="auth-submit" type="submit" data-i18n="btn.sendReset">Kirim Tautan Reset</button>
+      </form>
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('lemail')" data-i18n="link.backLogin">← Kembali ke halaman masuk</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LUPA PASSWORD › RP-SENT — cek email (generik)                -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="rpsent" data-screen-label="RP-SENT Cek Email">
+      <div class="auth-illus">
+        <div class="auth-illus__circle"><i data-lucide="mail-check"></i></div>
+      </div>
+      <h1 class="auth-screen__title auth-screen__title--sm auth-screen__title--center" data-i18n="rpsent.title">Cek email Anda</h1>
+      <p class="auth-screen__lead auth-screen__lead--center" data-i18n="rpsent.lead">Bila email terdaftar, tautan reset (berlaku 15 menit) telah dikirim. Semua sesi aktif Anda akan keluar setelah password diubah.</p>
+
+      <button class="auth-submit auth-submit--demo" type="button" onclick="AUTH.go('rp2')" data-i18n="rpsent.simulate">Simulasikan klik tautan</button>
+
+      <div class="auth-foot-link">
+        <a href="#" onclick="event.preventDefault(); AUTH.go('lemail')" data-i18n="link.backLogin">← Kembali ke halaman masuk</a>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LUPA PASSWORD › RP2 — atur password baru                     -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="rp2" data-screen-label="RP2 Atur Password Baru">
+      <h1 class="auth-screen__title auth-screen__title--sm" data-i18n="rp2.title">Atur Password Baru</h1>
+      <p class="auth-screen__lead" data-i18n="rp2.lead">Password minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol.</p>
+      <form class="auth-form" onsubmit="event.preventDefault(); AUTH.go('rpdone');">
+        <div class="field field--pw">
+          <label class="field__label" data-i18n="f.newpw">Password Baru</label>
+          <input class="field__input" type="password" id="rpNewPw" data-i18n-ph="ph.newpw" placeholder="Masukkan password baru" required>
+          <button class="field__eye" type="button" aria-label="Tampilkan password" data-eye><i data-lucide="eye"></i></button>
+        </div>
+        <!-- strength meter (UI-only) -->
+        <div class="pw-strength" id="pwStrength" data-level="0">
+          <div class="pw-strength__bars"><span></span><span></span><span></span><span></span></div>
+          <span class="pw-strength__label" id="pwStrengthLabel" data-i18n="pw.weak">Lemah</span>
+        </div>
+        <div class="field field--pw">
+          <label class="field__label" data-i18n="f.confirmpw">Konfirmasi Password</label>
+          <input class="field__input" type="password" id="rpConfirmPw" data-i18n-ph="ph.confirmpw" placeholder="Ulangi password baru" required>
+          <button class="field__eye" type="button" aria-label="Tampilkan password" data-eye><i data-lucide="eye"></i></button>
+          <span class="field__hint field__hint--error" id="rpMatchHint" hidden data-i18n="pw.mismatch">Password tidak cocok.</span>
+        </div>
+        <button class="auth-submit" type="submit" data-i18n="btn.save">Simpan</button>
+      </form>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LUPA PASSWORD › RP-DONE — sukses (sesi di-revoke)            -->
+    <!-- ============================================================= -->
+    <section class="auth-screen" data-auth="rpdone" data-screen-label="RP-DONE Sukses Reset">
+      <div class="auth-illus">
+        <div class="auth-illus__circle auth-illus__circle--success"><i data-lucide="check"></i></div>
+      </div>
+      <h1 class="auth-screen__title auth-screen__title--sm auth-screen__title--center" data-i18n="rpdone.title">Password berhasil diubah</h1>
+      <p class="auth-screen__lead auth-screen__lead--center" data-i18n="rpdone.lead">Semua sesi Anda telah keluar. Silakan masuk kembali dengan password baru.</p>
+      <button class="auth-submit" type="button" onclick="AUTH.go('lemail')" data-i18n="btn.toLogin">Ke Halaman Masuk</button>
+    </section>
+
+  </div>
+
+  <!-- footer -->
+  <div class="auth-footer">
+    <div class="auth-footer__links">
+      <a href="#" onclick="event.preventDefault()" data-i18n="foot.privacy">Kebijakan privasi</a>
+      <span class="auth-footer__dot">•</span>
+      <a href="#" onclick="event.preventDefault()" data-i18n="foot.terms">Ketentuan penggunaan</a>
+      <span class="auth-footer__dot">•</span>
+      <a href="#" onclick="event.preventDefault()" data-i18n="foot.about">Tentang Sevaka</a>
+    </div>
+    <div class="auth-footer__copy">© 2025 PT Danamas Insan Kreasi Andalan</div>
+  </div>
+
+</div>
+
+<!-- Tweaks panel mount point -->
+<div id="tweaks-root"></div>
+
+<!-- Scripts -->
+<script src="js/auth.js"></script>
+
+<!-- React + Babel + Tweaks panel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="js/tweaks-panel.jsx"></script>
+<script type="text/babel" src="js/tweaks-auth.jsx"></script>
+
+</body>
+</html>

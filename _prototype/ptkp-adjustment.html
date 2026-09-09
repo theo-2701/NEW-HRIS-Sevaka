@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — PTKP Adjustment</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    /* ===== PTKP Adjustment — page-specific (built on app.css primitives) ===== */
+    .ptkp-wrap { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+    @media (max-width: 1180px) { .ptkp-wrap { grid-template-columns: 1fr; } }
+
+    .ptkp-subject {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px; background: var(--bg-surface);
+      border: 1px solid var(--border-1); border-radius: 12px; box-shadow: var(--shadow-card-sm);
+    }
+    .ptkp-subject__meta { display: flex; flex-direction: column; gap: 2px; }
+    .ptkp-subject__name { font: 700 16px/1.2 var(--font-display); color: var(--fg-1); }
+    .ptkp-subject__sub { font: 500 12px/1.3 var(--font-body); color: var(--fg-3); }
+    .ptkp-subject__spacer { flex: 1; }
+    .ptkp-subject { margin-bottom: 20px; }
+    .ptkp-wrap { margin-bottom: 20px; }
+
+    /* current period card */
+    .ptkp-current__row { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--color-vapor); }
+    .ptkp-current__row:last-child { border-bottom: none; }
+    .ptkp-current__k { font: 500 12px/1.3 var(--font-body); color: var(--fg-3); }
+    .ptkp-current__v { font: 700 14px/1.3 var(--font-body); color: var(--fg-1); }
+    .ptkp-code {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 52px; height: 30px; padding: 0 12px; border-radius: 8px;
+      background: var(--color-secondary-500); color: #fff; font: 700 15px/1 var(--font-body); letter-spacing: 0.02em;
+    }
+
+    /* form */
+    .ptkp-form { display: flex; flex-direction: column; gap: 18px; }
+    .ptkp-form__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .ptkp-form__grid { grid-template-columns: 1fr; } }
+
+    .ptkp-attest {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 16px 18px; background: var(--color-secondary-50);
+      border: 1px solid var(--color-primary-200); border-radius: 10px;
+    }
+    .ptkp-attest__text { font: 500 13px/1.5 var(--font-body); color: var(--fg-2); }
+    .ptkp-attest.is-armed { border-color: var(--color-secondary-500); box-shadow: 0 0 0 3px rgba(2,132,199,.10); }
+
+    .ptkp-sod {
+      display: flex; gap: 10px; align-items: center;
+      font: 500 12px/1.4 var(--font-body); color: var(--fg-3);
+      padding: 10px 0 2px;
+    }
+    .ptkp-sod svg { width: 16px; height: 16px; color: var(--color-secondary-500); flex-shrink: 0; }
+
+    .ptkp-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 2px; }
+    .ptkp-form .ctl--date > input { pointer-events: auto; }
+
+    /* history */
+    .ptkp-hist { width: 100%; border-collapse: collapse; }
+    .ptkp-hist th {
+      background: linear-gradient(180deg, #9bd5ef 0%, #8ccbe9 100%); text-align: left; padding: 13px 14px;
+      font: 700 14px/1.2 var(--font-body);
+      color: #fff; border-bottom: none; white-space: nowrap;
+    }
+    .ptkp-hist td { padding: 12px 14px; font: 500 13px/1.4 var(--font-body); color: var(--fg-1); border-bottom: 1px solid var(--color-vapor); }
+    .ptkp-hist tr:last-child td { border-bottom: none; }
+    .ptkp-hist__code { font: 700 13px/1 var(--font-body); color: var(--color-secondary-700); }
+
+    .badge-live {
+      display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px;
+      font: 700 10px/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase;
+      background: var(--color-success-100); color: var(--color-success-900);
+    }
+    .badge-live .dotpulse { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success-500); }
+    .badge-closed {
+      display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px;
+      font: 700 10px/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase;
+      background: var(--color-vapor); color: var(--fg-3);
+    }
+
+    /* toast */
+    .toast {
+      position: fixed; top: 78px; right: 24px; z-index: 3000;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 10px; background: #fff;
+      border: 1px solid var(--border-1); box-shadow: var(--shadow-overlay);
+      font: 600 13px/1.3 var(--font-body); color: var(--fg-1);
+      transform: translateX(120%); transition: transform 180ms var(--ease-standard);
+    }
+    .toast.is-on { transform: translateX(0); }
+    .toast__icon { width: 24px; height: 24px; border-radius: 50%; background: var(--color-success-100); color: var(--color-success-700); display: inline-flex; align-items: center; justify-content: center; }
+    .toast__icon svg { width: 15px; height: 15px; }
+  </style>
+</head>
+<body data-screen-label="PTKP Adjustment">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <!-- Page header -->
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">PTKP Adjustment</span>
+          </nav>
+          <h1 class="emp-title">PTKP Adjustment</h1>
+          <p class="emp-subtitle" style="font:500 13px/1.5 var(--font-body);color:var(--fg-3);margin:6px 0 0;max-width:640px">Set an employee's tax-exempt income status (PTKP). Opening a new period automatically closes the running one. Attestation is required and the tax basis is written to an immutable log.</p>
+        </div>
+        <div class="pg-shell__body">
+
+        <!-- Subject strip -->
+        <div class="ptkp-subject">
+          <span class="avatar avatar--lg" style="background:linear-gradient(#7ab9d4,#026395)">ES</span>
+          <div class="ptkp-subject__meta">
+            <span class="ptkp-subject__name">Eka Saputra</span>
+            <span class="ptkp-subject__sub">NIK EMP-0005 · Staff Finance · BR-Papua · COMPANY001</span>
+          </div>
+          <div class="ptkp-subject__spacer"></div>
+          <button class="btn btn--secondary" id="changeSubjectBtn">Change employee</button>
+        </div>
+
+        <div class="ptkp-wrap">
+
+          <!-- LEFT: adjust form -->
+          <section class="card">
+            <div class="card__head">
+              <h2 class="card__title">Adjust PTKP Status</h2>
+            </div>
+
+            <div class="ptkp-sod">
+              <i data-lucide="shield-check"></i>
+              Segregation of duties — the verifier must differ from the requester. Audit actor is stamped by the server from your token.
+            </div>
+
+            <form class="ptkp-form" id="ptkpForm" autocomplete="off">
+              <div class="ptkp-form__grid">
+                <div class="fld">
+                  <label class="fld__label">PTKP Code <span class="req">*</span></label>
+                  <div class="ctl ctl--select" id="ptkpCodeCtl">
+                    <span class="ctl__value" data-placeholder="Select PTKP code" id="ptkpCodeVal">Select PTKP code</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt" data-code="TK0">TK/0 — Single, no dependents</div>
+                      <div class="dropdown__opt" data-code="TK1">TK/1 — Single, 1 dependent</div>
+                      <div class="dropdown__opt" data-code="K0">K/0 — Married, no dependents</div>
+                      <div class="dropdown__opt" data-code="K1">K/1 — Married, 1 dependent</div>
+                      <div class="dropdown__opt" data-code="K2">K/2 — Married, 2 dependents</div>
+                      <div class="dropdown__opt" data-code="K3">K/3 — Married, 3 dependents</div>
+                    </div>
+                  </div>
+                  <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Must exist in the PTKP master (cnf_ptkp_effective).</span>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Effective From <span class="req">*</span></label>
+                  <div class="ctl ctl--date">
+                    <input type="date" id="ptkpFrom" value="2026-01-01">
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                  <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Backdating across a locked tax year is rejected.</span>
+                </div>
+              </div>
+
+              <div class="fld">
+                <label class="fld__label">Event date <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+                <div class="ctl ctl--date">
+                  <input type="date" id="ptkpEventDate">
+                  <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+                <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Optional — the triggering event date (e.g. childbirth).</span>
+              </div>
+
+              <div class="fld">
+                <label class="fld__label">Supporting document <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+                <label class="file-ctl">
+                  <span class="file-ctl__btn">Choose File</span>
+                  <span class="file-ctl__name" id="ptkpFileName">No file selected</span>
+                  <input type="file" hidden id="ptkpFile">
+                </label>
+                <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Sent as an opaque document id — not a URL.</span>
+              </div>
+
+              <div class="fld">
+                <label class="fld__label">Remarks <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+                <div class="ctl">
+                  <textarea id="ptkpRemarks" rows="3" placeholder="e.g. Second child born — change in dependents."></textarea>
+                </div>
+              </div>
+
+              <label class="ptkp-attest" id="ptkpAttest" for="ptkpAttestCheck">
+                <label class="check-red" style="margin-top:1px">
+                  <input type="checkbox" id="ptkpAttestCheck">
+                  <span class="check-red__box"></span>
+                </label>
+                <span class="ptkp-attest__text"><strong>Attestation.</strong> I declare that the PTKP status above is true and correct per the employee's valid supporting documents. This statement is recorded in the immutable change log.</span>
+              </label>
+
+              <div class="ptkp-actions">
+                <button class="btn btn--secondary" type="button" onclick="location.href='employee-directory.html'">Cancel</button>
+                <button class="btn btn--primary" type="submit" id="ptkpSubmit" disabled>Save Adjustment</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- RIGHT: running period -->
+          <section class="card">
+            <div class="card__head">
+              <h2 class="card__title">Running Period</h2>
+              <span class="badge-live"><span class="dotpulse"></span>Active</span>
+            </div>
+            <div>
+              <div class="ptkp-current__row">
+                <span class="ptkp-current__k">PTKP Code</span>
+                <span class="ptkp-current__v"><span class="ptkp-code" id="curCode">TK0</span></span>
+              </div>
+              <div class="ptkp-current__row">
+                <span class="ptkp-current__k">Effective From</span>
+                <span class="ptkp-current__v" id="curFrom">01 Jan 2025</span>
+              </div>
+              <div class="ptkp-current__row">
+                <span class="ptkp-current__k">Effective Until</span>
+                <span class="ptkp-current__v" style="color:var(--color-success-800)">Open — no end date</span>
+              </div>
+              <div class="ptkp-current__row">
+                <span class="ptkp-current__k">Event date</span>
+                <span class="ptkp-current__v" id="curEvent">15 Dec 2025 <span style="color:var(--fg-4);font-weight:500">· marriage</span></span>
+              </div>
+              <div class="ptkp-current__row">
+                <span class="ptkp-current__k">Set by</span>
+                <span class="ptkp-current__v">Rina Hartono</span>
+              </div>
+            </div>
+            <p style="font:400 12px/1.5 var(--font-body);color:var(--fg-3);margin:0">The new tax basis becomes the reference for the next payroll calculation once saved.</p>
+          </section>
+        </div>
+
+        <!-- History -->
+        <section class="card" style="padding:0;overflow:hidden">
+          <div class="card__head" style="padding:18px 20px 0">
+            <h2 class="card__title">Adjustment History</h2>
+            <span class="card__sub">Append-only · immutable</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="ptkp-hist">
+              <thead>
+                <tr>
+                  <th>PTKP Code</th>
+                  <th>Effective From</th>
+                  <th>Effective Until</th>
+                  <th>Status</th>
+                  <th>Changed By</th>
+                  <th>Recorded At</th>
+                </tr>
+              </thead>
+              <tbody id="ptkpHistBody">
+                <tr>
+                  <td><span class="ptkp-hist__code">TK/0</span></td>
+                  <td>01 Jan 2025</td>
+                  <td>—</td>
+                  <td><span class="badge-live"><span class="dotpulse"></span>Active</span></td>
+                  <td>Rina Hartono</td>
+                  <td class="dim" style="color:var(--fg-3)">02 Jan 2025 · 09:14 WIB</td>
+                </tr>
+                <tr>
+                  <td><span class="ptkp-hist__code">TK/0</span></td>
+                  <td>01 Jan 2024</td>
+                  <td>31 Dec 2024</td>
+                  <td><span class="badge-closed">Closed</span></td>
+                  <td>Rina Hartono</td>
+                  <td class="dim" style="color:var(--fg-3)">04 Jan 2024 · 10:02 WIB</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="ptkpToast">
+  <span class="toast__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
+  <span id="ptkpToastMsg">New PTKP period is now active.</span>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'PTKP Adjustment' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmt(iso) {
+    if (!iso) return '—';
+    var p = iso.split('-'); if (p.length !== 3) return iso;
+    return String(+p[2]).padStart(2, '0') + ' ' + MONTHS[+p[1] - 1] + ' ' + p[0];
+  }
+
+  var codeCtl   = document.getElementById('ptkpCodeCtl');
+  var codeVal   = document.getElementById('ptkpCodeVal');
+  var attest    = document.getElementById('ptkpAttestCheck');
+  var attestBox = document.getElementById('ptkpAttest');
+  var submit    = document.getElementById('ptkpSubmit');
+  var form      = document.getElementById('ptkpForm');
+  var fromInput = document.getElementById('ptkpFrom');
+  var fileInput = document.getElementById('ptkpFile');
+  var fileName  = document.getElementById('ptkpFileName');
+  var eventDate = document.getElementById('ptkpEventDate');
+  var remarks   = document.getElementById('ptkpRemarks');
+  var pickedCode = null;
+
+  // custom-select open/close
+  if (codeCtl) {
+    codeCtl.addEventListener('click', function (e) {
+      if (e.target.closest('.dropdown__opt')) return;
+      codeCtl.classList.toggle('is-open');
+    });
+    codeCtl.querySelectorAll('.dropdown__opt').forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        pickedCode = opt.getAttribute('data-code');
+        codeVal.textContent = opt.textContent;
+        codeVal.style.color = 'var(--fg-1)';
+        codeCtl.classList.remove('is-open');
+        sync();
+      });
+    });
+    document.addEventListener('click', function (e) {
+      if (!codeCtl.contains(e.target)) codeCtl.classList.remove('is-open');
+    });
+  }
+
+  if (fileInput) fileInput.addEventListener('change', function () {
+    fileName.textContent = fileInput.files && fileInput.files[0] ? fileInput.files[0].name : 'No file selected';
+  });
+
+  function sync() {
+    var ok = !!pickedCode && !!fromInput.value && attest.checked;
+    submit.disabled = !ok;
+    attestBox.classList.toggle('is-armed', attest.checked);
+  }
+  attest.addEventListener('change', sync);
+  fromInput.addEventListener('change', sync);
+
+  function toast(msg) {
+    var t = document.getElementById('ptkpToast');
+    document.getElementById('ptkpToastMsg').textContent = msg;
+    t.classList.add('is-on');
+    setTimeout(function () { t.classList.remove('is-on'); }, 3200);
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (submit.disabled) return;
+
+    var codeShort = pickedCode.replace(/([A-Z]+)(\d)/, '$1/$2');
+    var fromIso = fromInput.value;
+
+    // close running period + open new one in history
+    var body = document.getElementById('ptkpHistBody');
+    var liveRow = body.querySelector('tr');
+    if (liveRow) {
+      liveRow.children[2].textContent = fmt(prevDay(fromIso));
+      liveRow.children[3].innerHTML = '<span class="badge-closed">Closed</span>';
+    }
+    var now = new Date();
+    var stamp = String(now.getDate()).padStart(2,'0') + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear() +
+                ' · ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' WIB';
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><span class="ptkp-hist__code">' + codeShort + '</span></td>' +
+      '<td>' + fmt(fromIso) + '</td>' +
+      '<td>—</td>' +
+      '<td><span class="badge-live"><span class="dotpulse"></span>Active</span></td>' +
+      '<td>Tony Stark</td>' +
+      '<td class="dim" style="color:var(--fg-3)">' + stamp + '</td>';
+    body.insertBefore(tr, body.firstChild);
+
+    // update running-period card
+    document.getElementById('curCode').textContent = pickedCode;
+    document.getElementById('curFrom').textContent = fmt(fromIso);
+    if (eventDate && eventDate.value) document.getElementById('curEvent').textContent = fmt(eventDate.value);
+
+    // reset form
+    pickedCode = null;
+    codeVal.textContent = 'Select PTKP code';
+    codeVal.style.color = '';
+    attest.checked = false;
+    if (eventDate) eventDate.value = '';
+    if (remarks) remarks.value = '';
+    if (fileInput) { fileInput.value = ''; fileName.textContent = 'No file selected'; }
+    sync();
+
+    toast('PTKP set to ' + codeShort + '. New period active from ' + fmt(fromIso) + '.');
+    if (window.lucide) window.lucide.createIcons();
+  });
+
+  function prevDay(iso) {
+    var d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+})();
+</script>
+
+</body>
+</html>

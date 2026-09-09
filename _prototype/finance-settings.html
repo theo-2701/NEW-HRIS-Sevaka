@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Finance Settings</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/finance.css?v=1">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Finance Settings">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Finance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Finance Settings</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Cross-Module Finance Settings</h1>
+<p class="flow-sub">Master data shared by Benefit Reimbursement, Loan and Cash Advance. Loan Limit is fully maintainable here; Advance Purpose Type and Rejection Reasons are read boards on this page — their full CRUD contract stays in the API (FT1, 47 endpoints).</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newLimitBtn">New loan limit</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="sfTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="loanlimit">Loan Limit<span class="tabnav__count" id="cntLimit">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="purpose">Advance Purpose Type<span class="tabnav__count" id="cntPurpose">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="rejection">Rejection Reasons<span class="tabnav__count" id="cntReason">0</span></button>
+</div>
+
+<!-- ===== SF-A2 / SF-B2 — Loan Limit ===== -->
+<div class="tabpanel is-on" data-tabpanel="loanlimit">
+<div class="fin-bar" style="margin-bottom:14px">
+<div class="fin-bar__flt">
+<div class="fld fld--sm">
+<label class="fld__label">Job grade</label>
+<div class="ctl ctl--select" id="fltGrade"><span class="ctl__value">All grades</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltGradeDd"><div class="dropdown__opt is-sel" data-val="">All grades</div></div>
+</div>
+</div>
+<div class="fld fld--sm">
+<label class="fld__label">Status</label>
+<div class="ctl ctl--select" id="fltActive"><span class="ctl__value">All status</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All status</div><div class="dropdown__opt" data-val="true">ACTIVE</div><div class="dropdown__opt" data-val="false">INACTIVE</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>A limit change never applies retroactively — <strong>mst_loan_limit</strong> is read at submission time by Loan (FT3), so running loans keep the amount frozen at their own submission. <code>job_grade_id</code> is unique among active rows: a second row for the same grade is refused with <strong>409</strong>.</span></div>
+
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Job Grade</th><th class="ta-r">Limit Amount</th><th>Status</th><th></th></tr></thead>
+<tbody id="limitBody"></tbody>
+</table>
+</div>
+
+<div class="note note--warn" style="margin-top:14px"><i data-lucide="triangle-alert"></i><span><strong>Documented contract gap — PROB-FRONTEND-018.</strong> TSD §6.1.5 summary matrix lists <code>loan-limits</code> as readable catalogue for <code>ROLE_EMPLOYEE</code>, while §6.1.5 narrative and §14.1.9 state zero access. This screen renders the contradiction as-is (read allowed, write restricted to <code>ROLE_FINANCE_OFFICER</code>/<code>ROLE_SUPER_ADMIN</code>) and waits on a principal decision — nothing was invented either way.</span></div>
+</div>
+
+<!-- ===== SF-S1 — Advance Purpose Type (read board) ===== -->
+<div class="tabpanel" data-tabpanel="purpose">
+<div class="sec-head"><span class="sec-head__t">Advance Purpose Type</span><span class="sec-head__sp"></span><span class="sec-head__note">Read board — full CRUD (create / update / delete / history / seed-sample) stays in the API contract, F1.36–F1.42.</span></div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Name</th><th class="ta-c">Official Travel</th><th class="ta-r">Max Amount</th><th>Status</th></tr></thead>
+<tbody id="purposeBody"></tbody>
+</table>
+</div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span><strong>Deny-by-default invariant.</strong> A row with <code>max_amount = NULL</code> and <code>is_unlimited_ack = false</code> saves legitimately but <strong>cannot be selected</strong> when submitting a cash advance (FT3/FT4). <code>is_unlimited_ack</code> and <code>requires_receipt</code> are narrated, not columns — FSD §1.3 fixes SF-S1 to Name / Official Travel / Max Amount / Status. Changing <code>is_official_travel</code> requires a <code>reason</code> (conditional, F1.38).</span></div>
+</div>
+
+<!-- ===== SF-S2 — Rejection Reasons (read board) ===== -->
+<div class="tabpanel" data-tabpanel="rejection">
+<div class="sec-head"><span class="sec-head__t">Rejection Reasons</span><span class="sec-head__sp"></span><span class="sec-head__note">Shared by Benefit Reimbursement, Loan and Cash Advance rejections — read board, F1.43–F1.47.</span></div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Name</th><th class="ta-c">Requires Free-Text</th><th>System Default</th></tr></thead>
+<tbody id="reasonBody"></tbody>
+</table>
+</div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span><code>is_system_default</code> is server-derived and immutable after insert — a custom reason is always created with <code>false</code>, and deleting a system-default row is refused with <strong>422 FIN_REJECTION_REASON_SYSTEM_DEFAULT</strong>. Seeding of the five built-in rows for a new company is an open design item in the contract (§14.1.8) — not assumed here.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ SF-A3 — Create loan limit ============ -->
+<div class="ovl" id="limitCreate">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New loan limit</h3><p class="ovl__desc">One active row per job grade. A duplicate grade is refused with 409.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="limitCreateForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Job grade <span class="req">*</span></label>
+<div class="ctl ctl--select" id="ncGrade"><span class="ctl__value" style="color:var(--fg-4)">Select job grade</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="ncGradeDd"></div>
+</div>
+<span class="fld__hint">Cross-service anchor to <code>company.mst_job_grade</code> — no foreign key (GAP-1, inherited as-is).</span>
+</div>
+<div class="fld">
+<label class="fld__label">Limit amount <span class="req">*</span></label>
+<div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="ncAmount" placeholder="0" inputmode="numeric"></div>
+<span class="fld__hint">numeric(18,2), must be ≥ 0.</span>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="ncSave" disabled>Save loan limit</button>
+</div>
+</div>
+</div>
+
+<!-- ============ SF-B3 — Edit loan limit ============ -->
+<div class="ovl" id="limitEdit">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Edit loan limit</h3><p class="ovl__desc">Job grade is the row identity and cannot be changed. A new amount applies to later submissions only.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="limitEditForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Job grade</label>
+<div class="ctl is-disabled"><input type="text" id="edGrade" disabled></div>
+<span class="fld__hint">Read-only on edit — a limit change is not retroactive (TSD §14.1.5).</span>
+</div>
+<div class="fld">
+<label class="fld__label">Limit amount <span class="req">*</span></label>
+<div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="edAmount" inputmode="numeric"></div>
+<span class="fld__hint" id="edDelta">&nbsp;</span>
+</div>
+<div class="fin-toggle">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Active</div><div class="fin-toggle__d">Part of the PUT payload (F1.27). An inactive grade offers no borrowing room to new submissions.</div></div>
+<button type="button" class="fin-switch is-on" id="edActive" aria-label="Toggle active"></button>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="edSave">Save changes</button>
+</div>
+</div>
+</div>
+
+<!-- ============ Delete confirm ============ -->
+<div class="ovl" id="limitDelete">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Delete loan limit</h3><p class="ovl__desc">Soft delete — the row stays in the database and stops applying to new submissions.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="delKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--danger" id="delConfirm">Delete</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-settings.js"></script>
+</body>
+</html>

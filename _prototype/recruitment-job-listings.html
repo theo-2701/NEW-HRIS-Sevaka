@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA Recruitment — Job Listings</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/recruitment.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Recruitment — Job Listings">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <div class="rc-sec">
+            <span class="rc-sec__title">Job Listings</span>
+            <div class="rc-head-actions">
+              <div class="rc-menu-wrap">
+                <button class="btn btn--secondary" id="importBtn" type="button">Import <i data-lucide="chevron-down"></i></button>
+                <div class="rc-menu" id="importMenu">
+                  <button class="rc-menu__item" type="button" id="miImportJob"><i data-lucide="file-up"></i>Import Job Listing</button>
+                  <a class="rc-menu__item" href="recruitment-import-logs.html"><i data-lucide="scroll-text"></i>Import Logs</a>
+                </div>
+              </div>
+              <a class="btn btn--primary" href="recruitment-create-job-listing.html">Create Job Listing</a>
+            </div>
+          </div>
+
+          <!-- status summary cards (filter) -->
+          <div class="rc-status-row" id="statusRow">
+            <button class="rc-status is-on" type="button" data-status="published">
+              <span class="rc-status__num">5</span>
+              <span class="rc-status__label"><span class="rc-status__dot" style="background:var(--color-success-500)"></span>Published</span>
+            </button>
+            <button class="rc-status" type="button" data-status="draft">
+              <span class="rc-status__num">2</span>
+              <span class="rc-status__label"><span class="rc-status__dot" style="background:var(--color-warning-500)"></span>Draft</span>
+            </button>
+            <button class="rc-status" type="button" data-status="unpublished">
+              <span class="rc-status__num">3</span>
+              <span class="rc-status__label"><span class="rc-status__dot" style="background:var(--color-silver)"></span>Unpublished</span>
+            </button>
+            <button class="rc-status" type="button" data-status="closed">
+              <span class="rc-status__num">4</span>
+              <span class="rc-status__label"><span class="rc-status__dot" style="background:var(--color-error-500)"></span>Closed</span>
+            </button>
+          </div>
+
+          <!-- toolbar -->
+          <div class="rc-toolbar">
+            <button class="rc-filter" type="button" id="filterBtn">Filter</button>
+            <div class="rc-toolbar__spacer"></div>
+            <i data-lucide="circle-help" class="rc-toolbar__help"></i>
+            <div class="rc-search"><i data-lucide="search"></i><input type="text" placeholder="Search here"></div>
+          </div>
+
+          <!-- table -->
+          <div class="rc-table-wrap">
+            <table class="dtable rc-table">
+              <thead>
+                <tr>
+                  <th>Job Listing Title</th>
+                  <th>Job Position</th>
+                  <th>Organization</th>
+                  <th><span class="rc-th-sort">New Candidates <i data-lucide="info"></i> <i data-lucide="arrow-up-down"></i></span></th>
+                  <th><span class="rc-th-sort">Candidate In Process <i data-lucide="info"></i></span></th>
+                  <th>Publication Status</th>
+                  <th>Publication Platform</th>
+                  <th><span class="rc-th-sort">Publication Date <i data-lucide="arrow-up-down"></i></span></th>
+                  <th>Publication Duration</th>
+                  <th><span class="rc-th-sort">Created Date <i data-lucide="arrow-up-down"></i></span></th>
+                  <th>Hiring Team</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="jlBody"></tbody>
+            </table>
+          </div>
+
+          <!-- footer -->
+          <div class="rc-tfoot">
+            <div class="rc-tfoot__left">
+              <span>Showing</span>
+              <button class="rc-tfoot__select" type="button">10 <i data-lucide="chevron-down"></i></button>
+              <span>from <span id="rowCount">5</span> rows</span>
+            </div>
+            <div class="rc-tfoot__pages">
+              <button class="rc-pg" aria-label="first" disabled><i data-lucide="chevrons-left"></i></button>
+              <button class="rc-pg" aria-label="prev" disabled><i data-lucide="chevron-left"></i></button>
+              <span class="rc-pg-cur">1</span>
+              <button class="rc-pg" aria-label="next" disabled><i data-lucide="chevron-right"></i></button>
+              <button class="rc-pg" aria-label="last" disabled><i data-lucide="chevrons-right"></i></button>
+              <span style="margin-left:6px">from 1</span>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ ALL FILTER modal ============ -->
+<div class="ovl" id="filterModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel ovl__panel--filter">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">All Filter</h3></div>
+      <button class="ovl__x" data-close aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+    <div id="fltBody"></div>
+    <div class="ovl__foot ovl__foot--split">
+      <button class="flt-reset" type="button" id="fltResetAll" style="margin-left:0">Reset filter</button>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn--secondary" data-close>Cancel</button>
+        <button class="btn btn--primary" id="fltApply">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ IMPORT JOB LISTING modal ============ -->
+<div class="ovl" id="importJobModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Import Job Listing</h3></div>
+      <button class="ovl__x" data-close aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+    <div>
+      <h4 class="ij-h">Download and complete the template</h4>
+      <p class="ij-sub">Download the template below and fill in your data.</p>
+    </div>
+    <a class="ij-file" href="#" onclick="event.preventDefault()">
+      <i data-lucide="file-text"></i>
+      <span class="ij-file__name">Template_Import_Job Listing.xlsx</span>
+      <i data-lucide="download" class="ij-file__dl"></i>
+    </a>
+    <div>
+      <h4 class="ij-h">Few tips:</h4>
+      <ul class="ij-tips">
+        <li>Please follow the guidelines to avoid upload errors.</li>
+        <li>Make sure your file includes all mandatory fields as defined in the template.</li>
+        <li>For more information on uploading job listings, refer to the <a href="#" onclick="event.preventDefault()">guidebook</a>.</li>
+      </ul>
+    </div>
+    <div class="fld">
+      <label class="fld__label">Upload spreadsheet</label>
+      <label class="file-ctl imp-upload">
+        <span class="file-ctl__btn imp-upload__btn">Choose File</span>
+        <span class="file-ctl__name imp-upload__name">No file selected</span>
+        <input type="file" hidden id="ijFile" accept=".csv">
+      </label>
+      <span class="ij-hint">The file must be in CSV format with a max file size of 5 MB.</span>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="ijSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>window.RC_PAGE = { active: 'jobs' };</script>
+<script src="js/recruitment-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script>
+  (function () {
+    // One dataset per publication status; the status cards switch the table.
+    var DATA = {
+      published: [
+        { title:'Senior Backend Engineer', id:'JL-1042', branch:'Jakarta HQ', hc:'0/2', pos:'Backend Engineer', org:'Engineering', nw:12, ip:5, plat:'Career Page', pubdate:'12 Jul 2026', dur:'17', created:'10 Jul 2026' },
+        { title:'UI/UX Designer',          id:'JL-1039', branch:'Bandung',    hc:'0/1', pos:'Product Designer', org:'Product',     nw:8,  ip:3, plat:'Career Page', pubdate:'09 Jul 2026', dur:'20', created:'07 Jul 2026' },
+        { title:'Sales Executive',         id:'JL-1051', branch:'Surabaya',   hc:'0/4', pos:'Sales',            org:'Commercial',  nw:24, ip:9, plat:'LinkedIn',    pubdate:'15 Jul 2026', dur:'14', created:'14 Jul 2026' },
+        { title:'Product Manager',         id:'JL-1033', branch:'Jakarta HQ', hc:'0/1', pos:'Product Manager',  org:'Product',     nw:6,  ip:2, plat:'Career Page', pubdate:'05 Jul 2026', dur:'24', created:'03 Jul 2026' },
+        { title:'DevOps Engineer',         id:'JL-1047', branch:'Remote',     hc:'0/2', pos:'DevOps Engineer',  org:'Engineering', nw:15, ip:4, plat:'JobStreet',   pubdate:'13 Jul 2026', dur:'16', created:'11 Jul 2026' }
+      ],
+      draft: [
+        { title:'Finance Analyst',      id:'JL-1058', branch:'Jakarta HQ', hc:'0/1', pos:'Finance Analyst', org:'Finance',    nw:0, ip:0, plat:'—', pubdate:'—', dur:'—', created:'21 Jul 2026' },
+        { title:'Warehouse Supervisor', id:'JL-1060', branch:'Bekasi',     hc:'0/2', pos:'Supervisor',     org:'Operations', nw:0, ip:0, plat:'—', pubdate:'—', dur:'—', created:'22 Jul 2026' }
+      ],
+      unpublished: [
+        { title:'Content Writer',   id:'JL-1025', branch:'Bandung',  hc:'0/1', pos:'Content Writer', org:'Marketing',   nw:4, ip:1, plat:'Career Page', pubdate:'—', dur:'—', created:'28 Jun 2026' },
+        { title:'QA Engineer',      id:'JL-1029', branch:'Remote',   hc:'0/2', pos:'QA Engineer',    org:'Engineering', nw:7, ip:2, plat:'Career Page', pubdate:'—', dur:'—', created:'30 Jun 2026' },
+        { title:'Customer Success', id:'JL-1031', branch:'Surabaya', hc:'0/1', pos:'CS Specialist',  org:'Commercial',  nw:5, ip:0, plat:'LinkedIn',    pubdate:'—', dur:'—', created:'01 Jul 2026' }
+      ],
+      closed: [
+        { title:'HR Generalist',    id:'JL-0998', branch:'Jakarta HQ', hc:'1/1', pos:'HR Generalist',    org:'People',      nw:31, ip:0, plat:'Career Page', pubdate:'02 Jun 2026', dur:'30', created:'01 Jun 2026' },
+        { title:'Data Analyst',     id:'JL-1003', branch:'Jakarta HQ', hc:'2/2', pos:'Data Analyst',     org:'Engineering', nw:44, ip:0, plat:'LinkedIn',    pubdate:'05 Jun 2026', dur:'28', created:'03 Jun 2026' },
+        { title:'Graphic Designer', id:'JL-1010', branch:'Bandung',    hc:'1/1', pos:'Graphic Designer', org:'Marketing',   nw:18, ip:0, plat:'Career Page', pubdate:'10 Jun 2026', dur:'25', created:'08 Jun 2026' },
+        { title:'Recruiter',        id:'JL-1014', branch:'Jakarta HQ', hc:'1/1', pos:'Recruiter',        org:'People',      nw:22, ip:0, plat:'JobStreet',   pubdate:'12 Jun 2026', dur:'26', created:'10 Jun 2026' }
+      ]
+    };
+    var PILL = {
+      published:   { cls:'sb--green', label:'Published' },
+      draft:       { cls:'sb--amber', label:'Draft' },
+      unpublished: { cls:'sb--grey',  label:'Unpublished' },
+      closed:      { cls:'sb--red',   label:'Closed' }
+    };
+    var MENU = {
+      published:   [{ label:'View Detail', icon:'eye', href:'recruitment-job-listing-detail.html' }, { label:'Edit', icon:'pencil' }, { label:'Duplicate', icon:'copy' }, { label:'Unpublish', icon:'eye-off' }, { label:'Close', icon:'x-circle', danger:true }],
+      draft:       [{ label:'View Detail', icon:'eye', href:'recruitment-job-listing-detail.html' }, { label:'Edit', icon:'pencil' }, { label:'Submit', icon:'send' }, { label:'Delete', icon:'trash-2', danger:true }],
+      unpublished: [{ label:'View Detail', icon:'eye', href:'recruitment-job-listing-detail.html' }, { label:'Edit', icon:'pencil' }, { label:'Publish', icon:'upload' }, { label:'Delete', icon:'trash-2', danger:true }],
+      closed:      [{ label:'View Detail', icon:'eye', href:'recruitment-job-listing-detail.html' }, { label:'Duplicate', icon:'copy' }, { label:'Reopen', icon:'rotate-ccw' }]
+    };
+
+    function cand(n) {
+      if (!n) return '<span class="cell-dim">—</span>';
+      return '<a class="rc-link" href="#" onclick="event.preventDefault()">' + n + ' candidate' + (n === 1 ? '' : 's') + '</a>';
+    }
+
+    function render(status) {
+      var rows = DATA[status], pill = PILL[status];
+      document.getElementById('jlBody').innerHTML = rows.map(function (r) {
+        return '<tr>' +
+          '<td><div class="rc-jl">' +
+            '<a class="rc-jl__title" href="recruitment-job-listing-detail.html">' + r.title + '</a>' +
+            '<span class="rc-jl__meta">#' + r.id + ' | ' + r.branch + ' | ' + r.hc + ' Headcount</span>' +
+          '</div></td>' +
+          '<td>' + r.pos + '</td>' +
+          '<td>' + r.org + '</td>' +
+          '<td>' + cand(r.nw) + '</td>' +
+          '<td>' + cand(r.ip) + '</td>' +
+          '<td><span class="sb ' + pill.cls + '"><span class="sb__dot"></span>' + pill.label + '</span></td>' +
+          '<td class="cell-dim">' + r.plat + '</td>' +
+          '<td class="cell-dim">' + r.pubdate + '</td>' +
+          '<td class="cell-dim">' + (r.dur === '—' ? '—' : r.dur + ' Days') + '</td>' +
+          '<td class="cell-dim">' + r.created + '</td>' +
+          '<td><a class="rc-team" href="#" onclick="event.preventDefault()"><i data-lucide="users"></i>View Team</a></td>' +
+          '<td>' + window.Flow.rowMenu(MENU[status]) + '</td>' +
+        '</tr>';
+      }).join('');
+      document.getElementById('rowCount').textContent = rows.length;
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    render('published');
+
+    // status cards switch the table
+    var row = document.getElementById('statusRow');
+    row.querySelectorAll('.rc-status').forEach(function (c) {
+      c.addEventListener('click', function () {
+        row.querySelectorAll('.rc-status').forEach(function (x) { x.classList.remove('is-on'); });
+        c.classList.add('is-on');
+        render(c.getAttribute('data-status'));
+      });
+    });
+
+    // import dropdown
+    var ib = document.getElementById('importBtn'), im = document.getElementById('importMenu');
+    ib.addEventListener('click', function (e) { e.stopPropagation(); im.classList.toggle('is-open'); });
+    document.addEventListener('click', function () { im.classList.remove('is-open'); });
+
+    // ---- Import Job Listing modal ----
+    document.getElementById('miImportJob').addEventListener('click', function () {
+      im.classList.remove('is-open');
+      window.Flow.openModal('importJobModal');
+    });
+    var ijFile = document.getElementById('ijFile');
+    var ijBox = ijFile.closest('.imp-upload');
+    var ijName = ijBox.querySelector('.imp-upload__name');
+    ijFile.addEventListener('change', function () {
+      if (ijFile.files && ijFile.files.length) {
+        ijName.textContent = ijFile.files[0].name;
+        ijBox.classList.add('is-filled');
+      } else { ijName.textContent = 'No file selected'; ijBox.classList.remove('is-filled'); }
+    });
+    document.getElementById('ijSubmit').addEventListener('click', function () {
+      if (!ijFile.files || !ijFile.files.length) { window.Flow.toast('Please choose a CSV file to import.', 'warn'); return; }
+      window.Flow.closeModal('importJobModal');
+      window.Flow.toast('Import started — track progress in Import Logs.', 'ok');
+    });
+
+    // ---- All Filter modal ----
+    var SEARCH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+    var CAL_SVG = '<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+    var PEOPLE = [
+      { name: 'CP060 - Mitsui Satu', meta: 'Jakarta | IT Staff - SQA', color: '#0284c7', ini: 'MS' },
+      { name: 'CP060 - Mitsui Dua',  meta: 'Jakarta | IT Staff - SQA', color: '#0e9488', ini: 'MD' },
+      { name: 'CP060 - Mitsui Tiga', meta: 'Jakarta | IT Staff - SQA', color: '#d97706', ini: 'MT' }
+    ];
+    var SECTIONS = [
+      { key: 'jobs', title: 'By Jobs', groups: [
+        { label: 'Branch',            noun: 'Branch',            opts: ['Jakarta HQ', 'Bandung', 'Surabaya', 'Bekasi', 'Remote'] },
+        { label: 'Organization',      noun: 'Organization',      opts: ['Engineering', 'Product', 'Commercial', 'Finance', 'Operations', 'Marketing', 'People'] },
+        { label: 'Employment status', noun: 'Employment Status', opts: ['Permanent', 'Contract', 'Internship', 'Freelance'] },
+        { label: 'Workplace type',    noun: 'Workplace Type',    opts: ['On-site', 'Hybrid', 'Remote'] }
+      ] },
+      { key: 'pub', title: 'By Publication', groups: [
+        { type: 'date', label: 'Publication date', placeholder: 'Select publication date' },
+        { type: 'date', label: 'Closing date',     placeholder: 'Select closing date' },
+        { label: 'Publication platform', noun: 'Publication Platform', opts: ['Career Page', 'LinkedIn', 'JobStreet', 'Glints'] },
+        { type: 'people', label: 'Creator', noun: 'Creator', people: PEOPLE }
+      ] },
+      { key: 'team', title: 'By Hiring Team', groups: [
+        { type: 'people', label: 'Hiring team', noun: 'Hiring Team', people: PEOPLE }
+      ] }
+    ];
+
+    function optRow(txt, isAll) {
+      return '<label class="flt-opt"' + (isAll ? ' data-all' : '') + '>' +
+        '<span class="checkbox"><input type="checkbox"><span class="checkbox__box"></span></span>' +
+        '<span class="flt-opt__txt">' + txt + '</span></label>';
+    }
+    function personRow(p) {
+      return '<label class="flt-opt">' +
+        '<span class="checkbox"><input type="checkbox"><span class="checkbox__box"></span></span>' +
+        '<span class="flt-person"><span class="flt-av" style="background:' + p.color + '">' + p.ini + '</span>' +
+        '<span class="flt-person__names"><span class="flt-person__name">' + p.name + '</span>' +
+        '<span class="flt-person__meta">' + p.meta + '</span></span></span></label>';
+    }
+    function groupHTML(g) {
+      if (g.type === 'date') {
+        return '<div class="flt-group flt-date"><span class="flt-group__label">' + g.label + '</span>' +
+          '<div class="ctl ctl--date"><input type="text" placeholder="' + g.placeholder + '">' + CAL_SVG + '</div></div>';
+      }
+      var rows, ph;
+      if (g.type === 'people') {
+        rows = optRow('All', true) + g.people.map(personRow).join('');
+        ph = 'is any of [Selected ' + g.noun + ']';
+      } else {
+        rows = optRow('All', true) + g.opts.map(function (o) { return optRow(o); }).join('');
+        ph = 'is any of [Selected ' + g.noun + ']';
+      }
+      return '<div class="flt-group" data-noun="' + g.noun + '">' +
+        '<span class="flt-group__label">' + g.label + '</span>' +
+        '<span class="flt-group__sub" data-ph="' + ph + '">' + ph + '</span>' +
+        '<div class="flt-search">' + SEARCH_SVG + '<input type="text" placeholder="Search..."></div>' +
+        '<div class="flt-opts">' + rows + '</div></div>';
+    }
+    function sectionHTML(s) {
+      return '<section class="flt-sec" data-sec="' + s.key + '">' +
+        '<div class="flt-sec__head"><i data-lucide="chevron-down" class="flt-sec__caret"></i>' +
+        '<span class="flt-sec__title">' + s.title + '</span>' +
+        '<button class="flt-reset" type="button" data-sec-reset>Reset</button></div>' +
+        '<div class="flt-sec__body">' + s.groups.map(groupHTML).join('') + '</div></section>';
+    }
+    document.getElementById('fltBody').innerHTML = SECTIONS.map(sectionHTML).join('');
+
+    function groupChecks(group) {
+      return [].slice.call(group.querySelectorAll('.flt-opt:not([data-all]) input[type="checkbox"]'));
+    }
+    function syncAll(group) {
+      var all = group.querySelector('.flt-opt[data-all] input');
+      if (!all) return;
+      var checks = groupChecks(group);
+      all.checked = checks.length > 0 && checks.every(function (c) { return c.checked; });
+    }
+    function updateSub(group) {
+      var sub = group.querySelector('.flt-group__sub');
+      if (!sub) return;
+      var sel = [].slice.call(group.querySelectorAll('.flt-opt:not([data-all]) input:checked')).map(function (c) {
+        return c.closest('.flt-opt').querySelector('.flt-person__name, .flt-opt__txt').textContent.trim();
+      });
+      var noun = group.getAttribute('data-noun');
+      if (!sel.length) sub.textContent = 'is any of [Selected ' + noun + ']';
+      else if (group.querySelector('.flt-opt[data-all] input').checked) sub.textContent = 'is any of All ' + noun;
+      else sub.textContent = 'is any of ' + sel.join(', ');
+    }
+
+    var fltBody = document.getElementById('fltBody');
+    // collapse / expand section
+    fltBody.querySelectorAll('.flt-sec__head').forEach(function (head) {
+      head.addEventListener('click', function (e) {
+        if (e.target.closest('[data-sec-reset]')) return;
+        head.parentNode.classList.toggle('is-collapsed');
+      });
+    });
+    // per-section reset
+    fltBody.querySelectorAll('[data-sec-reset]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        resetSection(btn.closest('.flt-sec'));
+      });
+    });
+    // "All" toggles + individual sync
+    fltBody.querySelectorAll('.flt-group').forEach(function (group) {
+      var all = group.querySelector('.flt-opt[data-all] input');
+      if (all) all.addEventListener('change', function () {
+        groupChecks(group).forEach(function (c) {
+          if (c.closest('.flt-opt').classList.contains('is-hidden')) return;
+          c.checked = all.checked;
+        });
+      });
+      groupChecks(group).forEach(function (c) { c.addEventListener('change', function () { syncAll(group); }); });
+      var si = group.querySelector('.flt-search input');
+      if (si) si.addEventListener('input', function () {
+        var q = si.value.trim().toLowerCase();
+        group.querySelectorAll('.flt-opt:not([data-all])').forEach(function (o) {
+          o.classList.toggle('is-hidden', o.textContent.toLowerCase().indexOf(q) === -1);
+        });
+      });
+    });
+
+    function resetSection(sec) {
+      sec.querySelectorAll('input[type="checkbox"]').forEach(function (c) { c.checked = false; });
+      sec.querySelectorAll('.ctl--date input').forEach(function (i) {
+        i.value = ''; delete i.dataset.iso; i.classList.remove('has-value');
+      });
+      sec.querySelectorAll('.flt-group').forEach(updateSub);
+    }
+    document.getElementById('fltResetAll').addEventListener('click', function () {
+      fltBody.querySelectorAll('.flt-sec').forEach(resetSection);
+    });
+    document.getElementById('fltApply').addEventListener('click', function () {
+      fltBody.querySelectorAll('.flt-group').forEach(updateSub);
+      window.Flow.closeModal('filterModal');
+      window.Flow.toast('Filters applied.', 'ok');
+    });
+    document.getElementById('filterBtn').addEventListener('click', function () { window.Flow.openModal('filterModal'); });
+  })();
+</script>
+</body>
+</html>

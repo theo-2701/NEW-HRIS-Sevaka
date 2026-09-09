@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — My Files</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-modals.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/daterange.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="ESS Files" data-doc-page="ess">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Employee Self-Service</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Files</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">My Files</h1>
+                <p class="flow-sub">Your own documents. The contract is identical to the HR file screens — the only difference is the filter: <code>owner_id</code> is taken from the <code>employee_id</code> claim on your token, never from a picker. Signed in as Yanti Prasetya · NIK 20190912.</p>
+              </div>
+              <div class="flow-head__actions"><button class="btn btn--primary" id="essRequest">Request Letter</button></div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="docCategory" style="width:210px;height:40px">
+                <span class="ctl__value">All categories</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"></div>
+              </div>
+              <div class="rng" id="docRange" data-placeholder="Created between"><button class="rng__ctl" type="button"><span class="rng__val is-empty">Created between</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div>
+              <div class="doc-tbar__sp"></div>
+              <div class="co-search"><i data-lucide="search"></i><input type="text" id="docSearch" placeholder="Search file name"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>File Name</th><th>Category</th><th>Class</th><th>Scan</th><th>Size</th><th>Created</th><th class="ta-r"></th></tr></thead>
+              <tbody id="docBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="docFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="ban"></i>No upload button, no delete button</div>
+              <p>Uploading is Regime B (server-to-server, on behalf of the owning service). There is <strong>no Delete anywhere in Document Service</strong> (<code>DOC-37</code>) — files only disappear through the scheduled sweep.</p>
+            </div>
+            <div class="doc-note" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="eye-off"></i>“Withheld from owner” has no human lever</div>
+              <p>A withheld row is simply <strong>absent</strong> from this list. What you see is the consequence, not a toggle or a marker (<code>DOC-30</code>.4/5).</p>
+            </div>
+            <div class="doc-note" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="split"></i><code>shown_in_self_service</code> ≠ authorization</div>
+              <p>It governs what this <em>screen lists</em>, not what the <em>door permits</em>. A file hidden from this list is still reachable through the employee-service screen that owns its disclosure timing.</p>
+            </div></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== A4 · DETAIL + VERSION HISTORY ===== -->
+<div class="ovl" id="docDetail"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="dtTitle">Document detail</h3><p class="ovl__desc"><code>GET /documents/{document-id}</code> — a flat object, not wrapped in <code>data</code>. Version history is append-only and served whole, without pagination.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="kv" id="dtKv"></div>
+    <div>
+      <div class="fld__label" style="margin-bottom:8px">Version history</div>
+      <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+        <thead><tr><th>Version</th><th>File name</th><th>MIME</th><th>Size</th><th>Scan</th><th>Storage</th><th>Created</th></tr></thead>
+        <tbody id="dtVersions"></tbody>
+      </table></div>
+    </div>
+    <div id="dtLetter" style="display:none">
+      <div class="fld__label" style="margin-bottom:8px">Letter block — filled only when <code>origin=DILAHIRKAN_SISTEM</code></div>
+      <div class="kv" id="dtLetterKv"></div>
+      <div class="doc-note" style="margin-top:12px">
+        <div class="doc-note__h"><i data-lucide="eye"></i>Read-only here</div>
+        <p>Approving (<code>A11</code>) and cancelling (<code>A12</code>) a letter are HR levers. This screen holds exactly six addresses — <code>A3</code>·<code>A4</code>·<code>A2</code>·<code>A16</code>·<code>A10</code>·<code>A15</code> — so the letter is shown, never acted on.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ovl__foot">
+    <button class="btn btn--secondary" data-close>Close</button>
+    <button class="btn btn--primary" id="dtOpen">Open File Content</button>
+  </div>
+</div></div>
+
+<!-- ===== A2 · FILE CONTENT ===== -->
+<div class="ovl" id="docContent"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="ctTitle">File content</h3><p class="ovl__desc" id="ctDesc"></p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="doc-heads" id="ctHeads"></div>
+    <div class="doc-viewer" id="ctViewer"></div>
+    <div class="doc-note" id="ctLog"><div class="doc-note__h"><i data-lucide="history"></i>Access trail</div></div>
+    <div class="doc-note doc-note--hard">
+      <div class="doc-note__h"><i data-lucide="alert-triangle"></i>Hard frontend limit — PROB-FRONTEND-029</div>
+      <p><code>A2</code> is header-only. Bytes must never be written to app storage (localStorage / IndexedDB / service worker); in-memory URLs are released when the screen closes; a sensitive file is re-fetched on every opening and never held between screens. User-requested downloads are the one exception.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<!-- ===== S4 · REQUEST LETTER (A10 self path + A15) ===== -->
+<div class="ovl" id="essAsk"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Request Letter</h3><p class="ovl__desc"><code>POST /letters</code>, self path — two fields and no more. <code>subject_employee_id</code> is <strong>forbidden to send</strong>; the server derives it from your token.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Letter type <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="essTpl"><span class="ctl__value" style="color:var(--fg-4)">Select letter type</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="essTplDD"></div>
+      </div>
+      <p class="fld__hint" id="essTplHint">Only letter types you may request for yourself appear here — <code>A15</code>, filtered to <code>is_self_requestable=true</code> <strong>and</strong> a TEMPORARY retention category.</p>
+    </div>
+    <div class="fld"><label class="fld__label">Letter subject <span class="req">*</span></label><div class="ctl"><input type="text" value="20190912 — Yanti Prasetya (yourself)" disabled></div>
+      <p class="fld__hint">Locked. The letter is issued in your own name and cannot be requested on someone else’s behalf — <code>subject_employee_id</code> is never sent on this path.</p></div>
+    <div id="essGate"></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="essSubmit">Request letter</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true, activeGroup:'Employee Profile', activeItem:'Files', user:{ name:'Yanti Prasetya', role:'Karyawan \u00b7 ROLE_EMPLOYEE' } };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-files.js"></script>
+<script src="js/document-ess.js"></script>
+</body>
+</html>

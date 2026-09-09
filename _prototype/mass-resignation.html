@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Mass Resignation</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    .mr-form .ctl--date > input { pointer-events: auto; }
+    .sel-tbl { width: 100%; border-collapse: collapse; }
+    .sel-tbl th { position: sticky; top: 0; background: linear-gradient(180deg, #9bd5ef 0%, #8ccbe9 100%); text-align: left; padding: 11px 12px; font: 700 13px/1.2 var(--font-body); color: #fff; z-index: 1; }
+    .sel-tbl td { padding: 9px 12px; font: 500 12.5px/1.3 var(--font-body); color: var(--fg-1); border-bottom: 1px solid var(--color-vapor); }
+    .sel-scroll { max-height: 240px; overflow-y: auto; border: 1px solid var(--border-1); border-radius: 10px; }
+    .sel-tbl tr.is-self td { color: var(--fg-4); }
+    .sel-lock { display: inline-flex; align-items: center; gap: 5px; font: 600 10px/1 var(--font-body); color: var(--fg-4); }
+    .sel-lock svg { width: 12px; height: 12px; }
+    .check-sm { display:inline-flex; cursor: pointer; }
+    .check-sm input { position:absolute; opacity:0; }
+    .check-sm__box { width:18px; height:18px; border-radius:5px; background:#fff; box-shadow: inset 0 0 0 1.5px var(--color-fog); display:inline-flex; align-items:center; justify-content:center; transition: all var(--duration-2) var(--ease-standard); }
+    .check-sm input:checked + .check-sm__box { background: var(--color-secondary-500); box-shadow:none; }
+    .check-sm input:checked + .check-sm__box::after { content:""; width:9px; height:5px; border:2px solid #fff; border-top:none; border-right:none; transform: rotate(-45deg); margin-top:-2px; }
+    .check-sm input:disabled + .check-sm__box { background: var(--color-vapor); box-shadow:none; }
+    .mono-block { font: 600 12px/1.6 var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace); color: var(--fg-2); background: var(--color-mist); border-radius: 8px; padding: 10px 12px; word-break: break-all; }
+  </style>
+</head>
+<body data-screen-label="Mass Resignation">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Mass Resignation</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Mass Resignation</h1>
+              <p class="flow-sub">Batch offboarding with blast-radius control. A dry-run previews impact, approval freezes the selection as a hash, and a circuit-breaker can halt and resume processing mid-run.</p>
+            </div>
+            <div class="flow-head__actions">
+              <button class="btn btn--primary" id="newBatchBtn">New batch</button>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+        <div class="kpi" style="margin-top:4px">
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="boxes"></i>Active batches</span><span class="kpi__value" id="kpiActive">3</span><span class="kpi__foot">Not yet terminal</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="loader"></i>Processing now</span><span class="kpi__value" id="kpiProc">1</span><span class="kpi__foot">Throttled offboarding</span></div>
+          <div class="kpi__tile kpi__tile--danger"><span class="kpi__label"><i data-lucide="pause-circle"></i>Halted</span><span class="kpi__value" id="kpiHalt">1</span><span class="kpi__foot">Needs resume or cancel</span></div>
+          <div class="kpi__tile"><span class="kpi__label"><i data-lucide="users"></i>Impacted (quarter)</span><span class="kpi__value">31</span><span class="kpi__foot">Across all batches</span></div>
+        </div>
+
+        <div class="sec-head" style="margin-top:22px"><span class="sec-head__t">Batches</span><span class="sec-head__c" id="batchCount">6</span></div>
+        <div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+          <table class="dtable">
+            <thead><tr><th>Batch</th><th>Reason</th><th>Leave date</th><th class="ta-c">Selected</th><th>Progress</th><th>Status</th><th>Maker</th><th></th></tr></thead>
+            <tbody id="batchBody"></tbody>
+          </table>
+        </div>
+        <div class="ph-foot" id="pgMr"></div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ MR-CREATE ============ -->
+<div class="ovl" id="mrCreate">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">New batch</h3><p class="ovl__desc">Select employees, then run a dry-run to preview the blast-radius before saving.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="mr-form" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="fld">
+        <label class="fld__label">Reason <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="mrReason"><span class="ctl__value" style="color:var(--fg-4)">Select reason</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt">Resignation (voluntary)</div><div class="dropdown__opt">Contract end</div>
+            <div class="dropdown__opt">Termination (with cause)</div><div class="dropdown__opt">Layoff</div><div class="dropdown__opt">Retirement</div>
+          </div>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Effective leave date <span class="req">*</span></label>
+        <div class="ctl ctl--date"><input type="date" id="mrDate">
+          <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-head" style="margin-bottom:8px"><span class="sec-head__t" style="font-size:13px">Employee selection</span><span class="sec-head__sp"></span><span class="tag-count"><span id="selCount">0</span> selected</span></div>
+      <div class="sel-scroll">
+        <table class="sel-tbl">
+          <thead><tr><th style="width:36px"></th><th>Employee</th><th>Unit</th><th>Position</th></tr></thead>
+          <tbody id="selBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label class="fld__label">Notes <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+      <div class="ctl ctl--area"><textarea id="mrNotes" rows="2" maxlength="150" placeholder="Context for approvers"></textarea></div>
+    </div>
+
+    <div class="card" style="box-shadow:none;background:var(--color-mist)">
+      <div class="sec-head" style="margin:0 0 12px"><span class="sec-head__t" style="font-size:13px">Dry-run — blast radius</span><span class="sec-head__sp"></span><button class="rowbtn" id="dryBtn">Run dry-run</button></div>
+      <div id="dryPanel" class="impact">
+        <div class="impact__gauge">
+          <span class="impact__count"><span id="dryCount">0</span><small>impacted</small></span>
+          <div class="impact__bar-wrap">
+            <div class="impact__bar" id="dryBar"><span style="width:0%"></span></div>
+            <div class="impact__scale"><span>0</span><span>Threshold: 15</span></div>
+          </div>
+        </div>
+        <div class="note note--info" id="dryNote"><i data-lucide="info"></i><span>Run the dry-run to compute how many employees this batch would offboard.</span></div>
+      </div>
+    </div>
+
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="mrSaveBtn" disabled>Save batch as draft</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MR-APPROVE ============ -->
+<div class="ovl" id="mrApprove">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Review batch</h3><p class="ovl__desc">Checker must outrank the maker and differ from them. Approval freezes the selection hash.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="mrApproveKv"></div>
+    <div class="note note--warn"><i data-lucide="shield"></i><span>Rank-guard: checker must be HR Manager or above <strong>and</strong> differ from the maker (SoD). The frozen hash prevents the selection changing between approval and processing (anti-TOCTOU).</span></div>
+    <div class="fld">
+      <label class="fld__label">Approver note <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="mrApproveNote" rows="2" maxlength="150" placeholder="Decision rationale"></textarea></div>
+    </div>
+    <div class="ovl__foot ovl__foot--split">
+      <button class="btn btn--danger" id="mrRejectBtn">Reject batch</button>
+      <button class="btn btn--primary" id="mrApproveBtn">Approve &amp; freeze hash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MR-PROCESS ============ -->
+<div class="ovl" id="mrProcess">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Process batch</h3><p class="ovl__desc">Send the frozen selection hash to start throttled offboarding. A mismatch is rejected.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="mrProcessKv"></div>
+    <div>
+      <label class="fld__label" style="display:block;margin-bottom:6px">Selection hash <span class="req">*</span></label>
+      <div class="hashchip" style="width:100%"><i data-lucide="fingerprint"></i><span class="hashchip__val" id="mrHashVal"></span><button class="hashchip__copy" title="Copy"><i data-lucide="copy"></i></button></div>
+    </div>
+    <div class="note note--warn"><i data-lucide="triangle-alert"></i><span>The hash must match the selection frozen at approval. A mismatch is rejected with <strong>409 Conflict</strong> — the batch stays APPROVED and nothing is spawned (anti-TOCTOU).</span></div>
+    <div class="note note--info"><i data-lucide="git-commit-horizontal"></i><span>A batch correlation id is attached to every spawned offboarding so the run can be halted or bulk-suspended as one.</span></div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="mrProcessBtn">Send hash &amp; process</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MR-HALT ============ -->
+<div class="ovl" id="mrHalt">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Halt processing</h3><p class="ovl__desc">The circuit-breaker suspends running offboarding instances by correlation id.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="note note--danger"><i data-lucide="octagon-x"></i><span>Halting freezes the remaining employees in this batch. Already-processed employees are not reverted.</span></div>
+    <div class="fld">
+      <label class="fld__label">Reason for halt <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="haltReason" rows="2" maxlength="150" placeholder="Why halt this run?"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--danger" id="haltBtn" disabled>Halt batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MR-RESUME ============ -->
+<div class="ovl" id="mrResume">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Resume or cancel</h3><p class="ovl__desc">Continue the remaining employees, or cancel them and finish as partial.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="mrResumeKv"></div>
+    <div class="fld">
+      <label class="fld__label">Action <span class="req">*</span></label>
+      <div class="radio-branch" id="resumeSeg">
+        <label class="rb is-on" data-val="RESUME"><span class="rb__dot"></span><span><span class="rb__t">Resume — continue batch</span><span class="rb__d">Resume suspended instances and continue throttled spawn from the halt point. Status &rarr; PROCESSING.</span></span></label>
+        <label class="rb" data-val="CANCEL"><span class="rb__dot"></span><span><span class="rb__t">Cancel remaining</span><span class="rb__d">Cancel the remaining instances; already-finished employees stay terminal. Status &rarr; PARTIAL.</span></span></label>
+      </div>
+    </div>
+    <div class="fld">
+      <label class="fld__label">Approver note <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="resumeNote" rows="2" maxlength="150" placeholder="Reason for this decision"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="resumeBtn">Resume batch</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'Mass Resignation' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/mass-resignation.js"></script>
+<script src="js/kpi-status.js"></script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Personal Data Erasure Requests</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/document.css?v=2">
+<link rel="stylesheet" href="css/daterange.css">
+<link rel="stylesheet" href="css/settings.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Settings — Erasure Requests">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Settings</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Personal Data Erasure</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Personal Data Erasure Requests</h1>
+<p class="flow-sub">Records one erasure request from a data subject — usually a former employee with no account — and then follows how far each depositary service has got with it. The only insert-and-read story in the settings service: the actor is a person, not a sweep, and the request arrives by letter and is written down by HR.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newBtn">Record new request</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="doc-note doc-note--hard" style="margin-bottom:18px">
+<div class="doc-note__h"><i data-lucide="alert-octagon"></i>This menu has no home in the sidebar yet</div>
+<p>The three endpoints behind this screen store no <code>setup_code</code> and no prefix, so the rule that derives sub-menus has nothing to work from — where the menu row belongs is still an open decision (PROB-FRONTEND-033). The screen is documented in full and routed here so the prototype can be opened; the real menu entry waits on that decision.</p>
+</div>
+
+<div class="doc-tbar">
+<button class="btn btn--secondary" data-filter-open="erFilter">Filter</button>
+<span class="doc-fsum" data-filter-sum="erFilter"></span>
+<div class="doc-tbar__sp"></div>
+</div>
+
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Subject</th><th>Status</th><th>Letter Date</th><th>Recorded</th><th>Completed</th><th>Outstanding</th></tr></thead>
+<tbody id="erBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="erPg"></div>
+
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+<div class="note note--info"><i data-lucide="info"></i><span>The list answers "which one needs looking at", so it carries <strong>counts</strong> rather than the tracker rows themselves — the detail answers the rest. Paging is mandatory from birth: the set only grows, and no row is ever deleted.</span></div>
+<div class="note note--warn"><i data-lucide="user-x"></i><span>No name or NIK is stored against a request — only the subject's identifier. Name and NIK are <strong>exchanged at render time</strong> from the authorisation database over a read-only, three-column grant (id · nama · nik). Nothing is copied back. If the exchange fails the list still stands with its statuses and dates and only the name column goes blank — compliance evidence does not depend on it. A subject already anonymised correctly reads <code>ANONYMIZED</code>: the right answer, not a failure.</span></div>
+<div class="note note--danger"><i data-lucide="shield-x"></i><span>🔴 There is <strong>no "mark done" button and no action column</strong> on either screen — the subject’s name is the link into the detail, nothing more. Status only ever rises by machine: the executing service marks its own tracker row through its own machine identity, and the parent request is lifted to COMPLETED by the next sweep — at most one sweep interval later, never the instant the last depositary finishes.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ===== A6 filter ===== -->
+<div class="ovl" id="erFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter requests</h3><p class="ovl__desc">All criteria optional. An empty grid is a valid 200 — this endpoint never answers 404.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div class="fld">
+<label class="fld__label">Status</label>
+<div class="ctl ctl--select" id="fStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="REQUESTED">REQUESTED</div><div class="dropdown__opt" data-val="IN_PROGRESS">IN_PROGRESS</div><div class="dropdown__opt" data-val="COMPLETED">COMPLETED</div></div>
+</div>
+<span class="fld__hint">Closed list of three. COMPLETED is terminal — nothing transitions out of it.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Letter date between</label>
+<div class="rng" id="fRange" data-placeholder="All dates"><button class="rng__ctl" type="button"><span class="rng__val is-empty">All dates</span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div>
+</div>
+<div class="fld">
+<label class="fld__label">Subject</label>
+<div class="ctl ctl--select" id="fSubj"><span class="ctl__value">Anyone</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fSubjDd"></div>
+</div>
+<span class="fld__hint">Same employee picker as the record form — filtered so former employees stay visible.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-filter-reset="erFilter">Reset</button>
+<button class="btn btn--primary" id="fApply">Apply filter</button>
+</div>
+</div>
+</div>
+
+<!-- ===== A5 — record request (PDH-1) ===== -->
+<div class="ovl" id="newOvl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Record erasure request</h3><p class="ovl__desc">Three fields, and only three: the list of services to erase from, the subject's name and NIK, and the opening status are all set by the server and refused if sent.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="newForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Data subject <span class="req">*</span></label>
+<div class="ctl ctl--select" id="nSubj"><span class="ctl__value is-empty">Pick an employee…</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="nSubjDd"></div>
+</div>
+<span class="fld__hint">Fed by the employee-service search with the global-status filter set to <em>IN</em>, so former employees are offered too.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Date on the subject's letter <span class="req">*</span></label>
+<div class="ctl ctl--date" id="nDateCtl"><input type="text" id="nDate" placeholder="DD MMM YYYY" readonly></div>
+<span class="fld__hint">When the <strong>subject</strong> asked — not when the row is written down. A future date is refused.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Letter time zone <span class="req">*</span></label>
+<div class="ctl ctl--select" id="nTz"><span class="ctl__value">Asia/Jakarta</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="nTzDd"></div>
+</div>
+<span class="fld__hint">IANA zone, stored beside the timestamp.</span>
+</div>
+<div class="note note--danger is-hidden" id="nErr"><i data-lucide="alert-octagon"></i><span id="nErrMsg"></span></div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="nSave">Save</button>
+</div>
+</div>
+</div>
+
+<!-- ===== A5 — 201 (PDH-2) ===== -->
+<div class="ovl" id="okOvl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">201 — request recorded</h3><p class="ovl__desc">One request row and nine tracker rows are born in the same transaction; if either fails, nothing is left behind.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="kv" id="okKv"></div>
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Service</th><th>Progress</th><th class="ta-r">Broadcasts</th><th>Last Broadcast</th></tr></thead>
+<tbody id="okBody"></tbody>
+</table>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span>Status at birth is always <code>REQUESTED</code> and every tracker row starts <code>PENDING</code> with a broadcast count of zero: <strong>no message goes out here</strong>. The first broadcast is the next scheduled sweep's work.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--primary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ===== A7 — detail + tracker (PDH-5) ===== -->
+<div class="ovl" id="detOvl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="dTitle">Request detail</h3><p class="ovl__desc">Two dates sit side by side on purpose: the compliance deadline is counted from the letter, not from the day HR typed it in.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="kv" id="dKv"></div>
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Service</th><th>Progress</th><th class="ta-r">Broadcasts</th><th>Last Broadcast</th><th>Completed</th></tr></thead>
+<tbody id="dBody"></tbody>
+</table>
+</div>
+<div class="note note--warn"><i data-lucide="radio"></i><span>🔴 <strong>The broadcast count must be on screen.</strong> A row that stays PENDING sweep after sweep produces no error anywhere — that counter is the only number that makes the situation visible. <code>settings-service</code> itself sitting at 12 broadcasts and still PENDING is exactly the case it exists to expose.</span></div>
+<div class="note note--info"><i data-lucide="info"></i><span>Legal transitions are PENDING↔HELD, either into COMPLETED, and COMPLETED into itself (idempotent). <strong>Leaving COMPLETED is refused forever</strong> — anonymisation cannot be undone. No reason-for-hold field is accepted: why a service holds lives in that service's own schema.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { activeGroup: 'settings', activeItem: 'Personal Data Erasure' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/settings-data.js"></script>
+<script src="js/settings-erasure.js"></script>
+</body>
+</html>

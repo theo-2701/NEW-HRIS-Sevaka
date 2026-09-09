@@ -1,0 +1,386 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* =========================================================================
+   SEVAKA HRIS — Tailwind v4 theme
+   Setiap token design system dipetakan ke namespace Tailwind v4 supaya
+   utility class (bg-secondary-500, text-fg-1, rounded-md, shadow-card, ...)
+   identik dengan colors_and_type.css. Hardcode hex di komponen = pelanggaran
+   aturan; pakai utility di bawah ini.
+   ========================================================================= */
+@theme {
+  /* ---------- Font families ---------- */
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mark: 'Arial', 'Helvetica Neue', Helvetica, sans-serif;
+  --font-sans: var(--font-body);
+
+  /* ---------- Brand — Sky (primary) ---------- */
+  --color-primary-50: #f3fafd;
+  --color-primary-100: #edf8fc;
+  --color-primary-200: #daf0f9;
+  --color-primary-500: #87ceeb;
+  --color-primary-600: #7ab9d4;
+  --color-primary-700: #6ca5bc;
+  --color-primary-800: #659bb0;
+  --color-primary-850: #517c8d;
+  --color-primary-900: #3d5d6a;
+  --color-primary-950: #2f4852;
+
+  /* ---------- Brand — Ocean (secondary / CTA) ---------- */
+  --color-secondary-50: #e6f3f9;
+  --color-secondary-100: #d9edf7;
+  --color-secondary-200: #b1d9ee;
+  --color-secondary-500: #0284c7;
+  --color-secondary-600: #0277b3;
+  --color-secondary-700: #026a9f;
+  --color-secondary-800: #026395;
+  --color-secondary-850: #014f77;
+  --color-secondary-900: #013b5a;
+  --color-secondary-950: #012e46;
+
+  /* ---------- Brand — Sand (tertiary) ---------- */
+  --color-tertiary-50: #fffdf3;
+  --color-tertiary-100: #fffbed;
+  --color-tertiary-200: #fef7db;
+  --color-tertiary-500: #fde68a;
+  --color-tertiary-600: #e4cf7c;
+  --color-tertiary-700: #cab86e;
+  --color-tertiary-800: #bead68;
+  --color-tertiary-850: #988a53;
+  --color-tertiary-900: #72673e;
+  --color-tertiary-950: #595130;
+
+  /* ---------- Semantic ---------- */
+  --color-success-50: #ebfbf5;
+  --color-success-100: #e1f8f0;
+  --color-success-200: #c0f1df;
+  --color-success-500: #34d399;
+  --color-success-600: #2fbe8a;
+  --color-success-700: #2aa97a;
+  --color-success-800: #279e73;
+  --color-success-900: #1f7f5c;
+  --color-success-950: #124a36;
+
+  --color-warning-50: #fef5e7;
+  --color-warning-100: #fef0da;
+  --color-warning-200: #fce1b3;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #dd8e0a;
+  --color-warning-700: #c47e09;
+  --color-warning-800: #b87708;
+  --color-warning-900: #935f07;
+  --color-warning-950: #563704;
+
+  --color-error-50: #fdecec;
+  --color-error-100: #fde3e3;
+  --color-error-200: #fac5c5;
+  --color-error-500: #ef4444;
+  --color-error-600: #d73d3d;
+  --color-error-700: #bf3636;
+  --color-error-800: #b33333;
+  --color-error-900: #8f2929;
+  --color-error-950: #541818;
+
+  /* ---------- Merek ----------
+     Warna logo SEVAKA (burung + wordmark). Dipisah dari skala Sky karena
+     nilainya diambil langsung dari file logo, bukan dari skala design system. */
+  --color-brand: #72b5dd;
+
+  /* ---------- Neutrals / surfaces ---------- */
+  --color-cloud: #fafcfe;
+  --color-vapor: #f1f5f9;
+  --color-mist: #f3fafd;
+  --color-fog: #eaecf0;
+  --color-silver: #94a3b8;
+  --color-steel: #667085;
+  --color-obsidian: #111827;
+  --color-ink: #1f1f1f;
+
+  /* ---------- Semantic foreground / background ---------- */
+  --color-fg-1: #111827;
+  --color-fg-2: #334155;
+  --color-fg-3: #667085;
+  --color-fg-4: #94a3b8;
+  --color-fg-on-brand: #fafcfe;
+  --color-fg-link: #0284c7;
+  --color-fg-link-hover: #026a9f;
+
+  --color-bg-app: #f3fafd;
+  --color-bg-surface: #ffffff;
+  --color-bg-raised: #fafcfe;
+  --color-bg-subtle: #f1f5f9;
+  --color-bg-brand: #0284c7;
+  --color-bg-brand-soft: #d9edf7;
+  --color-bg-accent-soft: #edf8fc;
+
+  --color-border-1: #eaecf0;
+  --color-border-2: #d0d5dd;
+  --color-border-focus: #0284c7;
+
+  /* ---------- Radii (8pt-aligned) ---------- */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-pill: 999px;
+
+  /* ---------- Elevation ---------- */
+  --shadow-card: 0px 2px 4px 0px rgba(0, 0, 0, 0.16);
+  --shadow-card-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.06), 0px 1px 3px 0px rgba(16, 24, 40, 0.1);
+  --shadow-modal: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  --shadow-overlay: 0px 8px 24px 0px rgba(17, 24, 39, 0.16);
+  /* Pop-up lift — lebih dalam dari shadow-card, khusus dialog terpusat. */
+  --shadow-popup: 0px 24px 48px -12px rgba(17, 24, 39, 0.32), 0px 8px 16px -8px rgba(17, 24, 39, 0.2);
+  --shadow-inset-rim: inset 0 0 2px 0 #334155;
+  --shadow-inset-rim-brand: inset 0 0 2px 0 #026a9f;
+
+  /* ---------- Motion ---------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0.1, 1);
+  --animate-ovl-in: ovl-in 220ms cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------- Splash auth (port `.intro` di `_prototype/css/auth.css`) ---------- */
+  --animate-intro-mark: intro-mark 720ms cubic-bezier(0.3, 0, 0.1, 1) forwards;
+  --animate-intro-letter: intro-letter 420ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  --animate-intro-fade: intro-fade 500ms cubic-bezier(0.2, 0, 0, 1) 760ms forwards;
+  --animate-intro-bg-out: intro-bg-out 460ms cubic-bezier(0.3, 0, 0.1, 1) forwards;
+  --animate-intro-rise-out: intro-rise-out 460ms cubic-bezier(0.3, 0, 0.1, 1) forwards;
+  --animate-card-reveal: card-reveal 560ms cubic-bezier(0.3, 0, 0.1, 1);
+}
+
+@keyframes intro-mark {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-6deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes intro-letter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes intro-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes intro-bg-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes intro-rise-out {
+  from {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-96px);
+    opacity: 0;
+  }
+}
+
+@keyframes card-reveal {
+  from {
+    transform: translateY(40px) scale(0.99);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Hormati preferensi kurangi-gerak: splash tetap tampil, tanpa animasi. */
+@media (prefers-reduced-motion: reduce) {
+  [data-intro] *,
+  [data-intro] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+@keyframes ovl-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* =========================================================================
+   Base — sesuai bagian "Base typography" colors_and_type.css
+   ========================================================================= */
+@layer base {
+  html {
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--color-fg-1);
+  }
+  body {
+    margin: 0;
+    background: var(--color-bg-app);
+    color: var(--color-fg-2);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-fg-1);
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--color-fg-1);
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.25;
+    color: var(--color-fg-1);
+  }
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+  /* Ikonografi SEVAKA: grid 24×24, stroke 1.75 (README design system §5).
+     CSS menang atas atribut presentasi `stroke-width` bawaan lucide-react,
+     jadi seluruh ikon otomatis memakai bobot yang benar. */
+  .lucide {
+    stroke-width: 1.75;
+  }
+}
+
+/* =========================================================================
+   Type-scale helpers — 1:1 dengan kelas .t-* design system.
+   Pakai kalau butuh skala tipografi persis; selebihnya pakai utility biasa.
+   ========================================================================= */
+@utility t-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+@utility t-h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+@utility t-h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+@utility t-h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.25;
+}
+@utility t-subtitle {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.3;
+}
+@utility t-body {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.4;
+}
+@utility t-button {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+@utility t-medium {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+@utility t-small {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4;
+}
+@utility t-label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+@utility t-wordmark {
+  font-family: var(--font-mark);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+/* Scrollbar tipis untuk area scroll (sidebar, body modal, tabel) —
+   mengikuti `.sidebar__nav::-webkit-scrollbar` di prototype: 5px, thumb Fog,
+   radius 3px. Tanpa ini scrollbar tebal bawaan Chromium merusak tepi tabel. */
+@utility scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-fog) transparent;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-fog);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-2);
+  }
+}
+
+/* Soft-press: efek khas SEVAKA untuk hover/active tombol sekunder & icon button */
+@utility shadow-press {
+  box-shadow: var(--shadow-press);
+}

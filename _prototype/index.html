@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Dashboard</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/unlock-account.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="01 Dashboard" data-density="regular" data-stat-layout="quad" data-mid-layout="wide-banner" data-theme="ocean">
+
+<div class="app">
+  <!-- ===================== TOP NAV ===================== -->
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <!-- ===================== BODY: SIDEBAR + MAIN ===================== -->
+  <div class="app__body">
+
+    <!-- Sidebar — collapse 84px ↔ expand 264px (matches design system) -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main -->
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <!-- =========== HERO =========== -->
+        <section class="dash-hero">
+          <div class="dash-hero__copy">
+            <div>
+              <h1 class="dash-hero__title">
+                Selamat Datang,
+                <br>
+                <span id="heroNameWrap"><span id="heroName" class="placeholder">{Nama User}</span>!</span>
+              </h1>
+              <span class="dash-hero__date">{DAY}, {DATE}</span>
+            </div>
+            <div class="dash-hero__pills">
+              <button class="hero-pill" type="button">
+                <span>Live Attendance</span>
+              </button>
+              <button class="hero-pill" type="button">
+                <span>Request Time Off</span>
+              </button>
+              <div class="pos-rel">
+                <button class="hero-pill" type="button" id="moreRequestBtn">
+                  <span>More Request</span>
+                  <i data-lucide="chevron-down"></i>
+                </button>
+                <div class="menu" id="moreRequestMenu" style="top: calc(100% + 8px); left: 0; right: auto; min-width: 220px;">
+                  <button class="menu__item"><i data-lucide="file-text"></i>Reimbursement</button>
+                  <button class="menu__item"><i data-lucide="briefcase"></i>Business trip</button>
+                  <button class="menu__item"><i data-lucide="calendar-plus"></i>Overtime</button>
+                  <button class="menu__item"><i data-lucide="clock"></i>Shift change</button>
+                  <button class="menu__item"><i data-lucide="user-plus"></i>New employee</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero illustration: floating HR dashboard widgets -->
+          <div class="dash-hero__art" aria-hidden="true">
+            <svg viewBox="0 0 460 320" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="cardGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#e8f3fa"/>
+                </linearGradient>
+                <linearGradient id="cardShade" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#1a5d8a"/>
+                  <stop offset="100%" stop-color="#0e3f60"/>
+                </linearGradient>
+                <linearGradient id="halo" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,.35)"/>
+                  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+                <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#062a44" flood-opacity=".22"/>
+                </filter>
+              </defs>
+
+              <!-- soft halo backdrop -->
+              <circle cx="240" cy="160" r="170" fill="url(#halo)"/>
+
+              <!-- ============ Main dashboard card (back) ============ -->
+              <g filter="url(#cardShadow)" transform="translate(140,52)">
+                <rect x="0" y="0" width="260" height="184" rx="14" fill="url(#cardGrad)"/>
+                <!-- top bar -->
+                <rect x="0" y="0" width="260" height="32" rx="14" fill="#0e3f60"/>
+                <rect x="0" y="18" width="260" height="14" fill="#0e3f60"/>
+                <circle cx="14" cy="16" r="3.5" fill="#ff6f5a"/>
+                <circle cx="26" cy="16" r="3.5" fill="#fde68a"/>
+                <circle cx="38" cy="16" r="3.5" fill="#7fc1de"/>
+                <rect x="58" y="13" width="120" height="6" rx="3" fill="rgba(255,255,255,.35)"/>
+
+                <!-- KPI row -->
+                <g transform="translate(16,46)">
+                  <!-- KPI 1 -->
+                  <rect x="0" y="0" width="68" height="44" rx="6" fill="white" stroke="#cfe6f2" stroke-width="1"/>
+                  <rect x="8" y="8" width="32" height="3" rx="1.5" fill="#9bc4dc"/>
+                  <text x="8" y="32" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="16" font-weight="700" fill="#0e3f60">1,284</text>
+                  <!-- KPI 2 -->
+                  <rect x="78" y="0" width="68" height="44" rx="6" fill="white" stroke="#cfe6f2" stroke-width="1"/>
+                  <rect x="86" y="8" width="32" height="3" rx="1.5" fill="#9bc4dc"/>
+                  <text x="86" y="32" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="16" font-weight="700" fill="#0e3f60">94<tspan font-size="11" fill="#5b94b8">%</tspan></text>
+                  <!-- KPI 3 -->
+                  <rect x="156" y="0" width="72" height="44" rx="6" fill="#0284c7"/>
+                  <rect x="164" y="8" width="32" height="3" rx="1.5" fill="rgba(255,255,255,.6)"/>
+                  <text x="164" y="32" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="16" font-weight="700" fill="white">+24</text>
+                </g>
+
+                <!-- chart area -->
+                <g transform="translate(16,104)">
+                  <!-- bar chart bg -->
+                  <rect x="0" y="0" width="140" height="64" rx="6" fill="white" stroke="#cfe6f2" stroke-width="1"/>
+                  <!-- gridlines -->
+                  <g stroke="#eaf2f7" stroke-width="1">
+                    <line x1="8" y1="20" x2="132" y2="20"/>
+                    <line x1="8" y1="36" x2="132" y2="36"/>
+                    <line x1="8" y1="52" x2="132" y2="52"/>
+                  </g>
+                  <!-- bars -->
+                  <g>
+                    <rect x="14" y="38" width="10" height="18" rx="2" fill="#7fc1de"/>
+                    <rect x="32" y="28" width="10" height="28" rx="2" fill="#7fc1de"/>
+                    <rect x="50" y="20" width="10" height="36" rx="2" fill="#0284c7"/>
+                    <rect x="68" y="30" width="10" height="26" rx="2" fill="#7fc1de"/>
+                    <rect x="86" y="14" width="10" height="42" rx="2" fill="#0284c7"/>
+                    <rect x="104" y="22" width="10" height="34" rx="2" fill="#7fc1de"/>
+                    <rect x="122" y="10" width="10" height="46" rx="2" fill="#0284c7"/>
+                  </g>
+
+                  <!-- donut card -->
+                  <g transform="translate(152,0)">
+                    <rect x="0" y="0" width="76" height="64" rx="6" fill="white" stroke="#cfe6f2" stroke-width="1"/>
+                    <!-- donut -->
+                    <g transform="translate(38,32)">
+                      <circle r="18" fill="none" stroke="#eaf2f7" stroke-width="7"/>
+                      <circle r="18" fill="none" stroke="#0284c7" stroke-width="7"
+                              stroke-dasharray="62 113.1" transform="rotate(-90)" stroke-linecap="butt"/>
+                      <circle r="18" fill="none" stroke="#7fc1de" stroke-width="7"
+                              stroke-dasharray="34 113.1" stroke-dashoffset="-62" transform="rotate(-90)"/>
+                      <circle r="18" fill="none" stroke="#fde68a" stroke-width="7"
+                              stroke-dasharray="17 113.1" stroke-dashoffset="-96" transform="rotate(-90)"/>
+                    </g>
+                  </g>
+                </g>
+              </g>
+
+              <!-- ============ Floating "approved leave" pill ============ -->
+              <g filter="url(#cardShadow)" transform="translate(40,90)">
+                <rect x="0" y="0" width="160" height="48" rx="10" fill="white"/>
+                <!-- avatar -->
+                <circle cx="24" cy="24" r="16" fill="#0284c7"/>
+                <circle cx="24" cy="20" r="6" fill="#fde6cc"/>
+                <path d="M10 38 q4 -10 14 -10 q10 0 14 10 z" fill="#fde6cc"/>
+                <!-- text rows -->
+                <rect x="48" y="12" width="76" height="6" rx="3" fill="#0e3f60"/>
+                <rect x="48" y="24" width="56" height="4" rx="2" fill="#9bc4dc"/>
+                <!-- approved check -->
+                <circle cx="140" cy="24" r="10" fill="#1f8a5b"/>
+                <path d="M135 24 l4 4 l7 -8" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+
+              <!-- ============ Floating notification card ============ -->
+              <g filter="url(#cardShadow)" transform="translate(46,180)">
+                <rect x="0" y="0" width="170" height="56" rx="10" fill="white"/>
+                <!-- icon tile -->
+                <rect x="8" y="10" width="36" height="36" rx="8" fill="#fde68a"/>
+                <!-- bell icon (simple) -->
+                <path d="M26 18 a8 8 0 0 1 8 8 v6 l3 3 H15 l3 -3 v -6 a8 8 0 0 1 8 -8 z m -2 22 a2 2 0 0 0 4 0 z" fill="#a26b0b"/>
+                <!-- text -->
+                <rect x="54" y="14" width="100" height="6" rx="3" fill="#0e3f60"/>
+                <rect x="54" y="26" width="80" height="4" rx="2" fill="#9bc4dc"/>
+                <rect x="54" y="36" width="60" height="4" rx="2" fill="#cfe6f2"/>
+              </g>
+
+              <!-- ============ Floating calendar tile (top-right) ============ -->
+              <g filter="url(#cardShadow)" transform="translate(370,28)">
+                <rect x="0" y="0" width="72" height="80" rx="10" fill="white"/>
+                <rect x="0" y="0" width="72" height="22" rx="10" fill="#e85a3d"/>
+                <rect x="0" y="14" width="72" height="8" fill="#e85a3d"/>
+                <rect x="12" y="-4" width="6" height="12" rx="2" fill="#a04428"/>
+                <rect x="54" y="-4" width="6" height="12" rx="2" fill="#a04428"/>
+                <text x="36" y="58" text-anchor="middle" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="24" font-weight="700" fill="#0e3f60">26</text>
+                <text x="36" y="72" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#5b94b8" letter-spacing="1">MAY</text>
+              </g>
+
+              <!-- ============ Floating "+ avatars" stack (bottom-right) ============ -->
+              <g filter="url(#cardShadow)" transform="translate(320,212)">
+                <rect x="0" y="0" width="118" height="44" rx="22" fill="white"/>
+                <!-- avatar 1 -->
+                <circle cx="22" cy="22" r="14" fill="#7fc1de" stroke="white" stroke-width="2"/>
+                <circle cx="22" cy="19" r="5" fill="#0e3f60"/>
+                <path d="M11 34 q4 -8 11 -8 q7 0 11 8 z" fill="#0e3f60"/>
+                <!-- avatar 2 -->
+                <circle cx="44" cy="22" r="14" fill="#fde68a" stroke="white" stroke-width="2"/>
+                <circle cx="44" cy="19" r="5" fill="#a26b0b"/>
+                <path d="M33 34 q4 -8 11 -8 q7 0 11 8 z" fill="#a26b0b"/>
+                <!-- avatar 3 -->
+                <circle cx="66" cy="22" r="14" fill="#0284c7" stroke="white" stroke-width="2"/>
+                <circle cx="66" cy="19" r="5" fill="white"/>
+                <path d="M55 34 q4 -8 11 -8 q7 0 11 8 z" fill="white"/>
+                <!-- +N tile -->
+                <circle cx="88" cy="22" r="14" fill="#cfe6f2" stroke="white" stroke-width="2"/>
+                <text x="88" y="26" text-anchor="middle" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="11" font-weight="700" fill="#0e3f60">+12</text>
+              </g>
+
+              <!-- subtle sparkles -->
+              <g fill="white" opacity=".7">
+                <path d="M260 36 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2 z"/>
+                <path d="M120 60 l1.4 4 l4 1.4 l-4 1.4 l-1.4 4 l-1.4 -4 l-4 -1.4 l4 -1.4 z"/>
+                <path d="M420 250 l1.4 4 l4 1.4 l-4 1.4 l-1.4 4 l-1.4 -4 l-4 -1.4 l4 -1.4 z"/>
+              </g>
+            </svg>
+          </div>
+        </section>
+
+        <!-- =========== STAT GRID =========== -->
+        <section class="stat-grid">
+
+          <!-- Gender Diversity -->
+          <div class="stat-card">
+            <div class="stat-card__head">
+              <h3 class="stat-card__title">
+                Gender Diversity
+                <span class="info-i"><i data-lucide="info"></i></span>
+              </h3>
+              <button class="stat-card__menu" aria-label="more"><i data-lucide="more-vertical"></i></button>
+            </div>
+            <div class="stat-card__body">
+              <div class="donut-wrap">
+                <svg viewBox="0 0 100 100">
+                  <!-- Female 52% Ocean -->
+                  <circle cx="50" cy="50" r="36" fill="none" stroke="#0284c7" stroke-width="18"
+                          stroke-dasharray="117.6 226.2" transform="rotate(-90 50 50)" stroke-linecap="butt"/>
+                  <!-- Male 36% Sky -->
+                  <circle cx="50" cy="50" r="36" fill="none" stroke="#87ceeb" stroke-width="18"
+                          stroke-dasharray="81.4 226.2" stroke-dashoffset="-117.6" transform="rotate(-90 50 50)"/>
+                  <!-- Not Filled 12% Sand -->
+                  <circle cx="50" cy="50" r="36" fill="none" stroke="#fde68a" stroke-width="18"
+                          stroke-dasharray="27.2 226.2" stroke-dashoffset="-199" transform="rotate(-90 50 50)"/>
+                </svg>
+                <div class="donut-legend">
+                  <div class="donut-legend__row"><span class="donut-legend__dot" style="background:#0284c7"></span>Female</div>
+                  <div class="donut-legend__row"><span class="donut-legend__dot" style="background:#87ceeb"></span>Male</div>
+                  <div class="donut-legend__row"><span class="donut-legend__dot" style="background:#fde68a"></span>Not Filled</div>
+                </div>
+              </div>
+            </div>
+            <div class="stat-card__foot">
+              <button class="filter-btn">Filter <i data-lucide="chevron-down"></i></button>
+            </div>
+          </div>
+
+          <!-- Staff Active (bar) -->
+          <div class="stat-card">
+            <div class="stat-card__head">
+              <h3 class="stat-card__title">
+                Staff Active
+                <span class="info-i"><i data-lucide="info"></i></span>
+              </h3>
+              <button class="stat-card__menu" aria-label="more"><i data-lucide="more-vertical"></i></button>
+            </div>
+            <div class="stat-card__body">
+              <div class="barchart-wrap">
+                <svg viewBox="0 0 320 220" preserveAspectRatio="none">
+                  <!-- gridlines + y labels -->
+                  <g font-family="Inter" font-size="11" fill="#94a3b8">
+                    <text x="2"  y="24">500</text><line x1="28" y1="20" x2="320" y2="20" stroke="#eef3f7"/>
+                    <text x="2"  y="64">400</text><line x1="28" y1="60" x2="320" y2="60" stroke="#eef3f7"/>
+                    <text x="2" y="104">300</text><line x1="28" y1="100" x2="320" y2="100" stroke="#eef3f7"/>
+                    <text x="2" y="144">200</text><line x1="28" y1="140" x2="320" y2="140" stroke="#eef3f7"/>
+                    <text x="2" y="184">100</text><line x1="28" y1="180" x2="320" y2="180" stroke="#eef3f7"/>
+                    <text x="6" y="204">0</text>
+                  </g>
+                  <!-- bars: Jun, Jul, Aug, Sept, Okt, Nov -->
+                  <g fill="#0284c7">
+                    <rect x="38"  y="112" width="32" height="88" rx="3"/>
+                    <rect x="84"  y="50"  width="32" height="150" rx="3"/>
+                    <rect x="130" y="68"  width="32" height="132" rx="3"/>
+                    <rect x="176" y="20"  width="32" height="180" rx="3"/>
+                    <rect x="222" y="68"  width="32" height="132" rx="3"/>
+                    <rect x="268" y="20"  width="32" height="180" rx="3"/>
+                  </g>
+                  <!-- x labels -->
+                  <g font-family="Inter" font-size="11" fill="#475569" text-anchor="middle">
+                    <text x="54"  y="216">Jun</text>
+                    <text x="100" y="216">Jul</text>
+                    <text x="146" y="216">Aug</text>
+                    <text x="192" y="216">Sept</text>
+                    <text x="238" y="216">Okt</text>
+                    <text x="284" y="216">Nov</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-card__foot">
+              <button class="filter-btn">Filter <i data-lucide="chevron-down"></i></button>
+            </div>
+          </div>
+
+          <!-- Monthly Turnover (line) -->
+          <div class="stat-card">
+            <div class="stat-card__head">
+              <h3 class="stat-card__title">
+                Monthly Turnover
+                <span class="info-i"><i data-lucide="info"></i></span>
+              </h3>
+              <button class="stat-card__menu" aria-label="more"><i data-lucide="more-vertical"></i></button>
+            </div>
+            <div class="stat-card__body">
+              <div class="linechart-wrap">
+                <svg viewBox="0 0 320 220" preserveAspectRatio="none">
+                  <g font-family="Inter" font-size="11" fill="#94a3b8">
+                    <text x="2" y="44">10%</text><line x1="28" y1="40" x2="320" y2="40" stroke="#eef3f7"/>
+                    <text x="6" y="124">5%</text><line x1="28" y1="120" x2="320" y2="120" stroke="#eef3f7"/>
+                    <text x="6" y="204">0%</text><line x1="28" y1="200" x2="320" y2="200" stroke="#eef3f7"/>
+                  </g>
+                  <!-- line path: Jun(160) Jul(120) Aug(120) Sept(80) Okt(120) Nov(120) -->
+                  <path d="M 54 160 L 100 120 L 146 120 L 192 80 L 238 120 L 284 120"
+                        fill="none" stroke="#0284c7" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- markers -->
+                  <g fill="white" stroke="#0284c7" stroke-width="2.5">
+                    <circle cx="54"  cy="160" r="5"/>
+                    <circle cx="100" cy="120" r="5"/>
+                    <circle cx="146" cy="120" r="5"/>
+                    <circle cx="192" cy="80"  r="5"/>
+                    <circle cx="238" cy="120" r="5"/>
+                    <circle cx="284" cy="120" r="5"/>
+                  </g>
+                  <!-- x labels -->
+                  <g font-family="Inter" font-size="11" fill="#475569" text-anchor="middle">
+                    <text x="54"  y="216">Jun</text>
+                    <text x="100" y="216">Jul</text>
+                    <text x="146" y="216">Aug</text>
+                    <text x="192" y="216">Sept</text>
+                    <text x="238" y="216">Okt</text>
+                    <text x="284" y="216">Nov</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-card__foot">
+              <button class="filter-btn">Filter <i data-lucide="chevron-down"></i></button>
+            </div>
+          </div>
+
+          <!-- Job Level -->
+          <div class="stat-card">
+            <div class="stat-card__head">
+              <h3 class="stat-card__title">
+                Job Level
+                <span class="info-i"><i data-lucide="info"></i></span>
+              </h3>
+              <button class="stat-card__menu" aria-label="more"><i data-lucide="more-vertical"></i></button>
+            </div>
+            <div class="stat-card__body">
+              <div class="joblevel-bar">
+                <span style="width:40%;background:#bce0f3"></span>
+                <span style="width:25%;background:#0e4a73"></span>
+                <span style="width:15%;background:#fde68a"></span>
+                <span style="width:10%;background:#7eb9d4"></span>
+                <span style="width:6%;background:#0284c7"></span>
+                <span style="width:3%;background:#cfe6f2"></span>
+                <span style="width:0.9%;background:#0a3a5a"></span>
+                <span style="width:0.1%;background:#062234"></span>
+              </div>
+              <div class="joblevel-ticks">
+                <span>0%</span><span>100%</span>
+              </div>
+              <div class="joblevel-total"><span>Total</span><b>1000</b></div>
+              <div class="joblevel-list">
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#bce0f3"></span>
+                  <span class="joblevel-row__name">Staff</span>
+                  <span class="joblevel-row__count">400</span>
+                  <span class="joblevel-row__pct">40%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#0e4a73"></span>
+                  <span class="joblevel-row__name">Operator</span>
+                  <span class="joblevel-row__count">250</span>
+                  <span class="joblevel-row__pct">25%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#fde68a"></span>
+                  <span class="joblevel-row__name">Manager</span>
+                  <span class="joblevel-row__count">150</span>
+                  <span class="joblevel-row__pct">15%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#7eb9d4"></span>
+                  <span class="joblevel-row__name">Supervisor</span>
+                  <span class="joblevel-row__count">100</span>
+                  <span class="joblevel-row__pct">10%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#0284c7"></span>
+                  <span class="joblevel-row__name">Intern</span>
+                  <span class="joblevel-row__count">60</span>
+                  <span class="joblevel-row__pct">6%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#cfe6f2"></span>
+                  <span class="joblevel-row__name">specialist</span>
+                  <span class="joblevel-row__count">30</span>
+                  <span class="joblevel-row__pct">3%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#0a3a5a"></span>
+                  <span class="joblevel-row__name">VP</span>
+                  <span class="joblevel-row__count">9</span>
+                  <span class="joblevel-row__pct">0.9%</span>
+                </div>
+                <div class="joblevel-row">
+                  <span class="joblevel-row__sw" style="background:#062234"></span>
+                  <span class="joblevel-row__name">CEO</span>
+                  <span class="joblevel-row__count">1</span>
+                  <span class="joblevel-row__pct">0.1%</span>
+                </div>
+              </div>
+            </div>
+            <div class="stat-card__foot">
+              <button class="filter-btn">Filter <i data-lucide="chevron-down"></i></button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =========== MID ROW =========== -->
+        <section class="mid-row">
+
+          <!-- Left column: Keamanan Akun + Quick Links -->
+          <div class="mid-col">
+
+            <!-- Keamanan Akun (Admin — Buka Kunci Akun) -->
+            <div class="security-card">
+              <div class="security-card__head">
+                <span class="security-card__icon"><i data-lucide="shield-check"></i></span>
+                <div class="security-card__titles">
+                  <h4 class="security-card__title">Keamanan Akun</h4>
+                  <span class="security-card__sub">Akses SUPER_ADMIN / HR Manager</span>
+                </div>
+              </div>
+              <p class="security-card__desc">Akun karyawan terkunci otomatis setelah 5× gagal login. Buka kembali tanpa menunggu auto-unlock 15 menit.</p>
+              <div class="security-card__meta">
+                <span class="security-card__locked" id="lockedCountPill"><span class="security-card__dot"></span><strong id="lockedCount">2</strong> akun terkunci</span>
+              </div>
+              <button class="security-card__cta" id="openUnlockModal" type="button">
+                <i data-lucide="key-round"></i> Buka Kunci Akun
+              </button>
+            </div>
+
+          <!-- Quick Links -->
+          <aside class="qlinks">
+            <div>
+              <h4 class="qlinks__heading">Quick Links</h4>
+              <div class="qlinks__list">
+                <a class="qlink"><i data-lucide="user" class="qlink__icon"></i>Employee Profile</a>
+                <a class="qlink"><i data-lucide="repeat" class="qlink__icon"></i>Employee Transfer</a>
+                <a class="qlink"><i data-lucide="building" class="qlink__icon"></i>Company Settings</a>
+                <a class="qlink"><i data-lucide="puzzle" class="qlink__icon"></i>Integrations</a>
+              </div>
+            </div>
+            <div>
+              <h4 class="qlinks__heading">Application</h4>
+              <div class="qlinks__list">
+                <a class="qlink"><i data-lucide="file-text" class="qlink__icon"></i>Forms</a>
+                <a class="qlink"><i data-lucide="award" class="qlink__icon"></i>Perfomence Review</a>
+                <a class="qlink"><i data-lucide="users-round" class="qlink__icon"></i>Talent Management</a>
+                <a class="qlink"><i data-lucide="lightbulb" class="qlink__icon"></i>Insight</a>
+                <a class="qlink"><i data-lucide="calendar-clock" class="qlink__icon"></i>Timesheet</a>
+                <a class="qlink"><i data-lucide="file-stack" class="qlink__icon"></i>Document Template</a>
+                <a class="qlink"><i data-lucide="graduation-cap" class="qlink__icon"></i>Training</a>
+              </div>
+            </div>
+          </aside>
+          </div>
+
+          <!-- Banner -->
+          <div class="banner">
+            <div class="banner__art" aria-hidden="true">
+              <img src="assets/asset img 2.png" alt="" draggable="false">
+            </div>
+            <div class="banner__copy">
+              <p class="banner__text">Pantau kehadiran tim secara real-time dan setujui permintaan cuti dengan lebih cepat melalui sistem HRIS.</p>
+              <a class="banner__cta">Pelajari Selengkapnya <i data-lucide="arrow-right"></i></a>
+            </div>
+            <div class="banner__dots">
+              <button class="banner__dot is-on" aria-label="slide 1"></button>
+              <button class="banner__dot" aria-label="slide 2"></button>
+              <button class="banner__dot" aria-label="slide 3"></button>
+              <button class="banner__dot" aria-label="slide 4"></button>
+            </div>
+          </div>
+
+          <!-- Side stack: leave + who's off -->
+          <div class="side-stack">
+            <div class="leave-card">
+              <div class="leave-section">
+                <span class="leave-section__label">
+                  Annual Leave Balance
+                  <span class="info-i"><i data-lucide="info"></i></span>
+                </span>
+                <span class="leave-section__value">10 <small>Days</small></span>
+                <a class="leave-section__cta">Request annual leave <i data-lucide="arrow-right"></i></a>
+              </div>
+              <div class="leave-card__divider"></div>
+              <div class="leave-section">
+                <span class="leave-section__label">Sick Leave Used</span>
+                <span class="leave-section__value">4 <small>Days</small></span>
+                <a class="leave-section__cta">Request sick leave <i data-lucide="arrow-right"></i></a>
+              </div>
+              <a class="leave-card__viewall">View all</a>
+            </div>
+
+            <div class="whoisoff-card">
+              <div class="whoisoff-card__head">
+                <h4 class="whoisoff-card__title">Who's Off</h4>
+                <button class="whoisoff-card__pick">Today <i data-lucide="chevron-down"></i></button>
+              </div>
+              <div class="whoisoff-card__date">Tue, 09 December 2025</div>
+              <div>
+                <div class="whoisoff-row">
+                  <div class="whoisoff-row__avatar"><svg viewBox="0 0 36 36"><rect width="36" height="36" fill="#5db95d"/><circle cx="18" cy="14" r="9" fill="#a8d479"/><circle cx="14" cy="13" r="1.5" fill="#1c2c3a"/><circle cx="22" cy="13" r="1.5" fill="#1c2c3a"/><path d="M12 17 q6 4 12 0" stroke="#1c2c3a" stroke-width="1.4" fill="none"/><path d="M6 36 q4 -9 12 -9 q8 0 12 9z" fill="#2b6a2b"/></svg></div>
+                  <div class="whoisoff-row__meta">
+                    <span class="whoisoff-row__name">Mitsui Tiga</span>
+                    <span class="whoisoff-row__sub">Cuti Tahunan</span>
+                  </div>
+                </div>
+                <div class="whoisoff-row">
+                  <div class="whoisoff-row__avatar"><svg viewBox="0 0 36 36"><rect width="36" height="36" fill="#5db95d"/><circle cx="18" cy="14" r="9" fill="#a8d479"/><circle cx="14" cy="13" r="1.5" fill="#1c2c3a"/><circle cx="22" cy="13" r="1.5" fill="#1c2c3a"/><path d="M12 17 q6 4 12 0" stroke="#1c2c3a" stroke-width="1.4" fill="none"/><path d="M6 36 q4 -9 12 -9 q8 0 12 9z" fill="#2b6a2b"/></svg></div>
+                  <div class="whoisoff-row__meta">
+                    <span class="whoisoff-row__name">Mitsui Empat</span>
+                    <span class="whoisoff-row__sub">Cuti Tahunan</span>
+                  </div>
+                </div>
+                <div class="whoisoff-row">
+                  <div class="whoisoff-row__avatar"><svg viewBox="0 0 36 36"><rect width="36" height="36" fill="#5db95d"/><circle cx="18" cy="14" r="9" fill="#a8d479"/><circle cx="14" cy="13" r="1.5" fill="#1c2c3a"/><circle cx="22" cy="13" r="1.5" fill="#1c2c3a"/><path d="M12 17 q6 4 12 0" stroke="#1c2c3a" stroke-width="1.4" fill="none"/><path d="M6 36 q4 -9 12 -9 q8 0 12 9z" fill="#2b6a2b"/></svg></div>
+                  <div class="whoisoff-row__meta">
+                    <span class="whoisoff-row__name">Mitsui Lima</span>
+                    <span class="whoisoff-row__sub">Cuti Tahunan</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =========== TABLE CARD (Contract & Probation) =========== -->
+        <section class="table-card" data-tabgroup>
+          <div class="tabs-pills">
+            <button class="tab-pill">Announcement</button>
+            <button class="tab-pill is-on">Contract &amp; Probation</button>
+            <button class="tab-pill">Tasks</button>
+          </div>
+
+          <div class="info-banner">
+            <span class="info-banner__icon"></span>
+            <span>Introducing the Evaluation Review Cycle. Elevate your organization's success with the power of timely and data-driven review! <a href="#" onclick="event.preventDefault()">Learn more</a></span>
+          </div>
+
+          <div class="table-toolbar">
+            <button class="table-toolbar__filter">
+              <span style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="filter"></i>Filter</span>
+              <i data-lucide="chevron-down"></i>
+            </button>
+            <button class="table-toolbar__icon" aria-label="notifications"><i data-lucide="bell"></i><span class="dot"></span></button>
+            <div class="table-toolbar__search">
+              <input type="text" placeholder="Search here">
+              <i data-lucide="search"></i>
+            </div>
+          </div>
+
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th><label class="checkbox" style="margin:0"><input type="checkbox" id="headCheck"><span class="checkbox__box"></span></label></th>
+                <th>Employee</th>
+                <th>Status</th>
+                <th>End Date</th>
+                <th>Total Contract Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><label class="checkbox" style="margin:0"><input type="checkbox" data-rowcheck><span class="checkbox__box"></span></label></td>
+                <td>Lorem Ipsum</td>
+                <td><span class="status-pill">[Status]</span></td>
+                <td>12/12/2025</td>
+                <td>Lorem Ipsum</td>
+              </tr>
+              <tr>
+                <td><label class="checkbox" style="margin:0"><input type="checkbox" data-rowcheck><span class="checkbox__box"></span></label></td>
+                <td>Lorem Ipsum</td>
+                <td><span class="status-pill">[Status]</span></td>
+                <td>12/12/2025</td>
+                <td>Lorem Ipsum</td>
+              </tr>
+              <tr>
+                <td><label class="checkbox" style="margin:0"><input type="checkbox" data-rowcheck><span class="checkbox__box"></span></label></td>
+                <td>Lorem Ipsum</td>
+                <td><span class="status-pill">[Status]</span></td>
+                <td>12/12/2025</td>
+                <td>Lorem Ipsum</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="table-foot">
+            <div class="table-foot__left">
+              <span>Showing</span>
+              <button class="table-foot__select">10 <i data-lucide="chevron-down"></i></button>
+              <span>from 1 row</span>
+            </div>
+            <div class="table-foot__pages">
+              <button class="table-foot__btn" aria-label="first" disabled><i data-lucide="chevrons-left"></i></button>
+              <button class="table-foot__btn" aria-label="prev" disabled><i data-lucide="chevron-left"></i></button>
+              <span class="table-foot__page-input">1</span>
+              <button class="table-foot__btn" aria-label="next"><i data-lucide="chevron-right"></i></button>
+              <button class="table-foot__btn" aria-label="last"><i data-lucide="chevrons-right"></i></button>
+              <span style="margin-left:8px">from 1</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- =========== UNLOCK ACCOUNT MODAL (Buka Kunci Akun) =========== -->
+<div class="ua-overlay" id="unlockOverlay" aria-hidden="true">
+  <div class="ua-modal" role="dialog" aria-modal="true" aria-labelledby="uaTitle">
+    <header class="ua-modal__head">
+      <div class="ua-modal__headmeta">
+        <span class="ua-modal__icon"><i data-lucide="key-round"></i></span>
+        <div>
+          <h3 class="ua-modal__title" id="uaTitle">Buka Kunci Akun</h3>
+          <p class="ua-modal__subtitle">Daftar akun terkunci karena melebihi batas percobaan login.</p>
+        </div>
+      </div>
+      <button class="ua-modal__close" id="unlockClose" aria-label="Tutup"><i data-lucide="x"></i></button>
+    </header>
+
+    <div class="ua-modal__toolbar">
+      <div class="ua-search">
+        <i data-lucide="search"></i>
+        <input type="search" id="unlockSearch" placeholder="Cari nama, username, atau email">
+      </div>
+      <span class="ua-count"><strong id="uaListCount">0</strong> akun terkunci</span>
+    </div>
+
+    <div class="ua-modal__body">
+      <div class="ua-success" id="unlockSuccess" hidden>
+        <span class="ua-success__icon"><i data-lucide="check"></i></span>
+        <span id="unlockSuccessText">Account unlocked successfully.</span>
+      </div>
+      <table class="ua-table">
+        <thead>
+          <tr>
+            <th>Nama akun</th>
+            <th>Identifier dicoba</th>
+            <th class="ua-num">Gagal</th>
+            <th>Auto-unlock</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="unlockTbody"></tbody>
+      </table>
+      <div class="ua-empty" id="unlockEmpty" hidden>
+        <i data-lucide="shield-check"></i>
+        <p>Tidak ada akun terkunci.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tweaks panel mount point -->
+<div id="tweaks-root"></div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: true, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/unlock-account.js"></script>
+
+<!-- React + Babel + Tweaks panel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="js/tweaks-panel.jsx"></script>
+<script type="text/babel" src="js/tweaks-app.jsx"></script>
+
+</body>
+</html>

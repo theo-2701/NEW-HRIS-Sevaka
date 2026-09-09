@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Performance — Objections</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/document.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.quote{background:var(--color-primary-50,#f3fafd);border:1px solid var(--border-1,#EAECF0);border-radius:10px;padding:14px 16px;font:400 13px/1.6 Inter;color:var(--fg-3,#334155)}.quote__m{font:400 11px/1.4 Inter;color:var(--fg-4,#94A3B8);margin-top:8px}.hctx{font:600 10px/1 Inter;letter-spacing:.02em;color:var(--fg-4,#94A3B8);text-transform:uppercase;margin-top:4px}.mini{font:400 11px/1.4 Inter;color:var(--fg-4,#94A3B8)}.dl{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:12px 14px;font:400 12px/1.5 Inter;border:1px solid var(--border-1,#EAECF0);background:var(--color-cloud,#FAFCFE);color:var(--fg-3,#334155)}.dl svg{width:16px;height:16px;flex:0 0 16px;margin-top:1px}.dl--ok{background:#F0FDF9;border-color:#A7F3D0;color:#065F46}.dl--warn{background:#FFFBEB;border-color:#FDE68A;color:#92400E}.dl--bad{background:#FEF2F2;border-color:#FECACA;color:#991B1B}.dl b{font-weight:700}.rc-head-actions .btn[hidden]{display:none}a{color:var(--fg-link,#0284c7);text-decoration:none}a:hover{text-decoration:underline}</style>
+</head>
+<body data-screen-label="Performance — Objections" data-perf-page="objections">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <div class="rc-sec">
+            <span class="rc-sec__title">Objections</span>
+            <div class="rc-head-actions" id="obHeadActs">
+              <button class="btn btn--secondary" type="button" id="obNewValue">Object to a Signed Score</button>
+              <button class="btn btn--secondary" type="button" id="obNewRej">Object to a Final Rejection</button>
+              <button class="btn btn--secondary" type="button" id="obReopenBtn" data-roles="ROLE_HR_MANAGER" hidden>Reopen Objection Window</button>
+            </div>
+          </div>
+          <p class="doc-lead">Three surfaces for three roles. An employee objects to a signed score or to a final rejection and watches their own case; the active holder — the assessor, the next supervisor up, or HR once the chain runs out — reads what has been laid on them and answers; HR watches everything still unanswered company-wide and can reopen a closed objection window. There is no client-side update or delete on an objection: answering it flips the status inside the same transaction.</p>
+
+          <div class="tabnav" id="obTab">
+            <button type="button" class="tabnav__tab is-on" data-tab="mine">My Objections</button>
+            <button type="button" class="tabnav__tab" data-tab="inbox">Incoming (Holder)</button>
+            <button type="button" class="tabnav__tab" data-tab="hr">HR — Unanswered</button>
+            <button type="button" class="tabnav__tab" data-tab="reopen">Reopen Windows</button>
+          </div>
+
+          <!-- G1/G2 own list -->
+          <div class="tabpanel is-on" data-tabpanel="mine">
+            <div class="dl" id="obElig"></div>
+            <div class="dtable-wrap dtable-wrap--act" style="margin-top:16px"><table class="dtable">
+              <thead><tr><th>Objection</th><th>Type</th><th>Status</th><th>Active Holder</th><th>Submitted</th><th class="ta-r"></th></tr></thead>
+              <tbody id="obMineBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="obMineFoot"></div>
+            <p class="fld__hint"><code>GET /me/objections</code> — bound to the token, no employee parameter is accepted. The holder column carries the holder context, a read-only label derived from whoever currently owes the answer.</p>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="split"></i>Two entry points, not one form with a dropdown</div>
+              <p>Objecting to a <strong>signed score</strong> and objecting to a <strong>final rejection</strong> are separate creation screens on purpose. The first only accepts a sheet that is already approved and never carries an approval round; the second must name a round that actually carries the final-rejection outcome, and its answerer is the approver who rejected it — not the assessor.</p>
+            </div>
+          </div>
+
+          <!-- G3 -->
+          <div class="tabpanel" data-tabpanel="inbox">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="obInStatus" style="width:190px"><span class="ctl__value">Status: all</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="ALL">Status: all</div><div class="dropdown__opt" data-val="SUBMITTED">Status: SUBMITTED</div><div class="dropdown__opt" data-val="ANSWERED">Status: ANSWERED</div></div>
+              </div>
+              <div class="ctl ctl--select" id="obInSort" style="width:210px"><span class="ctl__value">Sort: submitted_at</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="submitted_at">Sort: submitted_at</div><div class="dropdown__opt" data-val="status">Sort: status</div></div>
+              </div>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Objection</th><th>Type</th><th>Status</th><th>Raised By</th><th>Submitted</th><th class="ta-r"></th></tr></thead>
+              <tbody id="obInboxBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="obInFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="shield"></i>The button is not the gate</div>
+              <p>For a supervisor the holder is forced server-side to the caller's own identity, so the grid can never be pointed at somebody else's queue. Only the currently active holder may answer: a holder who has already passed the case up the chain is refused even if the Answer button was visible a moment earlier. Answering is one-to-one — an answered objection is opened read-only, never answered twice.</p>
+              <p style="margin-top:8px">Holder context reads <code>PENILAI_ASLI</code> while the original assessor still owes the answer, <code>NAIK_RANTAI</code> once it has moved up the chain, and <code>PENADAH_HR</code> when HR is the last catcher. Only the first appears in this dataset.</p>
+            </div>
+          </div>
+
+          <!-- G5 -->
+          <div class="tabpanel" data-tabpanel="hr">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="obHrSort" style="width:210px"><span class="ctl__value">Sort: submitted_at</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="submitted_at">Sort: submitted_at</div><div class="dropdown__opt" data-val="status">Sort: status</div></div>
+              </div>
+              <span class="doc-fsum">Status is fixed to SUBMITTED — the contract carries no other filter here</span>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Objection</th><th>Type</th><th>Raised By</th><th>Active Holder</th><th>Submitted</th><th>Days Waiting</th><th class="ta-r"></th></tr></thead>
+              <tbody id="obHrBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="obHrFoot"></div>
+            <p class="fld__hint">Company-wide, no holder filter, and only <code>SUBMITTED</code> rows — HR reads here, it never answers. An answered objection is not deleted: it simply belongs to the sheet history instead of this watchlist. Days waiting is the aging derived on the pending-objections report, quoted here so HR can see which case has sat longest.</p>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="clock"></i>Escalation happens off-screen</div>
+              <p>Ownership moves from the original assessor up the chain and finally to HR through a background job — there is no screen and no user action for it. The chain stops at HR: if HR sits on it, the objection stays <code>SUBMITTED</code> indefinitely and is only visible on the monitor board.</p>
+            </div>
+          </div>
+
+          <!-- G6 -->
+          <div class="tabpanel" data-tabpanel="reopen">
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Employee</th><th>Sheet</th><th>Opened By</th><th>Opened</th><th>New Deadline</th><th class="ta-r"></th></tr></thead>
+              <tbody id="obRwBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="obRwFoot"></div>
+            <p class="fld__hint">Create-only — a window is never updated or deleted, and nothing caps how often HR may reopen the same sheet; the record itself is the restraint. The new deadline is a full fresh term counted from the moment it was opened, not the remainder of the old one.</p>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- G1 · OBJECT TO SIGNED VALUE -->
+<div class="ovl" id="obValueM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Object to a signed score</h3><p class="ovl__desc"><code>POST /objections</code> — <code>subject_type=VALUE</code>, fixed by this entry point.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="kv">
+      <div class="kv__k">Type</div><div class="kv__v"><span class="sb sb--blue"><span class="sb__dot"></span>VALUE</span></div>
+      <div class="kv__k">Approval round</div><div class="kv__v"><span class="mini">— always empty for this type; the server forces it, nothing is sent</span></div>
+    </div>
+    <div class="fld"><label class="fld__label">Approved sheet <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="obvSheet"><span class="ctl__value">RS-0002 — Semester 1 2026</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="obvSheetOpts"></div>
+      </div>
+      <p class="fld__hint">Only sheets of yours that are already approved are listed — objecting to anything else fails validation on the server.</p></div>
+    <div class="dl" id="obvGate"></div>
+    <div class="fld"><label class="fld__label">Objection text <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="obvText" rows="4" maxlength="4000" placeholder="1–4000 characters"></textarea></div>
+      <p class="fld__hint">No angle brackets, and it cannot be all whitespace.</p></div>
+    <div class="kv">
+      <div class="kv__k">Answerer</div><div class="kv__v" id="obvAns">Rina Amelia <span class="hctx">resolved from the assessment chain, not chosen by you</span></div>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="obvDo">Submit objection</button></div>
+</div></div>
+
+<!-- G2 · OBJECT TO FINAL REJECTION -->
+<div class="ovl" id="obRejM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Object to a final rejection</h3><p class="ovl__desc"><code>POST /objections</code> — <code>subject_type=REJECTED_FINAL</code>, a separate entry point on purpose.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="kv">
+      <div class="kv__k">Type</div><div class="kv__v"><span class="sb sb--red"><span class="sb__dot"></span>REJECTED_FINAL</span></div>
+    </div>
+    <div class="fld"><label class="fld__label">Rejected round <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="obrRound"><span class="ctl__value">AR-0004-2 — RS-0004 · cycle 1 / round 2</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="obrRoundOpts"></div>
+      </div>
+      <p class="fld__hint">The round named here must actually carry the final-rejection outcome — the sheet/round pair is checked server-side.</p></div>
+    <div class="dl" id="obrGate"></div>
+    <div class="fld"><label class="fld__label">Objection text <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="obrText" rows="4" maxlength="4000" placeholder="1–4000 characters"></textarea></div>
+      <p class="fld__hint">Same text rules as a score objection.</p></div>
+    <div class="kv">
+      <div class="kv__k">Answerer</div><div class="kv__v" id="obrAns">Rina Amelia <span class="hctx">the approver who rejected that round, read locally — not the assessor</span></div>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="obrDo">Submit objection</button></div>
+</div></div>
+
+<!-- G4 · ANSWER -->
+<div class="ovl" id="obAnsM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Answer objection</h3><p class="ovl__desc"><code>POST /objections/{objection-id}/answer</code> — the status flips to <code>ANSWERED</code> in the same transaction.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="kv" id="obaKv"></div>
+    <div class="quote" id="obaQuote"></div>
+    <div class="fld"><label class="fld__label">Answer <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="obaText" rows="4" maxlength="4000" placeholder="1–4000 characters"></textarea></div>
+      <p class="fld__hint">Same text rules as the objection itself, enforced by its own constraint.</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="obaDo">Send answer</button></div>
+</div></div>
+
+<!-- P5.02 · DETAIL -->
+<div class="ovl" id="obDetM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:620px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Objection detail</h3><p class="ovl__desc"><code>GET /objections/{objection-id}</code> — read-only drill-down; out-of-scope ids come back as not found.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="kv" id="obdKv"></div>
+    <div class="quote" id="obdQuote"></div>
+    <div id="obdAnswer"></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<!-- P5.07 · REOPEN WINDOW DETAIL -->
+<div class="ovl" id="obRwDetM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Reopen window detail</h3><p class="ovl__desc"><code>GET /reopen-windows/{reopen-window-id}</code> — read-only, HR scope.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="kv" id="obRwdKv"></div>
+    <div class="quote" id="obRwdReason"></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<!-- G6 · REOPEN WINDOW -->
+<div class="ovl" id="obRwM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Reopen objection window</h3><p class="ovl__desc"><code>POST /reopen-windows</code> — create-only.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div class="ovl__body">
+    <div class="fld"><label class="fld__label">Employee &amp; sheet <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="obRwSheet"><span class="ctl__value" style="color:var(--fg-4)">Select sheet</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="obRwSheetOpts"></div>
+      </div></div>
+    <div class="fld"><label class="fld__label">Reason <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="obRwReason" rows="3" maxlength="1000" placeholder="1–1000 characters"></textarea></div>
+      <p class="fld__hint">Shorter than an objection on purpose — this is an administrative HR note, and an empty reason is refused outright.</p></div>
+    <div class="fld"><label class="fld__label">New deadline</label>
+      <div class="ctl"><input type="text" id="obRwDl" disabled></div>
+      <p class="fld__hint" id="obRwDlHint"></p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="obRwDo">Reopen window</button></div>
+</div></div>
+
+<script>window.SEVAKA_SESSION = { roles: ['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER','ROLE_HR_STAFF','ROLE_HR_MANAGER'] };</script>
+<script src="js/performance-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script>
+(function(){
+  var F = window.Flow || window.F;
+  // objection_deadline_days: read from the settings response, never a UI constant (clamped 1–90 server-side)
+  var CFG = { deadlineDays: 14, today: new Date(2026, 7, 24) };
+  function fmt(d){ var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return String(d.getDate()).padStart(2,'0')+' '+m[d.getMonth()]+' '+d.getFullYear(); }
+  function parse(s){ var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], p=s.split(' '); return new Date(+p[2], m.indexOf(p[1]), +p[0]); }
+  function daysSince(s){ return Math.max(0, Math.round((CFG.today - parse(s))/864e5)); }
+  function plus(d,n){ var x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
+
+  // sheets the signed-in employee may object to (VALUE path) — deadline is the frozen per-sheet value
+  var SHEETS = [
+    { id:'RS-0002', label:'Semester 1 2026', state:'APPROVED', deadline:'19 Jul 2026', open:true,  answerer:'Rina Amelia', rw:null },
+    { id:'RS-0005', label:'Semester 2 2025', state:'APPROVED', deadline:'14 Feb 2026', open:false, answerer:'Rina Amelia', rw:null }
+  ];
+  var ROUNDS = [
+    { id:'AR-0004-2', sheet:'RS-0004', label:'cycle 1 / round 2', deadline:'24 May 2026', open:true, answerer:'Rina Amelia', rw:'RW-0001' }
+  ];
+  var OBJ = [
+    { id:'OBJ-0001', type:'VALUE', sheet:'RS-0002', round:null, rw:null, status:'SUBMITTED', by:'Budi Santoso', mine:true, holder:'Rina Amelia', ctx:'PENILAI_ASLI', at:'10 Jul 2026',
+      note:'Saya rasa skor kolaborasi saya seharusnya lebih tinggi mengingat inisiatif retro mingguan.', answer:'', ansBy:'', ansAt:'' },
+    { id:'OBJ-0002', type:'REJECTED_FINAL', sheet:'RS-0004', round:'AR-0004-2', rw:'RW-0001', status:'ANSWERED', by:'Yanti Prasetya', mine:false, holder:'Rina Amelia', ctx:'PENILAI_ASLI', at:'15 Apr 2026',
+      note:'Saya sudah merevisi target sesuai arahan sebelumnya, mohon ditinjau ulang.',
+      answer:'Setelah ditinjau ulang, target masih kurang spesifik. Saran: ajukan kembali via jalur review baru semester depan.', ansBy:'Rina Amelia', ansAt:'20 Apr 2026' }
+  ];
+  var RW = [ { id:'RW-0001', emp:'Yanti Prasetya', sheet:'RS-0004', by:'Hesti Wulandari', at:'10 May 2026', dl:'24 May 2026', reason:'Ditemukan kesalahan input target saat audit internal Mei 2026' } ];
+
+  function tb(t){ return '<span class="sb '+(t==='VALUE'?'sb--blue':'sb--red')+'"><span class="sb__dot"></span>'+t+'</span>'; }
+  function sb(s){ return '<span class="sb '+(s==='SUBMITTED'?'sb--amber':'sb--green')+'"><span class="sb__dot"></span>'+s+'</span>'; }
+  function icon(n){ return '<i data-lucide="'+n+'"></i>'; }
+  var cur=null;
+
+  // ---------- my objections ----------
+  var pgMine = F.pager('obMineFoot', 10, drawMine, 'objections');
+  function drawMine(){
+    var open = SHEETS.filter(function(s){ return s.open; }).length + ROUNDS.filter(function(r){ return r.open; }).length;
+    var el = document.getElementById('obElig');
+    el.className = 'dl ' + (open ? 'dl--ok' : 'dl--bad');
+    el.innerHTML = icon(open?'unlock':'lock') + '<div>' + (open
+      ? '<b>'+open+' item'+(open>1?'s':'')+' still inside the objection window.</b> RS-0002 is open until 19 Jul 2026; AR-0004-2 is open until 24 May 2026 through reopen window RW-0001.'
+      : '<b>Every window has closed.</b> Objecting now is refused as a passed deadline — ask HR to reopen the window for the sheet.')
+      + ' The term is the days frozen on each sheet at signing, so two sheets can carry different lengths.</div>';
+    var all = OBJ.filter(function(o){ return o.mine; });
+    pgMine.state.total = all.length;
+    document.getElementById('obMineBody').innerHTML = pgMine.slice(all).map(function(o){
+      return '<tr><td>'+o.id+'<div class="td-sub">'+o.sheet+'</div></td><td>'+tb(o.type)+'</td><td>'+sb(o.status)+'</td>'+
+        '<td>'+o.holder+'<div class="hctx">'+o.ctx+'</div></td><td>'+o.at+'</td>'+
+        '<td class="ta-r"><div class="rowacts"><button class="rowbtn" data-det="'+o.id+'">View Detail</button></div></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="dtable__empty">You have not raised any objection.</td></tr>';
+    pgMine.paint(); if (window.lucide) lucide.createIcons();
+  }
+
+  // ---------- inbox ----------
+  var pgIn = F.pager('obInFoot', 10, drawInbox, 'objections');
+  function inRows(){
+    var st = document.querySelector('#obInStatus .ctl__value').textContent.replace('Status: ','').trim();
+    var so = document.querySelector('#obInSort .ctl__value').textContent.replace('Sort: ','').trim();
+    return OBJ.filter(function(o){ return st==='all' || o.status===st; })
+      .sort(function(a,b){ return so==='status' ? a.status.localeCompare(b.status) : 0; });
+  }
+  function drawInbox(){
+    var all = inRows(); pgIn.state.total = all.length;
+    document.getElementById('obInboxBody').innerHTML = pgIn.slice(all).map(function(o){
+      var acts = F.rowMenu([
+        { label:'Answer', icon:'pencil-line', attr:'data-ans="'+o.id+'"', disabled:o.status!=='SUBMITTED', reason:'Already answered — the answer relation is one-to-one' },
+        { label:'View Detail', icon:'eye', attr:'data-det="'+o.id+'"' }
+      ]);
+      return '<tr><td>'+o.id+'<div class="td-sub">'+o.sheet+'</div></td><td>'+tb(o.type)+'</td><td>'+sb(o.status)+'</td><td>'+o.by+'</td><td>'+o.at+'</td>'+
+        '<td class="ta-r"><div class="rowacts">'+acts+'</div></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="dtable__empty">Nothing is laid on you right now.</td></tr>';
+    pgIn.paint(); if (window.lucide) lucide.createIcons();
+  }
+
+  // ---------- HR watchlist ----------
+  var pgHr = F.pager('obHrFoot', 10, drawHr, 'objections');
+  function drawHr(){
+    var all = OBJ.filter(function(o){ return o.status==='SUBMITTED'; });
+    pgHr.state.total = all.length;
+    document.getElementById('obHrBody').innerHTML = pgHr.slice(all).map(function(o){
+      var d = daysSince(o.at);
+      return '<tr><td>'+o.id+'<div class="td-sub">'+o.sheet+'</div></td><td>'+tb(o.type)+'</td><td>'+o.by+'</td><td>'+o.holder+'<div class="hctx">'+o.ctx+'</div></td><td>'+o.at+'</td>'+
+        '<td>'+d+' day'+(d===1?'':'s')+'<div class="hctx">days_since_submitted</div></td>'+
+        '<td class="ta-r"><div class="rowacts"><button class="rowbtn" data-det="'+o.id+'">View Detail</button></div></td></tr>';
+    }).join('') || '<tr><td colspan="7" class="dtable__empty">Nothing is unanswered company-wide.</td></tr>';
+    pgHr.paint(); if (window.lucide) lucide.createIcons();
+  }
+
+  // ---------- reopen history ----------
+  var pgRw = F.pager('obRwFoot', 10, drawRw, 'windows');
+  function drawRw(){
+    var all = RW.slice();
+    pgRw.state.total = all.length;
+    document.getElementById('obRwBody').innerHTML = pgRw.slice(all).map(function(r){
+      return '<tr><td>'+r.emp+'<div class="td-sub">'+r.id+'</div></td><td>'+r.sheet+'</td><td>'+r.by+'</td><td>'+r.at+'</td><td>'+r.dl+'</td>'+
+        '<td class="ta-r"><div class="rowacts"><button class="rowbtn" data-rwd="'+r.id+'">View Detail</button></div></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="dtable__empty">No window has been reopened.</td></tr>';
+    pgRw.paint();
+  }
+
+  // ---------- create gates ----------
+  function sheetById(id){ return SHEETS.filter(function(s){ return s.id===id; })[0]; }
+  function roundById(id){ return ROUNDS.filter(function(r){ return r.id===id; })[0]; }
+  function gate(el, item){
+    el.className = 'dl ' + (item.open ? (item.rw ? 'dl--warn' : 'dl--ok') : 'dl--bad');
+    el.innerHTML = icon(item.open?'calendar-check':'calendar-x') + '<div>' + (item.open
+      ? (item.rw
+        ? '<b>Window reopened until '+item.deadline+'.</b> This submission is recorded as raised through '+item.rw+'.'
+        : '<b>Window open until '+item.deadline+'.</b> Counted from the days frozen on the sheet at signing.')
+      : '<b>Window closed on '+item.deadline+'.</b> The server refuses a passed deadline with no active reopen window — HR has to reopen it first.') + '</div>';
+    if (window.lucide) lucide.createIcons();
+  }
+  function fillOpts(mount, list, render){ mount.innerHTML = list.map(function(x){ return '<div class="dropdown__opt" data-val="'+x.id+'">'+render(x)+'</div>'; }).join(''); }
+  fillOpts(document.getElementById('obvSheetOpts'), SHEETS, function(s){ return s.id+' — '+s.label; });
+  fillOpts(document.getElementById('obrRoundOpts'), ROUNDS, function(r){ return r.id+' — '+r.sheet+' · '+r.label; });
+  fillOpts(document.getElementById('obRwSheetOpts'), [
+    {id:'RS-0004 — Yanti Prasetya'},{id:'RS-0002 — Budi Santoso'},{id:'RS-0003 — Rina Amelia'}
+  ], function(x){ return x.id; });
+  if (F.wireSelects) F.wireSelects();
+
+  function curSheet(){ return sheetById(document.querySelector('#obvSheet .ctl__value').textContent.split(' —')[0].trim()) || SHEETS[0]; }
+  function curRound(){ return roundById(document.querySelector('#obrRound .ctl__value').textContent.split(' —')[0].trim()) || ROUNDS[0]; }
+  function syncValue(){ var s=curSheet(); gate(document.getElementById('obvGate'), s);
+    document.getElementById('obvAns').innerHTML = s.answerer+' <span class="hctx">resolved from the assessment chain, not chosen by you</span>'; }
+  function syncRej(){ var r=curRound(); gate(document.getElementById('obrGate'), r);
+    document.getElementById('obrAns').innerHTML = r.answerer+' <span class="hctx">the approver who rejected that round, read locally — not the assessor</span>'; }
+  document.getElementById('obvSheet').addEventListener('selectchange', syncValue);
+  document.getElementById('obrRound').addEventListener('selectchange', syncRej);
+  document.getElementById('obvSheet').addEventListener('click', function(){ setTimeout(syncValue, 0); });
+  document.getElementById('obrRound').addEventListener('click', function(){ setTimeout(syncRej, 0); });
+
+  // ---------- tabs ----------
+  document.getElementById('obTab').addEventListener('tabchange', function(e){
+    var v = e.detail.tab || e.detail.value;
+    document.getElementById('obNewValue').hidden = v!=='mine';
+    document.getElementById('obNewRej').hidden = v!=='mine';
+    document.getElementById('obReopenBtn').hidden = !(v==='reopen' || v==='hr');
+    if (v==='inbox') drawInbox(); else if (v==='hr') drawHr(); else if (v==='reopen') drawRw(); else drawMine();
+  });
+  ['obInStatus','obInSort'].forEach(function(id){ document.getElementById(id).addEventListener('click', function(){ setTimeout(function(){ pgIn.state.page=1; drawInbox(); },0); }); });
+  document.getElementById('obHrSort').addEventListener('click', function(){ setTimeout(function(){ pgHr.state.page=1; drawHr(); },0); });
+
+  // ---------- create ----------
+  document.getElementById('obNewValue').addEventListener('click', function(){ syncValue(); F.openModal('obValueM'); });
+  document.getElementById('obNewRej').addEventListener('click', function(){ syncRej(); F.openModal('obRejM'); });
+  function validText(v){ return v && v.trim() && v.indexOf('<')===-1 && v.indexOf('>')===-1; }
+  function nextId(){ return 'OBJ-'+String(OBJ.length+1).padStart(4,'0'); }
+  document.getElementById('obvDo').addEventListener('click', function(){
+    var s = curSheet(), t = document.getElementById('obvText').value;
+    if (!s.open) { F.toast('Deadline passed on '+s.deadline+' with no active reopen window — the objection is refused.','warn'); return; }
+    if (!validText(t)) { F.toast('1–4000 characters, no angle brackets, not all whitespace.','warn'); return; }
+    OBJ.push({ id:nextId(), type:'VALUE', sheet:s.id, round:null, rw:s.rw, status:'SUBMITTED', by:'Budi Santoso', mine:true,
+      holder:s.answerer, ctx:'PENILAI_ASLI', at:fmt(CFG.today), note:t.trim(), answer:'', ansBy:'', ansAt:'' });
+    F.closeModal('obValueM'); document.getElementById('obvText').value='';
+    F.toast('Objection submitted — the answerer was resolved by the system.'); drawMine();
+  });
+  document.getElementById('obrDo').addEventListener('click', function(){
+    var r = curRound(), t = document.getElementById('obrText').value;
+    if (!r.open) { F.toast('Deadline passed on '+r.deadline+' with no active reopen window — the objection is refused.','warn'); return; }
+    if (!validText(t)) { F.toast('1–4000 characters, no angle brackets, not all whitespace.','warn'); return; }
+    OBJ.push({ id:nextId(), type:'REJECTED_FINAL', sheet:r.sheet, round:r.id, rw:r.rw, status:'SUBMITTED', by:'Yanti Prasetya', mine:true,
+      holder:r.answerer, ctx:'PENILAI_ASLI', at:fmt(CFG.today), note:t.trim(), answer:'', ansBy:'', ansAt:'' });
+    F.closeModal('obRejM'); document.getElementById('obrText').value='';
+    F.toast('Objection submitted against '+r.id+(r.rw?' through '+r.rw:'')+'.'); drawMine();
+  });
+
+  // ---------- answer + detail ----------
+  function byId(id){ return OBJ.filter(function(o){ return o.id===id; })[0]; }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('[data-ans]');
+    if (a) {
+      cur = byId(a.dataset.ans);
+      document.getElementById('obaKv').innerHTML =
+        '<div class="kv__k">Objection</div><div class="kv__v">'+cur.id+' · '+cur.sheet+'</div>'+
+        '<div class="kv__k">Type</div><div class="kv__v">'+tb(cur.type)+(cur.round?' <span class="mini">'+cur.round+'</span>':'')+'</div>'+
+        '<div class="kv__k">Raised by</div><div class="kv__v">'+cur.by+' · '+cur.at+'</div>';
+      document.getElementById('obaQuote').innerHTML = cur.note + '<div class="quote__m">submission_note — read-only</div>';
+      document.getElementById('obaText').value = '';
+      F.openModal('obAnsM'); if (window.lucide) lucide.createIcons(); return;
+    }
+    var d = e.target.closest('[data-det]');
+    if (d) {
+      var o = byId(d.dataset.det);
+      document.getElementById('obdKv').innerHTML =
+        '<div class="kv__k">Objection</div><div class="kv__v">'+o.id+'</div>'+
+        '<div class="kv__k">Sheet</div><div class="kv__v">'+o.sheet+'</div>'+
+        '<div class="kv__k">Type</div><div class="kv__v">'+tb(o.type)+'</div>'+
+        '<div class="kv__k">Approval round</div><div class="kv__v">'+(o.round || '<span class="mini">— null, as it must be for a score objection</span>')+'</div>'+
+        '<div class="kv__k">Via reopen window</div><div class="kv__v">'+(o.rw || '<span class="mini">— raised inside the normal window</span>')+'</div>'+
+        '<div class="kv__k">Status</div><div class="kv__v">'+sb(o.status)+'</div>'+
+        '<div class="kv__k">Raised by</div><div class="kv__v">'+o.by+' · '+o.at+'</div>'+
+        '<div class="kv__k">Active holder</div><div class="kv__v">'+o.holder+' <span class="hctx">'+o.ctx+'</span></div>';
+      document.getElementById('obdQuote').innerHTML = o.note + '<div class="quote__m">submission_note — read-only</div>';
+      document.getElementById('obdAnswer').innerHTML = o.answer
+        ? '<div class="quote" style="background:#F0FDF9;border-color:#A7F3D0">'+o.answer+'<div class="quote__m">answer_text · '+o.ansBy+' · '+o.ansAt+'</div></div>'
+        : '<div class="dl dl--warn">'+icon('hourglass')+'<div>Not answered yet — the case sits with '+o.holder+'.</div></div>';
+      F.openModal('obDetM'); if (window.lucide) lucide.createIcons(); return;
+    }
+    var w = e.target.closest('[data-rwd]');
+    if (w) {
+      var r = RW.filter(function(x){ return x.id===w.dataset.rwd; })[0];
+      document.getElementById('obRwdKv').innerHTML =
+        '<div class="kv__k">Window</div><div class="kv__v">'+r.id+'</div>'+
+        '<div class="kv__k">Employee &amp; sheet</div><div class="kv__v">'+r.emp+' · '+r.sheet+'</div>'+
+        '<div class="kv__k">Opened by</div><div class="kv__v">'+r.by+' · '+r.at+'</div>'+
+        '<div class="kv__k">New deadline</div><div class="kv__v">'+r.dl+' <span class="hctx">a full fresh term from opened_at, not the remainder</span></div>';
+      document.getElementById('obRwdReason').innerHTML = r.reason + '<div class="quote__m">reason — immutable, the window is never updated or deleted</div>';
+      F.openModal('obRwDetM'); if (window.lucide) lucide.createIcons();
+    }
+  });
+  document.getElementById('obaDo').addEventListener('click', function(){
+    var t = document.getElementById('obaText').value;
+    if (!validText(t)) { F.toast('An answer is required — 1–4000 characters, no angle brackets.','warn'); return; }
+    cur.answer = t.trim(); cur.status = 'ANSWERED'; cur.ansBy = 'Rina Amelia'; cur.ansAt = fmt(CFG.today);
+    F.closeModal('obAnsM'); F.toast('Answer saved — the objection is now ANSWERED.'); drawInbox(); drawMine();
+  });
+
+  // ---------- reopen ----------
+  function paintRwDeadline(){
+    var nd = plus(CFG.today, CFG.deadlineDays);
+    document.getElementById('obRwDl').value = fmt(nd);
+    document.getElementById('obRwDlHint').innerHTML = 'Derived, never sent: opened_at plus <code>objection_deadline_days</code> as returned by the settings response ('+CFG.deadlineDays+' days for this company) — a full new term, not the remainder of the old one.';
+  }
+  document.getElementById('obReopenBtn').addEventListener('click', function(){ paintRwDeadline(); F.openModal('obRwM'); });
+  document.getElementById('obRwDo').addEventListener('click', function(){
+    var s = document.querySelector('#obRwSheet .ctl__value').textContent.trim();
+    var r = document.getElementById('obRwReason').value.trim();
+    if (s === 'Select sheet') { F.toast('Pick the employee and sheet to reopen.','warn'); return; }
+    if (!r) { F.toast('A reason is required — the request is refused without one.','warn'); return; }
+    var nd = plus(CFG.today, CFG.deadlineDays);
+    RW.push({ id:'RW-'+String(RW.length+1).padStart(4,'0'), emp:s.split('— ')[1] || '—', sheet:s.split(' ')[0], by:'Hesti Wulandari', at:fmt(CFG.today), dl:fmt(nd), reason:r });
+    F.closeModal('obRwM'); document.getElementById('obRwReason').value='';
+    F.toast('Window reopened — a full new term until '+fmt(nd)+'.'); drawRw();
+  });
+
+  drawMine();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

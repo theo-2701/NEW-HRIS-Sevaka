@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Scheduler Index</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=2">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — Scheduler Index">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Scheduler</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Index</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Scheduler Index</h1>
+<p class="flow-sub">A pure read projection of the roster as a date × employee grid. There is no create, update or delete on this screen at all — every write to a roster lives in Scheduler Schedule.</p>
+</div>
+<div class="flow-head__actions">
+<a class="btn btn--secondary" href="time-scheduler-schedule.html">Go to Scheduler Schedule</a>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="note note--info"><i data-lucide="lock"></i><span>Read-only view. Every cell here is the resolved outcome of an assignment made elsewhere — an individual adjustment, a bulk assignment, or an approved shift swap.</span></div>
+
+<div class="fin-tbar" style="margin-top:16px">
+<div class="ctl ctl--select fin-tbar__sel" id="fltWeek"><span class="ctl__value">27 Jul – 02 Aug 2026</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="2026-07-27">27 Jul – 02 Aug 2026</div><div class="dropdown__opt" data-val="2026-08-03">03 – 09 Aug 2026</div></div>
+</div>
+<div class="ctl ctl--select fin-tbar__sel" id="fltSource"><span class="ctl__value">All sources</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All sources</div><div class="dropdown__opt" data-val="INDIVIDUAL">Individual adjustment</div><div class="dropdown__opt" data-val="BULK">Bulk assignment</div><div class="dropdown__opt" data-val="SWAP">Shift swap</div></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<span class="sec-head__note">An empty cell means no roster row exists for that person on that date — it is not an off day.</span>
+</div>
+
+<div class="subtabs" style="margin-top:18px">
+<span class="seg"><button type="button" class="seg__btn is-on" data-sub="grid">Week grid</button><button type="button" class="seg__btn" data-sub="rows">Roster rows</button></span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note">Same data, two readings — the grid shows coverage per day, the rows show one record per assignment.</span>
+</div>
+
+<div class="subpanel is-on" data-subpanel="grid">
+<div class="tm-roster" id="rosterGrid"></div>
+<div class="tm-key"><span class="tm-key__lbl">Key</span><span class="tm-key__items" id="shiftLegend"></span><button class="tm-key__info" type="button" id="legendBtn" title="What each cell means" aria-label="What each cell means"><i data-lucide="info"></i></button></div>
+</div>
+
+<div class="subpanel" data-subpanel="rows">
+<div class="dtable-wrap">
+<table class="dtable">
+<thead><tr><th>Date</th><th>Employee</th><th>Shift Pattern</th><th>Hours</th><th>Off Day</th><th>Source</th></tr></thead>
+<tbody id="rowsBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgRows"></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<div class="ovl" id="legendModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Reading the week grid</h3><p class="ovl__desc">Every cell is the resolved outcome of an assignment made in Scheduler Schedule.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div id="legendBody" style="display:flex;flex-direction:column;gap:14px"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-scheduler-index.js"></script>
+</body>
+</html>

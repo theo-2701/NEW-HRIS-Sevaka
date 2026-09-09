@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA Recruitment — Import Log Detail</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/recruitment.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Recruitment — Import Log Detail">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <a class="crumb" href="recruitment-import-logs.html">Job Listings / Import Logs</a>
+          <h1 class="rc-detail-title">Import log detail</h1>
+          <hr class="rc-rule">
+
+          <div class="rc-kv">
+            <div>
+              <div class="rc-kv__k">Import ID</div>
+              <div class="rc-kv__v" id="dvId">IMP-20260728-014</div>
+            </div>
+            <div>
+              <div class="rc-kv__k">Date</div>
+              <div class="rc-kv__v" id="dvDate">28 Jul 2026, 14:22</div>
+            </div>
+            <div>
+              <div class="rc-kv__k">Uploaded By</div>
+              <div class="rc-kv__v">
+                <span class="rc-uploader"><span class="flt-av" id="dvAv" style="background:#d97706">MT</span>
+                  <span class="rc-uploader__names"><span class="rc-uploader__name" id="dvBy">CP060 - Mitsui Tiga</span>
+                  <span class="rc-uploader__meta" id="dvMeta">Jakarta | IT Staff - SQA</span></span></span>
+              </div>
+            </div>
+            <div>
+              <div class="rc-kv__k">File name</div>
+              <div class="rc-kv__v" id="dvFile">job-listings-batch-3.csv<span class="rc-kv__filemeta" id="dvSize">42 KB</span></div>
+            </div>
+            <div>
+              <div class="rc-kv__k">Status</div>
+              <div class="rc-kv__v"><span class="logst" id="dvStatus"></span></div>
+            </div>
+          </div>
+
+          <hr class="rc-rule">
+
+          <!-- SUCCESS state -->
+          <div id="okBlock">
+            <div class="rc-detail-sub">Successful job listings import</div>
+            <div class="rc-detail-count">1 of 1 row</div>
+            <div class="dtable-wrap dtable-wrap--scroll">
+              <table class="dtable rc-wide-table" style="min-width:1700px">
+                <thead>
+                  <tr>
+                    <th>Job Position</th><th>Work Location</th><th>Organization</th><th>Employment Type</th>
+                    <th>Workplace</th><th>Headcount Needed</th><th>Salary Range (Min)</th><th>Job Description</th>
+                    <th>Requirement</th><th>Benefits</th><th>Education</th><th>Experience Level</th>
+                    <th>Minimum Experience</th><th>Gender</th><th>Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-strong">Senior Backend Engineer</td>
+                    <td>Jakarta HQ</td>
+                    <td>Engineering</td>
+                    <td>Permanent</td>
+                    <td>Hybrid</td>
+                    <td>2</td>
+                    <td>Rp 18.000.000</td>
+                    <td class="cell-dim">Design &amp; maintain core services</td>
+                    <td class="cell-dim">Go / Node.js, distributed systems</td>
+                    <td class="cell-dim">BPJS, THR, remote stipend</td>
+                    <td>S1 Informatika</td>
+                    <td>Senior</td>
+                    <td>5 years</td>
+                    <td>Any</td>
+                    <td>Min: 27<br>Max: 40</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="rc-tfoot">
+              <div class="rc-tfoot__left">
+                <span>Showing</span>
+                <button class="rc-tfoot__select" type="button">10 <i data-lucide="chevron-down"></i></button>
+                <span>from 1 row</span>
+              </div>
+              <div class="rc-tfoot__pages">
+                <button class="rc-pg" aria-label="prev" disabled><i data-lucide="chevron-left"></i></button>
+                <button class="rc-pg" aria-label="first" disabled><i data-lucide="chevrons-left"></i></button>
+                <span class="rc-pg-cur">1</span>
+                <button class="rc-pg" aria-label="next" disabled><i data-lucide="chevron-right"></i></button>
+                <button class="rc-pg" aria-label="last" disabled><i data-lucide="chevrons-right"></i></button>
+                <span style="margin-left:6px">from 1</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAILED state -->
+          <div id="errBlock" style="display:none">
+            <div class="rc-errlog">
+              <div class="rc-errlog__head">Error Log</div>
+              <div class="rc-errlog__body">
+                <ul>
+                  <li>Row 1: branch "Pusat" not found</li>
+                  <li>Row 1: organization "Head Office" not found</li>
+                  <li>Row 1: employment status "Full Time" not found</li>
+                  <li>Row 2: branch "Pusat" not found</li>
+                  <li>Row 2: organization "Technology Division" not found</li>
+                  <li>Row 2: employment type "Full Time" not found</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.RC_PAGE = { active: 'jobs' };</script>
+<script src="js/recruitment-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var status = (q.get('status') || 'completed').toLowerCase();
+    var id = q.get('id');
+    var failed = status === 'failed';
+
+    // sample records keyed to the logs list, so the detail matches the row clicked
+    var RECS = {
+      'IMP-20260728-014': { date: '28 Jul 2026, 14:22', by: 'CP060 - Mitsui Tiga', meta: 'Jakarta | IT Staff - SQA', color: '#d97706', ini: 'MT', file: 'job-listings-batch-3.csv', size: '42 KB' },
+      'IMP-20260726-009': { date: '26 Jul 2026, 09:41', by: 'CP060 - Mitsui Dua',  meta: 'Jakarta | IT Staff - SQA', color: '#0e9488', ini: 'MD', file: 'q3-openings.csv',          size: '61 KB' },
+      'IMP-20260722-002': { date: '22 Jul 2026, 16:08', by: 'CP060 - Mitsui Satu', meta: 'Jakarta | IT Staff - SQA', color: '#0284c7', ini: 'MS', file: 'engineering-roles.csv',    size: '38 KB' }
+    };
+    var r = (id && RECS[id]) || RECS['IMP-20260728-014'];
+    if (id) document.getElementById('dvId').textContent = id;
+    document.getElementById('dvDate').textContent = r.date;
+    document.getElementById('dvBy').textContent = r.by;
+    document.getElementById('dvMeta').textContent = r.meta;
+    var av = document.getElementById('dvAv'); av.textContent = r.ini; av.style.background = r.color;
+    document.getElementById('dvFile').innerHTML = r.file + '<span class="rc-kv__filemeta">' + r.size + '</span>';
+
+    var st = document.getElementById('dvStatus');
+    st.textContent = failed ? 'Failed' : 'Completed';
+    st.classList.add(failed ? 'logst--fail' : 'logst--done');
+
+    document.getElementById('okBlock').style.display = failed ? 'none' : '';
+    document.getElementById('errBlock').style.display = failed ? '' : 'none';
+
+    if (window.lucide) window.lucide.createIcons();
+  })();
+</script>
+</body>
+</html>

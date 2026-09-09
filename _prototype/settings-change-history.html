@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Settings Change History</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/document.css?v=2">
+<link rel="stylesheet" href="css/daterange.css">
+<link rel="stylesheet" href="css/settings.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Settings — Change History">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<a class="crumbs__item crumbs__item--link" href="settings-configuration.html">Settings</a>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<a class="crumbs__item crumbs__item--link is-hidden" id="crumbMenu" href="settings-configuration.html">Time</a>
+<span class="crumbs__sep is-hidden" id="crumbMenuSep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Change History</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Change History</h1>
+<p class="flow-sub">One read-only grid across every company setting, newest first — not a history per setting. The question people actually ask during a dispute is <em>what changed last month, and who</em>, so the toolbar offers four filter axes instead of a tab per menu. This screen is the control that remained after second-person approval was dropped from setting changes.</p>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="st-as">
+<span class="st-as__l">Viewing as</span>
+<div class="ctl ctl--select" id="asRole"><span class="ctl__value">Hesti Wulandari — ROLE_HR_MANAGER</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="asRoleDd"></div>
+</div>
+<span class="st-as__m" id="asMsg"></span>
+</div>
+
+<div id="gate" class="is-hidden">
+<div class="st-gate">
+<span class="st-gate__i"><i data-lucide="shield-x"></i></span>
+<span class="st-gate__t">Refused at the gate</span>
+<span class="st-gate__d">Exactly two roles read this grid: <strong>ROLE_SUPER_ADMIN</strong> and <strong>ROLE_HR_MANAGER</strong>. A role that holds R‡ read over its own module's settings is still refused here — the module read right <em>stops</em> at this screen, because a version row carries the identity of whoever made the change while a running value does not. Zero queries run; the refusal is written down as a security event.</span>
+<span class="st-gate__c">403 FORBIDDEN · Peran tidak berwenang membaca riwayat perubahan setelan</span>
+</div>
+</div>
+
+<div id="grid">
+<div class="doc-note is-hidden" id="carried" style="margin-bottom:16px">
+<div class="doc-note__h"><i data-lucide="link"></i>Carried in from a settings row</div>
+<p>The <strong>Setting</strong> filter arrived pre-filled from the History link on a settings grid row — <code id="carriedCode"></code>. Opening the history of one row does not open a second menu. Pressing an actor's name on a row, by contrast, does <em>not</em> set the actor filter: the answer never carries an employee_id, so there is nothing to carry.</p>
+</div>
+
+<div class="doc-tbar">
+<button class="btn btn--secondary" data-filter-open="histFilter">Filter</button>
+<span class="doc-fsum" data-filter-sum="histFilter"></span>
+<div class="doc-tbar__sp"></div>
+</div>
+
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Setup Code</th><th>Menu</th><th class="ta-r">Ver.</th><th>Before</th><th>After</th><th>Actor</th><th>Time</th><th>Note</th></tr></thead>
+<tbody id="histBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="histPg"></div>
+
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+<div class="note note--info"><i data-lucide="info"></i><span>The <strong>Menu</strong> column is derived on this screen from the <code>setup_code</code> prefix — no server field carries it. <strong>Before</strong> is empty exactly on version 1 and is computed by the server, never by the client. <strong>Actor</strong> has three shapes, and they are told apart by the <em>pair</em> <code>employee_id</code>+<code>nik</code>, not by <code>employee_id</code> alone: testing the id by itself would let an anonymised row pass as a system row — the opposite conclusion.</span></div>
+<div class="note note--info"><i data-lucide="eye"></i><span>Two things are always enforced by the server and can never be sent from here: there is <strong>no locked-row filter</strong> — platform rows stay visible to the two top roles, because what is shown is the platform changing itself (accountability), not a value they may set — and <code>employee_id</code> is stripped from every answer.</span></div>
+<div class="note note--warn"><i data-lucide="alert-triangle"></i><span><strong>No buttons, without exception</strong>, and no toast: this menu has no write door at all. Pagination is mandatory from birth. The page opens at the contract's default size of <strong>25</strong> (the contract's ceiling is 100). Sorting is <code>created_at DESC</code> by default, itself a deliberate deviation from the ascending house rule, and a column outside the sort whitelist is refused 422 <em>and</em> recorded as a parameter-injection attempt.</span></div>
+<div class="note note--warn"><i data-lucide="user-search"></i><span>The <strong>Actor</strong> filter is fed by the employee picker owned by employee-service — not a settings endpoint, and not claimed to exist by the settings documents. It is optional, so it does not block anything, but its chain is not verified live either.</span></div>
+</div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ===== A3 filter — four axes ===== -->
+<div class="ovl" id="histFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter change history</h3><p class="ovl__desc">Every criterion is optional — an empty request means the whole history, first page.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div class="fld">
+<label class="fld__label">Module — prefixes</label>
+<div class="st-mods" id="fMods"></div>
+<span class="fld__hint">Matched as <code>prefix%</code> joined with OR. Sixteen members at most.</span>
+</div>
+<div class="st-two">
+<div class="fld">
+<label class="fld__label">Setting</label>
+<div class="ctl ctl--select" id="fCode"><span class="ctl__value">All settings</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fCodeDd"></div>
+</div>
+<span class="fld__hint">Full match. This is the field a History link pre-fills.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Actor class</label>
+<div class="ctl ctl--select" id="fSys"><span class="ctl__value">Everything</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">Everything</div><div class="dropdown__opt" data-val="true">System rows only</div><div class="dropdown__opt" data-val="false">Drop system rows</div></div>
+</div>
+<span class="fld__hint">Three states, so a three-value select — not a binary checkbox. Dropping system rows <strong>keeps</strong> anonymised rows.</span>
+</div>
+</div>
+<div class="st-two">
+<div class="fld">
+<label class="fld__label">Actor</label>
+<div class="ctl ctl--select" id="fActor"><span class="ctl__value">Anyone</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fActorDd"></div>
+</div>
+<span class="fld__hint">Employee picker owned by employee-service — a presentation-layer dependency, named here rather than assumed.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Date range</label>
+<div class="rng" id="fRange" data-placeholder="All dates"><button class="rng__ctl" type="button"><span class="rng__val is-empty">All dates</span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div>
+<span class="fld__hint">Range over <code>created_at</code>; the end date may not precede the start date.</span>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-filter-reset="histFilter">Reset</button>
+<button class="btn btn--primary" id="fApply">Apply filter</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { activeGroup: 'settings', activeItem: 'Change History' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/settings-data.js"></script>
+<script src="js/settings-change-history.js"></script>
+</body>
+</html>

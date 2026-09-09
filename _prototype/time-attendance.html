@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Attendance</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=1">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — Attendance">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Attendance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Attendance</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Attendance</h1>
+<p class="flow-sub">A tap is evidence: append-only, with no edit and no delete anywhere on this screen. The daily summary is a machine verdict with zero write endpoints at all. The one lawful way to move a day's assessment is a correction request — and its author can never be its approver.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary is-hidden" id="newCorrBtn">New correction</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="attTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="punch">Punch</button>
+<button class="tabnav__tab" type="button" data-tab="history">History &amp; Summary<span class="tabnav__count" id="cntDay">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="correction">Correction<span class="tabnav__count" id="cntCor">0</span></button>
+</div>
+<div class="fin-tbar" style="margin-top:14px;gap:8px;align-items:center">
+<span class="cell-dim" style="font-size:12px">Dev only — signed in as</span>
+<div class="fld" style="max-width:236px;flex:0 0 236px">
+<div class="ctl ctl--select ctl--sm" id="viewAs"><span class="ctl__value">Rina Wulandari — EMPLOYEE</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="viewAsDd"></div>
+</div>
+</div>
+<div class="fin-tbar__sp"></div>
+</div>
+<div class="note note--info" style="margin:10px 0 22px" id="essBanner"><i data-lucide="user"></i><span id="essTxt"></span></div>
+
+<!-- ===== A3 — punch console ===== -->
+<div class="tabpanel is-on" data-tabpanel="punch">
+<div class="tm-punch">
+<div class="tm-punch__card">
+<span class="tm-punch__lbl">Device clock</span>
+<span class="tm-punch__clock" id="pnClock">00:00:00</span>
+<span class="tm-punch__date" id="pnDate">—</span>
+<button class="tm-punch__btn" id="pnBtn">TAP IN</button>
+<span class="tm-punch__st" id="pnState">No tap recorded today.</span>
+<div class="tm-selfie" id="pnSelfieFld">
+<div class="tm-selfie__row">
+<button class="btn btn--secondary tm-selfie__btn" type="button" id="pnSelfieBtn"><i data-lucide="camera"></i><span id="pnSelfieBtnT">Take selfie</span></button>
+<span class="tm-selfie__thumb is-hidden" id="pnSelfieThumb"></span>
+<span class="tm-selfie__st" id="pnSelfieSt"></span>
+</div>
+<span class="fld__hint" style="color:rgba(255,255,255,.82)">Required by this capture channel. Live camera only — no file picker, so a photo out of the gallery can never stand in for the person tapping. Without a frame the tap is refused 422.</span>
+</div>
+</div>
+<div class="tm-punch__side">
+<div class="note note--info"><i data-lucide="info"></i><span>Which button you see is decided by the state of the day, not by a choice: no <code>IN</code> yet → Tap in; an <code>IN</code> with no <code>OUT</code> → Tap out. The timestamp, the coordinates, the accuracy and the device details are all captured in the background — a future time is refused, and the timezone sent is the employee's, never the server's.</span></div>
+<div class="note note--info" id="pnChannel"><i data-lucide="map-pin"></i><span></span></div>
+<div class="note note--info"><i data-lucide="key-round"></i><span>An <code>Idempotency-Key</code> is generated per tap <em>attempt</em> and reused verbatim on retry — a slow connection and a second press never produce a second row. It is scoped to (employee, key), not globally.</span></div>
+<div class="note note--info"><i data-lucide="map-pin"></i><span>If the device refuses location permission, both coordinates stay empty and <strong>the tap is still saved</strong>. Whether it was inside the radius is computed by the server — never accepted from the client — and an empty verdict means <em>could not be evaluated</em>, not a violation.</span></div>
+<div class="sec-head" style="margin-top:4px"><span class="sec-head__t">Today's taps</span></div>
+<div class="dtable-wrap">
+<table class="dtable">
+<thead><tr><th>Type</th><th>Tap Time</th><th>Work Date</th><th>Radius</th><th>Flags</th></tr></thead>
+<tbody id="pnBody"></tbody>
+</table>
+</div>
+<p class="sec-head__note">The work date is derived by the server from the roster — a shift crossing midnight lands on a different day from the calendar date of the tap.</p>
+</div>
+</div>
+</div>
+
+<!-- ===== C2 — history & daily summary ===== -->
+<div class="tabpanel" data-tabpanel="history">
+<div class="subtabs">
+<span class="seg"><button type="button" class="seg__btn is-on" data-sub="daily">Daily summary</button><button type="button" class="seg__btn" data-sub="taps">Tap history</button></span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note">Both tables are 100 % read-only — the correction sub-tab is the only lawful way to shift a verdict.</span>
+</div>
+<div class="subpanel is-on" data-subpanel="daily">
+<div class="fin-tbar">
+<button class="btn btn--secondary" data-filter-open="fltMDaily">Filter</button>
+<span class="cell-dim" data-filter-sum="fltMDaily" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltDayName" placeholder="Search employee"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Date</th><th>Employee</th><th>Day Type</th><th>Arrangement</th><th>Expected (snapshot)</th><th class="ta-r">Tolerance</th><th>Status</th><th class="ta-r">Worked</th><th class="ta-r">Late</th><th class="ta-r">Undertime</th><th>Excused</th></tr></thead>
+<tbody id="dayBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgDay"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>Arrangement, expected hours and tolerance are <strong>frozen on that date</strong>. The dispute "what time was I judged late against?" has to be answered with the historic value, never with today's rule.</span></div>
+</div>
+<div class="subpanel" data-subpanel="taps">
+<div class="note note--warn is-hidden" id="tapGate"><i data-lucide="shield"></i><span></span></div>
+<div id="tapWrap">
+<div class="fin-tbar">
+<button class="btn btn--secondary" data-filter-open="fltMTaps">Filter</button>
+<span class="cell-dim" data-filter-sum="fltMTaps" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltTapName" placeholder="Search employee"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Tap Time</th><th>Employee</th><th>Type</th><th>Work Date</th><th>Radius</th><th>Flags</th></tr></thead>
+<tbody id="tapBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgTap"></div>
+</div>
+</div>
+</div>
+
+<!-- ===== D2 — correction ===== -->
+<div class="tabpanel" data-tabpanel="correction">
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltCStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="PENDING_APPROVAL">Pending approval</div><div class="dropdown__opt" data-val="APPROVED">Approved</div><div class="dropdown__opt" data-val="REJECTED">Rejected</div><div class="dropdown__opt" data-val="CANCELLED">Cancelled</div></div>
+</div>
+<div class="ctl ctl--select fin-tbar__sel" id="fltCReason"><span class="ctl__value">All reasons</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All reasons</div><div class="dropdown__opt" data-val="FORGOT_PUNCH">Forgot to punch</div><div class="dropdown__opt" data-val="APP_ERROR">App or device error</div><div class="dropdown__opt" data-val="OFFICIAL_TRAVEL">Official travel</div><div class="dropdown__opt" data-val="OTHER">Other</div></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltCName" placeholder="Search filer"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Correction</th><th>Filed by</th><th>Corrected Day</th><th>Day owner</th><th>Reason Type</th><th>Proposed In</th><th>Proposed Out</th><th>Status</th><th></th></tr></thead>
+<tbody id="corBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgCor"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>There is no Edit here on purpose — the reason is immutable once submitted, because the approver decides on the sentence they read. The lawful way to change a pending correction is <strong>withdraw and file again</strong>: two honest traces instead of one edited one. Withdrawing is not a delete either — the row stays, its status becomes Cancelled.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ D3 — correction form ============ -->
+<div class="ovl" id="corForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New attendance correction</h3><p class="ovl__desc">The corrected day stays exactly as it is while this waits — you remain marked late or absent until a decision lands.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="cfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Filed by</label>
+<div class="ctl ctl--ro"><input type="text" id="cfFiler" readonly tabindex="-1"></div>
+<span class="fld__hint">Read from the token, never typed. The filer and the owner of the day may be two different people — the pair is kept apart precisely so the separation of duties can be audited.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Day to correct <span class="req">*</span></label>
+<div class="ctl ctl--select" id="cfDay"><span class="ctl__value" style="color:var(--fg-4)">Select day</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="cfDayDd"></div>
+</div>
+<span class="fld__hint">Days that already carry a pending correction drop out of this list until that one is decided or withdrawn.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Correction reason <span class="req">*</span></label>
+<div class="ctl ctl--select" id="cfReason"><span class="ctl__value" style="color:var(--fg-4)">Select reason</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="FORGOT_PUNCH">Forgot to punch</div><div class="dropdown__opt" data-val="APP_ERROR">App or device error</div><div class="dropdown__opt" data-val="OFFICIAL_TRAVEL">Official travel</div><div class="dropdown__opt" data-val="OTHER">Other</div></div>
+</div>
+<span class="fld__hint">Locked once submitted.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Reason note <span class="req" id="cfNoteStar" style="display:none">*</span></label>
+<div class="ctl ctl--area"><textarea id="cfNote" rows="3" placeholder="Input text here"></textarea></div>
+<span class="fld__hint">Mandatory only when the reason is Other; optional for the three named reasons.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Proposed clock-in</label>
+<div class="ctl"><input type="time" id="cfIn"></div>
+</div>
+<div class="fld">
+<label class="fld__label">Proposed clock-out</label>
+<div class="ctl"><input type="time" id="cfOut"></div>
+</div>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span>At least one of the two times must be filled — a correction that proposes nothing corrects nothing and is refused.</span></div>
+<div class="tm-derived" id="cfDerived"></div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="cfSave">Submit correction</button>
+</div>
+</div>
+</div>
+
+<!-- ============ D5 — correction decision ============ -->
+<div class="ovl" id="corDecision">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="cdTitle">Approve correction</h3><p class="ovl__desc" id="cdDesc">Separation of duties — a correction can never be approved by the person who filed it.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="cdKv"></div>
+<div class="fld">
+<label class="fld__label">Decision note</label>
+<div class="ctl ctl--area"><textarea id="cdNote" rows="3" placeholder="Input text here"></textarea></div>
+<span class="fld__hint">Optional — it accompanies the decision to the workflow engine rather than being stored as a column here.</span>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="cdGo">Approve</button>
+</div>
+</div>
+</div>
+
+<!-- ============ correction detail ============ -->
+<div class="ovl" id="corDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Correction detail</h3><p class="ovl__desc">Read-only. There is no Edit: the reason is immutable once submitted.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="cvKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ withdraw correction ============ -->
+<div class="ovl" id="corWithdraw">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Withdraw this correction?</h3><p class="ovl__desc">Only while it is still pending. The row stays in the record with a Cancelled status — this is not a delete.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="cwKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep it</button>
+<button class="btn btn--danger" id="cwConfirm">Withdraw correction</button>
+</div>
+</div>
+</div>
+
+<!-- ============ punch detail ============ -->
+<div class="ovl" id="punchSaved">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Tap recorded</h3><p class="ovl__desc">Confirmation only — this screen never shows the day's verdict; the recompute runs outside the tap transaction.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="psKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ selfie capture ============ -->
+<div class="ovl" id="selfieCam">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Take selfie</h3><p class="ovl__desc">Live camera only. The frame is captured here and uploaded with the tap — nothing is read from the device gallery.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="tm-cam"><video id="scVideo" autoplay playsinline muted></video><div class="tm-cam__err" id="scErr"></div></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--secondary is-hidden" id="scSim">Use simulated frame</button>
+<button class="btn btn--primary" id="scShoot">Capture</button>
+</div>
+</div>
+</div>
+
+<div class="ovl" id="fltMDaily">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter daily summary</h3><p class="ovl__desc">Only the fields the search contract accepts.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="item__grid"><div class="fld"><div class="ctl ctl--select" id="fltStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="PRESENT">Present</div><div class="dropdown__opt" data-val="LATE">Late</div><div class="dropdown__opt" data-val="INCOMPLETE">Incomplete</div><div class="dropdown__opt" data-val="ABSENT">Absent</div><div class="dropdown__opt" data-val="ON_LEAVE">On leave</div><div class="dropdown__opt" data-val="SICK">Sick</div><div class="dropdown__opt" data-val="NOT_SCHEDULED">Not scheduled</div></div>
+</div></div><div class="fld"><div class="ctl ctl--select" id="fltDayType"><span class="ctl__value">All day types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All day types</div><div class="dropdown__opt" data-val="WORKDAY">Workday</div><div class="dropdown__opt" data-val="WEEKLY_REST">Weekly rest</div><div class="dropdown__opt" data-val="PUBLIC_HOLIDAY">Public holiday</div></div>
+</div></div></div>
+<div class="item__grid"><div class="fld"><div class="ctl ctl--select" id="fltExcused"><span class="ctl__value">Excused or not</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">Excused or not</div><div class="dropdown__opt" data-val="YES">Excused only</div><div class="dropdown__opt" data-val="NO">Not excused</div></div>
+</div></div><div></div></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--primary" data-close>Done</button></div>
+</div>
+</div>
+
+<div class="ovl" id="fltMTaps">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter tap history</h3><p class="ovl__desc">Only the fields the search contract accepts.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="item__grid"><div class="fld"><div class="ctl ctl--select" id="fltPType"><span class="ctl__value">In and out</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">In and out</div><div class="dropdown__opt" data-val="IN">Tap in</div><div class="dropdown__opt" data-val="OUT">Tap out</div></div>
+</div></div><div class="fld"><div class="ctl ctl--select" id="fltGeo"><span class="ctl__value">Any radius verdict</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">Any radius verdict</div><div class="dropdown__opt" data-val="IN">Inside radius</div><div class="dropdown__opt" data-val="OUT">Outside radius</div><div class="dropdown__opt" data-val="NULL">Could not be evaluated</div></div>
+</div></div></div>
+<div class="item__grid"><div class="fld"><div class="ctl ctl--select" id="fltMock"><span class="ctl__value">Any mock-location flag</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">Any mock-location flag</div><div class="dropdown__opt" data-val="YES">Suspected only</div><div class="dropdown__opt" data-val="NO">Not suspected</div></div>
+</div></div><div></div></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--primary" data-close>Done</button></div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-attendance.js"></script>
+</body>
+</html>

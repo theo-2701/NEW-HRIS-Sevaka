@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Benefit Reimbursement</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=8">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Benefit Reimbursement">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Finance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" id="crumbNow" aria-current="page">Benefit Reimbursement</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Benefit Reimbursement</h1>
+<p class="flow-sub">Reimbursement claims for medical and other benefit expenses. The entitlement is reserved at submission (<code>reservation_state=HELD</code>) and consumed when the approval process completes. Medical attachments are access-restricted (§18.3).</p>
+</div>
+<div class="flow-head__actions"><button class="btn btn--primary" id="newClaimBtn">New claim</button></div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="brTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="all">All Request<span class="tabnav__count" id="cntClaims">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="balance">Balance Overview</button>
+<button class="tabnav__tab" type="button" data-tab="ledger">Transaction History<span class="tabnav__count" id="cntLedger">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="disbursement">Disbursement History<span class="tabnav__count" id="cntDisb">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="bens">Beneficiaries<span class="tabnav__count" id="cntBens">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="settings">Settings</button>
+</div>
+
+<!-- ===== BR-A2 / BR-B2 — company-wide claim grid, row scope forced by the server ===== -->
+<div class="tabpanel is-on" data-tabpanel="all">
+<div class="fin-tbar">
+<button class="btn btn--secondary" data-filter-open="fltMReq">Filter</button>
+<span class="cell-dim" data-filter-sum="fltMReq" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltQ" placeholder="Request no. or employee name"></div>
+<button class="btn btn--secondary" id="expBtn">Export</button>
+</div>
+
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Employee</th><th>Benefit Type</th><th class="ta-r">Amount</th><th>Status</th><th>Reservation</th><th>Submitted</th><th></th></tr></thead>
+<tbody id="claimBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgAll"></div>
+<p class="fld__hint" style="margin-top:10px">One grid, one endpoint (<code>POST /benefit-claims/search</code>). The row scope is forced by the server from the caller's role — a department manager sees their department and decides on <code>SUBMITTED</code> rows, a finance officer reads the whole company. The <strong>DISPUTE HOLD</strong> badge appears when an active hold targets the claim; a held row cannot be decided until the hold is released.</p>
+</div>
+
+<!-- ===== BR-S1 — balance overview ===== -->
+<div class="tabpanel" data-tabpanel="balance">
+<div class="note note--warn"><i data-lucide="triangle-alert"></i><span>While a grace period is open two periods carry a live balance at once — pick the period to read one set of figures at a time; a single merged figure would mislead. Remaining is <strong>derived</strong> (entitled − used − reserved), never stored.</span></div>
+<div id="balanceWrap" style="display:flex;flex-direction:column;gap:18px;margin-top:18px"></div>
+</div>
+
+<!-- ===== BR-S2 — transaction history (ledger) ===== -->
+<div class="tabpanel" data-tabpanel="ledger">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze">
+<table class="dtable">
+<thead><tr><th>Entry Type</th><th>Claim</th><th>Benefit Type</th><th class="ta-r">Amount</th><th>Recorded At</th><th class="ta-r">Remaining After (derived)</th></tr></thead>
+<tbody id="ledgerBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgLedger"></div>
+<p class="fld__hint" style="margin-top:10px">Remaining-after is <strong>derived</strong> client-side from row order — <code>log_benefit_balance_ledger</code> stores no balance column. <code>entry_type</code> carries ten values (GRANT, PRORATE_ADJUSTMENT, GRADE_ADJUSTMENT, EXIT_ADJUSTMENT, RESERVATION, RESERVATION_RELEASE, USAGE, USAGE_REVERSAL, FORFEITURE, NEGATIVE_FORFEITURE); the seeded scenario shows only a few. A USAGE row does not move the remaining figure — the reservation is converted, not deducted twice.</p>
+</div>
+
+<!-- ===== BR-S3 — disbursement history ===== -->
+<div class="tabpanel" data-tabpanel="disbursement">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Employee</th><th class="ta-r">Amount</th><th>Payment Method</th><th>Mark Source</th><th>Marked At</th><th>Actual Paid</th></tr></thead>
+<tbody id="disbBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgDisb"></div>
+<p class="fld__hint" style="margin-top:10px">A sub-set of the Disbursement &amp; Receivables grid filtered to <code>payable_type=BENEFIT_CLAIM</code> — one shared search endpoint, not a second table. <strong>MANUAL</strong> means a finance officer marked the payment; <strong>CLIENT_SYSTEM</strong> means the mark arrived from the payment/payroll machine gate. The employee-scoped version of this list stays empty in self-service (PROB-FRONTEND-016) — <code>ROLE_EMPLOYEE</code> is granted none of the twelve disbursement endpoints.</p>
+</div>
+
+<!-- ===== BR-A6 (proposed frame) — beneficiaries of the signed-in employee ===== -->
+<div class="tabpanel" data-tabpanel="bens">
+<div class="sec-head"><span class="sec-head__t">My beneficiaries</span><span class="sec-head__sp"></span><button class="btn btn--secondary" id="addBenBtn">Add beneficiary</button></div>
+<div class="dtable-wrap" style="margin-top:12px">
+<table class="dtable">
+<thead><tr><th>Name</th><th>Relationship</th><th>Slot Consumed</th><th>Status</th><th></th></tr></thead>
+<tbody id="benBody"></tbody>
+</table>
+</div>
+<p class="fld__hint" style="margin-top:10px">Family members you may claim for, valid per period (<code>emp_benefit_beneficiary</code>). Each row points at a relative already registered on your <a href="employee-profile.html">employee profile</a> (<code>mst_relative</code>) — Finance keeps the pointer and the frozen relationship, never the family data itself, so a relative missing here must be added on the profile first. A row can only be deactivated — never hard-deleted — and a relationship outside the company whitelist is refused with <strong>422 FIN_BENEFICIARY_NOT_LISTED</strong>.</p>
+<p class="fld__hint" style="margin-top:8px"><strong>Re-activating an inactive row:</strong> there is no employee-side path, and none was invented. <code>PATCH /benefit-beneficiaries/{id}</code> lets <code>ROLE_EMPLOYEE†</code> set <code>is_active=false</code> <em>only</em> (UIC §3.3); the same endpoint grants “koreksi” — including <code>is_active=true</code>, which <code>log_benefit_beneficiary_history.changed_field</code> records — to <code>ROLE_FINANCE_OFFICER</code> / <code>ROLE_SUPER_ADMIN</code>. Re-adding the relative is <strong>not</strong> an alternative either: <code>uq_emp_benefit_beneficiary_employee_id_period_id_relative_id</code> allows one row per relative per period, so a second <code>POST</code> collides. An inactive row therefore shows a disabled action for you — <strong>ask a finance officer to correct it</strong>, or wait for the next period, where a fresh row may be registered. Endpoints 2/4 carry <strong>no frame in the FSD screen map</strong> — recorded as a requested document change (proposed <code>BR-A6</code>), not improvised elsewhere.</p>
+</div>
+
+<!-- ===== BR-C2 / BR-S4 / BR-S5 — settings (cross-reference to FT1 master data) ===== -->
+<div class="tabpanel" data-tabpanel="settings">
+<div class="subtabs" id="setTabs">
+<span class="seg">
+<button class="seg__btn is-on" type="button" data-sub="types"><i data-lucide="list"></i>Benefit Type</button>
+<button class="seg__btn" type="button" data-sub="ent"><i data-lucide="table-2"></i>Entitlement per Grade</button>
+<button class="seg__btn" type="button" data-sub="rel"><i data-lucide="users"></i>Family Relationship Whitelist</button>
+</span>
+<span class="subtabs__sp"></span>
+<button class="btn btn--secondary" id="newTypeBtn">New benefit type</button>
+</div>
+
+<div class="subpanel is-on" data-subpanel="types">
+<div class="dtable-wrap dtable-wrap--scroll">
+<table class="dtable">
+<thead><tr><th>Benefit Type</th><th>Requires Receipt</th><th>Allows Family Claim</th><th>Health Data</th><th>Status</th><th></th></tr></thead>
+<tbody id="typeBody"></tbody>
+</table>
+</div>
+<p class="fld__hint" style="margin-top:10px"><code>mst_benefit_type</code>. Health Data = <code>contains_health_data</code> — it locks who may open attachments on claims of this type (§18.3); changing it demands a reason that is written to <code>log_benefit_type_history</code>. Removal is a soft delete, never a hard one.</p>
+</div>
+
+<div class="subpanel" data-subpanel="ent">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze">
+<table class="dtable">
+<thead><tr><th>Job Grade</th><th>Benefit Type</th><th class="ta-r">Annual Amount</th></tr></thead>
+<tbody id="entBody"></tbody>
+</table>
+</div>
+<p class="fld__hint" style="margin-top:10px"><code>mst_benefit_entitlement</code> holds only benefit type × job grade × annual amount — the matrix is <strong>not</strong> tied to a period; a period plus this matrix produces <code>emp_benefit_balance</code>. Per-employee exceptions (<code>mst_benefit_entitlement_exception</code>) have no screen anywhere by design — read access is denied even to the employee the row belongs to.</p>
+</div>
+
+<div class="subpanel" data-subpanel="rel">
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze">
+<table class="dtable">
+<thead><tr><th>Relationship Type</th><th>Claimable</th><th>Enum Source</th></tr></thead>
+<tbody id="relBody"></tbody>
+</table>
+</div>
+<p class="fld__hint" style="margin-top:10px">This screen only marks which relationships may be claimed for (<code>is_eligible</code>) — it does not define the <code>relationship_type</code> enum, which belongs to employee-profile and is read as an anchor. Deactivating a relationship never voids an already-approved claim, because each claim freezes <code>beneficiary_relationship_snapshot</code> at submission.</p>
+</div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ BR-A3 detail / BR-B3 decision ============ -->
+<div class="ovl" id="claimDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="cdTitle">Claim detail</h3><p class="ovl__desc" id="cdDesc">Receipts are read-only for the approver.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="cdKv"></div>
+<div class="note note--warn" id="cdWarn" style="display:none"><i data-lucide="triangle-alert"></i><span id="cdWarnTxt"></span></div>
+<div class="note note--info" id="cdHold" style="display:none"><i data-lucide="lock"></i><span><strong>Dispute hold is active on this claim.</strong> No decision may be taken until a finance officer releases the hold in Finance Security — the Approve action stays disabled.</span></div>
+<div>
+<div class="sumbox__head" style="padding-left:0"><i data-lucide="receipt"></i>Receipts</div>
+<div class="dtable-wrap" style="margin-top:6px">
+<table class="dtable">
+<thead><tr><th>Expense Date</th><th>Beneficiary</th><th>Receipt No.</th><th class="ta-r">Amount</th><th class="ta-c">Attachment</th></tr></thead>
+<tbody id="cdItems"></tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="ovl__foot" id="cdFoot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ BR-B4 — reject claim (own modal; the reason is never an inline reveal) ============ -->
+<div class="ovl" id="claimReject">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="crTitle">Reject claim</h3><p class="ovl__desc">The reason is written with the decision and shown to the applicant. The claim is not deleted — REJECTED is a status and the reservation is released.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="crKv"></div>
+<div class="note note--warn" id="crWarn" style="display:none"><i data-lucide="triangle-alert"></i><span id="crWarnTxt"></span></div>
+<div class="fld">
+<label class="fld__label">Rejection reason <span class="req">*</span></label>
+<div class="ctl ctl--select" id="crReason"><span class="ctl__value" style="color:var(--fg-4)">Select reason</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="crReasonDd"></div>
+</div>
+<span class="fld__hint"><code>reason_id</code> — a foreign key to <code>mst_rejection_reason</code>, mandatory on every rejection.</span>
+</div>
+<div class="fld" id="crNoteWrap">
+<label class="fld__label" id="crNoteLbl">Note <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+<div class="ctl ctl--area"><textarea id="crNote" rows="3" maxlength="500" placeholder="Recorded with the decision"></textarea></div>
+<span class="fld__hint">Medical terms and diagnoses are forbidden here — the server filters them.</span>
+</div>
+<label class="fchk" id="crAckWrap" style="display:none"><input type="checkbox" id="crAck"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">I have read the similarity warning above.</span></label>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="crBack">Back to claim</button>
+<button class="btn btn--danger" id="crConfirm" disabled>Reject claim</button>
+</div>
+</div>
+</div>
+
+<!-- ============ BR-C3 / BR-D3 — benefit type form ============ -->
+<div class="ovl" id="typeForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="tfTitle">New benefit type</h3><p class="ovl__desc">Flags drive claim validation: receipt requirement, family eligibility and health-data handling.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="typeFormBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="tfName" placeholder="Input text here" maxlength="150"></div>
+<span class="fld__hint">2–150 characters, unique among active rows.</span>
+</div>
+<div class="fin-toggle">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Requires receipt</div><div class="fin-toggle__d">Receipt number and attachment become mandatory on every claim item.</div></div>
+<button type="button" class="fin-switch is-on" id="tfReceipt"></button>
+</div>
+<div class="fin-toggle">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Allows family claim</div><div class="fin-toggle__d">Enables the family-member beneficiary path on the claim form.</div></div>
+<button type="button" class="fin-switch" id="tfFamily"></button>
+</div>
+<div class="fin-toggle">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Contains health data</div><div class="fin-toggle__d">Attachments are locked to the health-data roles and every open is logged. <span class="fld__hint" id="tfHealthChg" style="display:none;color:var(--color-warning-700)"></span></div></div>
+<button type="button" class="fin-switch" id="tfHealth"></button>
+</div>
+<div class="fld" id="tfReasonWrap" style="display:none">
+<label class="fld__label">Reason <span class="req">*</span></label>
+<div class="ctl ctl--area"><textarea id="tfReason" rows="3" maxlength="2000" placeholder="Why the health-data classification changes"></textarea></div>
+<span class="fld__hint">Mandatory only when <code>contains_health_data</code> changes value — otherwise refused with <strong>422 FIN_REASON_REQUIRED</strong>.</span>
+</div>
+<div class="fin-toggle" id="tfActiveWrap" style="display:none">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Active</div><div class="fin-toggle__d">Inactive types disappear from the claim form but keep their history.</div></div>
+<button type="button" class="fin-switch is-on" id="tfActive"></button>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="tfSave" disabled>Save benefit type</button>
+</div>
+</div>
+</div>
+
+<!-- ============ BR-A4 — new claim (moved here from ESS per FSD §2.2/§7.2.1) ============ -->
+<div class="ovl" id="claimForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Submit benefit claim</h3><p class="ovl__desc">Total, status, reservation state and every snapshot are written by the server — never sent from here.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="claimFormBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Benefit type <span class="req">*</span></label>
+<div class="ctl ctl--select" id="cfType"><span class="ctl__value" style="color:var(--fg-4)">Select benefit type</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="cfTypeDd"></div>
+</div>
+<span class="fld__hint">Only active benefit types are offered.</span>
+</div>
+<div class="sumbox" id="cfBalance" style="display:none">
+<div class="sumbox__head"><i data-lucide="wallet"></i>Remaining entitlement (read-only)</div>
+<div class="sumbox__row"><span class="sumbox__k">Entitled</span><span class="sumbox__v" id="cfEnt">—</span></div>
+<div class="sumbox__row"><span class="sumbox__k">Used</span><span class="sumbox__v" id="cfUsed">—</span></div>
+<div class="sumbox__row"><span class="sumbox__k">Reserved</span><span class="sumbox__v" id="cfRes">—</span></div>
+<div class="sumbox__row"><span class="sumbox__k">Remaining (derived)</span><span class="sumbox__v" id="cfLeft">—</span></div>
+</div>
+<div>
+<div class="sec-head" style="margin-bottom:10px"><span class="fld__label">Receipts <span class="req">*</span></span><span class="sec-head__sp"></span><span class="sec-head__note" id="cfCount">1 receipt</span></div>
+<div class="items" id="cfItems"></div>
+<div style="margin-top:12px"><button type="button" class="add-filter" id="cfAddItem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add receipt</button></div>
+<span class="fld__hint">The form opens with one receipt because the contract requires <strong>at least one</strong> item (<code>items ✓ min 1</code>) — add a row for every further receipt of the same benefit type. An expense date must fall inside the back-date window, otherwise the submission is refused with <strong>422 FIN_CLAIM_WINDOW_EXPIRED</strong>; a duplicate receipt key is refused with <strong>409</strong>.</span>
+</div>
+<div class="sumbox">
+<div class="sumbox__head"><i data-lucide="sigma"></i>Claim total</div>
+<div class="sumbox__row"><span class="sumbox__k">Sum of receipts (server-authoritative)</span><span class="sumbox__v" id="cfTotal">Rp 0</span></div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="cfSubmit" disabled>Submit claim</button>
+</div>
+</div>
+</div>
+
+<!-- ============ BR-A6 — add beneficiary ============ -->
+<div class="ovl" id="benForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Add beneficiary</h3><p class="ovl__desc">Picked from the relatives registered on your employee profile — the relationship must also be whitelisted for the company.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="benFormBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Relative <span class="req">*</span></label>
+<div class="ctl ctl--select" id="bfRel"><span class="ctl__value" style="color:var(--fg-4)">Select relative</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="bfRelDd"></div>
+</div>
+<span class="fld__hint">Source: <code>employee_profile.mst_relative</code>. One row per relative per period (<code>uq_…_employee_id_period_id_relative_id</code>), so a relative already listed above is not offered again; a relationship outside the whitelist is refused with <strong>422</strong>.</span>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="bfSave" disabled>Add beneficiary</button>
+</div>
+</div>
+</div>
+
+<!-- ============ Cancel own claim (UIC §3.1 endpoint 10) ============ -->
+<div class="ovl" id="claimCancel">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Cancel claim</h3><p class="ovl__desc">Allowed to the applicant only, and only before any human decision. The row is not deleted — CANCELLED is a status.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="ccKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep claim</button>
+<button class="btn btn--danger" id="ccConfirm">Cancel claim</button>
+</div>
+</div>
+</div>
+
+<div class="ovl" id="fltMReq">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Filter requests</h3><p class="ovl__desc">Status, benefit type and the submitted-date window.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="item__grid"><div class="fld fld--sm">
+<label class="fld__label">Status</label>
+<div class="ctl ctl--select" id="fltStatus"><span class="ctl__value">All status</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All status</div><div class="dropdown__opt" data-val="SUBMITTED">SUBMITTED</div><div class="dropdown__opt" data-val="APPROVED">APPROVED</div><div class="dropdown__opt" data-val="REJECTED">REJECTED</div><div class="dropdown__opt" data-val="CANCELLED">CANCELLED</div></div>
+</div>
+</div><div class="fld">
+<label class="fld__label">Benefit type</label>
+<div class="ctl ctl--select" id="fltType"><span class="ctl__value">All benefit types</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltTypeDd"></div>
+</div>
+</div></div>
+<div class="item__grid"><div class="fld fld--sm">
+<label class="fld__label">Submitted from</label>
+<div class="ctl ctl--date"><input type="text" id="fltFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div><div class="fld fld--sm">
+<label class="fld__label">Submitted to</label>
+<div class="ctl ctl--date"><input type="text" id="fltTo" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div></div>
+</div>
+<div class="ovl__foot"><button class="btn btn--secondary" id="fltReset">Reset</button><button class="btn btn--primary" data-close>Done</button></div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-benefit.js"></script>
+</body>
+</html>

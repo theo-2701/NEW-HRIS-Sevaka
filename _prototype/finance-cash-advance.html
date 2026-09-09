@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Cash Advance</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Cash Advance">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Finance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Cash Advance</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Cash Advance</h1>
+<p class="flow-sub">Two submission doors (by the employee, or created by a finance officer on their behalf), then a two-stage settlement: the finance officer <strong>flags</strong> receipts, the recipient's manager <strong>decides</strong>. Any difference is computed automatically at the closing stage.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newAdvBtn">New cash advance</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="caTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="request">All Request<span class="tabnav__count" id="cntAdv">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="settlement">Settlement<span class="tabnav__count" id="cntStl">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="differences">Differences<span class="tabnav__count" id="cntDif">0</span></button>
+</div>
+
+<!-- ===== CA-A2 — request list ===== -->
+<div class="tabpanel is-on" data-tabpanel="request">
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltStatus"><span class="ctl__value">All status</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All status</div><div class="dropdown__opt" data-val="SUBMITTED">SUBMITTED</div><div class="dropdown__opt" data-val="APPROVED">APPROVED</div><div class="dropdown__opt" data-val="SETTLED">SETTLED</div><div class="dropdown__opt" data-val="REJECTED">REJECTED</div><div class="dropdown__opt" data-val="CANCELLED">CANCELLED</div><div class="dropdown__opt" data-val="REPUDIATED">REPUDIATED</div></div>
+</div>
+<div class="ctl ctl--select fin-tbar__sel" id="fltPurpose"><span class="ctl__value">All purposes</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltPurposeDd"></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltNo" placeholder="Search request no."></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Recipient</th><th>Purpose</th><th class="ta-r">Amount</th><th>Travel Dates</th><th>Status</th><th>Created</th><th></th></tr></thead>
+<tbody id="advBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgadv"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>The recipient is the identity that matters — for a request created on someone's behalf, the row belongs to the recipient, not to the creator. Repudiation is available to the recipient only, only on a request created on their behalf and not yet disbursed. Travel cancellation needs no approval gate, and turns the whole amount into a surplus at the closing stage.</span></div>
+<div class="note note--warn" style="margin-top:12px"><i data-lucide="triangle-alert"></i><span><strong>Documented visual-coverage gap.</strong> Return-date change (<code>date-changes</code>) has no screen in this module: the contract is complete on the API side, the screen was never part of this page's frame set. It is recorded, not improvised.</span></div>
+</div>
+
+<!-- ===== CA-B2 / CA-B3 — settlement ===== -->
+<div class="tabpanel" data-tabpanel="settlement">
+<div class="note note--info"><i data-lucide="info"></i><span>Stage 1 — the finance officer flags receipts (<code>review</code>, returns 200 with <code>UNDER_REVIEW</code>): a marking, not a decision. Stage 2 — the recipient's manager decides (<code>decision</code>, returns <strong>202</strong>): the final status and any difference are written asynchronously.</span></div>
+<div class="note note--warn" style="margin-top:12px"><i data-lucide="triangle-alert"></i><span><strong>Added frame — CA-B0, not in the document set.</strong> The step where the recipient hands in the receipts (<code>5.9</code> submit settlement, <code>5.10</code> list &amp; detail) is fully contracted in the UIC but has no frame in the FSD and no row in its traceability matrix. It is built here as <strong>CA-B0 “Submit settlement”</strong> (row action on an APPROVED request) so the chain can be demonstrated end to end. Recorded as a major addition in <code>FINANCE-GAP-NOTES.md</code> — the FSD frame set needs to grow from 9 to 10 screens.</span></div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Recipient</th><th class="ta-r">Advance</th><th class="ta-r">Receipts</th><th class="ta-c">Stage</th><th>Status</th><th></th></tr></thead>
+<tbody id="stlBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgstl"></div>
+</div>
+
+<!-- ===== CA-S1 — differences ===== -->
+<div class="tabpanel" data-tabpanel="differences">
+<div class="sec-head"><span class="sec-head__t">Differences</span><span class="sec-head__sp"></span><span class="sec-head__note">Computed only at the closing stage. A surplus needs a return method; a shortfall is paid by the company through Disbursement &amp; Receivables.</span></div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Employee</th><th>Type</th><th class="ta-r">Amount</th><th>Settlement Method</th><th>Due Date</th><th>Status</th><th></th></tr></thead>
+<tbody id="difBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgdif"></div>
+<p class="fld__hint" style="margin-top:10px">Calling the surplus return-method endpoint on a shortfall row is refused with <strong>422</strong> — that path runs through Disbursement (<code>payable_type = CASH_ADVANCE_SHORTFALL</code>). A large shortfall additionally requires a second approver, distinct from the one who decided the settlement.</p>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ CA-A3 — new cash advance ============ -->
+<div class="ovl" id="advForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">New cash advance</h3><p class="ovl__desc">The purpose limit is frozen into the row at submit time as <code>max_amount_snapshot</code>.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="advFormBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fin-toggle">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Create on behalf of another employee</div><div class="fin-toggle__d">Second door — allowed for finance officer and super admin only; any other role is refused with 403.</div></div>
+<button type="button" class="fin-switch" id="afBehalf"></button>
+</div>
+<div class="fld" id="afRecipientWrap" style="display:none">
+<label class="fld__label">Recipient <span class="req">*</span></label>
+<div class="ctl ctl--select" id="afRecipient"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="afRecipientDd"></div>
+</div>
+<span class="fld__hint">Must differ from the caller. The recipient may repudiate the request while it is not yet disbursed.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Purpose type <span class="req">*</span></label>
+<div class="ctl ctl--select" id="afPurpose"><span class="ctl__value" style="color:var(--fg-4)">Select purpose</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="afPurposeDd"></div>
+</div>
+<span class="fld__hint" id="afPurposeHint">A purpose with no maximum and no unlimited acknowledgement cannot be selected — deny by default.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Maximum limit</label>
+<div class="ctl ctl--ro"><input type="text" id="afMax" value="—" readonly tabindex="-1"></div>
+<span class="fld__hint">Read-only, taken from the purpose type and frozen into the row as <code>max_amount_snapshot</code> at submit.</span>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Amount <span class="req">*</span></label>
+<div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="afAmount" placeholder="0" inputmode="numeric"></div>
+<span class="fld__hint" id="afMaxHint">&nbsp;</span>
+</div>
+<div class="item__grid" id="afTravelWrap" style="display:none">
+<div class="fld">
+<label class="fld__label">Travel start <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="afStart" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">Travel end <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="afEnd" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="afSubmit" disabled>Submit request</button>
+</div>
+</div>
+</div>
+
+<!-- ============ CA-B2 — review receipts ============ -->
+<div class="ovl" id="reviewModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="rvTitle">Review receipts</h3><p class="ovl__desc">Flagging is a marking, not a decision. Leaving every row unflagged means all receipts are accepted as valid.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="rvKv"></div>
+<div class="note note--warn" id="rvWarn" style="display:none"><i data-lucide="triangle-alert"></i><span id="rvWarnTxt"></span></div>
+<div>
+<div class="sumbox__head" style="padding-left:0"><i data-lucide="receipt"></i>Receipts</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:6px">
+<table class="dtable">
+<thead><tr><th class="ta-c">Flag</th><th>Expense Date</th><th>Receipt No.</th><th class="ta-r">Amount</th><th>Item Status</th><th class="ta-c">Attachment</th></tr></thead>
+<tbody id="rvItems"></tbody>
+</table>
+</div>
+</div>
+<div class="fld" id="rvReasonWrap" style="display:none">
+<label class="fld__label">Flag reason <span class="req">*</span></label>
+<div class="ctl ctl--select" id="rvReason"><span class="ctl__value" style="color:var(--fg-4)">Select reason</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="rvReasonDd"></div>
+</div>
+</div>
+<label class="fchk" id="rvAckWrap" style="display:none"><input type="checkbox" id="rvAck"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">I acknowledge the receipt-similarity warning (required before forwarding).</span></label>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="rvSubmit">Forward to decision</button>
+</div>
+</div>
+</div>
+
+<!-- ============ CA-B3 — settlement decision ============ -->
+<div class="ovl" id="decisionModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="dcTitle">Settlement decision</h3><p class="ovl__desc">Only the recipient's direct manager may decide. Accept/Reject returns 202 — the difference is computed after the process completes.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="sumbox" id="dcSum"></div>
+<div class="dtable-wrap dtable-wrap--scroll">
+<table class="dtable">
+<thead><tr><th>Expense Date</th><th>Receipt No.</th><th class="ta-r">Amount</th><th>Item Status</th></tr></thead>
+<tbody id="dcItems"></tbody>
+</table>
+</div>
+<div class="k9"><i data-lucide="clock"></i><span id="dcNote"><strong>Closing stage.</strong> This settlement is marked final, so accepting it computes the surplus or shortfall against the advance amount.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="dcClose" data-close style="display:none">Close</button>
+<button class="btn btn--danger" id="dcRejectBtn">Reject</button>
+<button class="btn btn--primary" id="dcAcceptBtn">Accept settlement</button>
+</div>
+</div>
+</div>
+
+<!-- ============ CA-B0 — submit settlement (added frame, see FINANCE-GAP-NOTES.md) ============ -->
+<div class="ovl" id="submitStlModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide ovl__panel--xwide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="ssTitle">Submit settlement</h3><p class="ovl__desc">Hand in the receipts for an advance already approved. Each receipt number is unique across finance modules; a clash is refused with <code>409 FIN_DUPLICATE_RECEIPT</code>.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="ssKv"></div>
+<div>
+<div class="sumbox__head" style="padding-left:0"><i data-lucide="receipt"></i>Receipts</div>
+<div class="stl-rows">
+<div class="stl-rows__head"><span>Expense date *</span><span>Receipt no.</span><span>Amount *</span><span>Attachment *</span><span></span></div>
+<div id="ssRows"></div>
+</div>
+<button type="button" class="add-filter" id="ssAdd" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add receipt</button>
+</div>
+<div class="sumbox" id="ssSum"></div>
+<div class="fin-toggle">
+<div class="fin-toggle__text"><div class="fin-toggle__t">Closing stage</div><div class="fin-toggle__d">Marks this as the final settlement (<code>is_final_stage</code>). The surplus or shortfall is computed only at the closing stage, after the manager accepts.</div></div>
+<button type="button" class="fin-switch is-on" id="ssFinal"></button>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span>Every attachment is checked to exist in document-service <strong>before</strong> the domain transaction starts, and the submission carries a mandatory <code>Idempotency-Key</code>.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="ssSubmit" disabled>Submit settlement</button>
+</div>
+</div>
+</div>
+
+<!-- ============ CA-A4 — request detail ============ -->
+<div class="ovl" id="detailModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="dtTitle">Cash advance detail</h3><p class="ovl__desc">Read-only. Every snapshot below was frozen into the row at submit time.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="dtKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+<button class="btn btn--primary" id="dtGoSettlement">Open settlement</button>
+</div>
+</div>
+</div>
+
+<!-- ============ 5.4 — cancel guard ============ -->
+<div class="ovl" id="cancelModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Cancel this request?</h3><p class="ovl__desc">Allowed only while the status is <code>SUBMITTED</code> and no approval task has completed yet.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="kv" id="cxKv"></div>
+<div class="note note--warn"><i data-lucide="triangle-alert"></i><span>If the approval process already produced a decision, the server refuses the cancellation with <strong>409 FIN_ALREADY_DECIDED</strong> and the request stays as it is.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep request</button>
+<button class="btn btn--danger" id="cxConfirm">Cancel request</button>
+</div>
+</div>
+</div>
+
+<!-- ============ 5.14 — surplus return method ============ -->
+<div class="ovl" id="methodModal">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Surplus return method</h3><p class="ovl__desc">Surplus only — a shortfall is settled through Disbursement &amp; Receivables.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="kv" id="smKv"></div>
+<div class="fld">
+<label class="fld__label">Method <span class="req">*</span></label>
+<div class="ctl ctl--select" id="smMethod"><span class="ctl__value" style="color:var(--fg-4)">Select method</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt" data-val="RETURNED_OUTSIDE_HRIS">RETURNED_OUTSIDE_HRIS</div><div class="dropdown__opt" data-val="PAYROLL_DEDUCTION">PAYROLL_DEDUCTION</div></div>
+</div>
+</div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="smSave" disabled>Save method</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-cash-advance.js"></script>
+</body>
+</html>

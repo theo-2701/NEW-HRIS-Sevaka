@@ -1,0 +1,49 @@
+/* SEVAKA HRIS — date-range control (.rng)
+   One field for a from→to range: 36 px trigger + two-month popup with a
+   From / To footer and Set Date / Cancel. Replaces two separate date fields. */
+
+.rng { position: relative; }
+.rng__ctl { display: flex; align-items: center; gap: 8px; width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--color-silver); border-radius: var(--radius-md); background: var(--color-cloud); cursor: pointer; text-align: left; font: 500 12px/1.4 var(--font-body); color: var(--fg-1); transition: border-color var(--duration-2) var(--ease-standard), box-shadow var(--duration-2) var(--ease-standard); }
+.rng__ctl:hover { border-color: var(--color-secondary-200); }
+.rng.is-open .rng__ctl { border-color: var(--color-secondary-500); box-shadow: 0 0 0 4px rgba(2,132,199,.16); }
+.rng__ctl svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--fg-3); }
+.rng__val { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rng__val.is-empty { color: var(--fg-4); }
+
+.rng__pop { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; background: #fff; border: 1px solid var(--border-1); border-radius: var(--radius-lg); box-shadow: var(--shadow-modal); }
+.rng.is-open .rng__pop { display: block; }
+.rng__pop--right { left: auto; right: 0; }
+.rng__months { display: grid; grid-template-columns: 1fr 1fr; }
+.rng__cal { width: 208px; padding: 12px; }
+.rng__cal + .rng__cal { border-left: 1px solid var(--border-1); }
+.rng__head { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+.rng__nav { width: 24px; height: 24px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-1); border-radius: var(--radius-md); background: #fff; color: var(--color-secondary-600); cursor: pointer; transition: background var(--duration-2) var(--ease-standard), border-color var(--duration-2) var(--ease-standard); }
+.rng__nav:hover { background: var(--color-mist); border-color: var(--color-secondary-200); }
+.rng__nav svg { width: 14px; height: 14px; }
+.rng__title { flex: 1; text-align: center; font: 700 12.5px/1 var(--font-display); color: var(--fg-1); }
+.rng__wd { display: grid; grid-template-columns: repeat(7, 1fr); }
+.rng__wd span { text-align: center; font: 700 10px/1 var(--font-body); color: var(--fg-2); padding: 4px 0; }
+.rng__grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.rng__d { height: 26px; border: none; background: transparent; font: 500 11.5px/1 var(--font-body); color: var(--fg-1); cursor: pointer; position: relative; }
+.rng__d.is-out { color: var(--fg-4); }
+.rng__d:hover:not(.is-out) { color: var(--color-secondary-700); }
+.rng__d.is-in { background: var(--color-primary-50); }
+.rng__d.is-edge { background: var(--color-primary-50); }
+.rng__d.is-edge--s { border-radius: 999px 0 0 999px; }
+.rng__d.is-edge--e { border-radius: 0 999px 999px 0; }
+.rng__d.is-sel { color: #fff; background-image: radial-gradient(circle 13px at center, var(--color-secondary-700) 99%, transparent 100%); }
+
+.rng__foot { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border-1); flex-wrap: wrap; }
+.rng__boxes { display: flex; align-items: center; gap: 6px; }
+.rng__box { min-width: 78px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-1); border-radius: var(--radius-md); background: #fff; font: 600 11.5px/1 var(--font-body); color: var(--fg-1); }
+.rng__box.is-empty { color: var(--fg-4); font-weight: 500; }
+.rng__sep { font: 500 11.5px/1 var(--font-body); color: var(--fg-2); }
+.rng__acts { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+/* Compact footer buttons — smaller than the 36px page standard on purpose: they sit
+   inside a popover, not on the page. */
+.rng__foot .btn { min-width: 88px; min-height: 28px; max-height: 28px; height: 28px; padding: 0 12px; font-size: 12px; }
+.rng__clear { border: none; background: none; padding: 0 4px; font: 700 12px/1 var(--font-body); color: var(--fg-3); cursor: pointer; }
+.rng__clear:hover { color: var(--color-error-600); }
+
+/* The popup is ~432px wide at this scale, so a two-month range picker fits inside a
+   standard .ovl modal panel without clipping. Zero per-page overrides needed. */

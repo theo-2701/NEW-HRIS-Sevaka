@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Employee Directory</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    /* =========================================================================
+       Employee Directory — dokumen-faithful (FSD-001 §1 · UIC-001 §2)
+       Read-only. DIR-GRID (search berkriteria) + DIR-DETAIL (overlay).
+       ========================================================================= */
+    a { color: var(--fg-link); } a:hover { color: var(--fg-link-hover); }
+
+    .dir-page { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ---- unified shell container ---- */
+    .dir-shell { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 14px; box-shadow: var(--shadow-card-sm); overflow: hidden; }
+    .dir-shell__head { padding: 18px 22px 20px; border-bottom: 1px solid var(--border-1); }
+    .dir-shell__body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* ---- breadcrumb (static / non-clickable — home icon = dashboard) + title ---- */
+    .crumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .crumbs__item { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--font-body); color: var(--color-secondary-600); cursor: default; user-select: none; }
+    .crumbs__item svg { width: 16px; height: 16px; }
+    .crumbs__item--home { color: var(--color-secondary-500); }
+    .crumbs__item--current { color: var(--color-secondary-800); font-weight: 700; }
+    .crumbs__sep { color: var(--color-fog); font: 400 14px/1 var(--font-body); user-select: none; }
+    .dir-headrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+    .dir-title { font: 700 24px/1.15 var(--font-display); letter-spacing: -.02em; color: var(--fg-1); margin: 4px 0 0; }
+    .dir-sub { font: 500 13px/1.5 var(--font-body); color: var(--fg-3); margin-top: 4px; max-width: 640px; }
+
+    /* ---- endpoint hint chip (contract-driven build) ---- */
+    .ep { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 999px; background: var(--color-secondary-950); color: #cfe8f6; font: 600 11px/1 var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace); letter-spacing: .01em; }
+    .ep b { color: #fff; font-weight: 700; }
+    .ep svg { width: 13px; height: 13px; color: #7cc2e6; }
+
+    /* ---- scope banner (aktor / data-scope) ---- */
+    .scope-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 10px; background: var(--color-primary-50); border: 1px solid var(--color-primary-200); }
+    .scope-bar__lbl { font: 700 10px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--color-secondary-700); }
+    .scope-pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 999px; background: #fff; border: 1px solid var(--color-primary-200); font: 600 11.5px/1 var(--font-body); color: var(--fg-2); cursor: pointer; transition: all var(--duration-2) var(--ease-standard); }
+    .scope-pill svg { width: 14px; height: 14px; color: var(--color-secondary-500); }
+    .scope-pill.is-on { background: var(--color-secondary-500); border-color: var(--color-secondary-500); color: #fff; }
+    .scope-pill.is-on svg { color: #fff; }
+    .scope-bar__hint { font: 500 11.5px/1.4 var(--font-body); color: var(--fg-3); margin-left: auto; }
+
+    /* ---- search card (POST /employees/search body) ---- */
+    .srch { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 12px; }
+    .srch__head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border-1); }
+    .srch__head h2 { font: 700 14px/1.2 var(--font-display); color: var(--fg-1); margin: 0; }
+    .srch__head .ep { margin-left: auto; }
+    .srch__grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 16px; padding: 18px; }
+    .fg { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .fg--wide { grid-column: 1 / -1; }
+    .fg--span2 { grid-column: span 2; }
+    .fg__lbl { font: 700 12px/1 var(--font-body); color: var(--fg-2); display: flex; align-items: center; gap: 6px; }
+    .fg__lbl code { font: 600 10.5px/1 var(--font-mono, ui-monospace, Menlo, monospace); color: var(--fg-4); background: var(--color-vapor); padding: 2px 5px; border-radius: 4px; }
+    .inp { height: 36px; border-radius: 8px; background: var(--color-cloud); border: 1px solid var(--color-silver); padding: 0 12px; font: 500 13px/1 var(--font-body); color: var(--fg-1); outline: none; width: 100%; transition: border-color var(--duration-2), box-shadow var(--duration-2); }
+    .inp::placeholder { color: var(--fg-4); }
+    .inp:focus { border-color: var(--color-secondary-500); box-shadow: 0 0 0 4px rgba(2,132,199,.16); }
+    .fg.is-err .inp { border-color: var(--color-error-500); box-shadow: 0 0 0 4px rgba(239,68,68,.16); }
+    .fg__err { font: 600 11px/1.3 var(--font-body); color: var(--color-error-700); display: none; align-items: center; gap: 5px; }
+    .fg__err svg { width: 13px; height: 13px; }
+    .fg.is-err .fg__err { display: flex; }
+    .inp-icon { position: relative; }
+    .inp-icon svg { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--fg-4); pointer-events: none; }
+    .daterange { display: flex; align-items: center; gap: 8px; }
+    .daterange .inp { flex: 1; min-width: 0; position: relative; cursor: pointer; }
+    .daterange .inp::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+    .daterange span { font: 500 11px/1 var(--font-body); color: var(--fg-4); }
+
+    /* status multi chips */
+    .stat-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stat-chip { border: 1px solid var(--color-fog); cursor: pointer; height: 30px; padding: 0 12px; border-radius: 999px; background: #fff; color: var(--fg-3); font: 700 11px/1 var(--font-body); letter-spacing: .02em; display: inline-flex; align-items: center; gap: 7px; transition: all var(--duration-2) var(--ease-standard); }
+    .stat-chip .dotc { width: 7px; height: 7px; border-radius: 50%; }
+    .stat-chip.is-on { color: #fff; border-color: transparent; }
+    .stat-chip.is-on.s-WAITING { background: var(--color-warning-600); }
+    .stat-chip.is-on.s-ACTIVE { background: var(--color-success-700); }
+    .stat-chip.is-on.s-OFFBOARDING { background: var(--color-secondary-600); }
+    .stat-chip.is-on.s-SUSPENDED { background: var(--color-warning-800); }
+    .stat-chip.is-on.s-RESIGNED { background: var(--color-steel); }
+    .stat-chip.is-on.s-TERMINATED { background: var(--color-error-700); }
+
+    .srch__foot { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--border-1); background: var(--color-mist); border-radius: 0 0 12px 12px; }
+    .srch__foot .note-inline { font: 500 11.5px/1.4 var(--font-body); color: var(--fg-3); display: flex; align-items: center; gap: 6px; }
+    .srch__foot .note-inline svg { width: 14px; height: 14px; color: var(--color-secondary-500); }
+    .srch__foot .spacer { flex: 1; }
+
+    /* ---- results table ---- */
+    .res { background: var(--bg-surface); border: 1px solid var(--border-1); border-radius: 12px; overflow: hidden; }
+    .res__head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border-1); }
+    .res__count { font: 700 13px/1.2 var(--font-body); color: var(--fg-1); }
+    .res__count b { color: var(--color-secondary-600); }
+    .res__head .ep { margin-left: auto; }
+    .res__scroll { overflow-x: auto; }
+    .rt { width: 100%; border-collapse: collapse; min-width: 1040px; }
+    .rt th { background: var(--color-primary-500); text-align: left; padding: 11px 16px; font: 700 10px/1.3 var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--color-cloud); border-bottom: 1px solid var(--color-primary-500); white-space: nowrap; }
+    .rt th .th-sort { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; background: none; border: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+    .rt th .th-sort svg { width: 12px; height: 12px; opacity: .7; color: var(--color-cloud); }
+    .rt th.is-sorted .th-sort svg { opacity: 1; color: var(--color-cloud); }
+    .rt th .gap-dot { display: inline-block; margin-left: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--color-warning-500); vertical-align: middle; }
+    .rt td { padding: 12px 16px; font: 500 13px/1.4 var(--font-body); color: var(--fg-1); border-bottom: 1px solid var(--color-vapor); vertical-align: middle; white-space: nowrap; }
+    .rt tbody tr { cursor: pointer; transition: background var(--duration-2) var(--ease-standard); }
+    .rt tbody tr:hover td { background: var(--color-primary-50); }
+    .rt tbody tr:last-child td { border-bottom: none; }
+    .emp-id { display: flex; align-items: center; gap: 11px; }
+    .emp-id__name { font: 700 13px/1.2 var(--font-body); color: var(--fg-1); }
+    .emp-id__proj { font: 500 10.5px/1.2 var(--font-body); color: var(--fg-4); margin-top: 2px; }
+    .nik-cell { font: 600 12.5px/1 var(--font-mono, ui-monospace, Menlo, monospace); color: var(--fg-2); letter-spacing: .04em; }
+    .nik-cell .mask { color: var(--fg-4); }
+
+    /* badges: 6 employment_status variants */
+    .badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 8px; font: 700 10.5px/1 var(--font-body); letter-spacing: .03em; }
+    .badge .d { width: 6px; height: 6px; border-radius: 50%; }
+    .b-WAITING { background: var(--color-warning-100); color: var(--color-warning-900); } .b-WAITING .d { background: var(--color-warning-600); }
+    .b-ACTIVE { background: var(--color-success-100); color: var(--color-success-950); } .b-ACTIVE .d { background: var(--color-success-600); }
+    .b-OFFBOARDING { background: var(--color-secondary-50); color: var(--color-secondary-800); } .b-OFFBOARDING .d { background: var(--color-secondary-500); }
+    .b-SUSPENDED { background: var(--color-warning-200); color: var(--color-warning-950); } .b-SUSPENDED .d { background: var(--color-warning-800); }
+    .b-RESIGNED { background: var(--color-vapor); color: var(--fg-2); } .b-RESIGNED .d { background: var(--color-steel); }
+    .b-TERMINATED { background: var(--color-error-100); color: var(--color-error-900); } .b-TERMINATED .d { background: var(--color-error-600); }
+
+    /* work_arrangement: 4 labels */
+    .wa { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 8px; font: 700 10.5px/1 var(--font-body); letter-spacing: .03em; background: var(--color-vapor); color: var(--fg-2); }
+    .wa svg { width: 13px; height: 13px; color: var(--fg-3); }
+
+    /* empty state */
+    .res-empty { padding: 56px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .res-empty[hidden] { display: none; }
+    .res-empty__ic { width: 48px; height: 48px; border-radius: 12px; background: var(--color-primary-100); display: grid; place-items: center; color: var(--color-secondary-500); margin-bottom: 4px; }
+    .res-empty__ic svg { width: 24px; height: 24px; }
+    .res-empty__t { font: 700 14px/1.3 var(--font-display); color: var(--fg-1); }
+    .res-empty__s { font: 500 12.5px/1.5 var(--font-body); color: var(--fg-3); max-width: 380px; }
+
+    /* footer / pagination */
+    .rt-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-top: 1px solid var(--border-1); background: var(--color-mist); }
+    .rt-foot__left, .rt-foot__pages { display: flex; align-items: center; gap: 8px; font: 500 12px/1 var(--font-body); color: var(--fg-3); }
+    .pg-btn { height: 30px; min-width: 30px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--border-1); background: #fff; color: var(--fg-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--duration-2); }
+    .pg-btn svg { width: 15px; height: 15px; }
+    .pg-btn:hover:not(:disabled) { border-color: var(--color-secondary-500); color: var(--color-secondary-600); }
+    .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .pg-cur { font: 700 12px/1 var(--font-body); color: var(--color-secondary-600); }
+    .sz-sel { height: 30px; border-radius: 7px; border: 1px solid var(--border-1); background: #fff; padding: 0 8px; font: 600 12px/1 var(--font-body); color: var(--fg-2); cursor: pointer; }
+
+    /* GAP legend */
+    .gap-legend { display: flex; align-items: flex-start; gap: 9px; padding: 11px 14px; border-radius: 10px; background: var(--color-warning-50); border: 1px solid var(--color-warning-200); font: 500 11.5px/1.5 var(--font-body); color: var(--color-warning-950); }
+    .gap-legend svg { width: 15px; height: 15px; color: var(--color-warning-700); flex-shrink: 0; margin-top: 1px; }
+    .gap-tag { display: inline-flex; align-items: center; gap: 5px; height: 18px; padding: 0 7px; border-radius: 5px; background: var(--color-warning-500); color: #fff; font: 700 8.5px/1 var(--font-body); letter-spacing: .04em; text-transform: uppercase; }
+
+    /* ---- table: name link + frozen first/last columns + View Detail action ---- */
+    a.emp-link { color: var(--fg-link); text-decoration: none; cursor: pointer; }
+    a.emp-link:hover { color: var(--fg-link); text-decoration: underline; text-underline-offset: 2px; }
+    .rt th.col-action, .rt td.col-action { text-align: right; }
+    .rt-view { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 8px; background: #fff; border: 1px solid var(--color-fog); font: 700 11.5px/1 var(--font-body); color: var(--color-secondary-700); cursor: pointer; white-space: nowrap; transition: all var(--duration-2) var(--ease-standard); }
+    .rt-view svg { width: 14px; height: 14px; }
+    .rt-view:hover { border-color: var(--color-secondary-500); background: var(--color-primary-50); }
+    /* freeze the identifier (Employee) left and the Action column right — matches table-standard */
+    .rt thead th:first-child, .rt tbody td:first-child { position: sticky; left: 0; }
+    .rt thead th:first-child { z-index: 7; }
+    .rt tbody td:first-child { z-index: 4; background: #fff; box-shadow: inset -1px 0 0 var(--color-vapor); }
+    .rt thead th:last-child, .rt tbody td:last-child { position: sticky; right: 0; }
+    .rt thead th:last-child { z-index: 7; }
+    .rt tbody td:last-child { z-index: 4; background: #fff; box-shadow: inset 1px 0 0 var(--color-vapor); }
+    .rt tbody tr:hover td:first-child, .rt tbody tr:hover td:last-child { background: var(--color-primary-50); }
+
+    /* ---- DIR-DETAIL overlay (redesigned to DS modal spec) ---- */
+    .ovl__panel--wide.dd { width: min(720px, 100%); max-height: calc(100vh - 64px); display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+    .dd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px; background: var(--color-primary-50); border-bottom: 1px solid var(--border-1); flex-shrink: 0; }
+    .dd-head__title { font: 700 20px/1.2 var(--font-display); letter-spacing: -.01em; color: var(--fg-1); margin: 0; }
+    .dd-head__sub { font: 500 12.5px/1.5 var(--font-body); color: var(--fg-3); margin: 4px 0 0; }
+    .dd-head__x { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: none; background: transparent; color: var(--fg-3); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background var(--duration-2); }
+    .dd-head__x:hover { background: var(--color-vapor); color: var(--fg-1); }
+    .dd-head__x svg { width: 20px; height: 20px; }
+    .dd-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+    .dd-person { display: flex; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border-1); }
+    .dd-person__name { font: 700 22px/1.2 var(--font-display); letter-spacing: -.01em; color: var(--fg-1); margin: 0; }
+    .dd-person__role { font: 500 13.5px/1.5 var(--font-body); color: var(--fg-3); margin: 5px 0 0; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .dd-group { display: flex; flex-direction: column; }
+    .dd-group + .dd-group { padding-top: 16px; border-top: 1px solid var(--border-1); }
+    .dd-group__head { font: 700 11px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .dd-group__head svg { width: 15px; height: 15px; color: var(--color-secondary-500); }
+    .dd-group__head .mask-note { font: 500 10.5px/1 var(--font-body); color: var(--fg-4); text-transform: none; letter-spacing: 0; }
+    .dd-group__head .gap-tag { margin-left: 2px; }
+    .dd .kv { grid-template-columns: 200px 1fr; }
+    .dd .ovl__foot { padding: 16px 24px; border-top: 1px solid var(--border-1); background: var(--color-mist); flex-shrink: 0; margin: 0; border-radius: 0; }
+    .mono-val { font-family: var(--font-mono, ui-monospace, Menlo, monospace); letter-spacing: .03em; }
+
+    /* toast */
+    .toast-wrap { position: fixed; top: 80px; right: 24px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { display: flex; align-items: flex-start; gap: 11px; width: 360px; padding: 13px 15px; border-radius: 10px; background: var(--color-secondary-950); color: #eaf6fd; box-shadow: var(--shadow-overlay); transform: translateX(24px); opacity: 0; transition: transform var(--duration-3) var(--ease-emphasized), opacity var(--duration-3); }
+    .toast.is-in { transform: translateX(0); opacity: 1; }
+    .toast svg { width: 17px; height: 17px; color: #7cc2e6; flex-shrink: 0; margin-top: 1px; }
+    .toast__t { font: 700 12.5px/1.3 var(--font-body); color: #fff; }
+    .toast__s { font: 500 11.5px/1.5 var(--font-body); color: #a9cfe4; margin-top: 3px; }
+  </style>
+</head>
+<body data-screen-label="Employee Directory">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <div class="dir-page">
+
+          <!-- ============ HEADER ============ -->
+          <section class="dir-shell">
+            <div class="dir-shell__head">
+              <nav class="crumbs" aria-label="Breadcrumb">
+                <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+                <span class="crumbs__sep" aria-hidden="true">/</span>
+                <span class="crumbs__item">Employee Management</span>
+                <span class="crumbs__sep" aria-hidden="true">/</span>
+                <span class="crumbs__item crumbs__item--current" aria-current="page">Employee Directory</span>
+              </nav>
+              <div class="dir-headrow">
+                <div>
+                  <h1 class="dir-title">Employee Directory</h1>
+                  <p class="dir-sub">Search the active employee directory and open a consolidated profile for any employee (work data + identity + position). <strong>Read-only</strong> — no data is mutated.</p>
+                </div>
+                <span class="ep"><i data-lucide="database"></i>schema <b>employee</b></span>
+              </div>
+            </div>
+            <div class="dir-shell__body">
+
+          <!-- ============ SCOPE / AKTOR ============ -->
+          <div class="scope-bar">
+            <span class="scope-bar__lbl">Actor data-scope</span>
+            <button class="scope-pill is-on" data-scope="HR" type="button"><i data-lucide="shield-check"></i>HR Staff / Manager · full</button>
+            <button class="scope-pill" data-scope="DEPT" type="button"><i data-lucide="git-branch"></i>Dept Manager · subtree *</button>
+            <button class="scope-pill" data-scope="SELF" type="button"><i data-lucide="user"></i>Employee · self †</button>
+            <span class="scope-bar__hint">Granular scope <code style="font-family:var(--font-mono,monospace)">employee:directory:read</code></span>
+          </div>
+
+          <!-- ============ SEARCH (DIR-GRID kriteria) ============ -->
+          <section class="srch">
+            <div class="srch__head">
+              <i data-lucide="search" style="width:16px;height:16px;color:var(--color-secondary-500)"></i>
+              <h2>Criteria Search</h2>
+              <span class="ep"><i data-lucide="arrow-up-right"></i><b>POST</b> /employees/search</span>
+            </div>
+            <div class="srch__grid">
+              <div class="fg fg--wide" id="fgKeyword">
+                <label class="fg__lbl">Keyword <code>keyword</code> <span style="color:var(--fg-4);font-weight:500;text-transform:none">— LIKE name / NIK</span></label>
+                <div class="inp-icon">
+                  <input class="inp" id="qKeyword" type="text" maxlength="150" placeholder="e.g. Eka, or NIK-0005" autocomplete="off">
+                  <i data-lucide="search"></i>
+                </div>
+                <span class="fg__err"><i data-lucide="alert-circle"></i>Characters <code style="font-family:var(--font-mono,monospace)">&lt; &gt;</code> and script quotes are not allowed (§8.6).</span>
+              </div>
+
+              <div class="fg">
+                <label class="fg__lbl">Unit / Branch <code>branch_id</code></label>
+                <div class="inp-icon">
+                  <select class="inp" id="qBranch">
+                    <option value="">All units</option>
+                    <option value="br-papua">BR-Papua</option>
+                    <option value="br-jkt">HO-Jakarta</option>
+                    <option value="br-sby">BR-Surabaya</option>
+                    <option value="br-bdg">BR-Bandung</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="fg fg--span2">
+                <label class="fg__lbl">Date range <code>created_at</code></label>
+                <div class="daterange">
+                  <input class="inp" id="qFrom" type="date"><span>to</span><input class="inp" id="qTo" type="date">
+                </div>
+              </div>
+
+              <div class="fg fg--wide">
+                <label class="fg__lbl">Employment status <code>employment_status[]</code> <span style="color:var(--fg-4);font-weight:500;text-transform:none">— IN operator (multi-select)</span></label>
+                <div class="stat-chips" id="statChips">
+                  <button class="stat-chip s-WAITING" data-st="WAITING" type="button"><span class="dotc" style="background:var(--color-warning-600)"></span>Waiting</button>
+                  <button class="stat-chip s-ACTIVE" data-st="ACTIVE" type="button"><span class="dotc" style="background:var(--color-success-600)"></span>Active</button>
+                  <button class="stat-chip s-OFFBOARDING" data-st="OFFBOARDING" type="button"><span class="dotc" style="background:var(--color-secondary-500)"></span>Offboarding</button>
+                  <button class="stat-chip s-SUSPENDED" data-st="SUSPENDED" type="button"><span class="dotc" style="background:var(--color-warning-800)"></span>Suspended</button>
+                  <button class="stat-chip s-RESIGNED" data-st="RESIGNED" type="button"><span class="dotc" style="background:var(--color-steel)"></span>Resigned</button>
+                  <button class="stat-chip s-TERMINATED" data-st="TERMINATED" type="button"><span class="dotc" style="background:var(--color-error-600)"></span>Terminated</button>
+                </div>
+              </div>
+            </div>
+            <div class="srch__foot">
+              <span class="note-inline"><i data-lucide="shield"></i>Every field is validated (rejects <code style="font-family:var(--font-mono,monospace)">&lt; &gt;</code> / scripts) before being composed into the query.</span>
+              <span class="spacer"></span>
+              <button class="btn btn--secondary" id="btnReset" type="button">Reset</button>
+              <button class="btn btn--primary" id="btnSearch" type="button">Search</button>
+            </div>
+          </section>
+
+          <!-- ============ GAP legend ============ -->
+          <div class="gap-legend">
+            <i data-lucide="git-pull-request-arrow"></i>
+            <div><span class="gap-tag">GAP · PROB-FRONTEND-002</span>&nbsp; The <strong>Name</strong> and <strong>Unit/Branch</strong> columns are not <code style="font-family:var(--font-mono,monospace)">emp_work_detail</code> columns — they are a <strong>cross-service join projection</strong> (auth &amp; company). Availability of these fields depends on a consolidated read contract that is <strong>not yet confirmed</strong> (enforcement deferred). Marked with a <span class="gap-dot" style="position:relative;top:1px"></span> dot on the column header. Grid columns mirror the search response DTO (UIC §2.1): NIK · Name · Employment Status · Work Arrangement · Branch.</div>
+          </div>
+
+          <!-- ============ RESULTS (DIR-GRID) ============ -->
+          <section class="res">
+            <div class="res__head">
+              <span class="res__count" id="resCount">Showing <b>0</b> results</span>
+              <span class="ep" id="epActive"><i data-lucide="filter"></i><b id="epCriteria">no filter</b></span>
+            </div>
+            <div class="res__scroll">
+              <table class="rt">
+                <thead>
+                  <tr>
+                    <th>Employee <span class="gap-dot" title="join projection"></span></th>
+                    <th data-sort="nik" class="is-sorted"><button class="th-sort" type="button">NIK <i data-lucide="chevrons-up-down"></i></button></th>
+                    <th data-sort="employment_status"><button class="th-sort" type="button">Employment Status <i data-lucide="chevrons-up-down"></i></button></th>
+                    <th>Work Arrangement</th>
+                    <th>Unit / Branch <span class="gap-dot" title="join projection"></span></th>
+                    <th class="col-action"></th>
+                  </tr>
+                </thead>
+                <tbody id="resBody"></tbody>
+              </table>
+              <div class="res-empty" id="resEmpty" hidden>
+                <span class="res-empty__ic"><i data-lucide="users"></i></span>
+                <div class="res-empty__t">No results</div>
+                <div class="res-empty__s">Adjust the keyword, status, unit, or date range, then run the search again.</div>
+              </div>
+            </div>
+            <div class="rt-foot">
+              <div class="rt-foot__left">
+                <span>Show</span>
+                <select class="sz-sel" id="pgSize"><option>5</option><option selected>8</option><option>10</option><option>20</option></select>
+                <span>of <b id="totalData">0</b> rows</span>
+              </div>
+              <div class="rt-foot__pages">
+                <button class="pg-btn" id="pgFirst" aria-label="first"><i data-lucide="chevrons-left"></i></button>
+                <button class="pg-btn" id="pgPrev" aria-label="prev"><i data-lucide="chevron-left"></i></button>
+                <span>Page <span class="pg-cur" id="pgCur">1</span> / <span id="pgTotal">1</span></span>
+                <button class="pg-btn" id="pgNext" aria-label="next"><i data-lucide="chevron-right"></i></button>
+                <button class="pg-btn" id="pgLast" aria-label="last"><i data-lucide="chevrons-right"></i></button>
+              </div>
+            </div>
+          </section>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ DIR-DETAIL (read-only overlay) ============ -->
+<div class="ovl" id="dirDetail">
+  <div class="ovl__scrim" data-close></div>
+  <div class="ovl__panel ovl__panel--wide dd">
+    <div class="dd-head">
+      <div>
+        <h3 class="dd-head__title">Employee Detail</h3>
+        <p class="dd-head__sub">Read-only consolidated profile · work data + bank + identity/position projection</p>
+      </div>
+      <button class="dd-head__x" data-close type="button" aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+
+    <div class="dd-scroll">
+      <div class="dd-person">
+        <span class="avatar avatar--lg" id="ddAvatar" style="background:linear-gradient(#7ab9d4,#026395)">ES</span>
+        <div>
+          <h4 class="dd-person__name" id="ddName">—</h4>
+          <p class="dd-person__role" id="ddRole">—</p>
+        </div>
+      </div>
+
+      <div>
+        <span class="ep" style="background:var(--color-secondary-950)"><i data-lucide="arrow-up-right"></i><b>GET</b> /employees/<span id="ddEndpointId">{id}</span></span>
+      </div>
+
+      <div class="note note--info" id="ddAudit"><i data-lucide="lock"></i><span>Read-only. Bank account &amp; PII are masked on cross-subject views; opening this record writes <strong>one append-only read-audit row</strong> (§12.2).</span></div>
+
+      <section class="dd-group">
+        <div class="dd-group__head"><i data-lucide="briefcase"></i>Work data <span class="mask-note">· emp_work_detail.*</span></div>
+        <div class="kv" id="ddWork"></div>
+      </section>
+
+      <section class="dd-group">
+        <div class="dd-group__head"><i data-lucide="landmark"></i>Bank account <span class="mask-note">· masked — last 4 digits (§1.8)</span></div>
+        <div class="kv" id="ddBank"></div>
+      </section>
+
+      <section class="dd-group">
+        <div class="dd-group__head"><i data-lucide="id-card"></i>Position &amp; identity <span class="gap-tag">projection</span> <span class="mask-note">· via auth / company</span></div>
+        <div class="kv" id="ddIdentity"></div>
+      </section>
+    </div>
+
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'Employee Directory' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+/* =========================================================================
+   Employee Directory — logic (self-contained, doc-faithful)
+   Simulates POST /employees/search + GET /employees/{id} against sample data.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  // ---- sample dataset (all 6 employment_status + 4 work_arrangement variants) ----
+  var CURRENT_USER = 'emp-tony'; // Tony Stark — the signed-in HR actor
+  var BRANCH = { 'br-papua':'BR-Papua', 'br-jkt':'HO-Jakarta', 'br-sby':'BR-Surabaya', 'br-bdg':'BR-Bandung' };
+  var WA_ICON = { WFO:'building-2', WFH:'house', HYBRID:'shuffle', MOBILE:'car' };
+
+  var DATA = [
+    { id:'emp-eka',   nik:'NIK-0005', name:'Eka Saputra',      pos:'Staff Finance',        branch:'br-papua', status:'ACTIVE',      wa:'WFO',    created:'2026-02-11', color:['#7ab9d4','#026395'],
+      bank:{ code:'BCA', acc:'8830041562', holder:'Eka Saputra' }, contract_end:'2027-02-10', cost:'CC-FIN-PPA', sbu:'SBU Timur', email:'eka.saputra@ptdika.co.id', phone:'+628123400051' },
+    { id:'emp-lia',   nik:'NIK-0012', name:'Lia Permata',      pos:'HR Specialist',        branch:'br-jkt',   status:'ACTIVE',      wa:'HYBRID', created:'2025-11-03', color:['#a8d479','#6ba23f'],
+      bank:{ code:'Mandiri', acc:'1440026719', holder:'Lia Permata' }, contract_end:'—', cost:'CC-HR-HO', sbu:'SBU Pusat', email:'lia.permata@ptdika.co.id', phone:'+628567712012' },
+    { id:'emp-tony',  nik:'NIK-0001', name:'Tony Stark',       pos:'HR Manager',           branch:'br-jkt',   status:'ACTIVE',      wa:'WFO',    created:'2024-05-20', color:['#f6b26b','#b45f06'],
+      bank:{ code:'BNI', acc:'0091553380', holder:'Tony Stark' }, contract_end:'—', cost:'CC-HR-HO', sbu:'SBU Pusat', email:'tony.stark@ptdika.co.id', phone:'+628111000001' },
+    { id:'emp-bagus', nik:'NIK-0021', name:'Bagus Wicaksono',  pos:'Software Engineer',    branch:'br-bdg',   status:'WAITING',     wa:'WFH',    created:'2026-07-01', color:['#b4a7d6','#674ea7'],
+      bank:{ code:'BCA', acc:'7720118834', holder:'Bagus Wicaksono' }, contract_end:'2027-06-30', cost:'CC-ENG-BDG', sbu:'SBU Barat', email:'bagus.w@ptdika.co.id', phone:'+628223345021' },
+    { id:'emp-rina',  nik:'NIK-0018', name:'Rina Marlina',     pos:'Accountant',           branch:'br-sby',   status:'OFFBOARDING', wa:'WFO',    created:'2023-09-14', color:['#76a5af','#134f5c'],
+      bank:{ code:'Mandiri', acc:'1330099471', holder:'Rina Marlina' }, contract_end:'2026-09-13', cost:'CC-FIN-SBY', sbu:'SBU Timur', email:'rina.marlina@ptdika.co.id', phone:'+628345567018' },
+    { id:'emp-doni',  nik:'NIK-0027', name:'Doni Prabowo',     pos:'Field Technician',     branch:'br-papua', status:'MOBILE'==='x'?'':'ACTIVE', wa:'MOBILE', created:'2025-03-22', color:['#e06666','#990000'],
+      bank:{ code:'BRI', acc:'3020117758', holder:'Doni Prabowo' }, contract_end:'2027-03-21', cost:'CC-OPS-PPA', sbu:'SBU Timur', email:'doni.prabowo@ptdika.co.id', phone:'+628778890027' },
+    { id:'emp-sari',  nik:'NIK-0009', name:'Sari Dewanti',     pos:'Payroll Officer',      branch:'br-jkt',   status:'SUSPENDED',   wa:'WFH',    created:'2024-12-05', color:['#93c47d','#38761d'],
+      bank:{ code:'BCA', acc:'8811220049', holder:'Sari Dewanti' }, contract_end:'—', cost:'CC-HR-HO', sbu:'SBU Pusat', email:'sari.dewanti@ptdika.co.id', phone:'+628990011009' },
+    { id:'emp-agus',  nik:'NIK-0031', name:'Agus Setiawan',    pos:'Warehouse Supervisor', branch:'br-sby',   status:'RESIGNED',    wa:'WFO',    created:'2022-08-30', color:['#8e7cc3','#351c75'],
+      bank:{ code:'BNI', acc:'0071889923', holder:'Agus Setiawan' }, contract_end:'2026-01-31', cost:'CC-OPS-SBY', sbu:'SBU Timur', email:'agus.setiawan@ptdika.co.id', phone:'+628112230031' },
+    { id:'emp-maya',  nik:'NIK-0014', name:'Maya Anggraini',   pos:'Recruiter',            branch:'br-bdg',   status:'TERMINATED',  wa:'HYBRID', created:'2023-04-18', color:['#6fa8dc','#0b5394'],
+      bank:{ code:'Mandiri', acc:'1660034418', holder:'Maya Anggraini' }, contract_end:'2025-12-31', cost:'CC-HR-BDG', sbu:'SBU Barat', email:'maya.anggraini@ptdika.co.id', phone:'+628334456014' },
+    { id:'emp-yoga',  nik:'NIK-0036', name:'Yoga Pratama',     pos:'Data Analyst',         branch:'br-jkt',   status:'ACTIVE',      wa:'HYBRID', created:'2026-01-19', color:['#c27ba0','#741b47'],
+      bank:{ code:'BCA', acc:'8899003612', holder:'Yoga Pratama' }, contract_end:'2027-01-18', cost:'CC-DATA-HO', sbu:'SBU Pusat', email:'yoga.pratama@ptdika.co.id', phone:'+628556678036' },
+    { id:'emp-nur',   nik:'NIK-0022', name:'Nur Aisyah',       pos:'Legal Officer',        branch:'br-jkt',   status:'ACTIVE',      wa:'WFO',    created:'2025-06-27', color:['#ffd966','#bf9000'],
+      bank:{ code:'BNI', acc:'0093312207', holder:'Nur Aisyah' }, contract_end:'—', cost:'CC-LEG-HO', sbu:'SBU Pusat', email:'nur.aisyah@ptdika.co.id', phone:'+628667789022' },
+    { id:'emp-fajar', nik:'NIK-0040', name:'Fajar Nugroho',    pos:'Site Engineer',        branch:'br-papua', status:'WAITING',     wa:'MOBILE', created:'2026-07-08', color:['#76a5af','#0c343d'],
+      bank:{ code:'BRI', acc:'3021009985', holder:'Fajar Nugroho' }, contract_end:'2027-07-07', cost:'CC-OPS-PPA', sbu:'SBU Timur', email:'fajar.nugroho@ptdika.co.id', phone:'+628778812040' }
+  ];
+
+  var STATUS_LABEL = { WAITING:'Waiting', ACTIVE:'Active', OFFBOARDING:'Offboarding', SUSPENDED:'Suspended', RESIGNED:'Resigned', TERMINATED:'Terminated' };
+
+  // Supervisor (parent-chain projection via company org — see FSD §1 position projection)
+  var SUP = {
+    'emp-eka':'Rahmat Hidayat · Manager Finance', 'emp-lia':'Tony Stark · HR Manager',
+    'emp-tony':'— (top of chain)', 'emp-bagus':'Dewi Lestari · Engineering Lead',
+    'emp-rina':'Rahmat Hidayat · Manager Finance', 'emp-doni':'Agus Setiawan · Warehouse Supervisor',
+    'emp-sari':'Tony Stark · HR Manager', 'emp-agus':'Budi Santoso · Ops Manager',
+    'emp-maya':'Tony Stark · HR Manager', 'emp-yoga':'Dewi Lestari · Engineering Lead',
+    'emp-nur':'Sinta Wijaya · Legal Manager', 'emp-fajar':'Agus Setiawan · Warehouse Supervisor'
+  };
+  // emp_work_detail — join_date / leave_date / job_grade_id (FSD 0.2 §1.1)
+  // job_grade_id resolves against company.mst_job_grade: Class row = golongan, parent Grade row = jabatan formal.
+  var WORK = {
+    'emp-eka':  { join:'2021-02-11', leave:null,         grade:'III-B', gradeName:'Class III-B', formal:'Staff' },
+    'emp-lia':  { join:'2019-11-04', leave:null,         grade:'IV-A', gradeName:'Class IV-A', formal:'Specialist' },
+    'emp-tony': { join:'2018-05-21', leave:null,         grade:'VI-A', gradeName:'Class VI-A', formal:'Manager' },
+    'emp-bagus':{ join:'2026-08-01', leave:null,         grade:'III-A', gradeName:'Class III-A', formal:'Staff' },
+    'emp-rina': { join:'2020-09-14', leave:'2026-09-13', grade:'IV-B', gradeName:'Class IV-B', formal:'Specialist' },
+    'emp-doni': { join:'2022-03-22', leave:null,         grade:'II-C', gradeName:'Class II-C', formal:'Pelaksana' },
+    'emp-sari': { join:'2021-12-06', leave:null,         grade:'III-C', gradeName:'Class III-C', formal:'Staff' },
+    'emp-agus': { join:'2019-08-30', leave:'2026-01-31', grade:'V-A', gradeName:'Class V-A', formal:'Supervisor' },
+    'emp-maya': { join:'2020-04-18', leave:'2025-12-31', grade:'III-B', gradeName:'Class III-B', formal:'Staff' },
+    'emp-yoga': { join:'2023-01-19', leave:null,         grade:'III-B', gradeName:'Class III-B', formal:'Staff' },
+    'emp-nur':  { join:'2022-06-27', leave:null,         grade:'IV-A', gradeName:'Class IV-A', formal:'Specialist' },
+    'emp-fajar':{ join:'2026-08-01', leave:null,         grade:'III-A', gradeName:'Class III-A', formal:'Staff' }
+  };
+  function workRow(e){ return WORK[e.id] || { join:e.created, leave:null, gradeName:'—', formal:'—' }; }
+
+  // Work status derived from contract presence (contract_end NULL ⇒ permanent)
+  function workStatus(e){ return (e.contract_end === '—') ? 'Karyawan Tetap (permanent)' : 'Karyawan Kontrak (PKWT)'; }
+
+  // ---- state ----
+  var state = { keyword:'', statuses:[], branch:'', from:'', to:'', sortBy:'nik', sortDir:'ASC', page:1, size:8, ran:false, results:[] };
+  var scope = 'HR';
+
+  // ---- helpers ----
+  var $ = function (s, r) { return (r||document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+  function icons(){ if (window.lucide) window.lucide.createIcons(); }
+  var SCRIPT_RE = /[<>]|script|['"`;]/i;
+
+  function maskNik(nik){ // partial mask on cross-subject grid
+    if (scope === 'HR') return { txt: nik, masked: false };
+    var m = nik.replace(/(.{4}).*(.{2})$/, function(_,a,b){ return a + '••••' + b; });
+    return { txt: m, masked: true };
+  }
+  function maskAcc(acc){ // only last 4 digits on cross-subject
+    return '•••• •••• ' + acc.slice(-4);
+  }
+  function fmtDate(d){
+    if (!d || d === '—') return '—';
+    var p = d.split('-'); var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return p[2] + ' ' + mo[parseInt(p[1],10)-1] + ' ' + p[0];
+  }
+
+  // ---- rendering ----
+  function badge(st){ return '<span class="badge b-'+st+'"><span class="d"></span>'+STATUS_LABEL[st]+'</span>'; }
+  function waLabel(wa){ return '<span class="wa"><i data-lucide="'+WA_ICON[wa]+'"></i>'+wa+'</span>'; }
+
+  function applyCriteria(){
+    var out = DATA.filter(function(e){
+      if (state.keyword){ var k = state.keyword.toLowerCase(); if (e.name.toLowerCase().indexOf(k)<0 && e.nik.toLowerCase().indexOf(k)<0) return false; }
+      if (state.statuses.length && state.statuses.indexOf(e.status)<0) return false;
+      if (state.branch && e.branch !== state.branch) return false;
+      if (state.from && e.created < state.from) return false;
+      if (state.to && e.created > state.to) return false;
+      return true;
+    });
+    // sort (whitelist: created_at, nik, employment_status)
+    out.sort(function(a,b){
+      var av, bv;
+      if (state.sortBy === 'created_at'){ av=a.created; bv=b.created; }
+      else if (state.sortBy === 'employment_status'){ av=a.status; bv=b.status; }
+      else { av=a.nik; bv=b.nik; }
+      var r = av < bv ? -1 : av > bv ? 1 : 0;
+      return state.sortDir === 'DESC' ? -r : r;
+    });
+    state.results = out;
+  }
+
+  function render(){
+    applyCriteria();
+    var total = state.results.length;
+    var totalPage = Math.max(1, Math.ceil(total / state.size));
+    if (state.page > totalPage) state.page = totalPage;
+    var start = (state.page-1)*state.size;
+    var pageRows = state.results.slice(start, start + state.size);
+
+    var body = $('#resBody'), empty = $('#resEmpty');
+    body.innerHTML = pageRows.map(function(e){
+      var nm = maskNik(e.nik);
+      var nikHtml = nm.masked ? '<span class="nik-cell"><span class="mask">'+nm.txt+'</span></span>' : '<span class="nik-cell">'+e.nik+'</span>';
+      return '<tr data-id="'+e.id+'">'+
+        '<td><div class="emp-id"><span class="avatar avatar--sm" style="background:linear-gradient('+e.color[0]+','+e.color[1]+')">'+e.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('')+'</span>'+
+          '<div><div class="emp-id__name"><a class="emp-link" data-open>'+e.name+'</a></div><div class="emp-id__proj">projection via auth</div></div></div></td>'+
+        '<td>'+nikHtml+'</td>'+
+        '<td>'+badge(e.status)+'</td>'+
+        '<td>'+waLabel(e.wa)+'</td>'+
+        '<td>'+BRANCH[e.branch]+'</td>'+
+        '<td class="col-action"><button class="rt-view" type="button" data-open>View Detail</button></td>'+
+      '</tr>';
+    }).join('');
+
+    empty.hidden = total !== 0;
+    body.parentElement.style.display = total === 0 ? 'none' : '';
+
+    $('#resCount').innerHTML = 'Showing <b>'+total+'</b> results';
+    $('#totalData').textContent = total;
+    $('#pgCur').textContent = state.page;
+    $('#pgTotal').textContent = totalPage;
+    $('#pgFirst').disabled = $('#pgPrev').disabled = state.page <= 1;
+    $('#pgNext').disabled = $('#pgLast').disabled = state.page >= totalPage;
+
+    // criteria summary chip
+    var parts = [];
+    if (state.keyword) parts.push('keyword:"'+state.keyword+'"');
+    if (state.statuses.length) parts.push(state.statuses.length + ' status');
+    if (state.branch) parts.push(BRANCH[state.branch]);
+    if (state.from || state.to) parts.push('date');
+    parts.push('sort '+state.sortBy+' '+state.sortDir);
+    $('#epCriteria').textContent = parts.join(' · ') || 'no filter';
+
+    // sort header state
+    $$('.rt th[data-sort]').forEach(function(th){
+      var on = th.getAttribute('data-sort') === state.sortBy;
+      th.classList.toggle('is-sorted', on);
+      var ic = th.querySelector('svg');
+      if (ic) ic.setAttribute('data-lucide', !on ? 'chevrons-up-down' : (state.sortDir==='ASC'?'chevron-up':'chevron-down'));
+    });
+    icons();
+  }
+
+  // ---- search actions ----
+  function validateKeyword(){
+    var v = $('#qKeyword').value;
+    var bad = SCRIPT_RE.test(v);
+    $('#fgKeyword').classList.toggle('is-err', bad);
+    return !bad;
+  }
+
+  $('#qKeyword').addEventListener('input', validateKeyword);
+
+  $('#statChips').addEventListener('click', function(e){
+    var btn = e.target.closest('.stat-chip'); if (!btn) return;
+    var st = btn.getAttribute('data-st');
+    var i = state.statuses.indexOf(st);
+    if (i<0) state.statuses.push(st); else state.statuses.splice(i,1);
+    btn.classList.toggle('is-on');
+  });
+
+  $('#btnSearch').addEventListener('click', function(){
+    if (!validateKeyword()){ toast('Validation failed', 'Keyword contains forbidden characters (§8.6 · 422).', 'alert-triangle'); return; }
+    state.keyword = $('#qKeyword').value.trim();
+    state.branch = $('#qBranch').value;
+    state.from = $('#qFrom').value;
+    state.to = $('#qTo').value;
+    state.page = 1;
+    state.ran = true;
+    render();
+  });
+
+  $('#btnReset').addEventListener('click', function(){
+    state.keyword=''; state.statuses=[]; state.branch=''; state.from=''; state.to=''; state.page=1;
+    $('#qKeyword').value=''; $('#qBranch').value=''; $('#qFrom').value=''; $('#qTo').value='';
+    $('#fgKeyword').classList.remove('is-err');
+    $$('.stat-chip').forEach(function(c){ c.classList.remove('is-on'); });
+    render();
+  });
+
+  // sort headers (whitelist enforced by data-sort attribute)
+  $$('.rt th[data-sort]').forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.getAttribute('data-sort');
+      if (state.sortBy === col) state.sortDir = state.sortDir==='ASC'?'DESC':'ASC';
+      else { state.sortBy = col; state.sortDir = 'ASC'; }
+      render();
+    });
+  });
+
+  // pagination
+  $('#pgSize').addEventListener('change', function(){ state.size = parseInt(this.value,10); state.page=1; render(); });
+  $('#pgFirst').addEventListener('click', function(){ state.page=1; render(); });
+  $('#pgPrev').addEventListener('click', function(){ if(state.page>1){state.page--; render();} });
+  $('#pgNext').addEventListener('click', function(){ state.page++; render(); });
+  $('#pgLast').addEventListener('click', function(){ state.page = Math.ceil(state.results.length/state.size); render(); });
+
+  // scope pills — affect masking
+  $$('.scope-pill').forEach(function(p){
+    p.addEventListener('click', function(){
+      $$('.scope-pill').forEach(function(x){ x.classList.remove('is-on'); });
+      p.classList.add('is-on');
+      scope = p.getAttribute('data-scope');
+      render();
+    });
+  });
+
+  // date fields: clicking anywhere in the box opens the native picker
+  $$('.daterange input[type="date"]').forEach(function (d) {
+    d.addEventListener('click', function () { if (d.showPicker) { try { d.showPicker(); } catch (err) {} } });
+  });
+
+  // ---- DIR-DETAIL ----
+  var overlay = $('#dirDetail');
+  function kvRows(pairs){ return pairs.map(function(p){ return '<div class="kv__k">'+p[0]+'</div><div class="kv__v '+(p[2]||'')+'">'+p[1]+'</div>'; }).join(''); }
+
+  function openDetail(id){
+    var e = DATA.find(function(x){ return x.id === id; }); if (!e) return;
+    var crossSubject = e.id !== CURRENT_USER;
+    $('#ddAvatar').textContent = e.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+    $('#ddAvatar').style.background = 'linear-gradient('+e.color[0]+','+e.color[1]+')';
+    $('#ddName').textContent = e.name;
+    $('#ddRole').innerHTML = e.pos + ' · ' + BRANCH[e.branch] + ' &nbsp;'+badge(e.status);
+    $('#ddEndpointId').textContent = e.id;
+
+    $('#ddWork').innerHTML = kvRows([
+      ['NIK', scope==='HR'||!crossSubject ? '<span class="mono-val">'+e.nik+'</span>' : '<span class="mono-val" style="color:var(--fg-4)">'+maskNik(e.nik).txt+'</span>'],
+      ['Employment status', badge(e.status)],
+      ['Work status', workStatus(e)],
+      ['Work arrangement', waLabel(e.wa)],
+      ['Supervisor (Atasan)', SUP[e.id] || '—'],
+      ['Contract end date', fmtDate(e.contract_end)],
+      ['Cost center', '<span class="mono-val">'+e.cost+'</span>'],
+      ['SBU', e.sbu],
+      ['Job grade &amp; formal position', workRow(e).gradeName === '—' ? '—' : (workRow(e).gradeName + ' <span style="color:var(--fg-3)">· ' + workRow(e).formal + '</span>')],
+      ['Join date', fmtDate(workRow(e).join)],
+      ['Leave date', workRow(e).leave ? fmtDate(workRow(e).leave) : '<span style="color:var(--color-success-800)">Still employed (NULL)</span>'],
+      ['Record created', fmtDate(e.created)]
+    ]);
+
+    // bank — masked on cross-subject
+    var accHtml = crossSubject ? '<span class="mono-val">'+maskAcc(e.bank.acc)+'</span> <span class="mask-note" style="color:var(--fg-4);font-size:10.5px">· last 4 digits</span>' : '<span class="mono-val">'+e.bank.acc+'</span>';
+    var holderHtml = crossSubject ? e.bank.holder.split(' ')[0] + ' •••' : e.bank.holder;
+    $('#ddBank').innerHTML = kvRows([
+      ['Bank', e.bank.code],
+      ['Account number', accHtml],
+      ['Account holder', holderHtml]
+    ]);
+
+    $('#ddIdentity').innerHTML = kvRows([
+      ['Name', e.name],
+      ['Email', e.email],
+      ['Phone', '<span class="mono-val">'+e.phone+'</span>'],
+      ['Job position', e.pos],
+      ['Unit / Branch', BRANCH[e.branch]]
+    ]);
+
+    // read-audit note + toast only when touching PII of another subject
+    $('#ddAudit').style.display = crossSubject ? '' : 'none';
+    overlay.classList.add('is-open');
+    icons();
+    if (crossSubject) toast('Read-audit recorded', 'Accessing PII for '+e.name+' (another subject) writes one append-only read-audit row.', 'file-lock-2');
+  }
+
+  $('#resBody').addEventListener('click', function(e){
+    var tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    openDetail(tr.getAttribute('data-id'));
+  });
+  $$('[data-close]', overlay).forEach(function(el){ el.addEventListener('click', function(){ overlay.classList.remove('is-open'); }); });
+  document.addEventListener('keydown', function(e){ if (e.key==='Escape') overlay.classList.remove('is-open'); });
+
+  // ---- toast ----
+  function toast(title, sub, icon){
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<i data-lucide="'+(icon||'info')+'"></i><div><div class="toast__t">'+title+'</div><div class="toast__s">'+sub+'</div></div>';
+    $('#toastWrap').appendChild(el);
+    icons();
+    requestAnimationFrame(function(){ el.classList.add('is-in'); });
+    setTimeout(function(){ el.classList.remove('is-in'); setTimeout(function(){ el.remove(); }, 300); }, 4200);
+  }
+
+  // ---- init: grid shows paginated initial set (FSD: "grid awal tampil ter-paginate") ----
+  render();
+  icons();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Performance — Score Approvals</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/document.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.qpill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 14px;font:600 12px/1 Inter}.qpill--ok{background:var(--color-warning-50,#fffbeb);border:1px solid var(--color-warning-200,#fde68a);color:var(--color-warning-800,#92400e)}.qpill--out{background:var(--color-error-50,#fef2f2);border:1px solid var(--color-error-200,#fecaca);color:var(--color-error-700,#b91c1c)}.dist{display:flex;gap:4px;align-items:flex-end;height:26px}.dist span{width:10px;background:var(--color-primary-300,#bfe4f4);border-radius:2px 2px 0 0}.dist span.hi{background:var(--color-secondary-500,#0284c7)}.decbtns{display:flex;gap:10px;flex-wrap:wrap}.radio.is-off{opacity:.5;cursor:not-allowed}.distv{font:600 13px/1 Inter;color:var(--fg-2,#111827)}.mini{font:400 11px/1.4 Inter;color:var(--fg-4,#94A3B8)}a{color:var(--fg-link,#0284c7);text-decoration:none}a:hover{text-decoration:underline}</style>
+</head>
+<body data-screen-label="Performance — Score Approvals" data-perf-page="approvals">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <div class="rc-sec"><span class="rc-sec__title">Score Approvals</span></div>
+          <p class="doc-lead">The approver chain decides the fate of a submitted sheet — approve, return, or reject finally — through a synchronous-then-asynchronous handshake with the workflow service. A decision answers <code>202 FORWARDED</code>: the outcome and the sheet status have <strong>not</strong> changed yet on that response; the workflow completion message writes them.</p>
+
+          <div class="tabnav" id="apTab">
+            <button type="button" class="tabnav__tab is-on" data-tab="queue">Pending Queue</button>
+            <button type="button" class="tabnav__tab" data-tab="hist">Round History</button>
+          </div>
+
+          <!-- F1 -->
+          <div class="tabpanel is-on" data-tabpanel="queue">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="apSort" style="width:220px"><span class="ctl__value">Oldest submitted first</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="ASC">Oldest submitted first</div><div class="dropdown__opt" data-val="DESC">Newest submitted first</div></div>
+              </div>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <span class="doc-fsum"><code>GET /me/pending-approvals</code> — the approver identity comes from the token; there is no identity parameter, and no employee search either. The form carries only page, size and the sort direction on <code>created_at</code>.</span>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Employee Under Review</th><th>Cycle · Round</th><th>Assessor Score Distribution</th><th>Submitted</th><th class="ta-r"></th></tr></thead>
+              <tbody id="apBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="apFoot"></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="quote"></i>The distribution is quoted, never recomputed</div>
+              <p>The score distribution beside each row is read straight off the response. Its formula belongs to <a href="performance-reports.html">Monitor &amp; Reports</a>; this screen only displays it.</p>
+            </div>
+          </div>
+
+          <!-- F4/F5/F6 -->
+          <div class="tabpanel" data-tabpanel="hist">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="apSheet" style="width:320px"><span class="ctl__value">RS-0004 — Yanti Prasetya (2 rounds)</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown">
+                  <div class="dropdown__opt" data-val="RS-0004">RS-0004 — Yanti Prasetya (2 rounds)</div>
+                  <div class="dropdown__opt" data-val="RS-0002">RS-0002 — Budi Santoso (1 round, approved)</div>
+                  <div class="dropdown__opt" data-val="RS-0003">RS-0003 — Rina Amelia (1 round, returned)</div>
+                </div>
+              </div>
+              <div class="doc-tbar__sp"></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>Cycle · Round</th><th>Approver</th><th>Outcome</th><th>Reason</th><th>Decided</th></tr></thead>
+              <tbody id="apHistBody"></tbody>
+            </table></div>
+            <p class="fld__hint">Read access: HR across the whole company, supervisors for their own department when they are the assessor or an approver, and an employee for their own sheet only.</p>
+            <div class="doc-note" style="margin-top:20px" id="apHistNote"></div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- F2 / F3 · DECIDE -->
+<div class="ovl" id="apDecideM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:580px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Decide on sheet</h3><p class="ovl__desc"><code>POST /review-sheets/{id}/decisions</code> — the answer is <code>202 FORWARDED</code>, not <code>200</code>.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="adKv"></div>
+    <div id="adQuota"></div>
+    <div class="fld"><label class="fld__label">Decision <span class="req">*</span></label>
+      <div class="radio-row" id="adBtns"></div></div>
+    <div class="fld" id="adReasonWrap" hidden><label class="fld__label">Decision reason <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="adReason" rows="3" maxlength="500" placeholder="Why is the sheet being returned or rejected?"></textarea></div>
+      <p class="fld__hint">The field does not exist for an approval — it appears, and becomes mandatory, only for a return or a final rejection.</p></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="workflow"></i>What 202 means here</div>
+      <p>The response says the decision was forwarded to the workflow engine. The round outcome and the sheet status are written later, when the completion message comes back. The token carried forward to the engine is the approver's own token, not a service token.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="adSubmit">Submit decision</button></div>
+</div></div>
+
+<script>window.SEVAKA_SESSION = { roles: ['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER','ROLE_HR_STAFF','ROLE_HR_MANAGER'] };</script>
+<script src="js/performance-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script>
+(function(){
+  var F = window.Flow || window.F;
+  var QUOTA = 1;
+  var PENDING = [
+    { sheet:'RS-0002', emp:'Budi Santoso', cycle:1, round:1, dist:{ rated:2, total:2, avg:4.2 }, submitted:'25 Jun 2026 09:00', returns:0 },
+    { sheet:'RS-0004', emp:'Yanti Prasetya', cycle:1, round:2, dist:{ rated:1, total:2, avg:3.4 }, submitted:'10 Apr 2026 08:30', returns:1 }
+  ];
+  var ROUNDS = {
+    'RS-0004':[
+      { cr:'1 · 1', approver:'Rina Amelia', outcome:'RETURNED', reason:"Item ADDITIONAL 'Dokumentasi SOP baru' belum jelas target ukurannya.", at:'01 Apr 2026 10:00' },
+      { cr:'1 · 2', approver:'Rina Amelia', outcome:'REJECTED_FINAL', reason:'Target masih belum terukur setelah revisi, jatah pengembalian (return_quota=1) sudah habis.', at:'15 Apr 2026 13:00' }
+    ],
+    'RS-0002':[ { cr:'1 · 1', approver:'Rina Amelia', outcome:'APPROVED', reason:'', at:'05 Jul 2026 11:00' } ],
+    'RS-0003':[ { cr:'1 · 1', approver:'Hesti Wulandari', outcome:'RETURNED', reason:'Bukti pencapaian target belum dilampirkan.', at:'02 Apr 2026 09:30' } ]
+  };
+  var NOTES = {
+    'RS-0004':'<div class="doc-note__h"><i data-lucide="ban"></i>Two rounds, quota spent</div><p>Round 1 was returned, which used the single return allowed per cycle. In round 2 the Return option is not offered at all — the quota is enforced at the endpoint, before anything reaches the workflow engine.</p>',
+    'RS-0002':'<div class="doc-note__h"><i data-lucide="check"></i>An empty reason is legitimate here</div><p>An approval carries no reason, so the column is deliberately blank rather than filled with a placeholder.</p>',
+    'RS-0003':'<div class="doc-note__h"><i data-lucide="git-branch"></i>Approver equals assessor — and that is correct</div><p>Rina Amelia sits at the top of the assessment structure with no parent, so Hesti Wulandari is both her assessor and her approver. The catcher chain ends with an HR Manager when the assessor/approver chain runs out.</p>'
+  };
+  var OB = { APPROVED:'sb--green', RETURNED:'sb--amber', REJECTED_FINAL:'sb--red' };
+  function ob(o){ return '<span class="sb '+(OB[o]||'sb--grey')+'"><span class="sb__dot"></span>'+o+'</span>'; }
+  function dist(d){
+    return '<span class="distv" title="assessor_score_distribution">Average '+d.avg.toFixed(1)+
+      '</span> <span class="mini">'+d.rated+' of '+d.total+' lines rated</span>';
+  }
+  var dir='ASC', cur=null, decision='APPROVED';
+
+  var pg = F.pager('apFoot', 10, drawQueue, 'sheets');
+  function drawQueue(){
+    var all = PENDING.slice();
+    if (dir==='DESC') all.reverse();
+    pg.state.total = all.length;
+    var view = pg.slice ? pg.slice(all) : all;
+    document.getElementById('apBody').innerHTML = view.map(function(p){
+      return '<tr><td><a href="#" class="ap-hist" data-hist="'+p.sheet+'">'+p.emp+'</a><div class="td-sub">'+p.sheet+'</div></td><td>cycle '+p.cycle+' · round '+p.round+'</td>'+
+        '<td>'+dist(p.dist)+'</td><td>'+p.submitted+'</td>'+
+        '<td class="ta-r"><div class="rowacts"><button class="rowbtn" data-decide="'+p.sheet+'">Review</button></div></td></tr>';
+    }).join('') || '<tr><td colspan="5" class="dtable__empty">Nothing is waiting on your decision.</td></tr>';
+    if (pg.paint) pg.paint();
+    if (window.lucide) lucide.createIcons();
+  }
+  function drawHist(){
+    var id = document.querySelector('#apSheet .ctl__value').textContent.trim().split(' ')[0];
+    var rows = ROUNDS[id] || [];
+    document.getElementById('apHistBody').innerHTML = rows.map(function(r){
+      return '<tr><td>'+r.cr+'</td><td>'+r.approver+'</td><td>'+ob(r.outcome)+'</td>'+
+        '<td>'+(r.reason || '<span class="mini" style="color:var(--fg-4)">—</span>')+'</td><td>'+r.at+'</td></tr>';
+    }).join('');
+    document.getElementById('apHistNote').innerHTML = NOTES[id] || '';
+    if (window.lucide) lucide.createIcons();
+  }
+
+  document.getElementById('apTab').addEventListener('tabchange', function(e){
+    if (e.detail.value==='hist') drawHist();
+  });
+  document.getElementById('apSheet').addEventListener('select', drawHist);
+  document.getElementById('apSort').addEventListener('select', function(e){ dir = e.detail.value; pg.reset(); drawQueue(); });
+  function openHist(id){
+    var pill = document.querySelector('#apTab [data-tab="hist"]'); if (pill) pill.click();
+    var opt = document.querySelector('#apSheet .dropdown__opt[data-val="'+id+'"]');
+    if (opt) { document.querySelector('#apSheet .ctl__value').textContent = opt.textContent; }
+    drawHist();
+  }
+
+  function paintDecision(){
+    document.querySelectorAll('#adBtns input[type="radio"]').forEach(function(r){ r.checked = r.value===decision; });
+    document.getElementById('adReasonWrap').hidden = decision==='APPROVED';
+  }
+  document.getElementById('apBody').addEventListener('click', function(e){
+    var h = e.target.closest('[data-hist]');
+    if (h) { e.preventDefault(); openHist(h.dataset.hist); return; }
+    var b = e.target.closest('[data-decide]'); if(!b) return;
+    cur = PENDING.filter(function(p){ return p.sheet===b.dataset.decide; })[0];
+    var out = cur.returns >= QUOTA;
+    document.getElementById('adKv').innerHTML =
+      '<div class="kv__k">Sheet</div><div class="kv__v">'+cur.sheet+' — '+cur.emp+'</div>'+
+      '<div class="kv__k">Round</div><div class="kv__v">cycle '+cur.cycle+' · round '+cur.round+'</div>'+
+      '<div class="kv__k">Submitted</div><div class="kv__v">'+cur.submitted+'</div>';
+    document.getElementById('adQuota').innerHTML = out
+      ? '<span class="qpill qpill--out"><i data-lucide="ban"></i>Return quota spent: '+cur.returns+' of '+QUOTA+' used</span>'
+      : '<span class="qpill qpill--ok"><i data-lucide="undo-2"></i>Returns left: '+(QUOTA-cur.returns)+' of '+QUOTA+'</span>';
+    document.getElementById('adBtns').innerHTML =
+      '<label class="radio"><input type="radio" name="adDec" value="APPROVED" checked><span class="radio__dot"></span>Approve</label>' +
+      '<label class="radio'+(out?' is-off':'')+'"'+(out?' title="422 RETURN_QUOTA_EXCEEDED — the single return per cycle is already used"':'')+'>'+
+        '<input type="radio" name="adDec" value="RETURNED"'+(out?' disabled':'')+'><span class="radio__dot"></span>Return</label>' +
+      '<label class="radio"><input type="radio" name="adDec" value="REJECTED_FINAL"><span class="radio__dot"></span>Reject Final</label>';
+    decision = 'APPROVED';
+    document.getElementById('adReason').value = '';
+    paintDecision();
+    F.openModal('apDecideM');
+    if (window.lucide) lucide.createIcons();
+  });
+  document.getElementById('adBtns').addEventListener('change', function(e){
+    var r = e.target.closest('input[type="radio"]'); if(!r) return; decision = r.value; paintDecision();
+  });
+  document.getElementById('adSubmit').addEventListener('click', function(){
+    if (decision!=='APPROVED' && !document.getElementById('adReason').value.trim()) {
+      F.toast('A decision reason is mandatory for a return or a final rejection.','warn'); return;
+    }
+    PENDING = PENDING.filter(function(p){ return p !== cur; });
+    F.closeModal('apDecideM');
+    F.toast('202 FORWARDED — the decision went to the workflow engine; the outcome is written when it completes.');
+    pg.reset(); drawQueue();
+  });
+
+  drawQueue();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Employee Self-Service · Finance</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=8">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="ESS Finance">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Employee Self-Service</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" id="crumbNow" aria-current="page">Finance</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">My Finance</h1>
+<p class="flow-sub">A read-only view of your own financial transactions: benefit claims, their disbursement, and your loans. Every list reuses the module search endpoints with the row scope forced by the server to your identity — zero new endpoints, zero duplicated forms.</p>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="essTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="reimbursement">Reimbursement<span class="tabnav__count" id="cntClaims">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="taken">Reimbursement Taken</button>
+<button class="tabnav__tab" type="button" data-tab="loan">Loan<span class="tabnav__count" id="cntLoans">0</span></button>
+</div>
+
+<!-- ===== ESS-3 — my claims (read-only; the form lives on the Benefit Reimbursement page) ===== -->
+<div class="tabpanel is-on" data-tabpanel="reimbursement">
+<div class="sec-head"><span class="sec-head__t">My claims</span><span class="sec-head__sp"></span><a class="btn btn--primary" href="finance-benefit-reimbursement.html#new">New claim</a></div>
+<p class="fld__hint" style="margin-top:6px">Submitting, cancelling and the beneficiary list all happen on the Benefit Reimbursement page, where those screens are already built — “New claim” opens that form directly. This hub only reads.</p>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze" style="margin-top:12px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th>Benefit Type</th><th class="ta-r">Amount</th><th>Status</th><th>Reservation</th><th>Submitted</th><th></th></tr></thead>
+<tbody id="claimBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgMine"></div>
+<p class="fld__hint" style="margin-top:10px">The same grid the Finance module shows (<code>POST /benefit-claims/search</code>), filtered to you by the server — not a different screen and not a second endpoint.</p>
+</div>
+
+<!-- ===== ESS-4 — documented gap ===== -->
+<div class="tabpanel" data-tabpanel="taken">
+<div class="gapbox">
+<span class="gapbox__i"><i data-lucide="unplug"></i></span>
+<span class="gapbox__code">PROB-FRONTEND-016</span>
+<div class="gapbox__t">No employee-scoped read path for disbursement</div>
+<p class="gapbox__d">“Reimbursement Taken” needs to read the disbursement marks for your own claims. The Disbursement module grants none of its twelve endpoints to <code>ROLE_EMPLOYEE</code> — the same root cause that keeps this list empty in self-service while the Finance module's Disbursement History tab is populated for a finance officer. Left empty deliberately: no endpoint was invented to fill it.</p>
+</div>
+</div>
+
+<!-- ===== ESS-5 ===== -->
+<div class="tabpanel" data-tabpanel="loan">
+<div class="sec-head"><span class="sec-head__t">My loans</span><span class="sec-head__sp"></span><a class="btn btn--primary" href="finance-loan.html">Go to Loan module</a></div>
+<p class="fld__hint" style="margin-top:6px">Submitting a request and acknowledging a received schedule both happen in the Loan module, where those forms are already built.</p>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--nofreeze" style="margin-top:12px">
+<table class="dtable">
+<thead><tr><th>Request No.</th><th class="ta-r">Principal</th><th class="ta-c">Tenor</th><th class="ta-r">Interest</th><th class="ta-r">Total Obligation</th><th>Status</th><th>Submitted</th></tr></thead>
+<tbody id="loanBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgLoan"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>Cash advance self-service is <strong>not</strong> part of this hub — it is named in the technical document but absent from the navigation map, and was never built as a screen. Recorded, not improvised.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ ESS-3 — claim detail (read-only, GET /benefit-claims/{id}) ============ -->
+<div class="ovl" id="claimDetail">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="cdTitle">Claim detail</h3><p class="ovl__desc">Server-authoritative snapshots frozen at submission and approval time. Similarity warnings are never shown to the applicant.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="kv" id="cdKv"></div>
+<div>
+<div class="sumbox__head" style="padding-left:0"><i data-lucide="receipt"></i>Receipts</div>
+<div class="dtable-wrap" style="margin-top:6px">
+<table class="dtable">
+<thead><tr><th>Expense Date</th><th>Beneficiary</th><th>Receipt No.</th><th class="ta-r">Amount</th><th class="ta-c">Attachment</th></tr></thead>
+<tbody id="cdItems"></tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/finance-data.js"></script>
+<script src="js/finance-ess.js"></script>
+</body>
+</html>

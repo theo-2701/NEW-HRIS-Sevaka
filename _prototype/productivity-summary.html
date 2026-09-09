@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Timesheet Summary</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Timesheet Summary">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Timesheet</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Summary</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Summary <span class="sb sb--green" id="smState" style="vertical-align:middle;margin-left:8px"><span class="sb__dot"></span>DISAHKAN</span></h1>
+<p class="flow-sub">Read-and-approval screen for <strong id="smWho">Dedi Kurniawan</strong>, <strong id="smRange">1–31 July 2026</strong> — minutes only, never money. Readable by the owner, their supervision chain and HR.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="smSubmit" disabled title="Closed: the period is already DISAHKAN and payroll-confirmed.">Submit recap</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="note note--danger" style="margin-top:4px"><i data-lucide="lock"></i>
+<span><strong>Payroll-locked.</strong> Payroll confirmed this period on <span id="smLocked"></span>, so it can no longer be reopened by <em>any</em> role — HR included — and Submit stays closed.</span></div>
+
+<div class="pv-stats pv-stats--lead" style="margin-top:18px">
+<div class="pv-stat pv-stat--lead"><span class="pv-stat__k"><i data-lucide="clock"></i>Total hours</span><span class="pv-stat__v" id="stTotal">—</span><span class="pv-stat__f" id="stTotalF">—</span></div>
+<div class="pv-stat pv-stat--q"><span class="pv-stat__k"><i data-lucide="ban"></i>Cancelled-task min.</span><span class="pv-stat__v" id="stCancel">—</span><span class="pv-stat__f">Inside the total, shown apart.</span></div>
+<div class="pv-stat pv-stat--q"><span class="pv-stat__k"><i data-lucide="hourglass"></i>Awaiting settlement</span><span class="pv-stat__v" id="stPending">—</span><span class="pv-stat__f">Unsettled system-stops.</span></div>
+<div class="pv-stat pv-stat--q"><span class="pv-stat__k"><i data-lucide="gauge"></i>Near the daily cap</span><span class="pv-stat__v" id="stNear">—</span><span class="pv-stat__f">Days near 1440 minutes.</span></div>
+</div>
+
+<div class="flow-grid-2" style="margin-top:22px">
+<div>
+<div class="sec-head"><span class="sec-head__t">Breakdown by task</span><span class="subtabs__sp"></span><span class="sec-head__note">Per task and project</span></div>
+<div class="dtable-wrap" style="margin-top:10px">
+<table class="dtable"><thead><tr><th>Task</th><th>Project</th><th class="ta-r">Minutes</th><th class="ta-r">Hours</th></tr></thead><tbody id="smTaskBody"></tbody></table>
+</div>
+</div>
+<div class="flow-stack">
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="pie-chart"></i>Origin composition</div>
+<div class="pv-bar" id="smBar" style="margin-bottom:12px"></div>
+<div id="smOriginRows"></div>
+</div>
+<div class="pv-panel">
+<div class="pv-panel__head"><i data-lucide="history"></i>Approval trail</div>
+<div class="pv-row"><span class="pv-row__k">submitted_at</span><span class="pv-row__v" id="smSub">—</span></div>
+<div class="pv-row"><span class="pv-row__k">approved_at</span><span class="pv-row__v" id="smApp">—</span></div>
+<div class="pv-row"><span class="pv-row__k">payroll_confirmed_at</span><span class="pv-row__v" id="smPay">—</span></div>
+</div>
+</div>
+</div>
+
+<details class="pv-fold">
+<summary><i data-lucide="chevron-right"></i>State reference — all four values of timesheet_period_state<span class="pv-fold__note">Static reference, not a query</span></summary>
+<div class="pv-fold__body">
+<div class="dtable-wrap">
+<table class="dtable"><thead><tr><th>State</th><th>What it means</th><th>Gate</th></tr></thead><tbody id="smStateBody"></tbody></table>
+</div>
+</div>
+</details>
+
+<div class="pv-notes">
+<span class="pv-notes__t">Contract notes</span>
+<p><strong>Deliberate boundary.</strong> This screen never queries attendance in the time service, and carries no difference-against-attendance column. Payroll integration fields (unpaid minutes, per-paid-group breakdown) are server-to-server and intentionally not rendered.</p>
+<p><strong>No client-facing endpoint moves this forward.</strong> <code>MENUNGGU_PENGESAHAN → DISAHKAN / DIKEMBALIKAN</code> happens only when the workflow service publishes its completed or cancelled event — so this screen never carries an Approve or Reject button, for any role. The owner's only action is Submit, gated on no system-stopped row being left unsettled.</p>
+<p><strong>DIKEMBALIKAN is reachable from two directions</strong> — a cancelled workflow decision, or a reopen from <code>DISAHKAN</code> by the direct manager or HR while payroll has not confirmed. Both land in the same state, and re-submission uses the very same endpoint with a fresh workflow instance.</p>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0001', roles:['ROLE_EMPLOYEE'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-summary.js"></script>
+</body>
+</html>

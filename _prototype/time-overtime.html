@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Overtime</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=2">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — Overtime">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Overtime</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Overtime</h1>
+<p class="flow-sub">Two stacked resources: the requests people file, and the daily summary that decides what is actually paid. Mode and category are derived by the server and cannot be typed. Payable hours are the smaller of hours actually worked and the total approved ceiling — never the number on the request.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newOtBtn">Request overtime</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tabnav" id="otTabs">
+<button class="tabnav__tab is-on" type="button" data-tab="requests">Requests<span class="tabnav__count" id="cntOt">0</span></button>
+<button class="tabnav__tab" type="button" data-tab="daily">Daily Summary<span class="tabnav__count" id="cntOtd">0</span></button>
+</div>
+
+<div class="fin-tbar" style="margin-top:14px;gap:8px;align-items:center">
+<span class="cell-dim" style="font-size:12px">Dev only — signed in as</span>
+<div class="fld" style="max-width:236px;flex:0 0 236px">
+<div class="ctl ctl--select ctl--sm" id="viewAs"><span class="ctl__value">Rina Wulandari — EMPLOYEE</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="viewAsDd"></div>
+</div>
+</div>
+<div class="fin-tbar__sp"></div>
+</div>
+<div class="note note--info" style="margin:10px 0 14px" id="essBanner"><i data-lucide="user"></i><span id="essTxt"></span></div>
+<div class="note note--warn" style="margin-bottom:22px"><i data-lucide="alert-triangle"></i><span>An <strong>auto call-out</strong> row is born by punch detection inside an approved standby window. Its recording endpoint was withdrawn entirely (K40) — the row is only <em>read</em> here: no edit, no withdraw, no approval. Standby rosters are kept in the On Call menu.</span></div>
+
+<!-- ===== A2 — request list ===== -->
+<div class="tabpanel is-on" data-tabpanel="requests">
+<div class="fin-tbar">
+<button class="btn btn--secondary" id="fltBtn">Filter</button>
+<span class="cell-dim" id="fltSum" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltName" placeholder="Search employee"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Overtime Date</th><th>Employee</th><th>Mode</th><th>Category</th><th class="ta-r">Hours Requested</th><th class="ta-r">Hours Approved</th><th>Status</th><th>Approval Layer Trigger</th><th></th></tr></thead>
+<tbody id="otBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgOt"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>A row born from on-call attendance detection carries no manual write surface anywhere in the product — its authorisation was granted up front when its standby window was approved. An approval-layer trigger <strong>lifts</strong> a request to another layer; it never refuses it, and the excess hours are still recorded truthfully.</span></div>
+</div>
+
+<!-- ===== D2 — daily summary ===== -->
+<div class="tabpanel" data-tabpanel="daily">
+<div class="note note--info"><i data-lucide="lock"></i><span>Read-only, with no add and no edit anywhere. These rows are only born or changed by automatic recomputation — new tap data, an approved overtime request, an approved attendance correction, or periodic reconciliation.</span></div>
+<div class="fin-tbar" style="margin-top:14px">
+<button class="btn btn--secondary" id="fltDBtn">Filter</button>
+<span class="cell-dim" id="fltDSum" style="font-size:12px"></span>
+<div class="fin-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="fltDName" placeholder="Search employee"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Date</th><th>Employee</th><th class="ta-r">Actual Hours</th><th class="ta-r">Approved Ceiling (total)</th><th class="ta-r">Payable Hours</th><th>Final Category</th><th>First Approved Request</th></tr></thead>
+<tbody id="otdBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgOtd"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>The ceiling is the sum of <strong>every</strong> approved request on that date — one date may legitimately carry an advance request and a retroactive one. The reference column names only the first approved request as a trace of origin; it is never the source of the ceiling. Payable hours is the figure that flows to payroll — deliberately hours and category only, never money.</span></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ B3 — request form ============ -->
+<div class="ovl" id="otForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="ofTitle">Request overtime</h3><p class="ovl__desc">Hours are not paid until a decision lands — working while a request waits carries the risk that the hours are never approved.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="ofBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="fld">
+<label class="fld__label">Requester</label>
+<div class="ctl ctl--ro"><input type="text" id="ofWho" readonly></div>
+<span class="fld__hint">Taken from the token — overtime can never be filed on someone else's behalf.</span>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Overtime date <span class="req">*</span></label>
+<div class="ctl ctl--date"><input type="text" id="ofDate" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+<div class="fld">
+<label class="fld__label">Hours requested <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="ofHours" step="0.25" min="0.25" placeholder="e.g. 3.00"></div>
+<span class="fld__hint">Quarter-hour steps, greater than zero.</span>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Reason <span class="req" id="ofReasonStar" style="display:none">*</span></label>
+<div class="ctl ctl--area"><textarea id="ofReason" rows="3" placeholder="Input text here" maxlength="500"></textarea></div>
+<span class="fld__hint">Mandatory once the chosen date is in the past. Otherwise optional but strongly advised — it is the only written context the approver reads.</span>
+</div>
+<div class="tm-derived" id="ofDerived"></div>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="ofSave">Submit request</button>
+</div>
+</div>
+</div>
+
+<!-- ============ D3 — approve drawer ============ -->
+<div class="ovl" id="otApprove">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Approve overtime request</h3><p class="ovl__desc">The approved figure becomes the ceiling — it may be trimmed below the request, never raised above it.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div><div class="cell-strong" id="oaHead">—</div><div class="cell-dim" id="oaReason">—</div></div>
+<div id="oaTrigger"></div>
+<div class="fld">
+<label class="fld__label">Approved hours <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="oaHours" step="0.25" min="0.25"></div>
+<span class="fld__hint">Mandatory when approving — <code>chk_emp_overtime_request_approved_hours</code>.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Decision note</label>
+<div class="ctl ctl--area"><textarea id="oaNote" rows="2" placeholder="Input text here"></textarea></div>
+<span class="fld__hint">Forwarded as a workflow-engine task comment — not a column on this table (G5).</span>
+</div>
+<div class="k9"><i data-lucide="shield"></i><span>Separation of duties — the approver may never be the requester. Enforced at the door (application/workflow), returning <code>403</code>, not merely hidden here.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="oaGo">Approve</button>
+</div>
+</div>
+</div>
+
+<!-- ============ D5 — reject drawer ============ -->
+<div class="ovl" id="otReject">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Reject overtime request</h3><p class="ovl__desc">A rejected request never produces a daily overtime fact — hours already worked against it are not payable.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div><div class="cell-strong" id="orHead">—</div><div class="cell-dim" id="orReason">—</div></div>
+<div id="orTrigger"></div>
+<div class="fld">
+<label class="fld__label">Decision note</label>
+<div class="ctl ctl--area"><textarea id="orNote" rows="3" placeholder="Input text here"></textarea></div>
+<span class="fld__hint">Forwarded as a workflow-engine task comment — not a column on this table (G5).</span>
+</div>
+<div class="k9"><i data-lucide="shield"></i><span>Separation of duties — the approver may never be the requester (<code>403</code>).</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--danger" id="orGo">Reject</button>
+</div>
+</div>
+</div>
+
+<!-- ============ read-only detail ============ -->
+<div class="ovl" id="otView">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Overtime request</h3><p class="ovl__desc">Mode, category and the approval-layer trigger are server-derived; anything a client sends for them is ignored.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="ovKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ============ withdraw ============ -->
+<div class="ovl" id="otWithdraw">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--sm">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Withdraw this request?</h3><p class="ovl__desc">Only before a decision lands. The row stays in the history as Withdrawn rather than disappearing.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="kv" id="owKv"></div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Keep request</button>
+<button class="btn btn--danger" id="owConfirm">Withdraw request</button>
+</div>
+</div>
+</div>
+
+<!-- ============ filter modal ============ -->
+<div class="ovl" id="otFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="fmTitle">Filter requests</h3><p class="ovl__desc">Only the fields the search contract accepts are offered here.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div id="fgReq" style="display:flex;flex-direction:column;gap:16px">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Status</label>
+<div class="ctl ctl--select" id="fltStatus"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All statuses</div><div class="dropdown__opt" data-val="PENDING_APPROVAL">Pending approval</div><div class="dropdown__opt" data-val="AUTO_APPROVED">Auto-approved</div><div class="dropdown__opt" data-val="APPROVED">Approved</div><div class="dropdown__opt" data-val="REJECTED">Rejected</div><div class="dropdown__opt" data-val="CANCELLED">Cancelled — withdrawn</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Submission mode</label>
+<div class="ctl ctl--select" id="fltMode"><span class="ctl__value">All modes</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All modes</div><div class="dropdown__opt" data-val="PRE">Filed in advance (PRE)</div><div class="dropdown__opt" data-val="RETROACTIVE">Retroactive</div></div>
+</div>
+</div>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Category</label>
+<div class="ctl ctl--select" id="fltCat"><span class="ctl__value">All categories</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All categories</div><div class="dropdown__opt" data-val="WORKDAY">Workday</div><div class="dropdown__opt" data-val="WEEKLY_REST">Weekly rest</div><div class="dropdown__opt" data-val="PUBLIC_HOLIDAY">Public holiday</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Date from</label>
+<div class="ctl ctl--date"><input type="text" id="fltFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+<div class="fld" style="max-width:calc(50% - 8px)">
+<label class="fld__label">Date to</label>
+<div class="ctl ctl--date"><input type="text" id="fltTo" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+<div id="fgDaily" class="is-hidden" style="display:flex;flex-direction:column;gap:16px">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Final category</label>
+<div class="ctl ctl--select" id="fltDCat"><span class="ctl__value">All categories</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown"><div class="dropdown__opt is-sel" data-val="">All categories</div><div class="dropdown__opt" data-val="WORKDAY">Workday</div><div class="dropdown__opt" data-val="WEEKLY_REST">Weekly rest</div><div class="dropdown__opt" data-val="PUBLIC_HOLIDAY">Public holiday</div></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Date from</label>
+<div class="ctl ctl--date"><input type="text" id="fltDFrom" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+<div class="fld" style="max-width:calc(50% - 8px)">
+<label class="fld__label">Date to</label>
+<div class="ctl ctl--date"><input type="text" id="fltDTo" placeholder="DD MMM YYYY">
+<svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+</div>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="fmReset">Reset</button>
+<button class="btn btn--primary" data-close>Done</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-overtime.js"></script>
+</body>
+</html>

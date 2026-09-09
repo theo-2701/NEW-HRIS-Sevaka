@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — ESS Payslip</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/finance.css">
+  <link rel="stylesheet" href="css/company.css">
+  <link rel="stylesheet" href="css/payroll-doc.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="ESS Payslip">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Self-Service</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Payroll</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Payslip</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Payslip</h1>
+              <p class="flow-sub">Four groups of lines in a fixed order — earnings, deductions, other matters, prior-month corrections. Your own slip leaves no trace; someone else's is always recorded.</p>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="psTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="mine">My payslip</button>
+            <button class="tabnav__tab" type="button" data-tab="hr">Employee payslips</button>
+          </div>
+
+          <div class="tabpanel is-on" data-tabpanel="mine">
+            <div class="note note--info" style="margin:14px 0"><i data-lucide="info"></i><span>Your own payslip — every signed-in person reaches it here, HR included, since an HR manager is an employee too. Reading or downloading your own slip writes nothing to the access trail. Only the second tab, which needs <code>ROLE_HR_MANAGER</code>, reaches other people's slips and records every look.</span></div>
+            <div class="co-tbar" style="margin-top:14px">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="myPeriod" style="width:200px;height:40px">
+                  <span class="ctl__value">PP-2026-07</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel" data-val="p7">PP-2026-07</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><button class="btn btn--secondary" id="myDownload">Download slip (PDF)</button></div>
+            </div>
+            <div id="mySlip"></div>
+          </div>
+
+          <div class="tabpanel" data-tabpanel="hr">
+            <div class="note note--info" style="margin:14px 0"><i data-lucide="info"></i><span>Signed in as <strong>Maya Anggraini</strong> — <code>ROLE_HR_MANAGER</code>. The grid below is internal HR consumption, so it carries <code>employee_id</code> and writes no access trail. The payslip itself never exposes <code>employee_id</code> — the NIK snapshot is the only identifier on it — and every open or download of someone else's slip is recorded.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="hrPeriod" style="width:200px;height:40px">
+                  <span class="ctl__value">PP-2026-07</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel" data-val="p7">PP-2026-07</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right" style="display:flex;gap:8px;align-items:center"><div class="co-search"><i data-lucide="search"></i><input type="text" id="hrSearch" placeholder="Search employee"></div><button class="btn btn--secondary" type="button" id="openTrail">Access trail</button></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Employee</th><th class="cell-mono">employee_id</th><th class="ta-r">Net prepared</th><th class="ta-c">Open finding</th><th class="ta-r"></th></tr></thead>
+              <tbody id="hrBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="pgHr"></div>
+            <div class="note note--warn" style="margin:14px 0"><i data-lucide="triangle-alert"></i><span>Guardrails on someone else's payslip: a result row that exists in a period not yet handed over is refused as <code>PAY_PAYSLIP_NOT_YET_AVAILABLE</code>; no row at all is a plain not-found; a download whose accompanying fields cannot be resolved is refused as <code>PAY_PAYSLIP_ASSEMBLY_INCOMPLETE</code> — strict on download, lenient on screen.</span></div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== H5 / H6 · SOMEONE ELSE'S PAYSLIP ===== -->
+<div class="ovl" id="mHrSlip"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:760px">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="hrSlipTitle">Payslip</h3><p class="ovl__desc">Identical in form to an employee's own payslip, and <code>employee_id</code> never appears on it. Opening it wrote a <code>LAYAR</code> entry in the access trail; downloading writes an <code>UNDUHAN</code> entry, treated exactly alike.</p></div><button class="ovl__x" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+  <div id="hrSlip"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-close>Close</button><button class="btn btn--primary" type="button" data-hrdl="1">Download slip (PDF)</button></div>
+</div></div>
+
+<!-- ===== ACCESS TRAIL ===== -->
+<div class="ovl" id="mTrail"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:720px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Access trail</h3><p class="ovl__desc">One row per screen view and per download of another person's payslip — both channels treated alike. Reading your own payslip records nothing. The browsable audit read belongs to <code>ROLE_SUPER_ADMIN</code> and has no menu of its own (carry-forward gap PROB-FRONTEND-025), so this panel reflects what this session wrote.</p></div><button class="ovl__x" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+  <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+    <thead><tr><th>Accessed at</th><th>Subject</th><th>Period</th><th class="ta-c">Channel</th><th>Accessed by</th></tr></thead>
+    <tbody id="logBody"></tbody>
+  </table></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-close>Close</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Payroll', activeItem: 'Payslip' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/payroll-doc-data.js"></script>
+<script src="js/payroll-doc-payslip.js"></script>
+</body>
+</html>

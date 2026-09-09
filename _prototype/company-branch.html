@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Branch</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/payroll-history.css">
+  <link rel="stylesheet" href="css/company.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Branch">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Settings</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Company</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Branch</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Branch</h1>
+              <p class="flow-sub">Register company branches and their operational parameters. Province, city and timezone are derived server-side from the postal-code snapshot — not entered directly.</p>
+            </div>
+            <div class="flow-head__actions">
+              <div class="co-addmenu" id="addMenu">
+                <button class="btn btn--primary" id="addBtn" type="button">Add branch<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="co-addmenu__pop">
+                  <button class="co-addmenu__item" type="button" data-add="single"><i data-lucide="plus"></i>Add branch</button>
+                  <button class="co-addmenu__item" type="button" data-add="bulk"><i data-lucide="upload"></i>Add bulk branch</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="brTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="list">Branch List<span class="tabnav__count" id="brCount">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="group">Branch Group<span class="tabnav__count" id="bgCount">0</span></button>
+          </div>
+
+          <!-- ============ BRANCH LIST ============ -->
+          <div class="tabpanel is-on" data-tabpanel="list">
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="brProvince" style="width:200px;height:40px">
+                  <span class="ctl__value" style="color:var(--fg-4)">All provinces</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown">
+                    <div class="dropdown__opt is-sel">All provinces</div>
+                    <div class="dropdown__opt">DKI Jakarta</div>
+                    <div class="dropdown__opt">Jawa Barat</div>
+                    <div class="dropdown__opt">Jawa Timur</div>
+                    <div class="dropdown__opt">Papua</div>
+                  </div>
+                </div>
+              </div>
+              <div class="co-tbar__right">
+                <div class="co-search"><i data-lucide="search"></i><input type="text" id="brSearch" placeholder="Search branch name"></div>
+              </div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll">
+              <table class="dtable">
+                <thead><tr>
+                  <th>Branch Name</th><th>Code</th><th>Category</th><th>Parent</th>
+                  <th>Province / City</th><th class="ta-c">Employees</th><th class="ta-r"></th>
+                </tr></thead>
+                <tbody id="brBody"></tbody>
+              </table>
+            </div>
+            <div class="ph-foot">
+              <div class="ph-showing">
+                <span id="brShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize">
+                  <select id="brPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="brPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="brPageBox">1</span>
+                <span class="ph-pager__from" id="brPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="brNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+
+            <div class="note note--warn" style="margin-top:16px"><i data-lucide="triangle-alert"></i><span><strong>GAP (PROB-FRONTEND-001)</strong> — <strong>FAX</strong>, <strong>Signature / Logo</strong>, <strong>Tax (NPWP / NITKU / KLU)</strong> and <strong>Attendance-on-Mobile + Radius</strong> have no storage column in the current contract. They appear disabled in the branch form pending a decision.</span></div>
+          </div>
+
+          <!-- ============ BRANCH GROUP ============ -->
+          <div class="tabpanel" data-tabpanel="group">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Branch Group is only active when <code>BRANCH_HIERARCHY_MODE = ENABLED</code>. It defines the branch categories and the level order used to build the parent hierarchy.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <button class="add-filter" id="bgAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Add category</button>
+              </div>
+              <div class="co-tbar__right">
+                <div class="co-search"><i data-lucide="search"></i><input type="text" id="bgSearch" placeholder="Search category name"></div>
+              </div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll">
+              <table class="dtable">
+                <thead><tr><th>Category Name</th><th class="ta-c">Level Order</th><th class="ta-c">View Child Data</th><th class="ta-c">Status</th><th class="ta-r"></th></tr></thead>
+                <tbody id="bgBody"></tbody>
+              </table>
+            </div>
+            <div class="ph-foot">
+              <div class="ph-showing">
+                <span id="bgShowing">Showing 0 of 0</span>
+                <div class="ph-pagesize">
+                  <select id="bgPageSize" aria-label="Rows per page"><option>10</option><option>20</option><option>50</option></select>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <span class="ph-pager__from">rows / page</span>
+              </div>
+              <div class="ph-pager">
+                <button class="ph-pager__btn" type="button" id="bgPrev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="ph-pagebox" id="bgPageBox">1</span>
+                <span class="ph-pager__from" id="bgPageOf">of 1</span>
+                <button class="ph-pager__btn" type="button" id="bgNext" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ BRANCH CREATE / EDIT ============ -->
+<div class="ovl" id="brEdit">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title" id="brEditTitle">Add branch</h3><p class="ovl__desc">Fields map 1:1 to <code>mst_branch</code>. Branch code must be unique among active branches.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <form id="brForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Branch name <span class="req">*</span></label>
+          <div class="ctl"><input type="text" id="brName" maxlength="60" placeholder="e.g. Kantor Bandung"></div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Branch code <span class="req">*</span></label>
+          <div class="ctl"><input type="text" id="brCode" maxlength="50" placeholder="e.g. BR-BDG-01"></div>
+        </div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Branch category <span class="req">*</span></label>
+          <div class="ctl ctl--select" id="brCat"><span class="ctl__value" style="color:var(--fg-4)">Select category</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"><div class="dropdown__opt">Head Quarter</div><div class="dropdown__opt">Regional</div><div class="dropdown__opt">Sub Branch</div></div>
+          </div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Parent branch <span style="font-weight:500;color:var(--fg-4)">(hierarchy only)</span></label>
+          <div class="ctl ctl--select" id="brParent"><span class="ctl__value" style="color:var(--fg-4)">Root / HQ (no parent)</span>
+            <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="dropdown"><div class="dropdown__opt is-sel">Root / HQ (no parent)</div><div class="dropdown__opt">Kantor Pusat Jakarta</div><div class="dropdown__opt">Regional Jawa Barat</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Address <span class="req">*</span></label>
+        <div class="ctl ctl--area"><textarea id="brAddr" rows="2" maxlength="200" placeholder="Full street address"></textarea></div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Phone <span class="req">*</span></label>
+          <div class="ctl"><input type="text" id="brPhone" maxlength="20" placeholder="+62 22 1234567"></div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Postal code <span class="req">*</span></label>
+          <div class="ctl"><input type="text" id="brZip" maxlength="5" placeholder="40115"></div>
+          <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Drives Province / City / Timezone.</span>
+        </div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Province</label>
+          <div class="co-derived co-derived--empty" id="brDerProv">— derived from zip</div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">City</label>
+          <div class="co-derived co-derived--empty" id="brDerCity">— derived from zip</div>
+        </div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Timezone</label>
+          <div class="co-derived co-derived--empty" id="brDerTz">— derived from zip</div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Regional wage (UMP) <span class="req">*</span></label>
+          <div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="brWage" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Work days / week <span class="req">*</span></label>
+          <div class="ctl"><input type="number" id="brDays" min="1" max="7" value="5"></div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Work hours / day <span class="req">*</span></label>
+          <div class="ctl"><input type="number" id="brHours" min="1" max="24" value="8"></div>
+        </div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Late tolerance (min) <span class="req">*</span></label>
+          <div class="ctl"><input type="number" id="brLate" min="0" value="15"></div>
+        </div>
+        <div class="fld">
+          <label class="fld__label">Latitude <span style="font-weight:500;color:var(--fg-4)">(GPS, optional)</span></label>
+          <div class="ctl"><input type="text" id="brLat" placeholder="-6.9147"></div>
+        </div>
+      </div>
+      <div class="co-grid2">
+        <div class="fld">
+          <label class="fld__label">Longitude <span style="font-weight:500;color:var(--fg-4)">(GPS, optional)</span></label>
+          <div class="ctl"><input type="text" id="brLng" placeholder="107.6098"></div>
+        </div>
+      </div>
+
+      <div class="co-gap">
+        <div class="co-gap__head"><i data-lucide="triangle-alert"></i>No storage column yet — disabled pending decision (GAP)</div>
+        <div class="co-gap__grid">
+          <div class="fld"><label class="fld__label">FAX</label><div class="ctl"><input type="text" placeholder="—" disabled></div></div>
+          <div class="fld"><label class="fld__label">Signature / Logo</label><div class="ctl"><input type="text" placeholder="—" disabled></div></div>
+          <div class="fld"><label class="fld__label">Tax (NPWP / NITKU / KLU)</label><div class="ctl"><input type="text" placeholder="—" disabled></div></div>
+          <div class="fld"><label class="fld__label">Attendance on mobile + radius</label><div class="ctl"><input type="text" placeholder="—" disabled></div></div>
+        </div>
+      </div>
+    </form>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="brSave">Save branch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BRANCH GROUP CREATE / EDIT ============ -->
+<div class="ovl" id="bgEdit">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title" id="bgEditTitle">Add category</h3><p class="ovl__desc">Fields map to <code>cnf_branch_group_struct</code>. Name and level order must be unique among active categories.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <form id="bgForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+      <div class="fld">
+        <label class="fld__label">Category name <span class="req">*</span></label>
+        <div class="ctl"><input type="text" id="bgName" maxlength="60" placeholder="e.g. Regional"></div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Level order <span class="req">*</span></label>
+        <div class="ctl"><input type="number" id="bgOrder" min="1" value="1"></div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Lower number = higher level in the hierarchy.</span>
+      </div>
+      <label class="co-switch"><input type="checkbox" id="bgChild" checked><span class="co-switch__track"></span><span class="co-switch__label">Can view child data</span></label>
+    </form>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="bgSave">Save category</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BULK IMPORT BRANCHES ============ -->
+<div class="ovl" id="brBulk">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Add bulk branch</h3><p class="ovl__desc">Bulk-create branches from a spreadsheet via <code>POST /branches/import</code>. Province / city / timezone are derived server-side from each row's postal code.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <p class="import-step__sub" style="margin-top:0">Follow these steps to bulk-create branches in SEVAKA.</p>
+      <h4 class="import-tips__title">Download and complete the template</h4>
+      <p class="import-step__sub">To upload data accurately, use only the provided template customized for the SEVAKA system.</p>
+      <div class="import-file">
+        <span class="import-file__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+        <span class="import-file__name">Template_Bulk_Branch.xlsx</span>
+        <button class="import-file__dl" type="button" id="brTplLink" aria-label="Download template"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>
+      </div>
+      <h4 class="import-tips__title">Few tips:</h4>
+      <ul class="import-tips__list">
+        <li>Follow the template guidelines to avoid upload errors.</li>
+        <li>Make sure your file includes all mandatory fields as defined in the template.</li>
+        <li>Rows with a duplicate active branch code are skipped and reported after upload.</li>
+      </ul>
+      <div class="import-upload-label">Upload spreadsheet <span class="req">*</span></div>
+      <label class="imp-upload" id="brBulkBox">
+        <span class="imp-upload__btn">Choose File</span>
+        <span class="imp-upload__name" id="brBulkName">No file selected</span>
+        <button class="imp-upload__clear is-hidden" type="button" id="brBulkClear" aria-label="Remove file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <input type="file" accept=".xlsx,.csv" hidden id="brBulkInput">
+      </label>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3);margin-top:6px">File must be in XLSX format with a maximum size of 5 MB.</span>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="brBulkSave">Import branches</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DELETE CONFIRM ============ -->
+<div class="ovl" id="delConfirm">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel" style="max-width:440px">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Delete branch</h3><p class="ovl__desc">This is a soft-delete — the record is hidden from the grid but kept for audit.</p></div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <p class="co-muted" id="delMsg" style="padding:4px 0">Are you sure you want to delete this record?</p>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--danger" id="delConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Company', activeItem: 'Branch' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/company-branch.js"></script>
+</body>
+</html>

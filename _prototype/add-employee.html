@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Add Employee</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/ae-tweaks.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Add Employee" data-density="cozy" data-field="outlined" style="font-size: 32px">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="app__main app__main--wizard">
+      <div class="ae-shell">
+        <section class="ae-panel">
+
+          <!-- ===================== HEADER + STEPPER ===================== -->
+          <header class="ae-head">
+            <a class="ae-crumb" href="employee-directory.html">Employee List</a>
+            <h1 class="ae-title">Add Employee</h1>
+            <div class="ae-head__rule"></div>
+
+            <div class="stepper" id="stepper">
+              <div class="step" data-step="1">
+                <div class="step__dot"><span class="step__num">1</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 1</div>
+                <div class="step__sub">Personal Data</div>
+              </div>
+              <div class="step" data-step="2">
+                <div class="step__dot"><span class="step__num">2</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 2</div>
+                <div class="step__sub">Employment Data</div>
+              </div>
+              <div class="step" data-step="3">
+                <div class="step__dot"><span class="step__num">3</span></div>
+                <div class="step__line"></div>
+                <div class="step__label">Step 3</div>
+                <div class="step__sub">Payroll</div>
+              </div>
+              <div class="step" data-step="4">
+                <div class="step__dot"><span class="step__num">4</span></div>
+                <div class="step__label">Step 4</div>
+                <div class="step__sub">Invite Employee</div>
+              </div>
+            </div>
+          </header>
+
+          <!-- ===================== BODY ===================== -->
+          <div class="ae-body">
+
+            <!-- =============== STEP 1: PERSONAL DATA =============== -->
+            <div class="ae-step-pane" data-pane="1">
+              <div class="ae-section">
+                <div class="ae-section__title">Personal Data</div>
+                <div class="ae-section__sub">Fill all employee personal basic information data</div>
+              </div>
+
+              <div class="ae-grid">
+                <div class="fld span-2">
+                  <label class="fld__label">Full name <span class="req">*</span></label>
+                  <div class="ctl"><input type="text" placeholder="Full name"></div>
+                </div>
+
+                <div class="fld span-2">
+                  <label class="fld__label">Email <span class="req">*</span></label>
+                  <div class="ctl"><input type="email" placeholder="Email"></div>
+                  <span class="fld__help" style="color: rgb(148, 163, 184); font-weight: 500">This email is use for log in</span>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Phone number</label>
+                  <div class="ctl"><input type="text" placeholder="Phone Number"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Additional phone number</label>
+                  <div class="ctl"><input type="text" placeholder="Additional phone number"></div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Place of birth</label>
+                  <div class="ctl"><input type="text" placeholder="Place of birth"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Birthdate <span class="req">*</span></label>
+                  <div class="ctl ctl--date">
+                    <input type="text" placeholder="Select Date" readonly data-date>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Gender</label>
+                  <div class="radio-row">
+                    <label class="radio"><input type="radio" name="gender" checked><span class="radio__dot"></span>Male</label>
+                    <label class="radio"><input type="radio" name="gender"><span class="radio__dot"></span>Female</label>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Marital status <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Marital Status">Marital Status</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Single</div>
+                      <div class="dropdown__opt">Married</div>
+                      <div class="dropdown__opt">Divorced</div>
+                      <div class="dropdown__opt">Widowed</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Blood type</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Blood type">Blood type</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">A</div>
+                      <div class="dropdown__opt">B</div>
+                      <div class="dropdown__opt">AB</div>
+                      <div class="dropdown__opt">O</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Religion <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Religion">Religion</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Islam</div>
+                      <div class="dropdown__opt">Kristen Protestan</div>
+                      <div class="dropdown__opt">Katolik</div>
+                      <div class="dropdown__opt">Hindu</div>
+                      <div class="dropdown__opt">Buddha</div>
+                      <div class="dropdown__opt">Konghucu</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ae-divider"></div>
+
+              <div class="ae-section">
+                <div class="ae-section__title">Identify &amp; Address</div>
+                <div class="ae-section__sub">Employee identify address information</div>
+              </div>
+
+              <div class="ae-grid">
+                <div class="fld">
+                  <label class="fld__label">NIK (NPWP 16 Digit)</label>
+                  <div class="ctl"><input type="text" placeholder="0000 0000 0000 0000"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Pasport number</label>
+                  <div class="ctl"><input type="text" placeholder="Pasport number"></div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Pasport expiry date</label>
+                  <div class="ctl ctl--select is-disabled">
+                    <span class="ctl__value">Select Date</span>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Postal code <span class="req">*</span></label>
+                  <div class="ctl"><input type="text" placeholder="Postal code"></div>
+                </div>
+
+                <div class="fld span-2">
+                  <label class="fld__label">Citizen ID address</label>
+                  <div class="ctl ctl--area"><textarea id="citizenAddr" placeholder="Citizen ID address"></textarea></div>
+                  <label class="mini-check">
+                    <input type="checkbox" id="useResidential"><span class="mini-check__box"></span>Use as residential address
+                  </label>
+                </div>
+
+                <div class="fld span-2">
+                  <label class="fld__label">Residential Address</label>
+                  <div class="ctl ctl--area" id="resAddrCtl"><textarea id="resAddr" placeholder="Residential Address"></textarea></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- =============== STEP 2: EMPLOYMENT DATA =============== -->
+            <div class="ae-step-pane" data-pane="2">
+              <div class="ae-section">
+                <div class="ae-section__title">Employment Data</div>
+                <div class="ae-section__sub">Fill all employee data information related to company</div>
+              </div>
+
+              <div class="ae-grid">
+                <div class="fld">
+                  <label class="fld__label">Employee ID <span class="req">*</span></label>
+                  <div class="ctl"><input type="text" placeholder="Employee ID"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Barcode <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl"><input type="text" placeholder="Barcode"></div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Group structure <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select group">Select group</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">SEVAKA Group</div>
+                      <div class="dropdown__opt">SEVAKA Tech</div>
+                      <div class="dropdown__opt">SEVAKA Retail</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Employment status <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select employment status">Select employment status</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Permanent</div>
+                      <div class="dropdown__opt">Contract (PKWT)</div>
+                      <div class="dropdown__opt">Probation</div>
+                      <div class="dropdown__opt">Internship</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Join date <span class="req">*</span></label>
+                  <div class="ctl ctl--date">
+                    <input type="text" placeholder="Select date" readonly data-date>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+                <div></div>
+
+                <div class="fld">
+                  <label class="fld__label">Branch</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select Branch">Select Branch</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Head Office — Jakarta</div>
+                      <div class="dropdown__opt">Branch — Surabaya</div>
+                      <div class="dropdown__opt">Branch — Bandung</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Organization <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select organization">Select organization</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Engineering</div>
+                      <div class="dropdown__opt">Human Resources</div>
+                      <div class="dropdown__opt">Finance</div>
+                      <div class="dropdown__opt">Sales &amp; Marketing</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Job position <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select job position">Select job position</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Software Engineer</div>
+                      <div class="dropdown__opt">HR Specialist</div>
+                      <div class="dropdown__opt">Accountant</div>
+                      <div class="dropdown__opt">Account Executive</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Job Level <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select job level">Select job level</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Staff</div>
+                      <div class="dropdown__opt">Supervisor</div>
+                      <div class="dropdown__opt">Manager</div>
+                      <div class="dropdown__opt">Director</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Grade</label>
+                  <div class="ctl ctl--select is-disabled">
+                    <span class="ctl__value">Select grade</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Class</label>
+                  <div class="ctl ctl--select is-disabled">
+                    <span class="ctl__value">Select class</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Schedule <span class="req">*</span></label>
+                  <div class="ctl ctl--select is-disabled">
+                    <span class="ctl__value">Select schedule</span>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+                <div></div>
+
+                <div class="fld">
+                  <label class="fld__label">Approval line <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select approval line">Select approval line</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Default Approval Line</div>
+                      <div class="dropdown__opt">Engineering Line</div>
+                      <div class="dropdown__opt">Finance Line</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Manager <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select manager">Select manager</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Pepper Potts</div>
+                      <div class="dropdown__opt">Bruce Banner</div>
+                      <div class="dropdown__opt">Natasha Romanoff</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="span-2 ae-sbu">
+                  <label class="fld__label ae-sbu__label">SBU</label>
+                  <div id="sbuList">
+                    <div class="sbu-row">
+                      <div class="ctl ctl--select">
+                        <span class="ctl__value" data-placeholder="Select SBU group">Select SBU group</span>
+                        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        <div class="dropdown">
+                          <div class="dropdown__opt">SBU Group A</div>
+                          <div class="dropdown__opt">SBU Group B</div>
+                        </div>
+                      </div>
+                      <div class="sbu-cell">
+                        <div class="ctl ctl--select">
+                          <span class="ctl__value" data-placeholder="Select SBU">Select SBU</span>
+                          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                          <div class="dropdown">
+                            <div class="dropdown__opt">SBU 01</div>
+                            <div class="dropdown__opt">SBU 02</div>
+                            <div class="dropdown__opt">SBU 03</div>
+                          </div>
+                        </div>
+                        <button class="sbu-remove" type="button" aria-label="Remove SBU">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="ae-addother" type="button" id="addOther">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                    Add Other
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- =============== STEP 3: PAYROLL =============== -->
+            <div class="ae-step-pane" data-pane="3">
+              <div class="ae-section">
+                <div class="ae-section__title">Salary</div>
+                <div class="ae-section__sub">Input employee salary info</div>
+              </div>
+
+              <div class="ae-grid">
+                <div class="fld">
+                  <label class="fld__label">Basic Salary <span class="req">*</span></label>
+                  <div class="ctl"><span class="ctl__prefix">RP</span><input type="text" placeholder="Input nominal"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Salary type</label>
+                  <div class="radio-row">
+                    <label class="radio"><input type="radio" name="salarytype" checked><span class="radio__dot"></span>Monthly</label>
+                    <label class="radio"><input type="radio" name="salarytype"><span class="radio__dot"></span>Daily</label>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <div class="fld__labelrow">
+                    <label class="fld__label">Payment Schedule</label>
+                    <span class="fld__link">Settings</span>
+                  </div>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select schedule">Select schedule</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Monthly — End of month</div>
+                      <div class="dropdown__opt">Monthly — 25th</div>
+                      <div class="dropdown__opt">Bi-weekly</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Prorate Setting</label>
+                  <div class="ctl ctl--select is-disabled">
+                    <span class="ctl__value">Select prorate setting</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+
+                <div class="fld span-2">
+                  <label class="fld__label">Allowed for overtime</label>
+                  <div class="radio-row">
+                    <label class="radio"><input type="radio" name="overtime" checked><span class="radio__dot"></span>Yes</label>
+                    <label class="radio"><input type="radio" name="overtime"><span class="radio__dot"></span>No</label>
+                  </div>
+                </div>
+
+                <div class="fld span-2">
+                  <label class="fld__label">Bank name</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select bank">Select bank</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Bank BCA</div>
+                      <div class="dropdown__opt">Bank Mandiri</div>
+                      <div class="dropdown__opt">Bank BNI</div>
+                      <div class="dropdown__opt">Bank BRI</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Account number</label>
+                  <div class="ctl"><input type="text" placeholder="Account number"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Account holder name</label>
+                  <div class="ctl"><input type="text" placeholder="Account holder name"></div>
+                </div>
+              </div>
+
+              <div class="ae-divider"></div>
+
+              <div class="ae-section">
+                <div class="ae-section__title">Tax Configuration</div>
+                <div class="ae-section__sub">Select the tax calculation type relevant to your company</div>
+              </div>
+
+              <div class="ae-grid">
+                <div class="fld">
+                  <label class="fld__label">NPWP</label>
+                  <div class="ctl"><input type="text" placeholder="00.000.000.0-000.000"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">PTKP status <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select PTKP status">Select PTKP status</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">TK/0</div>
+                      <div class="dropdown__opt">K/0</div>
+                      <div class="dropdown__opt">K/1</div>
+                      <div class="dropdown__opt">K/2</div>
+                      <div class="dropdown__opt">K/3</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Tax method</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value has-value">Gross</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt is-sel">Gross</div>
+                      <div class="dropdown__opt">Gross Up</div>
+                      <div class="dropdown__opt">Net</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Tax salary <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value has-value">Taxable</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt is-sel">Taxable</div>
+                      <div class="dropdown__opt">Non-taxable</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Taxable date <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl ctl--date">
+                    <input type="text" placeholder="Select date" readonly data-date>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Employment tax status <span class="req">*</span></label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value has-value">Permanent</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt is-sel">Permanent</div>
+                      <div class="dropdown__opt">Non-permanent</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">Beginning netto <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl"><span class="ctl__prefix">RP</span><input type="text" placeholder="Input nominal"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">PPH21 paid <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl"><span class="ctl__prefix">RP</span><input type="text" placeholder="Input nominal"></div>
+                </div>
+              </div>
+
+              <div class="ae-divider"></div>
+
+              <div class="ae-section">
+                <div class="ae-section__title">BPJS Configuration</div>
+                <div class="ae-section__sub">Employee BPJS payment arrangements</div>
+              </div>
+
+              <div class="ae-grid">
+                <div class="fld">
+                  <label class="fld__label">BPJS Ketenagakerjaan number</label>
+                  <div class="ctl"><input type="text" placeholder="0000000000"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">NPP BPJS Ketenagakerjaan</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select NPP BPJS Ketenagakerjaan">Select NPP BPJS Ketenagakerjaan</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">NPP 0001</div>
+                      <div class="dropdown__opt">NPP 0002</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">BPJS Ketenagakerjaan date <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl ctl--date">
+                    <input type="text" placeholder="Select date" readonly data-date>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+                <div></div>
+
+                <div class="fld">
+                  <label class="fld__label">BPJS Keseheatan number</label>
+                  <div class="ctl"><input type="text" placeholder="0000000000000"></div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">BPJS Kesehatan family</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select BPJS Kesehatan family">Select BPJS Kesehatan family</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">0 — Self only</div>
+                      <div class="dropdown__opt">1 — Spouse</div>
+                      <div class="dropdown__opt">2 — Spouse + 1 child</div>
+                      <div class="dropdown__opt">3 — Spouse + 2 children</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">BPJS Kesehatan date <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></label>
+                  <div class="ctl ctl--date">
+                    <input type="text" placeholder="Select date" readonly data-date>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">BPJS Kesehatan cost</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select BPJS Kesehatan cost">Select BPJS Kesehatan cost</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Borne by company</div>
+                      <div class="dropdown__opt">Borne by employee</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fld">
+                  <label class="fld__label">JHT cost</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select JHT cost">Select JHT cost</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Borne by company</div>
+                      <div class="dropdown__opt">Borne by employee</div>
+                    </div>
+                  </div>
+                </div>
+                <div></div>
+
+                <div class="fld">
+                  <label class="fld__label">Jaminan pensiun cost</label>
+                  <div class="ctl ctl--select">
+                    <span class="ctl__value" data-placeholder="Select jaminan pensiun cost">Select jaminan pensiun cost</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <div class="dropdown__opt">Borne by company</div>
+                      <div class="dropdown__opt">Borne by employee</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="fld">
+                  <label class="fld__label">Jaminan pensiun date</label>
+                  <div class="ctl ctl--date">
+                    <input type="text" placeholder="Select date" readonly data-date>
+                    <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- =============== STEP 4: INVITE EMPLOYEE =============== -->
+            <div class="ae-step-pane" data-pane="4">
+              <div class="invite">
+                <div class="invite__art">
+                  <svg viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="120" cy="120" r="116" fill="#5fd6df"/>
+                    <clipPath id="clip"><circle cx="120" cy="120" r="116"/></clipPath>
+                    <g clip-path="url(#clip)">
+                      <!-- suit jacket -->
+                      <path d="M60 240 q0 -64 60 -78 q60 14 60 78 z" fill="#1f3a5f"/>
+                      <!-- shirt -->
+                      <path d="M104 158 L120 240 L136 158 L120 150 Z" fill="#ffffff"/>
+                      <!-- tie -->
+                      <path d="M120 158 l-9 12 9 46 9 -46 z" fill="#e8552d"/>
+                      <!-- collar -->
+                      <path d="M104 156 l16 14 -10 8 -12 -16 z" fill="#f3f5f7"/>
+                      <path d="M136 156 l-16 14 10 8 12 -16 z" fill="#f3f5f7"/>
+                      <!-- neck -->
+                      <rect x="108" y="132" width="24" height="30" rx="10" fill="#f0c39a"/>
+                      <!-- head -->
+                      <ellipse cx="120" cy="104" rx="34" ry="38" fill="#f7d0a8"/>
+                      <!-- hair -->
+                      <path d="M86 100 q-4 -44 34 -48 q40 2 36 46 q-6 -18 -16 -22 q4 10 -2 16 q-18 -16 -44 -6 q-6 4 -8 14z" fill="#5a3825"/>
+                    </g>
+                  </svg>
+                  <span class="badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  </span>
+                </div>
+
+                <div class="invite__title">Invite the employee to access {Title}</div>
+                <div class="invite__sub">Wrap things up by sending an invite so they can get started immediately.</div>
+
+                <div class="invite__opts">
+                  <label class="invite-opt">
+                    <input type="checkbox">
+                    <span class="invite-opt__box"></span>
+                    <span class="invite-opt__title">Invite to [Title] now</span>
+                    <span class="invite-opt__desc">We'll send an email so they can log in right away.</span>
+                  </label>
+                  <label class="invite-opt">
+                    <input type="checkbox">
+                    <span class="invite-opt__box"></span>
+                    <span class="invite-opt__title">Start onboarding journey <span class="info-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span></span>
+                    <span class="invite-opt__desc">Help them settle in with our product familiarization guide.</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ===================== FOOTER ===================== -->
+          <footer class="ae-foot">
+            <div class="ae-foot__group" id="footStep">
+              <button class="btn btn--secondary" type="button" data-cancel>Cancel</button>
+              <button class="btn btn--secondary is-hidden" type="button" id="btnBack">Back</button>
+              <button class="btn btn--primary" type="button" id="btnNext">Next</button>
+            </div>
+            <div class="ae-foot__group is-hidden" id="footFinal">
+              <button class="btn btn--secondary" type="button" id="btnSubmitAdd">Submit &amp; Add Another</button>
+              <button class="btn btn--primary" type="button" id="btnSubmit">Submit</button>
+            </div>
+          </footer>
+
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+<div class="modal-scrim" id="confirmModal" aria-hidden="true">
+  <div class="modal modal--confirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <button class="modal__close" type="button" data-close-confirm aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="modal__title" id="confirmTitle">Confirm submission?</h2>
+    <div class="modal__rule"></div>
+    <p class="modal__body">Are you sure you want to submit? Please make sure all employee information is correct before proceeding.</p>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close-confirm>Cancel</button>
+      <button class="btn btn--primary" type="button" id="confirmSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="successModal" aria-hidden="true">
+  <div class="modal modal--success" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <button class="modal__close" type="button" data-close-success aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="success__art">
+      <img src="assets/success-folder-check.png" alt="Success" width="208" height="208">
+    </div>
+    <h2 class="success__title" id="successTitle">Employee Added</h2>
+    <p class="success__desc">The new employee has been added to your directory. We'll send the invitation and onboarding emails if you enabled them.</p>
+    <button class="btn btn--primary success__cta" type="button" id="goDirectory">Go to Employee Directory</button>
+    <button class="success__link" type="button" id="addAnother">Add another employee</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'New Joiner Submission' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/add-employee.js"></script>
+
+<!-- Tweaks panel (React + Babel) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="js/ae-tweaks.jsx"></script>
+
+</body>
+</html>

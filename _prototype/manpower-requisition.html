@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Manpower & Requisition</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <style>
+    .mp-line { display: grid; grid-template-columns: 1fr 130px 40px; gap: 10px; align-items: end; }
+    .mp-line + .mp-line { margin-top: 10px; }
+    .mp-target-tbl td.n { font: 700 14px/1 var(--font-body); color: var(--fg-1); }
+    .fld .ctl--select .dropdown { max-height: 240px; overflow-y: auto; }
+    /* unified plan table: expandable plan rows + unit sub-rows + computed gap */
+    .mp-caret { width: 15px; height: 15px; vertical-align: -3px; margin-right: 6px; color: var(--fg-3); transition: transform var(--duration-2) var(--ease-standard); }
+    .mp-caret.is-open { transform: rotate(90deg); }
+    .mp-plan-tbl .unit-row td { background: var(--color-mist); }
+    .mp-plan-tbl .unit-row td:first-child { padding-left: 46px; }
+    .gapv { display: inline-flex; min-width: 26px; justify-content: center; padding: 2px 8px; border-radius: 999px; font: 700 12px/1.4 var(--font-body); }
+    .gapv--pos { background: var(--color-warning-100); color: var(--color-warning-800); }
+    .gapv--zero { background: var(--color-vapor); color: var(--fg-3); }
+  </style>
+</head>
+<body data-screen-label="Manpower & Requisition">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Employee Management</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Manpower &amp; Requisition</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Manpower &amp; Requisition</h1>
+              <p class="flow-sub">Plan headcount per unit and raise position requisitions through a maker&rarr;checker review. Approved requisitions provision an open seat downstream.</p>
+            </div>
+            <div class="flow-head__actions">
+              <button class="btn btn--secondary" id="newPlanBtn">New plan</button>
+              <button class="btn btn--primary" id="newReqBtn">New requisition</button>
+            </div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+        <!-- KPI -->
+        <div class="kpi" style="margin-top:4px">
+          <div class="kpi__tile kpi__tile--info">
+            <span class="kpi__label"><i data-lucide="calendar-check"></i>Active plan</span>
+            <span class="kpi__value">2026</span>
+            <span class="kpi__foot">SEVAKA · COMPANY001</span>
+          </div>
+          <div class="kpi__tile">
+            <span class="kpi__label"><i data-lucide="users"></i>Target headcount</span>
+            <span class="kpi__value">84</span>
+            <span class="kpi__foot">Across 5 units</span>
+          </div>
+          <div class="kpi__tile">
+            <span class="kpi__label"><i data-lucide="file-plus-2"></i>Open requisitions</span>
+            <span class="kpi__value">6</span>
+            <span class="kpi__foot">3 approved &middot; 1 in approval</span>
+          </div>
+          <div class="kpi__tile">
+            <span class="kpi__label"><i data-lucide="clock"></i>Awaiting your review</span>
+            <span class="kpi__value">1</span>
+            <span class="kpi__foot">As HR Manager (checker)</span>
+          </div>
+        </div>
+
+        <div class="subtabs" style="margin-top:20px">
+          <span class="seg"><button type="button" class="seg__btn is-on" data-sub="plans">Manpower plans</button><button type="button" class="seg__btn" data-sub="reqs">Requisitions</button></span>
+          <span class="subtabs__sp"></span>
+          <span class="sec-head__note">Plans set the target; requisitions turn a gap into an approved seat.</span>
+        </div>
+
+        <div class="subpanel is-on" data-subpanel="plans">
+        <!-- Manpower plans (MP-OVERVIEW · target vs computed gap) -->
+        <section class="card" style="padding:0;overflow:hidden;margin-top:20px">
+          <div class="card__head" style="padding:18px 20px 0">
+            <h2 class="card__title">Manpower plans</h2>
+            <span class="card__sub">Target vs actual · gap computed</span>
+          </div>
+          <div class="dtable-wrap" style="border:none;border-radius:0;margin-top:12px">
+            <table class="dtable mp-plan-tbl">
+              <thead>
+                <tr>
+                  <th>Period / Unit</th>
+                  <th class="ta-r">Target</th>
+                  <th class="ta-r">Actual</th>
+                  <th class="ta-r">Gap</th>
+                  <th>Plan status</th>
+                </tr>
+              </thead>
+              <tbody id="planBody"></tbody>
+            </table>
+          </div>
+        </section>
+        <div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span><strong>Actual</strong> and <strong>Gap</strong> are computed against the live position count in company-service — employee-service stores no capacity column. <strong>PROB-FRONTEND-005:</strong> the aggregate read contract is not yet confirmed (enforcement deferred).</span></div>
+
+        </div>
+
+        <div class="subpanel" data-subpanel="reqs">
+        <!-- Requisitions -->
+        <section class="flow-stack">
+          <div>
+            <div class="sec-head">
+              <span class="sec-head__t">Requisitions</span>
+              <span class="sec-head__c" id="reqCount">6</span>
+              <span class="sec-head__sp"></span>
+              <span class="sec-head__note">Maker&rarr;checker · SoD enforced</span>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+              <table class="dtable">
+                <thead>
+                  <tr>
+                    <th>Requisition</th>
+                    <th>Position title</th>
+                    <th>Unit</th>
+                    <th>Reports to</th>
+                    <th class="ta-c">Headcount</th>
+                    <th>Status</th>
+                    <th>Maker</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="reqBody"></tbody>
+              </table>
+            </div>
+            <div class="ph-foot" id="pgReq"></div>
+          </div>
+        </section>
+        </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ MP-CREATE ============ -->
+<div class="ovl" id="planModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head">
+      <div>
+        <h3 class="ovl__title">New manpower plan</h3>
+        <p class="ovl__desc">Name the plan, set its period, and add at least one target headcount line per unit.</p>
+      </div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="fld">
+      <label class="fld__label">Plan title <span class="req">*</span></label>
+      <div class="ctl"><input type="text" id="planTitle" maxlength="150" placeholder="e.g. Rencana Headcount 2027"></div>
+    </div>
+    <div class="ptkp-form__grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="fld">
+        <label class="fld__label">Period start <span class="req">*</span></label>
+        <div class="ctl ctl--date"><input type="date" id="planStart" value="2027-01-01">
+          <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Period end <span class="req">*</span></label>
+        <div class="ctl ctl--date"><input type="date" id="planEnd" value="2027-12-31">
+          <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Must be on or after period start.</span>
+      </div>
+    </div>
+    <div>
+      <div class="sec-head" style="margin-bottom:10px"><span class="sec-head__t" style="font-size:14px">Target lines</span></div>
+      <div id="lineList"></div>
+      <button class="rowbtn" id="addLineBtn" style="margin-top:12px"><i data-lucide="plus"></i>Add unit</button>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--primary" id="savePlanBtn">Save as draft</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REQ-CREATE ============ -->
+<div class="ovl" id="reqModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div>
+        <h3 class="ovl__title">New requisition</h3>
+        <p class="ovl__desc">You are the <strong>maker</strong>. A different HR Manager must approve (segregation of duties).</p>
+      </div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+
+    <div class="fld">
+      <label class="fld__label">Plan <span style="font-weight:500;color:var(--fg-4)">(optional — leave blank for ad-hoc)</span></label>
+      <div class="ctl ctl--select" id="reqPlan">
+        <span class="ctl__value" style="color:var(--fg-4)">Ad-hoc (no plan)</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown">
+          <div class="dropdown__opt" data-val="">Ad-hoc (no plan)</div>
+          <div class="dropdown__opt" data-val="2026">2026 Plan</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ptkp-form__grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="fld">
+        <label class="fld__label">Unit <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="reqUnit">
+          <span class="ctl__value" style="color:var(--fg-4)">Select unit</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt">Finance — BR-Papua</div>
+            <div class="dropdown__opt">Operations — BR-Jakarta</div>
+            <div class="dropdown__opt">Engineering — HQ</div>
+            <div class="dropdown__opt">People Ops — HQ</div>
+            <div class="dropdown__opt">Sales — BR-Surabaya</div>
+          </div>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld__label">Reports to <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="reqParent">
+          <span class="ctl__value" style="color:var(--fg-4)">Select parent position</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="dropdown__opt">Finance Manager</div>
+            <div class="dropdown__opt">Operations Lead</div>
+            <div class="dropdown__opt">Engineering Manager</div>
+            <div class="dropdown__opt">Head of People</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label class="fld__label">Position title <span class="req">*</span></label>
+      <div class="ctl"><input type="text" id="reqTitle" maxlength="150" placeholder="e.g. Staff Finance"></div>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Max 150 characters.</span>
+    </div>
+
+    <div class="fld" style="max-width:160px">
+      <label class="fld__label">Headcount <span class="req">*</span></label>
+      <div class="ctl"><input type="number" id="reqQty" min="1" value="1"></div>
+    </div>
+
+    <div class="fld">
+      <label class="fld__label">Justification <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea id="reqNote" rows="3" maxlength="150" placeholder="Why is this position needed?"></textarea></div>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)"><span id="reqNoteCount">0</span>/150 characters</span>
+    </div>
+
+    <div class="note note--info"><i data-lucide="shield-check"></i><span>Submitting creates the requisition in <strong>IN&nbsp;APPROVAL</strong>. Approval is decided by a different HR Manager.</span></div>
+
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Cancel</button>
+      <button class="btn btn--secondary" id="saveReqDraftBtn">Save draft</button>
+      <button class="btn btn--primary" id="submitReqBtn" disabled>Submit for approval</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REQ-APPROVE ============ -->
+<div class="ovl" id="reqApproveModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div>
+        <h3 class="ovl__title">Review requisition</h3>
+        <p class="ovl__desc">Checker decision. You cannot approve a requisition you created.</p>
+      </div>
+      <button class="ovl__x" data-close><i data-lucide="x"></i></button>
+    </div>
+    <div class="kv" id="reqApproveKv"></div>
+    <div class="fld">
+      <label class="fld__label">Checker note <span style="font-weight:500;color:var(--fg-4)">(optional)</span></label>
+      <div class="ctl ctl--area"><textarea id="reqApproveNote" rows="2" maxlength="150" placeholder="Note recorded with your decision"></textarea></div>
+    </div>
+    <div class="ovl__foot">
+      <button class="btn btn--danger" id="reqRejectBtn">Reject</button>
+      <button class="btn btn--primary" id="reqApproveBtn">Approve requisition</button>
+    </div>
+  </div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'employees', activeItem: 'Manpower & Requisition' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/manpower-requisition.js"></script>
+<script src="js/kpi-status.js"></script>
+</body>
+</html>

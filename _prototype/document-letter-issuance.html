@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Letter Issuance</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-modals.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Letter Issuance" data-doc-page="letters">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Company Management</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Files</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Letter Issuance</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">Letter Issuance</h1>
+                <p class="flow-sub">Issue letters from drafts that have already been approved — one at a time, or in bulk. The third and separate sub-module: the HR staff who issue letters have zero access to the draft library (<code>DOC-81</code>).</p>
+              </div>
+              <div class="flow-head__actions">
+                <button class="btn btn--secondary" id="liCancelDemo">Cancel letter (reference)</button>
+                <button class="btn btn--primary" id="liIssue">Issue letter</button>
+              </div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="doc-note doc-note--gap" style="margin-bottom:18px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>PROB-SERVICE-356 — HIGH, OPEN</div>
+              <p>This screen has <strong>no menu row</strong> in the architecture blueprint menu map / <code>mst_menu</code>. The contract is complete but nobody can reach the screen through the HRIS menu until the row is registered in auth-service (<code>mst_menu</code> + <code>map_access_menu</code>). Stated, not invented.</p>
+            </div>
+            <div class="tabnav">
+              <button type="button" class="tabnav__tab is-on" data-tab="single">Single letter</button>
+              <button type="button" class="tabnav__tab" data-tab="mass">Mass issuance<span class="tabnav__count" id="liMassCount">3</span></button>
+            </div>
+
+            <div class="tabpanel is-on" data-tabpanel="single">
+              <div id="liResult"></div>
+              <div class="doc-note">
+                <div class="doc-note__h"><i data-lucide="git-merge"></i>This page has no grid of individual letters — on purpose</div>
+                <p>Approving (<code>A11</code>) and cancelling (<code>A12</code>) a single letter are <strong>really executed on the document detail screen</strong> (<code>A4</code>, in Company / Employee / Other Files), where <code>{letter-id}</code> is carried from the letter block. Here they are only narrated and demonstrated.</p>
+              </div>
+              <div class="doc-note" style="margin-top:12px">
+                <div class="doc-note__h"><i data-lucide="split"></i>One response code, two shapes</div>
+                <p>Both branches answer <code>201</code>. Gate off → <code>TERBIT</code>, with <code>letter_no</code>, <code>verification_code</code>, <code>issued_at</code> and <code>document_id</code> filled. Gate on → <code>MENUNGGU_PERSETUJUAN</code>, all four <code>null</code>. Different payload, never a different code.</p>
+              </div>
+              <div class="doc-note" style="margin-top:12px">
+                <div class="doc-note__h"><i data-lucide="users"></i>Actors</div>
+                <p><code>ROLE_HR_STAFF</code> issues but never approves · <code>ROLE_HR_MANAGER</code> issues <em>and</em> approves · <code>ROLE_SUPER_ADMIN</code> is the fallback ladder for approval and does not issue · approver ≠ submitter is enforced with <code>403</code>, and cannot be expressed as a database CHECK.</p>
+              </div>
+            </div>
+
+            <div class="tabpanel" data-tabpanel="mass">
+              <div class="doc-tbar">
+                <button class="btn btn--secondary" type="button" data-filter-open="liFilterM">Filter</button>
+                <span class="doc-fsum" data-filter-sum="liFilterM"></span>
+                <div class="doc-tbar__sp"></div>
+                <button class="btn btn--secondary" id="liMass">Submit mass issuance</button>
+              </div>
+              <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+                <thead><tr><th>Batch</th><th>Template</th><th>Recipients</th><th>State</th><th>Submitted</th><th>Approved By</th><th class="ta-r"></th></tr></thead>
+                <tbody id="liBody"></tbody>
+              </table></div>
+              <div class="ph-foot" id="liFoot"></div>
+              <div class="doc-note" style="margin-top:20px">
+                <div class="doc-note__h"><i data-lucide="info"></i>What the grid row deliberately omits</div>
+                <p>No <code>items</code> and no <code>summary</code> — counting them per grid row is expensive; they live in the report (<code>A13b</code>). There is also no “only the batches I submitted” filter, no recipient filter and no template-name keyword: the effective scope is the whole company.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== FILTER (batch grid) ===== -->
+<div class="ovl" id="liFilterM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Filter</h3><p class="ovl__desc"><code>POST /letter-batches/search</code> — criteria travel in the request body. Deliberately unavailable: recipient filter, approver filter, template-name keyword and “only mine”.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Batch state</label>
+      <div class="doc-chks" id="liState">
+        <label class="fchk"><input type="checkbox" id="liStAll" data-nosum><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">Select all</span></label>
+        <label class="fchk"><input type="checkbox" class="liSt" value="MENUNGGU_PERSETUJUAN"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">MENUNGGU_PERSETUJUAN</span></label>
+        <label class="fchk"><input type="checkbox" class="liSt" value="DISETUJUI"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">DISETUJUI</span></label>
+        <label class="fchk"><input type="checkbox" class="liSt" value="BERJALAN"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">BERJALAN</span></label>
+        <label class="fchk"><input type="checkbox" class="liSt" value="SELESAI"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">SELESAI</span></label>
+        <label class="fchk"><input type="checkbox" class="liSt" value="DITOLAK"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">DITOLAK</span></label>
+      </div>
+      <p class="fld__hint"><code>batch_state[]</code> — the contract takes an array, so several states travel at once. Nothing ticked means every state.</p></div>
+    <div class="fld"><label class="fld__label">Template</label><div class="ctl ctl--select" id="liTpl" style="width:230px;height:40px">
+                  <span class="ctl__value">All templates</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown" id="liTplDD"></div>
+                </div>
+                </div>
+    <div class="fld"><label class="fld__label">Submitted by</label><div class="ctl ctl--select" id="liBy" style="width:220px;height:40px">
+                  <span class="ctl__value">Submitted by anyone</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown" id="liByDD"></div>
+                </div>
+                </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-filter-reset="liFilterM">Reset</button><button class="btn btn--primary" data-close>Apply</button></div>
+</div></div>
+
+<!-- ===== S2 · ISSUE LETTER (A10) ===== -->
+<div class="ovl" id="liIssueM"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title">Issue letter</h3><p class="ovl__desc"><code>POST /letters</code> with a mandatory <code>Idempotency-Key</code> header. Four fields, no more.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Template <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="isTpl"><span class="ctl__value" style="color:var(--fg-4)">Select template</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="isTplDD"></div>
+      </div>
+      <p class="fld__hint"><code>PICKER → A15</code> — server-filtered to active templates that own an approved draft.</p></div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Letter subject <span class="req" id="isSubReq">*</span></label>
+        <div class="ctl ctl--select" id="isSubject"><span class="ctl__value" style="color:var(--fg-4)">Select employee</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="isSubjectDD"></div>
+        </div>
+        <p class="fld__hint">Required for <code>PERORANGAN</code> on the staff path only. <code>PICKER → employee-service</code>.</p></div>
+      <div class="fld"><label class="fld__label">Recipient branch</label>
+        <div class="ctl ctl--select" id="isBranch"><span class="ctl__value" style="color:var(--fg-4)">Select branch</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt" data-val="b1">Kantor Pusat Jakarta</div><div class="dropdown__opt" data-val="b2">Kantor Cabang Bandung</div></div>
+        </div>
+        <p class="fld__hint">Optional and only for <code>EDARAN</code>. Sending it with <code>PERORANGAN</code> is a <code>422</code>.</p></div>
+    </div>
+    <div class="fld"><label class="fld__label">Re-issue of</label>
+      <div class="ctl ctl--select" id="isReissue"><span class="ctl__value" style="color:var(--fg-4)">None</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="isReissueDD"></div>
+      </div>
+      <p class="fld__hint">Optional. <code>PICKER → A3</code> filtered to <code>origin=DILAHIRKAN_SISTEM</code>. Re-issuing a cancelled or not-yet-issued letter is a <code>422</code>.</p></div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="slash"></i>Four fields deliberately absent</div>
+      <p><code>letter_target</code> · <code>signer_scope</code> · <code>category_id</code> — all owned by the template and derived by the server — and <code>letter_no</code>, minted by the server at <code>TERBIT</code>. The draft body is never sent from the client either.</p>
+    </div>
+    <div id="isGate"></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="isSubmit">Issue letter</button></div>
+</div></div>
+
+<!-- ===== S3 · CANCEL LETTER (A12, reference form) ===== -->
+<div class="ovl" id="liCancelM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:540px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Cancel letter — reference form</h3><p class="ovl__desc"><code>POST /letters/{letter-id}/cancel</code>. Shown here with static sample data: in the real application <code>{letter-id}</code> is carried from <code>A4</code>, the document detail screen.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv">
+      <div class="kv__k">Letter no</div><div class="kv__v">002/HRD/VIII/2026</div>
+      <div class="kv__k">Subject</div><div class="kv__v">Dedi Kurniawan · NIK 20240117</div>
+      <div class="kv__k">Issuance state</div><div class="kv__v"><span class="sb sb--green"><span class="sb__dot"></span>TERBIT</span></div>
+    </div>
+    <div class="fld"><label class="fld__label">Cancellation reason <span class="req">*</span></label><div class="ctl ctl--area"><textarea id="lcReason" rows="3" maxlength="500" placeholder="1–500 characters">Penerima keliru, terbit atas nama yang salah</textarea></div>
+      <p class="fld__hint">May be shown on <code>A4</code>. <strong>Forbidden</strong> on the public verification page. Cancelling twice is not idempotent-success — it is a <code>422</code>, deliberately.</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button><button class="btn btn--danger" id="lcDo">Cancel letter</button></div>
+</div></div>
+
+<!-- ===== S5 · SUBMIT MASS ISSUANCE (A13a) ===== -->
+<div class="ovl" id="liMassM"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title">Submit mass issuance</h3><p class="ovl__desc"><code>POST /letter-batches</code> — template must be <code>letter_target=PERORANGAN</code>, and at least <strong>two</strong> unique recipients are required.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Template <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="mbTpl"><span class="ctl__value" style="color:var(--fg-4)">Select template</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="mbTplDD"></div>
+      </div></div>
+    <div>
+      <div class="fld__label" style="margin-bottom:8px">Recipients <span class="req">*</span></div>
+      <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+        <thead><tr><th style="width:44px"></th><th>Name</th><th>NIK</th><th>Department</th></tr></thead>
+        <tbody id="mbRecipients"></tbody>
+      </table></div>
+      <p class="fld__hint" id="mbCount">3 recipients selected — the minimum is two.</p>
+      <p class="fld__hint"><code>recipient_employee_ids[]</code> — duplicates break a unique constraint (<code>422</code>). Whether each employee actually exists is <strong>not</strong> validated at submit time; it surfaces as <code>GAGAL</code> when the task runs.</p>
+    </div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="lock"></i>Frozen by the server</div>
+      <p><code>template_version_id</code> is frozen at submit time · <code>recipient_count</code> is counted · no submission note field exists. A partial failure writes zero rows.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="mbSubmit">Submit batch</button></div>
+</div></div>
+
+<!-- ===== S6 · BATCH DECISION (A14) ===== -->
+<div class="ovl" id="liDecideM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Decide on batch</h3><p class="ovl__desc"><code>POST /letter-batches/{batch-id}/approve</code> — <code>decision</code> is exactly <code>DISETUJUI</code> or <code>DITOLAK</code>. There is no rejection-note field.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="bdKv"></div>
+    <div class="fld"><label class="fld__label">Decision <span class="req">*</span></label>
+      <div class="seg" id="bdDecision"><button type="button" class="seg__opt is-on" data-val="DISETUJUI">DISETUJUI</button><button type="button" class="seg__opt" data-val="DITOLAK">DITOLAK</button></div>
+    </div>
+    <div class="doc-note">
+      <div class="doc-note__h"><i data-lucide="user-x"></i>Approver ≠ submitter</div>
+      <p>Enforced with <code>403</code> after the state check. A batch already decided answers <code>422</code>, not <code>409</code> — this is a business rule, not a write collision. On approval the recipient list is frozen and the background worker becomes eligible to run.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button><button class="btn btn--primary" id="bdSubmit">Submit decision</button></div>
+</div></div>
+
+<!-- ===== S7 · BATCH REPORT (A13b) ===== -->
+<div class="ovl" id="liReportM"><div class="ovl__scrim"></div><div class="ovl__panel ovl__panel--wide">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="brTitle">Batch report</h3><p class="ovl__desc"><code>GET /letter-batches/{batch-id}</code> — the three counters are computed, and the report stays openable after the queue has finished.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="doc-stats" id="brStats"></div>
+    <div class="kv" id="brKv"></div>
+    <div>
+      <div class="fld__label" style="margin-bottom:8px">Per-recipient tasks</div>
+      <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+        <thead><tr><th>Recipient (NIK)</th><th>State</th><th>Letter No</th><th>Failure Reason</th></tr></thead>
+        <tbody id="brItems"></tbody>
+      </table></div>
+      <p class="fld__hint">The contract carries only <code>subject_employee_id</code> — the screen resolves name and NIK through employee-service. The failure column appears only when a task failed.</p>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--primary" data-close>Close</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true, activeGroup:'Document — no menu row yet', activeItem:'Letter Issuance' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-letters.js"></script>
+</body>
+</html>

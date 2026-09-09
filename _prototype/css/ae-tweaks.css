@@ -1,0 +1,104 @@
+/* =============================================================================
+   SEVAKA HRIS — Add Employee · Tweakable feel
+   Driven by the Tweaks panel (js loads React + tweaks-panel.jsx). The panel sets
+   data-density / data-field on <body> and remaps a few --color-secondary-* (plus
+   the primary-button vars) on :root for the accent. These rules read those.
+   Loaded LAST so they win over form-standard.css / add-employee.css.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1) DENSITY — the whitespace rhythm of the whole form
+   --------------------------------------------------------------------------- */
+body[data-density="compact"] .ae-grid     { gap: 12px 20px; }
+body[data-density="compact"] .ae-section   { margin-bottom: 14px; }
+body[data-density="compact"] .ae-divider   { margin: 20px 0; }
+body[data-density="compact"] .ae-body      { padding: 20px 32px 26px; }
+body[data-density="compact"] .stepper      { padding: 18px 24px 4px; }
+body[data-density="compact"] #sbuList      { gap: 12px; }
+
+body[data-density="cozy"] .ae-grid         { gap: 20px 24px; }
+body[data-density="cozy"] .ae-section      { margin-bottom: 22px; }
+body[data-density="cozy"] .ae-divider      { margin: 32px 0; }
+body[data-density="cozy"] .ae-body         { padding: 28px 40px 36px; }
+body[data-density="cozy"] .stepper         { padding: 28px 24px 4px; }
+
+body[data-density="spacious"] .ae-grid     { gap: 30px 34px; }
+body[data-density="spacious"] .ae-section  { margin-bottom: 34px; }
+body[data-density="spacious"] .ae-divider  { margin: 46px 0; }
+body[data-density="spacious"] .ae-body     { padding: 38px 54px 48px; }
+body[data-density="spacious"] .stepper     { padding: 36px 24px 10px; }
+body[data-density="spacious"] #sbuList     { gap: 28px; }
+
+/* ---------------------------------------------------------------------------
+   2) FIELD STYLE — the chrome language of every input
+   outlined (default) · filled (soft, borderless) · underlined (editorial)
+   --------------------------------------------------------------------------- */
+
+/* --- Outlined: explicit so toggling back is clean (matches Figma spec) --- */
+body[data-field="outlined"] .ctl {
+  background: var(--color-cloud);
+  border: 1px solid var(--color-silver);
+  border-radius: 8px;
+  box-shadow: none;
+}
+body[data-field="outlined"] .ctl:focus-within {
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-secondary-500) 18%, transparent);
+}
+
+/* --- Filled: soft tinted fill, no border; only a focus ring --- */
+body[data-field="filled"] .ctl {
+  background: var(--color-vapor);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  box-shadow: none;
+}
+body[data-field="filled"] .ctl:hover { background: #e9eef5; }
+body[data-field="filled"] .ctl:focus-within {
+  background: var(--color-cloud);
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-secondary-500) 18%, transparent);
+}
+
+/* --- Underlined: transparent, single bottom rule, flush-left text --- */
+body[data-field="underlined"] .ctl {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--color-silver);
+  border-radius: 0;
+  box-shadow: none;
+}
+body[data-field="underlined"] .ctl > input,
+body[data-field="underlined"] .ctl > textarea,
+body[data-field="underlined"] .ctl__value { padding-left: 0; }
+body[data-field="underlined"] .ctl__prefix {
+  background: transparent;
+  border: none;
+  padding-left: 0;
+  padding-right: 8px;
+}
+body[data-field="underlined"] .ctl--area { align-items: stretch; }
+body[data-field="underlined"] .ctl:focus-within {
+  border-bottom-color: var(--color-secondary-500);
+  box-shadow: 0 1.5px 0 0 var(--color-secondary-500);
+}
+body[data-field="underlined"] .ctl.is-disabled,
+body[data-field="filled"] .ctl.is-disabled { opacity: .65; }
+
+/* ---------------------------------------------------------------------------
+   3) ACCENT — the primary button follows the remapped brand var.
+   (stepper dots/lines, links, focus rings already read --color-secondary-*,
+   so they shift automatically when the panel remaps those on :root.)
+   The panel also overrides --bg-primary-btn + --shadow-primary directly.
+   --------------------------------------------------------------------------- */
+.ae-panel .btn--secondary { color: var(--color-secondary-700); }
+
+/* Smooth the accent + density transitions so toggling feels intentional */
+.ctl, .step__dot, .step__line, .btn--primary, .ae-grid, .ae-section, .ae-body {
+  transition: background var(--duration-2) var(--ease-standard),
+              border-color var(--duration-2) var(--ease-standard),
+              box-shadow var(--duration-2) var(--ease-standard),
+              gap var(--duration-2) var(--ease-standard),
+              padding var(--duration-2) var(--ease-standard),
+              margin var(--duration-2) var(--ease-standard);
+}

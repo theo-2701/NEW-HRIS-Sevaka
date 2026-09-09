@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Settings</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/document.css?v=2">
+<link rel="stylesheet" href="css/settings.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Settings — Configuration">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Settings</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page" id="crumbMenu">Time</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Settings</h1>
+<p class="flow-sub">Eight menus, <strong>one read door and one write door</strong>. A single read returns every setting the caller is allowed to see — the per-menu split happens on this screen, not on the server. Saving sends only the edited rows as one list and applies them in <strong>one transaction</strong>: if a single row is refused, nothing changes at all.</p>
+</div>
+<div class="flow-head__actions">
+<a class="btn btn--secondary" id="menuHistory" href="settings-change-history.html">Menu history</a>
+<button class="btn btn--primary" id="saveBtn">Save changes</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="st-as">
+<span class="st-as__l">Viewing as</span>
+<div class="ctl ctl--select" id="asRole"><span class="ctl__value">Hesti Wulandari — ROLE_HR_MANAGER</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="asRoleDd"></div>
+</div>
+<span class="st-as__m" id="asMsg"></span>
+<div class="st-as__sp"></div>
+<span class="st-as__m">Prototype device — the real answer class is decided by the token, never by a control.</span>
+</div>
+
+<div id="gate" class="is-hidden">
+<div class="st-gate">
+<span class="st-gate__i"><i data-lucide="shield-x"></i></span>
+<span class="st-gate__t">Refused at the gate</span>
+<span class="st-gate__d">This role holds no setting at all, so the request is turned away before a single query runs. This is deliberately <strong>not</strong> an empty list — an empty list would mean a company that simply has no settings yet.</span>
+<span class="st-gate__c">403 FORBIDDEN · Peran Anda tidak memegang setelan mana pun.</span>
+</div>
+</div>
+
+<div id="menuWrap">
+<div class="tabnav" id="subTabs"></div>
+<div class="doc-tbar">
+<div class="doc-tbar__sp"></div>
+<div class="fin-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="q" placeholder="Search setup code"></div>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll">
+<table class="dtable">
+<thead id="thead"></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+<div id="menuNotes" style="display:flex;flex-direction:column;gap:12px;margin-top:16px"></div>
+</div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ===== A2 — review request body (KEU-4) ===== -->
+<div class="ovl" id="reviewOvl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Review request body</h3><p class="ovl__desc">Only edited rows travel. Every row is judged; there is no short-circuit and no second approver.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Setup Code</th><th>Before</th><th>Sent</th></tr></thead>
+<tbody id="rvBody"></tbody>
+</table>
+</div>
+<div class="fld"><label class="fld__label">Literal request body</label><div class="st-json" id="rvJson"></div></div>
+<div id="rvRod" class="is-hidden">
+<div class="note note--warn"><i data-lucide="alert-triangle"></i><span id="rvRodMsg"></span></div>
+<label class="fchk" style="margin-top:10px"><input type="checkbox" id="rvConfirm"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Send <code>confirm_transition: true</code> with this row</span></label>
+<p class="fld__hint">🔴 This control is <strong>added by this prototype</strong>. The contract makes the field conditionally mandatory but no drawn screen carries a control for it — PROB-FRONTEND-046. Without it a switch to DISABLED can only be refused, never completed.</p>
+<div class="note note--danger is-hidden" id="rvNonRod" style="margin-top:10px"><i data-lucide="alert-octagon"></i><span id="rvNonRodMsg"></span></div>
+</div>
+<div class="doc-note doc-note--gap">
+<div class="doc-note__h"><i data-lucide="alert-triangle"></i>Three malformed shapes, ranked by danger</div>
+<p><code>24</code> — a scalar. Refused and visible (<code>422 VALIDATION_ERROR</code>).</p>
+<p><code>["6,12,24"]</code> — an array of text. Refused at the value stage (<code>422 SETUP_VALUE_NOT_OFFERED</code>).</p>
+<p>🔴 <code>[24]</code> — a flattened list. <strong>Passes every one of the seven checks</strong>: it is an array, its member is a number, the number is inside the offer. The company silently loses the 6- and 12-month tenors — PROB-FRONTEND-036.</p>
+</div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="rvSend">Save changes</button>
+</div>
+</div>
+</div>
+
+<!-- ===== A2 — accepted (WKT-6 / GAJ-3) ===== -->
+<div class="ovl" id="okOvl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">200 — settings saved</h3><p class="ovl__desc" id="okDesc"></p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Setup Code</th><th>Value After</th><th>Changed?</th><th>New Version</th><th>Updated At</th></tr></thead>
+<tbody id="okBody"></tbody>
+</table>
+</div>
+<div class="note note--info"><i data-lucide="info"></i><span>A row sent with a value <strong>identical</strong> to the running one performs no update: no version is born, <code>changed:false</code>, <code>version_number:null</code>, and <code>updated_at</code> still points at deployment time. The version row itself is written by a database trigger inside the same transaction — application code is forbidden to insert it.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--primary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- ===== A2 — refused (WKT-7) ===== -->
+<div class="ovl" id="noOvl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="noTitle">403 — SETUP_CODE_LOCKED</h3><p class="ovl__desc" id="noDesc"></p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="dtable-wrap dtable-wrap--plain">
+<table class="dtable">
+<thead><tr><th>Refused Row</th><th>Code</th><th>Message</th></tr></thead>
+<tbody id="noBody"></tbody>
+</table>
+</div>
+<div class="note note--danger"><i data-lucide="shield-x"></i><span>Every refused row is reported at once and the transaction is rolled back whole — <strong>zero settings changed</strong>. The top-level status is the harshest code in the batch: locked beats not-offered beats validation. The refusal is written down as a security event.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Back to the table</button>
+</div>
+</div>
+</div>
+
+<!-- ===== A2 — REQUIRED transition, state of play today (ORG-6) ===== -->
+<div class="ovl" id="err500Ovl">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title">500 — INTERNAL_ERROR</h3><p class="ovl__desc">Pemeriksaan kelengkapan penugasan belum dapat dijalankan.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div class="note note--danger"><i data-lucide="alert-octagon"></i><span id="err500Msg">Switching to <strong>REQUIRED</strong> answers <code>500</code> for <em>every</em> company today: the gap view <code>setup.vw_employee_assignment_gap</code> has not been provisioned anywhere, so the completeness check cannot run — with a gap of 37 or of 0 alike. Once the view is deployed the same request answers <code>422 ASSIGNMENT_GAP_BLOCKS_REQUIRED</code> naming the number of employees still unassigned.</span></div>
+<div class="dtable-wrap dtable-wrap--plain" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Move</th><th>confirm_transition</th><th>Answer once the view is deployed</th></tr></thead>
+<tbody>
+<tr><td><span class="st-val">→ OPTIONAL</span></td><td><span class="st-none">not sent</span></td><td><span class="st-offer">200 — accepted unconditionally, no gate.</span></td></tr>
+<tr><td><span class="st-val">→ DISABLED</span></td><td><span class="st-none">not sent</span></td><td><span class="st-offer">422 VALIDATION_ERROR — the move demands an explicit confirmation.</span></td></tr>
+<tr><td><span class="st-val">→ DISABLED</span></td><td><span class="st-val">true</span></td><td><span class="st-offer">200 — assignments are released, historical data is kept.</span></td></tr>
+<tr><td><span class="st-val">→ REQUIRED</span></td><td><span class="st-none">forbidden here</span></td><td><span class="st-offer">422 ASSIGNMENT_GAP_BLOCKS_REQUIRED when the gap is above zero (37 of 240 for Cost Center); 200 at a gap of zero (SBU today). <strong>Projection only</strong> — the row above is what happens today.</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { activeGroup: 'settings', activeItem: 'Time' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/settings-data.js"></script>
+<script src="js/settings-configuration.js"></script>
+</body>
+</html>

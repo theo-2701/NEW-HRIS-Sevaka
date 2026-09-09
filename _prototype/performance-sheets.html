@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA Performance — Review Sheets</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/document.css">
+<link rel="stylesheet" href="css/recruitment.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>.rsban{display:flex;gap:12px;align-items:flex-start;border-radius:10px;padding:14px 16px;font:500 13px/1.5 Inter;margin-bottom:20px}.rsban--lock{background:var(--color-warning-50,#fffbeb);border:1px solid var(--color-warning-200,#fde68a);color:var(--color-warning-800,#92400e)}.rsban--open{background:var(--color-success-50,#ecfdf5);border:1px solid var(--color-success-200,#a7f3d0);color:var(--color-success-800,#065f46)}.rsban--info{background:var(--color-primary-50,#f3fafd);border:1px solid var(--border-1,#EAECF0);color:var(--color-secondary-800,#014a70)}.rsban b{font-weight:700}.rscard{background:var(--color-white);border:1px solid var(--border-1,#EAECF0);border-radius:10px;padding:16px;margin-bottom:20px}.rscard__h{display:flex;justify-content:space-between;align-items:center;gap:12px;font:700 13px/1 Inter;color:var(--color-obsidian,#111827);margin-bottom:10px}.rscard__t{font:400 13px/1.6 Inter;color:var(--fg-3,#334155)}.rsdetail{display:none}.rsdetail.is-on{display:block}.rslist.is-off{display:none}.lockv{display:inline-flex;align-items:center;gap:6px;color:var(--fg-3,#334155)}.lockv i,.lockv svg{width:14px;height:14px;color:var(--fg-4,#94A3B8)}.mini{font:400 11px/1.4 Inter;color:var(--fg-4,#94A3B8)}.respcards{display:grid;grid-template-columns:1fr;gap:12px}.respcard{border:1px solid var(--border-1,#EAECF0);border-radius:10px;padding:12px 14px}.respcard__c{font:700 11px/1 Inter;letter-spacing:.02em;margin-bottom:6px}.respcard--ok .respcard__c{color:var(--color-success-700,#047857)}.respcard--403 .respcard__c{color:var(--color-error-600,#dc2626)}.respcard--422 .respcard__c{color:var(--color-warning-700,#b45309)}.respcard__t{font:400 12px/1.5 Inter;color:var(--fg-3,#334155)}.rsmeta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;border:1px solid var(--border-1,#EAECF0);border-radius:10px;padding:14px 16px;margin-bottom:20px;background:var(--color-white)}.rsmeta__k{font:700 10px/1 Inter;letter-spacing:.02em;text-transform:uppercase;color:var(--fg-4,#94A3B8);margin-bottom:6px}.rsmeta__v{font:500 13px/1.4 Inter;color:var(--fg-3,#334155)}.objnote{font:400 12px/1.5 Inter;color:var(--fg-3,#334155);max-width:260px}a{color:var(--fg-link,#0284c7);text-decoration:none}a:hover{text-decoration:underline}</style>
+</head>
+<body data-screen-label="Performance — Review Sheets" data-perf-page="sheets">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card rslist" id="rsList">
+          <div class="rc-sec"><span class="rc-sec__title">Review Sheets</span></div>
+          <p class="doc-lead">One sheet is one employee × one period, walked through four system-enforced steps: the employee writes a self-assessment the supervisor cannot read; the supervisor fills the initial scores <strong>blind</strong>; the moment every line carries an initial score the self-assessment <strong>opens automatically</strong> — no button, no extra action; then the supervisor adjusts freely and submits.</p>
+
+          <div class="tabnav" id="rsTab">
+            <button type="button" class="tabnav__tab is-on" data-tab="mine">My Sheet</button>
+            <button type="button" class="tabnav__tab" data-tab="queue">Assessor Queue</button>
+          </div>
+
+          <!-- D1 · RS-1 employee surface -->
+          <div class="tabpanel is-on" data-tabpanel="mine">
+            <div class="rscard">
+              <div class="rscard__h"><span>Self-assessment</span><button class="rowbtn" type="button" id="rsSelfEdit">Edit</button></div>
+              <p class="rscard__t" id="rsSelfText">—</p>
+              <p class="mini" style="margin-top:8px" id="rsSelfMeta"></p>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Item</th><th>Origin</th><th>Target</th><th>Read</th><th>Objection Note</th><th class="ta-r"></th></tr></thead>
+              <tbody id="rsMineBody"></tbody>
+            </table></div>
+            <p class="fld__hint" id="rsMineReset" style="margin-top:10px"></p>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="eye-off"></i>Two columns the employee never sees</div>
+              <p>Neither the initial score nor the adjusted score is rendered on this surface — the API leaves both out of the employee's own response, so it is not a hidden column but an absent field. "Mark as read" is an acknowledgement, not an approval, and an objection note here <strong>holds nothing up</strong> — it is a remark visible to the supervisor, different from a formal <a href="performance-objections.html">Objection</a>.</p>
+            </div>
+          </div>
+
+          <!-- E1 · RS-2 assessor queue -->
+          <div class="tabpanel" data-tabpanel="queue">
+            <div class="doc-tbar">
+              <div class="ctl ctl--select" id="rsPeriodPick" style="width:200px"><span class="ctl__value">RP-2026-S1</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="RP-2026-S1">RP-2026-S1</div><div class="dropdown__opt" data-val="RP-2025-S2">RP-2025-S2</div></div>
+              </div>
+              <div class="ctl ctl--select" id="rsSortPick" style="width:180px"><span class="ctl__value">Sort: created_at</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt" data-val="created_at">Sort: created_at</div><div class="dropdown__opt" data-val="status">Sort: status</div></div>
+              </div>
+              <div class="doc-tbar__sp"></div>
+              <div class="seg" id="rsScope">
+                <button type="button" class="seg__opt is-on" data-val="ASSESSOR">My sheets</button>
+                <button type="button" class="seg__opt" data-val="ALL">All (HR)</button>
+              </div>
+            </div>
+            <span class="doc-fsum" id="rsScopeNote">Scope <code>ASSESSOR</code> — only sheets where the caller is the seat-holding assessor. HR reads the same grid with <code>data_scope=ALL</code>; every read is written to the access log.</span>
+            <div class="dtable-wrap dtable-wrap--act" style="margin-top:12px"><table class="dtable">
+              <thead><tr><th>Employee</th><th>Period</th><th>Assessor</th><th>Status</th><th>Revision</th><th class="ta-r"></th></tr></thead>
+              <tbody id="rsQueueBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="rsFoot"></div>
+            <p class="fld__hint" style="margin-top:12px">The search body carries the period, page, size and one of three whitelisted sort keys — there is no free-text employee search on this endpoint, so none is offered here.</p>
+          </div>
+        </section>
+
+        <!-- E2/E3/E4/E5/E6 · detail -->
+        <section class="rc-card rsdetail" id="rsDetail">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a class="crumbs__item crumbs__item--link" href="#" id="rsBack">Review Sheets</a>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">View Detail</span>
+          </nav>
+          <div class="rc-sec">
+            <span class="rc-sec__title" id="rsdTitle">—</span>
+            <div class="rc-head-actions" id="rsdActions"></div>
+          </div>
+          <div class="rsmeta" id="rsdMeta"></div>
+          <div id="rsdBanner"></div>
+          <div class="rscard" id="rsdSelf"></div>
+          <div class="tabnav" id="rsdTab">
+            <button type="button" class="tabnav__tab is-on" data-tab="lines">Score Lines</button>
+            <button type="button" class="tabnav__tab" data-tab="hist">Assessor History</button>
+          </div>
+          <div class="tabpanel is-on" data-tabpanel="lines">
+            <div class="doc-tbar" id="rsdLineActs">
+              <button class="btn btn--secondary" type="button" id="rsAddMaster">Add from Master</button>
+              <button class="btn btn--secondary" type="button" id="rsAddExtra">Add Additional Line</button>
+              <div class="doc-tbar__sp"></div>
+              <span class="doc-fsum" id="rsShareSum"></span>
+            </div>
+            <div class="dtable-wrap dtable-wrap--act"><table class="dtable">
+              <thead><tr><th>Item</th><th>Origin</th><th>Target</th><th>Initial Value</th><th>Adjusted Value</th><th>Employee Read</th><th>Objection Note</th><th class="ta-r">Raw Weight</th><th class="ta-r">Frozen Share</th><th class="ta-r"></th></tr></thead>
+              <tbody id="rsLineBody"></tbody>
+            </table></div>
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="lock"></i>What can and cannot be touched here</div>
+              <p>An initial score can never be overwritten once written — filled lines render locked, empty ones stay editable, and the refusal is the same code in the opposite direction. Master lines carry an HR-locked weight, so only their target may change and no delete button is rendered for them at all. Additional lines are free, but their share is measured against the 30% ceiling <em>including</em> the line being added. Adding or changing any line silently resets every read mark on the sheet and bumps the reset counter — the employee is asked to read the sheet again.</p>
+            </div>
+            <div class="doc-note" style="margin-top:16px">
+              <div class="doc-note__h"><i data-lucide="percent"></i>Frozen share is empty until submit</div>
+              <p>The frozen weight ratio stays NULL for the whole of <code>IN_PROGRESS</code>. It is written once, permanently, at submit time — which is also the moment raw weights stop being editable.</p>
+            </div>
+          </div>
+          <div class="tabpanel" data-tabpanel="hist">
+            <div id="rsHistBanner"></div>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>Assessor</th><th>Valid From</th><th>Valid Until</th><th>Handover Note</th></tr></thead>
+              <tbody id="rsHistBody"></tbody>
+            </table></div>
+            <p class="fld__hint">Ordered by <code>valid_from</code>. Behind the screen, every supervisor action on a sheet in <code>IN_PROGRESS</code> or <code>RETURNED_TO_ASSESSOR</code> re-resolves the chain against the company service — there is no supervisor-chain event stream, so it is fetched, not subscribed.</p>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- D1 · SELF-ASSESSMENT -->
+<div class="ovl" id="rsSelfM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Self-assessment</h3><p class="ovl__desc">Your own words, in your own name — there is no anonymous route. Editable only until your supervisor records the first initial score.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Content <span class="req">*</span></label><div class="ctl"><textarea id="rsSelfInput" rows="5" placeholder="Describe your own performance this period"></textarea></div>
+      <p class="fld__hint">Saved once, then editable until the sheet is touched by the assessor.</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="rsSelfSave">Save</button></div>
+</div></div>
+
+<!-- D1 · OBJECTION NOTE -->
+<div class="ovl" id="rsObjM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Raise an objection note</h3><p class="ovl__desc">A remark on one line, visible to your supervisor.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="rsObjKv"></div>
+    <div class="fld"><label class="fld__label">Note <span class="req">*</span></label><div class="ctl"><textarea id="rsObjInput" rows="4" maxlength="500" placeholder="e.g. Target kolaborasi tim menurut saya kurang terukur, mohon diperjelas"></textarea></div>
+      <p class="fld__hint">Holds nothing up — the target and the period stay in force. If the remark must be answered, use <a href="performance-objections.html">Objections</a> instead.</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="rsObjSave">Save note</button></div>
+</div></div>
+
+<!-- E4a · ADD FROM MASTER -->
+<div class="ovl" id="rsMasterM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:540px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Add from master</h3><p class="ovl__desc">Only while the sheet is <code>IN_PROGRESS</code>. Name, target type and weight are copied by the system.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Master item <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="rsMasterPick"><span class="ctl__value" style="color:var(--fg-4)">Select master item</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="rsMasterDD"></div>
+      </div>
+      <p class="fld__hint">Active master rows of the employee's job grade only.</p></div>
+    <div class="kv" id="rsMasterKv"></div>
+    <div class="fld"><label class="fld__label">Target <span class="req">*</span></label>
+      <div class="ctl"><input id="rsMasterTarget" type="text" placeholder="e.g. 40 tiket"></div>
+      <p class="fld__hint">The only value this form writes — target type and raw weight above are carried over by the system and cannot be edited here.</p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="rsMasterDo">Add line</button></div>
+</div></div>
+
+<!-- E4b · ADD ADDITIONAL -->
+<div class="ovl" id="rsExtraM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:560px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Add additional line</h3><p class="ovl__desc">A free-form line the supervisor owns — a different form from "Add from master", on purpose.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Item name <span class="req">*</span></label><div class="ctl"><input id="rsExName" type="text" maxlength="255" placeholder="e.g. Riset kompetitor pasar"></div></div>
+    <div class="fld"><label class="fld__label">Target type <span class="req">*</span></label>
+      <div class="radio-row" id="rsExType">
+        <label class="radio"><input type="radio" name="rsExType" value="NUMERIC" checked><span class="radio__dot"></span>NUMERIC</label>
+        <label class="radio"><input type="radio" name="rsExType" value="NARRATIVE"><span class="radio__dot"></span>NARRATIVE</label>
+      </div></div>
+    <div class="fld"><label class="fld__label">Raw weight <span class="req">*</span></label><div class="ctl"><input id="rsExWeight" type="text" inputmode="decimal" placeholder="0.00"></div>
+      <p class="fld__hint" id="rsExShare">The additional share is computed against the 30% ceiling, counting this new line.</p></div>
+    <div class="fld"><label class="fld__label">Target <span class="req">*</span></label><div class="ctl"><input id="rsExTarget" type="text" placeholder="e.g. 5 laporan kompetitor"></div></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="rsExDo">Add line</button></div>
+</div></div>
+
+<!-- Initial / adjusted value -->
+<div class="ovl" id="rsValM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="rsvTitle">Initial value</h3><p class="ovl__desc" id="rsvDesc"></p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="rsvKv"></div>
+    <div class="fld"><label class="fld__label" id="rsvLabel">Value <span class="req">*</span></label><div class="ctl"><input id="rsvInput" type="text" placeholder="e.g. 38 tiket"></div>
+      <p class="fld__hint" id="rsvHint"></p></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="rsvSave">Save</button></div>
+</div></div>
+
+<!-- E6 · SUBMIT -->
+<div class="ovl" id="rsSubmitM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:600px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Submit sheet</h3><p class="ovl__desc">The contract belongs to <a href="performance-approvals.html">Score Approvals</a>; this screen only fires it.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="kv" id="rssKv"></div>
+    <div class="respcards">
+      <div class="respcard respcard--ok"><div class="respcard__c">200 OK</div><p class="respcard__t">Sheet submitted, waiting on <b id="rssApprover">the approver</b> (cycle 1, round 1). The workflow instance starts synchronously, so its process id is already on the response.</p></div>
+      <div class="respcard respcard--403"><div class="respcard__c">403 FORBIDDEN</div><p class="respcard__t">No legitimate approver — the approval chain is exhausted. A second line of defence; the main realisation of this case happens when the period is opened.</p></div>
+      <div class="respcard respcard--422"><div class="respcard__c">422 WEIGHT_SUM_ZERO</div><p class="respcard__t">The total weight of the live lines is 0, so the sheet cannot be submitted. This is checked <b>before</b> the chain is resolved.</p></div>
+    </div>
+    <p class="fld__hint">Only the current assessor may submit — or an HR Manager when they are themselves the assessor. A returned sheet re-uses this same action for the next round; there is no separate screen, and the Approve / Return / Reject decision is rendered in <a href="performance-approvals.html">Score Approvals</a>.</p>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="rssDo">Submit sheet</button></div>
+</div></div>
+
+<script>window.SEVAKA_SESSION = { roles: ['ROLE_EMPLOYEE','ROLE_DEPT_MANAGER','ROLE_HR_STAFF','ROLE_HR_MANAGER'] };</script>
+<script src="js/performance-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script>
+(function(){
+  var F = window.Flow || window.F;
+  var MASTER = [
+    { id:'KPI-001', name:'Menyelesaikan tiket dukungan', type:'NUMERIC',   w:'40.00' },
+    { id:'KPI-002', name:'Kolaborasi tim',               type:'NARRATIVE', w:'30.00' },
+    { id:'KPI-003', name:'Ketepatan waktu penyelesaian', type:'NUMERIC',   w:'20.00' }
+  ];
+  var SHEETS = [
+    { id:'RS-0001', emp:'Dedi Kurniawan', period:'RP-2026-S1', assessor:'Budi Santoso', status:'IN_PROGRESS', rev:false, proc:null,
+      self:'Saya merasa cukup baik dalam menyelesaikan tiket dukungan bulan ini, meski masih perlu perbaikan di dokumentasi.', selfAt:'10 Mar 2026 10:00', resets:0,
+      lines:[
+        { id:'RSI-0001-1', name:'Menyelesaikan tiket dukungan', origin:'MASTER', type:'NUMERIC', target:'40 tiket', init:'38 tiket', sub:'', w:'40.00', frozen:'', read:'10 Mar 2026', note:'' },
+        { id:'RSI-0001-2', name:'Kolaborasi tim', origin:'MASTER', type:'NARRATIVE', target:'Aktif membantu 2 rekan kerja', init:'', sub:'', w:'30.00', frozen:'', read:'', note:'' },
+        { id:'RSI-0001-3', name:'Membantu onboarding karyawan baru', origin:'ADDITIONAL', type:'NARRATIVE', target:'Mendampingi 1 karyawan baru', init:'', sub:'', w:'15.00', frozen:'', read:'', note:'' }
+      ],
+      hist:[{ n:'Budi Santoso', from:'05 Jan 2026', to:'', note:'' }] },
+    { id:'RS-0002', emp:'Budi Santoso', period:'RP-2026-S1', assessor:'Rina Amelia', status:'APPROVED', rev:false, proc:'8c00…0abc',
+      self:'Saya berhasil memimpin tim menuntaskan migrasi server dan menjaga kolaborasi lintas divisi.', selfAt:'20 Jan 2026 09:00', resets:1,
+      lines:[
+        { id:'RSI-0002-1', name:'Menyelesaikan tiket dukungan', origin:'MASTER', type:'NUMERIC', target:'35 tiket', init:'33 tiket', sub:'35 tiket', w:'40.00', frozen:'57.14%', read:'20 Mar 2026', note:'' },
+        { id:'RSI-0002-2', name:'Kolaborasi tim', origin:'MASTER', type:'NARRATIVE', target:'Mentoring 2 anggota', init:'Baik, konsisten', sub:'Baik, konsisten, ditingkatkan Q2', w:'30.00', frozen:'42.86%', read:'20 Mar 2026', note:'' }
+      ],
+      hist:[{ n:'Eko Prasetyo', from:'05 Jan 2026', to:'01 Feb 2026', note:'Resign' }, { n:'Rina Amelia', from:'01 Feb 2026', to:'', note:'' }] },
+    { id:'RS-0003', emp:'Rina Amelia', period:'RP-2026-S1', assessor:'Hesti Wulandari', status:'RETURNED_TO_ASSESSOR', rev:true, proc:'8c00…0bcd',
+      self:'Fokus saya semester ini adalah menstabilkan proses persetujuan lintas tim.', selfAt:'11 Mar 2026 14:40', resets:0,
+      lines:[
+        { id:'RSI-0003-1', name:'Ketepatan waktu penyelesaian', origin:'MASTER', type:'NUMERIC', target:'95% tepat waktu', init:'92%', sub:'93%', w:'20.00', frozen:'', read:'', note:'' }
+      ],
+      hist:[{ n:'Hesti Wulandari', from:'05 Jan 2026', to:'', note:'' }] },
+    { id:'RS-0004', emp:'Yanti Prasetya', period:'RP-2026-S1', assessor:'Budi Santoso', status:'REJECTED_FINAL', rev:true, proc:'8c00…0cde',
+      self:'Saya menyelesaikan migrasi data pelanggan lebih cepat dari rencana.', selfAt:'13 Mar 2026 08:10', resets:0,
+      lines:[
+        { id:'RSI-0004-1', name:'Kolaborasi tim', origin:'MASTER', type:'NARRATIVE', target:'Kolaborasi lintas divisi', init:'Baik', sub:'Baik', w:'30.00', frozen:'100.00%', read:'22 Mar 2026', note:'' }
+      ],
+      hist:[{ n:'Budi Santoso', from:'05 Jan 2026', to:'', note:'' }] }
+  ];
+  var SB = { IN_PROGRESS:'sb--blue', PENDING_APPROVAL:'sb--amber', RETURNED_TO_ASSESSOR:'sb--orange', APPROVED:'sb--green', REJECTED_FINAL:'sb--red' };
+  function st(s){ return '<span class="sb '+(SB[s]||'sb--grey')+'"><span class="sb__dot"></span>'+s+'</span>'; }
+  function og(o){ return '<span class="sb '+(o==='MASTER'?'sb--blue':'sb--indigo')+'"><span class="sb__dot"></span>'+o+'</span>'; }
+  function isOpen(s){ return s.lines.length>0 && s.lines.every(function(l){ return !!l.init; }); }
+  function anyInit(s){ return s.lines.some(function(l){ return !!l.init; }); }
+  var MINE = SHEETS[0];
+  var cur=null, scope='ASSESSOR', period='RP-2026-S1', sortBy='created_at', editLine=null, editKind='init', objLine=null, backTab='queue';
+
+  /* ---------- D1 · employee surface ---------- */
+  function drawMine(){
+    var s = MINE, locked = anyInit(s);
+    document.getElementById('rsSelfText').textContent = s.self || 'Not written yet.';
+    document.getElementById('rsSelfEdit').textContent = s.self ? 'Edit' : 'Write self-assessment';
+    document.getElementById('rsSelfEdit').disabled = locked;
+    document.getElementById('rsSelfMeta').innerHTML = !s.self
+      ? 'Nothing submitted yet — write it before your supervisor starts scoring, because the first initial score locks it.'
+      : 'Submitted ' + s.selfAt + (locked
+        ? ' · Editing is locked because at least one line of this sheet already carries an initial score — not because of the period.'
+        : ' · Still editable: no initial score has been recorded yet.');
+    document.getElementById('rsMineReset').innerHTML = s.resets>0
+      ? 'Your read marks were reset '+s.resets+' time(s) because the supervisor changed a line after you read it.'
+      : 'No read mark has been reset on this sheet.';
+    document.getElementById('rsMineBody').innerHTML = s.lines.map(function(l){
+      var acts = [];
+      if (!l.read) acts.push({label:'Mark as read', icon:'check', attr:'data-read="'+l.id+'"'});
+      acts.push({label:(l.note?'Edit objection note':'Raise objection note'), icon:'message-square', attr:'data-obj="'+l.id+'"'});
+      var actCell = acts.length===1
+        ? '<div class="rowacts"><button class="rowbtn" '+acts[0].attr+'>'+acts[0].label+'</button></div>'
+        : F.rowMenu(acts);
+      return '<tr><td>'+l.name+'<div class="td-sub">'+l.id+'</div></td><td>'+og(l.origin)+'</td><td>'+(l.target||'—')+'</td>'+
+        '<td>'+(l.read ? '<span class="sb sb--green"><span class="sb__dot"></span>Read '+l.read+'</span>' : '<span class="mini">Not read yet</span>')+'</td>'+
+        '<td><div class="objnote">'+(l.note ? l.note : '<span class="mini">No objection</span>')+'</div></td>'+
+        '<td class="ta-r">'+actCell+'</td></tr>';
+    }).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /* ---------- E1 · queue ---------- */
+  function queueRows(){
+    return SHEETS.filter(function(s){
+      return s.period===period && (scope==='ALL' || s.assessor==='Budi Santoso');
+    }).sort(function(a,b){ return sortBy==='status' ? a.status.localeCompare(b.status) : 0; });
+  }
+  var pg = F.pager('rsFoot', 10, drawQueue, 'sheets');
+  function drawQueue(){
+    var all = queueRows(); pg.state.total = all.length;
+    var view = pg.slice ? pg.slice(all) : all;
+    document.getElementById('rsQueueBody').innerHTML = view.map(function(s){
+      return '<tr><td><a href="#" class="rs-open" data-id="'+s.id+'">'+s.emp+'</a><div class="td-sub">'+s.id+'</div></td>'+
+        '<td>'+s.period+'</td><td>'+s.assessor+'</td><td>'+st(s.status)+'</td>'+
+        '<td>'+(s.rev ? '<span class="sb sb--amber"><span class="sb__dot"></span>Has revision</span>' : '<span class="mini">—</span>')+'</td>'+
+        '<td class="ta-r"><div class="rowacts"><button class="rowbtn" data-id="'+s.id+'">View Detail</button></div></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="dtable__empty">No sheet in this scope.</td></tr>';
+    if (pg.paint) pg.paint();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /* ---------- E2–E6 · detail ---------- */
+  function drawDetail(){
+    var s = cur, open = isOpen(s), editable = (s.status==='IN_PROGRESS' || s.status==='RETURNED_TO_ASSESSOR');
+    document.getElementById('rsdTitle').textContent = s.emp + ' — ' + s.period;
+    document.getElementById('rsdActions').innerHTML = editable
+      ? '<button class="btn btn--primary" id="rsSubmitBtn">Submit Sheet</button>' : '';
+    document.getElementById('rsdMeta').innerHTML =
+      '<div><div class="rsmeta__k">Sheet · Status</div><div class="rsmeta__v">'+s.id+' &nbsp;'+st(s.status)+'</div></div>'+
+      '<div><div class="rsmeta__k">Seat-holding assessor</div><div class="rsmeta__v">'+s.assessor+(s.hist.length>1?' <span class="mini">(seat changed hands)</span>':'')+'</div></div>'+
+      '<div><div class="rsmeta__k">Self-assessment filled</div><div class="rsmeta__v">'+(s.self?'Yes · '+s.selfAt:'No')+'</div></div>'+
+      '<div><div class="rsmeta__k">Workflow instance</div><div class="rsmeta__v">'+(s.proc || '<span class="mini">NULL — not submitted yet</span>')+'</div></div>';
+    var filled = s.lines.filter(function(l){ return !!l.init; }).length;
+    document.getElementById('rsdBanner').innerHTML = open
+      ? '<div class="rsban rsban--open"><i data-lucide="unlock"></i><div><b>Self-assessment OPEN.</b> Every line carries an initial score, so the employee\'s own words opened automatically — no button was pressed. Reading it here is a direct seat-holder access and is not written to the access log.</div></div>'
+      : '<div class="rsban rsban--lock"><i data-lucide="lock"></i><div><b>Self-assessment LOCKED — '+filled+'/'+s.lines.length+' initial scores filled.</b> The refusal lives in the query layer, not in this screen: every line is needed, not most of them.</div></div>';
+    document.getElementById('rsdSelf').innerHTML = open
+      ? '<div class="rscard__h"><span>Self-assessment — now readable</span><span class="mini">'+s.selfAt+'</span></div><p class="rscard__t">'+s.self+'</p>'
+      : '<div class="rscard__h"><span>Self-assessment</span><span class="mini">Hidden</span></div><p class="rscard__t" style="color:var(--fg-4)">Hidden until every initial score is recorded.</p>';
+    var acts = document.getElementById('rsdLineActs');
+    acts.style.display = s.status==='IN_PROGRESS' ? '' : 'none';
+    var total = s.lines.reduce(function(a,l){ return a+parseFloat(l.w); },0);
+    var extra = s.lines.filter(function(l){ return l.origin==='ADDITIONAL'; }).reduce(function(a,l){ return a+parseFloat(l.w); },0);
+    document.getElementById('rsShareSum').innerHTML = 'Additional share '+(total? (extra/total*100).toFixed(1):'0.0')+'% of '+total.toFixed(2)+' — ceiling 30%';
+    document.getElementById('rsLineBody').innerHTML = s.lines.map(function(l){
+      var initCell = l.init
+        ? '<span class="lockv"><i data-lucide="lock"></i>'+l.init+'</span>'
+        : (editable ? '<button class="rowbtn" data-init="'+l.id+'">Fill</button>' : '<span class="mini">—</span>');
+      var subCell = (open && editable)
+        ? '<button class="rowbtn rowbtn--ghost" data-sub="'+l.id+'">'+(l.sub || 'Adjust')+'</button>'
+        : (l.sub || '<span class="mini">—</span>');
+      var wCell = l.origin==='MASTER' ? '<span class="lockv"><i data-lucide="lock"></i>'+l.w+'</span>' : l.w;
+      var acts = [];
+      if (s.status==='IN_PROGRESS') acts.push({label:'Edit target', icon:'pencil', attr:'data-tgt="'+l.id+'"'});
+      if (s.status==='IN_PROGRESS' && l.origin==='ADDITIONAL') acts.push({label:'Edit weight', icon:'percent', attr:'data-wgt="'+l.id+'"'});
+      if (s.status==='IN_PROGRESS' && l.origin==='ADDITIONAL') acts.push({label:'Delete line', icon:'trash-2', attr:'data-del="'+l.id+'"', danger:true});
+      var actCell = acts.length===0 ? '' : acts.length===1
+        ? '<div class="rowacts"><button class="rowbtn" '+acts[0].attr+'>'+acts[0].label+'</button></div>'
+        : F.rowMenu(acts);
+      return '<tr><td>'+l.name+'<div class="td-sub">'+l.id+'</div></td><td>'+og(l.origin)+'</td><td>'+(l.target||'—')+'</td>'+
+        '<td>'+initCell+'</td><td>'+subCell+'</td>'+
+        '<td>'+(l.read ? '<span class="sb sb--green"><span class="sb__dot"></span>'+l.read+'</span>' : '<span class="mini">Not read</span>')+'</td>'+
+        '<td><div class="objnote">'+(l.note || '<span class="mini">—</span>')+'</div></td>'+
+        '<td class="ta-r">'+wCell+'</td>'+
+        '<td class="ta-r">'+(l.frozen || '<span class="mini">NULL</span>')+'</td><td class="ta-r">'+actCell+'</td></tr>';
+    }).join('');
+    document.getElementById('rsHistBanner').innerHTML = s.hist.length>1
+      ? '<div class="rsban rsban--info"><i data-lucide="repeat"></i><div><b>The assessor has changed hands.</b> This banner appears only when the history holds more than one row.</div></div>' : '';
+    document.getElementById('rsHistBody').innerHTML = s.hist.map(function(h){
+      return '<tr><td>'+h.n+'</td><td>'+h.from+'</td><td>'+(h.to || '<span class="sb sb--green"><span class="sb__dot"></span>Current holder</span>')+'</td><td>'+(h.note || '<span class="mini">—</span>')+'</td></tr>';
+    }).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+  function showDetail(id){
+    cur = SHEETS.filter(function(s){ return s.id===id; })[0]; if(!cur) return;
+    var on = document.querySelector('#rsTab .tabnav__tab.is-on');
+    backTab = on ? on.dataset.tab : 'queue';
+    document.getElementById('rsList').classList.add('is-off');
+    document.getElementById('rsDetail').classList.add('is-on');
+    drawDetail();
+  }
+  function touchLines(){ cur.lines.forEach(function(l){ l.read=''; }); cur.resets = (cur.resets||0)+1; }
+
+  /* ---------- wiring ---------- */
+  document.getElementById('rsTab').addEventListener('tabchange', function(e){
+    if (e.detail.value==='queue') drawQueue(); else drawMine();
+  });
+  document.getElementById('rsScope').addEventListener('segchange', function(e){
+    scope = e.detail.value;
+    document.getElementById('rsScopeNote').innerHTML = scope==='ASSESSOR'
+      ? 'Scope <code>ASSESSOR</code> — only sheets where the caller is the seat-holding assessor. HR reads the same grid with <code>data_scope=ALL</code>; every read is written to the access log.'
+      : 'Scope <code>ALL</code> — the whole company, HR only. The grid is identical; the query layer decides which rows come back, and each read is logged.';
+    pg.reset(); drawQueue();
+  });
+  if (F.wireSelects) F.wireSelects(document.body);
+  document.getElementById('rsPeriodPick').addEventListener('select', function(e){ period = e.detail.value; pg.reset(); drawQueue(); });
+  document.getElementById('rsSortPick').addEventListener('select', function(e){ sortBy = e.detail.value; drawQueue(); });
+  document.getElementById('rsQueueBody').addEventListener('click', function(e){
+    var b = e.target.closest('.rowbtn, .rs-open'); if(!b) return; e.preventDefault(); showDetail(b.dataset.id);
+  });
+  ['rsBack'].forEach(function(id){
+    document.getElementById(id).addEventListener('click', function(e){
+      e.preventDefault();
+      document.getElementById('rsDetail').classList.remove('is-on');
+      document.getElementById('rsList').classList.remove('is-off');
+      var back = document.querySelector('#rsTab .tabnav__tab[data-tab="'+backTab+'"]');
+      if (back && !back.classList.contains('is-on')) back.click();
+    });
+  });
+  document.getElementById('rsMineBody').addEventListener('click', function(e){
+    var r = e.target.closest('[data-read]'), o = e.target.closest('[data-obj]');
+    if (r) {
+      var l = MINE.lines.filter(function(x){return x.id===r.dataset.read;})[0];
+      l.read='24 Aug 2026'; F.toast('Line marked as read — an acknowledgement, not an approval.'); drawMine();
+    }
+    if (o) {
+      objLine = MINE.lines.filter(function(x){return x.id===o.dataset.obj;})[0];
+      document.getElementById('rsObjKv').innerHTML =
+        '<div class="kv__k">Line</div><div class="kv__v">'+objLine.name+'</div>'+
+        '<div class="kv__k">Target</div><div class="kv__v">'+(objLine.target||'—')+'</div>';
+      document.getElementById('rsObjInput').value = objLine.note || '';
+      F.openModal('rsObjM');
+    }
+  });
+  document.getElementById('rsObjSave').addEventListener('click', function(){
+    var v = document.getElementById('rsObjInput').value.trim();
+    if (!v) { F.toast('A note is required.','warn'); return; }
+    objLine.note = v; F.closeModal('rsObjM');
+    F.toast('Note recorded. It is visible to your supervisor and holds nothing up.'); drawMine();
+  });
+  document.getElementById('rsSelfEdit').addEventListener('click', function(){
+    document.getElementById('rsSelfInput').value = MINE.self || '';
+    F.openModal('rsSelfM');
+  });
+  document.getElementById('rsSelfSave').addEventListener('click', function(){
+    var v = document.getElementById('rsSelfInput').value.trim();
+    if (!v) { F.toast('Content is required.','warn'); return; }
+    MINE.self = v; MINE.selfAt = '24 Aug 2026 09:00';
+    F.closeModal('rsSelfM'); F.toast('Self-assessment saved.'); drawMine();
+  });
+
+  document.getElementById('rsDetail').addEventListener('click', function(e){
+    var i = e.target.closest('[data-init]'), sb = e.target.closest('[data-sub]'), dl = e.target.closest('[data-del]'),
+        tg = e.target.closest('[data-tgt]'), wg = e.target.closest('[data-wgt]');
+    if (i || sb) {
+      editLine = cur.lines.filter(function(l){ return l.id===(i?i.dataset.init:sb.dataset.sub); })[0];
+      editKind = i ? 'init' : 'sub';
+      document.getElementById('rsvTitle').textContent = i ? 'Record initial value' : 'Adjust value';
+      document.getElementById('rsvDesc').textContent = i
+        ? 'Write-once — the blind score, recorded before the employee\'s words can be read.'
+        : 'Changeable without limit while the sheet is in progress or returned.';
+      document.getElementById('rsvKv').innerHTML =
+        '<div class="kv__k">Line</div><div class="kv__v">'+editLine.name+'</div>'+
+        '<div class="kv__k">Target</div><div class="kv__v">'+(editLine.target||'—')+'</div>'+
+        (i ? '' : '<div class="kv__k">Initial value</div><div class="kv__v">'+editLine.init+'</div>');
+      document.getElementById('rsvLabel').innerHTML = (i?'Initial value':'Adjusted value')+' <span class="req">*</span>';
+      document.getElementById('rsvInput').value = i ? '' : (editLine.sub||'');
+      document.getElementById('rsvHint').textContent = i
+        ? 'An initial score can never be overwritten. Once every line is filled, the self-assessment opens by itself.'
+        : 'The initial value beside it stays readable and is never overwritten.';
+      F.openModal('rsValM');
+    }
+    if (e.target.closest('#rsSubmitBtn')) {
+      document.getElementById('rssKv').innerHTML =
+        '<div class="kv__k">Sheet</div><div class="kv__v">'+cur.id+' — '+cur.emp+'</div>'+
+        '<div class="kv__k">Status</div><div class="kv__v">'+st(cur.status)+'</div>'+
+        '<div class="kv__k">Total raw weight</div><div class="kv__v">'+cur.lines.reduce(function(a,l){return a+parseFloat(l.w);},0).toFixed(2)+'</div>';
+      document.getElementById('rssApprover').textContent = cur.assessor==='Budi Santoso' ? 'Rina Amelia' : 'Hesti Wulandari';
+      F.openModal('rsSubmitM');
+    }
+    if (tg || wg) {
+      editLine = cur.lines.filter(function(l){ return l.id===(tg?tg.dataset.tgt:wg.dataset.wgt); })[0];
+      editKind = tg ? 'target' : 'weight';
+      document.getElementById('rsvTitle').textContent = tg ? 'Edit target' : 'Edit raw weight';
+      document.getElementById('rsvDesc').textContent = tg
+        ? 'On a master line only the target may change; its weight is HR-locked.'
+        : 'Additional lines only — raising the weight is refused if the additional share passes the 30% ceiling.';
+      document.getElementById('rsvKv').innerHTML = '<div class="kv__k">Line</div><div class="kv__v">'+editLine.name+'</div><div class="kv__k">Origin</div><div class="kv__v">'+og(editLine.origin)+'</div>';
+      document.getElementById('rsvLabel').innerHTML = (tg?'Target':'Raw weight')+' <span class="req">*</span>';
+      document.getElementById('rsvInput').value = tg ? (editLine.target||'') : editLine.w;
+      document.getElementById('rsvHint').textContent = 'Saving resets every read mark on this sheet and bumps the reset counter.';
+      F.openModal('rsValM');
+    }
+    if (dl) {
+      cur.lines = cur.lines.filter(function(l){ return l.id!==dl.dataset.del; });
+      F.toast('Additional line deleted. A zero total weight is caught at submit, not here.');
+      drawDetail();
+    }
+  });
+  document.getElementById('rsvSave').addEventListener('click', function(){
+    var v = document.getElementById('rsvInput').value.trim();
+    if (!v) { F.toast('A value is required.','warn'); return; }
+    if (editKind==='init') { editLine.init = v; touchLines(); }
+    else if (editKind==='sub') editLine.sub = v;
+    else if (editKind==='target') { editLine.target = v; touchLines(); }
+    else {
+      var w = parseFloat(v);
+      if (isNaN(w) || w < 0) { F.toast('The raw weight must be a number of 0 or more.','warn'); return; }
+      var others = cur.lines.filter(function(l){ return l.id!==editLine.id; });
+      var total = others.reduce(function(a,l){ return a+parseFloat(l.w); },0) + w;
+      var extra = others.filter(function(l){ return l.origin==='ADDITIONAL'; }).reduce(function(a,l){ return a+parseFloat(l.w); },0) + w;
+      if (total && extra/total > 0.30) { F.toast('422 ADDITIONAL_ITEM_QUOTA_EXCEEDED — the additional share would be '+(extra/total*100).toFixed(1)+'%, above the 30% ceiling.','warn'); return; }
+      editLine.w = w.toFixed(2); touchLines();
+    }
+    F.closeModal('rsValM');
+    F.toast(editKind==='init' && isOpen(cur) ? 'Every line is filled — the self-assessment just opened automatically.' : 'Saved.');
+    drawDetail();
+  });
+  document.getElementById('rsAddMaster').addEventListener('click', function(){
+    document.getElementById('rsMasterDD').innerHTML = MASTER.map(function(m){
+      return '<div class="dropdown__opt" data-val="'+m.id+'">'+m.name+' — '+m.type+' · '+m.w+'</div>';
+    }).join('');
+    document.getElementById('rsMasterKv').innerHTML = '<div class="kv__k">Copied from master</div><div class="kv__v"><span class="mini">Pick an item first</span></div>';
+    document.getElementById('rsMasterTarget').value = '';
+    if (F.wireSelects) F.wireSelects(document.getElementById('rsMasterM'));
+    F.openModal('rsMasterM');
+  });
+  document.getElementById('rsMasterPick').addEventListener('select', function(e){
+    var m = MASTER.filter(function(x){ return x.id===e.detail.value; })[0];
+    document.getElementById('rsMasterKv').innerHTML = m
+      ? '<div class="kv__k">Item name</div><div class="kv__v">'+m.name+'</div>'+
+        '<div class="kv__k">Target type</div><div class="kv__v">'+m.type+'</div>'+
+        '<div class="kv__k">Raw weight</div><div class="kv__v"><span class="lockv"><i data-lucide="lock"></i>'+m.w+'</span> <span class="mini">locked by HR</span></div>'
+      : '<div class="kv__k">Copied from master</div><div class="kv__v"><span class="mini">Pick an item first</span></div>';
+    if (window.lucide) lucide.createIcons();
+  });
+  document.getElementById('rsMasterDo').addEventListener('click', function(){
+    var label = document.querySelector('#rsMasterPick .ctl__value').textContent.trim();
+    if (label === 'Select master item') { F.toast('Pick a master item first.','warn'); return; }
+    var m = MASTER.filter(function(x){ return label.indexOf(x.name)===0; })[0] || MASTER[0];
+    var t = document.getElementById('rsMasterTarget').value.trim();
+    if (!t) { F.toast('A target is required.','warn'); return; }
+    cur.lines.push({ id:cur.id+'-'+(cur.lines.length+1), name:m.name, origin:'MASTER', type:m.type,
+      target:t, init:'', sub:'', w:m.w, frozen:'', read:'', note:'' });
+    touchLines();
+    F.closeModal('rsMasterM'); F.toast('Master line copied — name, type and weight came from the master, weight locked.'); drawDetail();
+  });
+  document.getElementById('rsAddExtra').addEventListener('click', function(){
+    ['rsExName','rsExWeight','rsExTarget'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.querySelector('#rsExType input[value="NUMERIC"]').checked = true;
+    F.openModal('rsExtraM');
+  });
+  document.getElementById('rsExDo').addEventListener('click', function(){
+    var n = document.getElementById('rsExName').value.trim(), w = parseFloat(document.getElementById('rsExWeight').value), t = document.getElementById('rsExTarget').value.trim();
+    if (!n || isNaN(w) || !t) { F.toast('Name, raw weight and target are all required.','warn'); return; }
+    var total = cur.lines.reduce(function(a,l){ return a+parseFloat(l.w); },0) + w;
+    var extra = cur.lines.filter(function(l){ return l.origin==='ADDITIONAL'; }).reduce(function(a,l){ return a+parseFloat(l.w); },0) + w;
+    var share = extra/total;
+    if (share > 0.30) { F.toast('422 ADDITIONAL_ITEM_QUOTA_EXCEEDED — the additional share would be '+(share*100).toFixed(1)+'%, above the 30% ceiling.','warn'); return; }
+    cur.lines.push({ id:cur.id+'-'+(cur.lines.length+1), name:n, origin:'ADDITIONAL',
+      type:document.querySelector('#rsExType input:checked').value, target:t, init:'', sub:'', w:w.toFixed(2), frozen:'', read:'', note:'' });
+    touchLines();
+    F.closeModal('rsExtraM'); F.toast('Additional line added — share '+(share*100).toFixed(1)+'% of the sheet, under the 30% ceiling.'); drawDetail();
+  });
+  document.getElementById('rssDo').addEventListener('click', function(){
+    var total = cur.lines.reduce(function(a,l){ return a+parseFloat(l.w); },0);
+    if (total === 0) { F.toast('422 WEIGHT_SUM_ZERO — the live lines total 0.','warn'); return; }
+    cur.status = 'PENDING_APPROVAL'; cur.proc = '8c00…0f01';
+    cur.lines.forEach(function(l){ l.frozen = (parseFloat(l.w)/total*100).toFixed(2)+'%'; });
+    F.closeModal('rsSubmitM');
+    F.toast('Submitted — waiting on '+(cur.assessor==='Budi Santoso'?'Rina Amelia':'Hesti Wulandari')+' (cycle 1, round 1). Shares frozen.');
+    drawDetail(); drawQueue();
+  });
+
+  drawMine(); drawQueue();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>

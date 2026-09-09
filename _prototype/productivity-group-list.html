@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Group List (Group for Payroll)</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/productivity.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Group List">
+
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Productivity</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Group for Payroll</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Group List</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Group List</h1>
+<p class="flow-sub">The master of work groups whose hours count as paid — the first filter in the hours-to-money chain. Work outside every group is still recorded and still reported; it is simply never handed to payroll.</p>
+</div>
+<div class="flow-head__actions">
+<div class="pv-persona"><span class="pv-persona__lbl">Acting as</span>
+<span class="seg" id="glPersona">
+<button class="seg__btn is-on" type="button" data-persona="HESTI">Hesti · HR</button>
+<button class="seg__btn" type="button" data-persona="DEDI">Dedi · Employee</button>
+</span></div>
+<button class="btn btn--primary" id="glNewBtn">New group</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="tbar">
+<span class="seg" id="glState">
+<button class="seg__btn is-on" type="button" data-st="active">Active</button>
+<button class="seg__btn" type="button" data-st="inactive">Inactive</button>
+<button class="seg__btn" type="button" data-st="all">All</button>
+</span>
+<button class="btn btn--secondary" type="button" data-filter-open="glFilter">Sort</button>
+<span class="sec-head__note" id="glSortSum">Sorted by created_at</span>
+<span class="tbar__sp"></span>
+<label class="tbar__srch"><i data-lucide="search"></i><input type="search" id="glSrch" placeholder="Search group name"></label>
+</div>
+<div class="sec-head" style="margin-top:12px">
+<span class="sec-head__t" id="glTitle">Paid work groups</span><span class="sec-head__c" id="glCount">0</span>
+<span class="subtabs__sp"></span>
+<span class="sec-head__note" id="glNote">Two substantive attributes only: name and active flag.</span>
+</div>
+<div class="dtable-wrap dtable-wrap--scroll dtable-wrap--act" style="margin-top:10px">
+<table class="dtable">
+<thead><tr><th>Group</th><th>Code</th><th>Status</th><th>Referenced by a mapping</th><th>Created</th><th></th></tr></thead>
+<tbody id="glBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgGl"></div>
+
+<div class="note note--warn" style="margin-top:18px"><i data-lucide="unplug"></i>
+<span><strong>No cascade — deliberately.</strong> Setting a group to <code>is_active=false</code> does <em>not</em> deactivate the Task List mappings that point at it. The two flags are independent: an old mapping keeps applying until HR switches it off itself.</span></div>
+<div class="note note--info" style="margin-top:12px"><i data-lucide="info"></i>
+<span><strong>There is no delete endpoint</strong> for this master. The row action stays visible and disabled with its reason rather than being quietly hidden — deactivation is the whole vocabulary here.</span></div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ FILTER ============ -->
+<div class="ovl" id="glFilter">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title">Sort groups</h3><p class="ovl__desc">The contract whitelists two sort keys. Free-text search on <code>group_name</code> lives above the table.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="fld"><label class="fld__label">Sort by</label><div class="ctl ctl--select" id="gflSort" data-nosum><span class="ctl__value">created_at (default)</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="gflSortDD"><div class="dropdown__opt" data-val="created_at">created_at (default)</div><div class="dropdown__opt" data-val="group_name">group_name</div></div></div></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" id="gflClear">Reset</button>
+<button class="btn btn--primary" data-close>Apply</button>
+</div>
+</div>
+</div>
+
+<!-- ============ GROUP FORM ============ -->
+<div class="ovl" id="glForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="gfTitle">New group</h3><p class="ovl__desc" id="gfDesc">One substantive field — the name. A new group is born active.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="note note--danger" id="gfDup" style="display:none"><i data-lucide="octagon-alert"></i><span><strong>422 PROD_PAID_WORK_GROUP_NAME_DUPLICATE</strong><br>Another undeleted group already carries this name.</span></div>
+<div class="fld"><label class="fld__label">Group name <span class="req">*</span></label><div class="ctl"><input type="text" id="gfName" maxlength="60" placeholder="e.g. Kelompok Berbayar — Lapangan"></div>
+<span class="fld__hint"><span id="gfCount">0</span>/60 · required, unique</span></div>
+<div class="fld" id="gfActiveFld" style="display:none"><label class="fld__label">Status</label>
+<span class="seg" id="gfActive"><button class="seg__btn is-on" type="button" data-active="1">Active</button><button class="seg__btn" type="button" data-active="0">Inactive</button></span>
+<span class="fld__hint" id="gfActiveHint">A new group is always born active — the status becomes editable once it exists.</span></div>
+</div>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="gfSave" disabled>Save group</button>
+</div>
+</div>
+</div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true };
+window.SEVAKA_SESSION = { employee_id:'b7f4c9a2-0003', roles:['ROLE_EMPLOYEE','ROLE_HR_MANAGER'] };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/productivity-data.js"></script>
+<script src="js/productivity-group-list.js"></script>
+</body>
+</html>

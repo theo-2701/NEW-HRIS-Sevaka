@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Document Access Trail</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/employee-modals.css">
+<link rel="stylesheet" href="css/add-employee.css">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/table-standard.css">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css">
+<link rel="stylesheet" href="css/company.css">
+<link rel="stylesheet" href="css/finance.css">
+<link rel="stylesheet" href="css/daterange.css">
+<link rel="stylesheet" href="css/document.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Document Access Trail" data-doc-page="access">
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+        <section class="pg-shell">
+          <div class="pg-shell__head">
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Company Management</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item">Files</span>
+              <span class="crumbs__sep" aria-hidden="true">/</span>
+              <span class="crumbs__item crumbs__item--current" aria-current="page">Document Access Trail</span>
+            </nav>
+            <div class="flow-head__row">
+              <div>
+                <h1 class="flow-title">Document Access Trail</h1>
+                <p class="flow-sub">The only reading door onto <code>log_document_access</code>, and the only access-control surface in Document Service. Pure oversight — zero write levers. Exactly two roles may read it: <strong>ROLE_SUPER_ADMIN</strong> and <strong>ROLE_HR_MANAGER</strong>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pg-shell__body">
+            <div class="doc-note doc-note--gap" style="margin-bottom:18px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>PROB-SERVICE-407 — HIGH, OPEN</div>
+              <p>No menu row exists for this screen either. Same pattern as Category Settings: the contract is complete, the menu home is the principal’s decision, and inventing a row is forbidden.</p>
+            </div>
+            <div class="doc-tbar">
+              <button class="btn btn--secondary" type="button" data-filter-open="alFilterM">Filter</button>
+              <span class="doc-fsum" data-filter-sum="alFilterM"></span>
+            </div>
+            <div class="dtable-wrap dtable-wrap--plain"><table class="dtable">
+              <thead><tr><th>Accessed At</th><th>Actor (NIK)</th><th>Granularity</th><th>Document</th><th>Count</th><th>Flag</th></tr></thead>
+              <tbody id="alBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="alFoot"></div>
+
+            <div class="doc-note" style="margin-top:20px">
+              <div class="doc-note__h"><i data-lucide="rows-3"></i>JA-2 · two row shapes, flattening them is forbidden (G3)</div>
+              <div class="dtable-wrap dtable-wrap--plain" style="margin-top:10px"><table class="dtable">
+                <thead><tr><th>Value</th><th>When it is written</th><th>Fields filled</th><th>Shape on screen</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="sb sb--indigo"><span class="sb__dot"></span>PER_PEMBUKAAN</span></td><td class="cell-dim">Effective class SENSITIF — one row per file opened</td><td class="cell-dim"><code>document_id</code> + <code>version_id</code>, <code>document_count=1</code></td><td class="cell-dim">Names which file was opened</td></tr>
+                  <tr><td><span class="sb sb--blue"><span class="sb__dot"></span>PER_PERMINTAAN</span></td><td class="cell-dim">Class BIASA — one row per list request</td><td class="cell-dim"><code>document_ids[]</code>, <code>document_count</code> = its size</td><td class="cell-dim">States how many; the array is never itemised row by row</td></tr>
+                </tbody>
+              </table></div>
+              <p style="margin-top:10px">Which shape should apply after <code>K4</code> is still awaiting a principal decision (<code>PROB-SERVICE-402</code>) — and that decision lives on the writing side (<code>A2</code>/<code>A3</code>), not here.</p>
+            </div>
+            <div class="doc-note" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="check-check"></i>Three facts this dataset proves</div>
+              <p>1 · An owner opening their own file is still recorded — zero exceptions (<code>DOC-30</code>.3). 2 · <code>flagged_unreasonable</code> is the main brake on centralising Employee Files (<code>DOC-69</code>) and has <strong>no threshold-setting address</strong> (<code>PROB-SERVICE-434</code>). 3 · An empty <code>document_id</code> is legitimate after the document was swept — fact-versus-evidence, not data loss.</p>
+            </div>
+            <div class="doc-note doc-note--hard" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="alert-triangle"></i>Honest limits — do not smooth these over</div>
+              <p><code>source_ip</code> is stored on every row but is <strong>not shown as a column and not the accessor’s address</strong>: SNAT strips the client address before the gateway, so the stored value is the node/gateway address — one office, one address, zero power to tell people apart (<code>PROB-INFRA-047</code>). Every row in this dataset carries <code>10.0.3.134</code>. Labelling it “accessor address” is forbidden. Reading the trail <strong>leaves no trail</strong> — the watchers are not watched (<code>PROB-SECURITY-091</code>), and a read request refused with <code>403</code> is not recorded at all (<code>PROB-SECURITY-086</code>). The oversight here is <strong>mutual, not external</strong>: if both readers agree, nobody inside the system sees it — the real boundary of the zero-new-role decision (<code>DOC-33</code>).</p>
+            </div>
+            <div class="doc-note" style="margin-top:12px">
+              <div class="doc-note__h"><i data-lucide="search-x"></i>No free-text search — on purpose</div>
+              <p>Every filter is a <code>uuid</code>, an enum, a boolean or a date. Which addresses write here: only <code>A2</code>, committed <strong>before</strong> the first byte is released. <code>A3</code> and <code>A4</code> write nothing — a list or a description is not an opening. And <code>ROLE_HEALTH_DATA_OFFICER</code>, though allowed to open SENSITIF content, is deliberately absent from this screen: watched, not watching.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== FILTER (access trail) ===== -->
+<div class="ovl" id="alFilterM"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Filter</h3><p class="ovl__desc">Every criterion is a <code>uuid</code>, an enum, a boolean or a date — there is no free-text search on this address.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Actor</label><div class="ctl ctl--select" id="alActor" style="width:230px;height:40px">
+                <span class="ctl__value">Any actor</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown" id="alActorDD"></div>
+              </div>
+              <p class="fld__hint">Read from <code>created_by-&gt;&gt;'employee_id'</code>; shown as NIK.</p></div>
+    <div class="fld"><label class="fld__label">Granularity</label><div class="ctl ctl--select" id="alGran" style="width:220px;height:40px">
+                <span class="ctl__value">Any granularity</span>
+                <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <div class="dropdown"><div class="dropdown__opt is-sel">Any granularity</div><div class="dropdown__opt" data-val="PER_PEMBUKAAN">PER_PEMBUKAAN</div><div class="dropdown__opt" data-val="PER_PERMINTAAN">PER_PERMINTAAN</div></div>
+              </div>
+              </div>
+    <div class="fld"><label class="fld__label">Accessed between</label><div class="rng" id="alRange" data-placeholder="Accessed between"><button class="rng__ctl" type="button"><span class="rng__val is-empty">Accessed between</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div>
+              </div>
+    <div class="fld"><label class="fchk"><input type="checkbox" id="alFlag"><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="fchk__lbl">Flagged unreasonable only</span></label></div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" data-filter-reset="alFilterM">Reset</button><button class="btn btn--primary" data-close>Apply</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive:false, bellActive:false, notifDot:true, activeGroup:'Document — no menu row yet', activeItem:'Document Access Trail' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js"></script>
+<script src="js/document-data.js"></script>
+<script src="js/document-access.js"></script>
+</body>
+</html>

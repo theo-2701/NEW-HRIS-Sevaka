@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SEVAKA HRIS — Attendance Settings</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/colors_and_type.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/notifications.css">
+<link rel="stylesheet" href="css/employee.css">
+<link rel="stylesheet" href="css/add-employee.css?v=3">
+<link rel="stylesheet" href="css/employee-modals.css?v=3">
+<link rel="stylesheet" href="css/form-standard.css">
+<link rel="stylesheet" href="css/employee-flows.css?v=2">
+<link rel="stylesheet" href="css/pagination-standard.css">
+<link rel="stylesheet" href="css/finance.css?v=6">
+<link rel="stylesheet" href="css/time.css?v=1">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Time — Attendance Settings">
+<div class="app">
+<header class="topnav" id="sevakaTopnav"></header>
+<div class="app__body">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="app__main">
+<div class="app__scroll">
+<section class="pg-shell">
+<div class="pg-shell__head">
+<nav class="crumbs" aria-label="Breadcrumb">
+<span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Time Management</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item">Attendance</span>
+<span class="crumbs__sep" aria-hidden="true">/</span>
+<span class="crumbs__item crumbs__item--current" aria-current="page">Settings</span>
+</nav>
+<div class="flow-head__row">
+<div>
+<h1 class="flow-title">Attendance Settings</h1>
+<p class="flow-sub">One resource: the work points a tap is measured against — their tolerance radius and the capture matrix that says, per work arrangement, whether being inside the radius and whether a selfie are required. Changing a point never rewrites a tap that was already assessed; the new rule starts with the next tap.</p>
+</div>
+<div class="flow-head__actions">
+<button class="btn btn--primary" id="newGeoBtn">New work point</button>
+</div>
+</div>
+</div>
+<div class="pg-shell__body">
+
+<div class="fin-tbar">
+<div class="ctl ctl--select fin-tbar__sel" id="fltBranch"><span class="ctl__value">All branches</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltBranchDd"></div>
+</div>
+<div class="ctl ctl--select fin-tbar__sel" id="fltActive"><span class="ctl__value">All statuses</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="fltActiveDd"></div>
+</div>
+<div class="fin-tbar__sp"></div>
+<div class="ctl fin-tbar__rng"><input type="text" id="fltName" placeholder="Search work point name"></div>
+</div>
+<div class="note note--warn is-hidden" id="geoBanner" style="margin-top:14px"><i data-lucide="triangle-alert"></i><span id="geoBannerTxt"></span></div>
+
+<div class="dtable-wrap dtable-wrap--scroll" style="margin-top:14px">
+<table class="dtable">
+<thead><tr><th>Work Point</th><th>Branch</th><th>Coordinates</th><th class="ta-r">Radius</th><th>Capture Matrix</th><th>Active</th><th></th></tr></thead>
+<tbody id="geoBody"></tbody>
+</table>
+</div>
+<div class="ph-foot" id="pgGeo"></div>
+<div class="note note--info" style="margin-top:14px"><i data-lucide="info"></i><span>All four work arrangements must be filled in explicitly — there is no implied default, and no fifth row can be added: the list is system-locked. Deleting a point is refused as soon as a single tap has ever referenced it; the lawful way to retire one is the Active toggle.</span></div>
+
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+<!-- ============ A3 / B3 — geofence form ============ -->
+<div class="ovl" id="geoForm">
+<div class="ovl__scrim"></div>
+<div class="ovl__panel ovl__panel--wide">
+<div class="ovl__head">
+<div><h3 class="ovl__title" id="gfTitle">New work point</h3><p class="ovl__desc">A branch may legitimately own more than one point; the name only has to be unique among the active points of the same branch.</p></div>
+<button class="ovl__x" data-close><i data-lucide="x"></i></button>
+</div>
+<form id="gfBody" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Point name <span class="req">*</span></label>
+<div class="ctl"><input type="text" id="gfName" placeholder="Input text here" maxlength="150"></div>
+<span class="fld__hint">3–150 characters.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Branch <span class="req">*</span></label>
+<div class="ctl ctl--select" id="gfBranch"><span class="ctl__value" style="color:var(--fg-4)">Select branch</span>
+<svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+<div class="dropdown" id="gfBranchDd"></div>
+</div>
+<span class="fld__hint">Read from the company service, not stored here.</span>
+</div>
+</div>
+<div class="item__grid">
+<div class="fld">
+<label class="fld__label">Latitude <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="gfLat" step="0.000001" min="-90" max="90" placeholder="-6.208763"></div>
+</div>
+<div class="fld">
+<label class="fld__label">Longitude <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="gfLng" step="0.000001" min="-180" max="180" placeholder="106.845599"></div>
+</div>
+</div>
+<div class="fld">
+<label class="fld__label">Radius (metres) <span class="req">*</span></label>
+<div class="ctl"><input type="number" id="gfRadius" step="1" min="1" placeholder="e.g. 120"></div>
+<span class="fld__hint" id="gfRadiusHint">A positive whole number. A radius under typical phone GPS accuracy raises a warning, not a refusal.</span>
+</div>
+<div class="fld">
+<label class="fld__label">Capture matrix <span class="req">*</span></label>
+<table class="tm-matrix" id="gfMatrix">
+<thead><tr><th>Work arrangement</th><th>Radius required</th><th>Selfie required</th></tr></thead>
+<tbody></tbody>
+</table>
+<span class="fld__hint">All four rows, both checkboxes each — explicit by design, no implied defaults.</span>
+</div>
+<label class="fchk"><input type="checkbox" id="gfActive" checked><span class="fchk__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><span class="fchk__lbl">Active — evaluated for new taps</span></label>
+</form>
+<div class="ovl__foot">
+<button class="btn btn--secondary" data-close>Cancel</button>
+<button class="btn btn--primary" id="gfSave">Save work point</button>
+</div>
+</div>
+</div>
+
+<!-- C2/D2 deactivate and D3 delete are one-step row actions per FSD §6.4/§6.5 — no intermediate dialog. -->
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/time-data.js"></script>
+<script src="js/time-attendance-settings.js"></script>
+</body>
+</html>

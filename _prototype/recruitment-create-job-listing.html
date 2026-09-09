@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA Recruitment — Create Job Listing</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/recruitment.css">
+  <link rel="stylesheet" href="css/recruitment-create.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Recruitment — Create Job Listing">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body rc-body">
+    <aside class="rc-sidebar" id="rcSidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="rc-card">
+          <a class="crumb" href="recruitment-job-listings.html">Job Listings</a>
+          <h1 class="rc-detail-title">Create Job Listing</h1>
+          <hr class="rc-rule">
+
+          <!-- stepper -->
+          <div class="cj-steps">
+            <div class="cj-step is-on" data-step="1"><span class="cj-step__num">1</span><span class="cj-step__name">Step 1</span><span class="cj-step__sub">Job details</span></div>
+            <div class="cj-line"></div>
+            <div class="cj-step is-future" data-step="2"><span class="cj-step__num">2</span><span class="cj-step__name">Step 2</span><span class="cj-step__sub">Application form</span></div>
+            <div class="cj-line"></div>
+            <div class="cj-step is-future" data-step="3"><span class="cj-step__num">3</span><span class="cj-step__name">Step 3</span><span class="cj-step__sub">Hiring stage</span></div>
+            <div class="cj-line"></div>
+            <div class="cj-step is-future" data-step="4"><span class="cj-step__num">4</span><span class="cj-step__name">Step 4</span><span class="cj-step__sub">Hiring team</span></div>
+            <div class="cj-line"></div>
+            <div class="cj-step is-future" data-step="5"><span class="cj-step__num">5</span><span class="cj-step__name">Step 5</span><span class="cj-step__sub">Publication setting</span></div>
+          </div>
+
+          <!-- ============ STEP 1 — Job details ============ -->
+          <div class="cj-panel is-on" data-panel="1">
+
+            <section class="cj-sec">
+              <h2 class="cj-sec__title">General information</h2>
+              <p class="cj-sec__desc">Basic details about the job, including position, location, and headcount.</p>
+              <div class="cj-grid">
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Job position <span class="req">*</span></label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select job position</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Backend Engineer</button>
+                      <button class="dropdown__opt" type="button">Product Designer</button>
+                      <button class="dropdown__opt" type="button">Sales Executive</button>
+                      <button class="dropdown__opt" type="button">Finance Analyst</button>
+                    </div>
+                  </div>
+                  <span class="cj-help">Create a new job position via <a href="#" onclick="event.preventDefault()">Job position settings</a></span>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Job listing title</label>
+                  <span class="cj-count" id="cntTitle">0/255</span>
+                  <div class="ctl"><input type="text" maxlength="255" data-count="cntTitle" placeholder="Input job listing title here"></div>
+                </div>
+
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Branch location <span class="req">*</span></label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select branch location</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Jakarta HQ</button>
+                      <button class="dropdown__opt" type="button">Bandung</button>
+                      <button class="dropdown__opt" type="button">Surabaya</button>
+                      <button class="dropdown__opt" type="button">Bekasi</button>
+                    </div>
+                  </div>
+                  <span class="cj-help">Create a new branch location via <a href="#" onclick="event.preventDefault()">Branch settings</a></span>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Province <span class="req">*</span></label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select province</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">DKI Jakarta</button>
+                      <button class="dropdown__opt" type="button">Jawa Barat</button>
+                      <button class="dropdown__opt" type="button">Jawa Timur</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cj-fld">
+                  <label class="cj-fld__label">City <span class="req">*</span></label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select city</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Jakarta Selatan</button>
+                      <button class="dropdown__opt" type="button">Bandung</button>
+                      <button class="dropdown__opt" type="button">Surabaya</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Organization <span class="req">*</span></label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select organization</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Engineering</button>
+                      <button class="dropdown__opt" type="button">Product</button>
+                      <button class="dropdown__opt" type="button">Commercial</button>
+                      <button class="dropdown__opt" type="button">Finance</button>
+                    </div>
+                  </div>
+                  <span class="cj-help">Create a new organization via <a href="#" onclick="event.preventDefault()">Organization settings</a></span>
+                </div>
+
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Employment type <span class="req">*</span></label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select employment type</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Permanent</button>
+                      <button class="dropdown__opt" type="button">Contract</button>
+                      <button class="dropdown__opt" type="button">Internship</button>
+                      <button class="dropdown__opt" type="button">Freelance</button>
+                    </div>
+                  </div>
+                  <span class="cj-help">Create a new employment type via <a href="#" onclick="event.preventDefault()">Employment settings</a></span>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Workplace type</label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select workplace type</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">On-site</button>
+                      <button class="dropdown__opt" type="button">Hybrid</button>
+                      <button class="dropdown__opt" type="button">Remote</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Headcount needed</label>
+                  <div class="ctl"><input type="number" min="1" value="1"><span class="ctl__suffix">Headcount</span></div>
+                  <label class="cj-inline-check"><span class="checkbox"><input type="checkbox"><span class="checkbox__box"></span></span>Show headcount needed to public</label>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Salary range <span class="req">*</span></label>
+                  <div class="cj-range">
+                    <div class="ctl"><span class="ctl__prefix">IDR</span><input type="text" value="0"></div>
+                    <span class="cj-range__dash">—</span>
+                    <div class="ctl"><span class="ctl__prefix">IDR</span><input type="text" value="0"></div>
+                  </div>
+                  <label class="cj-inline-check"><span class="checkbox"><input type="checkbox"><span class="checkbox__box"></span></span>Show salary range to public</label>
+                </div>
+
+                <div class="cj-fld cj-full">
+                  <label class="cj-fld__label">Salary description <span class="req">*</span></label>
+                  <span class="cj-count" id="cntSalDesc">0/50</span>
+                  <div class="ctl ctl--area"><textarea rows="3" maxlength="50" data-count="cntSalDesc" placeholder="Input salary description here"></textarea></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="cj-sec">
+              <h2 class="cj-sec__title">Job Information</h2>
+              <p class="cj-sec__desc">A comprehensive overview of the position, including its duties, responsibilities, and qualifications needed.</p>
+
+              <div class="cj-fld">
+                <label class="cj-fld__label">Job description <span class="req">*</span></label>
+                <span class="cj-count" id="cntDesc">0/2500</span>
+                <div class="cj-rte" data-rte="Describe the role, day-to-day duties, and what success looks like." data-count="cntDesc" data-max="2500"></div>
+                <span class="cj-help">With a minimum of 100 characters to help candidates better understand the role and your expectations.</span>
+              </div>
+
+              <div class="cj-fld" style="margin-top:22px">
+                <label class="cj-fld__label">Job requirements <span class="req">*</span></label>
+                <span class="cj-count" id="cntReq">0/2500</span>
+                <div class="cj-rte" data-rte="List the skills, experience, and qualifications you expect." data-count="cntReq" data-max="2500"></div>
+                <span class="cj-help">Write a minimum of 200 characters to help candidates assess their fit for the role and enhance the overall application experience.</span>
+              </div>
+
+              <div class="cj-fld" style="margin-top:22px">
+                <label class="cj-fld__label">Benefits <span class="req">*</span></label>
+                <span class="cj-count" id="cntBen">0/2500</span>
+                <div class="cj-rte" data-rte="Describe the perks and benefits offered with this role." data-count="cntBen" data-max="2500"></div>
+                <span class="cj-help">Write a minimum of 50 characters to provide a clear understanding of the perks associated with the role, making your job listing more attractive and informative.</span>
+              </div>
+
+              <div class="cj-fld" style="margin-top:22px">
+                <label class="cj-fld__label">Job summary <span class="req">*</span></label>
+                <span class="cj-count" id="cntSum">0/150</span>
+                <div class="ctl ctl--area"><textarea rows="3" maxlength="150" data-count="cntSum" placeholder="A one-line summary shown on the job card"></textarea></div>
+              </div>
+            </section>
+
+            <section class="cj-sec">
+              <h2 class="cj-sec__title">Experience &amp; qualifications</h2>
+              <p class="cj-sec__desc">Necessary educational background, experience level, and other qualifications for the job.</p>
+              <div class="cj-grid">
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Educations</label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select education level</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">SMA / SMK</button>
+                      <button class="dropdown__opt" type="button">D3</button>
+                      <button class="dropdown__opt" type="button">S1</button>
+                      <button class="dropdown__opt" type="button">S2</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Experience level</label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Select experience level</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Entry level</button>
+                      <button class="dropdown__opt" type="button">Associate</button>
+                      <button class="dropdown__opt" type="button">Mid-senior</button>
+                      <button class="dropdown__opt" type="button">Director</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Min. experience <span class="req">*</span></label>
+                  <div class="ctl"><input type="number" min="0" placeholder="0"><span class="ctl__suffix">Years</span></div>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Gender</label>
+                  <div class="ctl ctl--select"><span class="ctl__value" style="color:var(--fg-4)">Any</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown">
+                      <button class="dropdown__opt" type="button">Any</button>
+                      <button class="dropdown__opt" type="button">Male</button>
+                      <button class="dropdown__opt" type="button">Female</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cj-fld">
+                  <label class="cj-fld__label">Age range <span class="req">*</span></label>
+                  <div class="cj-range">
+                    <div class="ctl"><input type="number" min="0" value="0"><span class="ctl__suffix">Years</span></div>
+                    <span class="cj-range__dash">—</span>
+                    <div class="ctl"><input type="number" min="0" value="0"><span class="ctl__suffix">Years</span></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ============ STEP 2 — Application form ============ -->
+          <div class="cj-panel" data-panel="2">
+            <section class="cj-sec">
+              <h2 class="cj-sec__title">Application Form</h2>
+              <p class="cj-sec__desc">Choose which fields candidates fill in, and which of them are mandatory.</p>
+              <div id="cjFormFields"></div>
+            </section>
+            <section class="cj-sec">
+              <h2 class="cj-sec__title">Custom questions</h2>
+              <p class="cj-sec__desc">Create custom questions to get more information from the candidate.</p>
+              <div id="cjQList"></div>
+              <div class="cj-addwrap" style="margin-top:14px">
+                <button class="add-filter" type="button" id="cjAddQuestion"><i data-lucide="circle-plus"></i>Add Question</button>
+              </div>
+            </section>
+          </div>
+
+          <!-- ============ STEP 3 — Hiring stage ============ -->
+          <div class="cj-panel" data-panel="3">
+            <div id="cjStages"></div>
+          </div>
+
+          <!-- ============ STEP 4 — Hiring team ============ -->
+          <div class="cj-panel" data-panel="4">
+            <div id="cjTeam"></div>
+          </div>
+
+          <!-- ============ STEP 5 — Publication setting ============ -->
+          <div class="cj-panel" data-panel="5">
+            <div class="cj-fld cj-pubdate">
+              <label class="cj-fld__label">Published date <span class="req">*</span></label>
+              <div class="ctl ctl--date"><input type="date" id="pubDate">
+                <svg class="ctl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+              </div>
+            </div>
+            <div class="cj-checks">
+              <label class="cj-inline-check"><span class="checkbox"><input type="checkbox" id="pubNoClose" checked><span class="checkbox__box"></span></span>No closing date</label>
+              <label class="cj-inline-check"><span class="checkbox"><input type="checkbox" id="pubAutoClose"><span class="checkbox__box"></span></span>Automatically close the job listing after the required headcount is fulfilled</label>
+              <label class="cj-inline-check"><span class="checkbox"><input type="checkbox" id="pubRestrict"><span class="checkbox__box"></span></span>Restrict to one application per candidate</label>
+              <div class="cj-reapp" id="pubReapp" hidden>
+                <span class="cj-reapp__label">Re-application period</span>
+                <div class="cj-reapp__row">
+                  <div class="ctl ctl--select"><span class="ctl__value">After a set period</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown"><button class="dropdown__opt is-sel" type="button">After a set period</button><button class="dropdown__opt" type="button">Never</button></div>
+                  </div>
+                  <div class="ctl ctl--select"><span class="ctl__value">6 months</span>
+                    <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <div class="dropdown"><button class="dropdown__opt" type="button">1 month</button><button class="dropdown__opt" type="button">3 months</button><button class="dropdown__opt is-sel" type="button">6 months</button><button class="dropdown__opt" type="button">12 months</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <section class="cj-sec" style="border-top:0;margin-top:26px;padding-top:0">
+              <h2 class="cj-sec__title">Publication platform</h2>
+              <div class="cj-promo" id="pubPromo">
+                <div class="cj-promo__art">Illustration — publication platforms</div>
+                <div>
+                  <h3 class="cj-promo__title">Attract more candidates by integrating with publication platforms</h3>
+                  <p class="cj-promo__text">Integrate your job platforms with SEVAKA Recruitment to attract more candidates and improve your hiring process.</p>
+                </div>
+                <button class="cj-promo__x" type="button" id="pubPromoX" aria-label="Dismiss"><i data-lucide="x"></i></button>
+              </div>
+              <div id="cjPlatforms"></div>
+            </section>
+          </div>
+
+          <!-- wizard footer -->
+          <div class="cj-foot">
+            <button class="btn btn--secondary" type="button" id="cjCancel">Cancel</button>
+            <div class="cj-foot__right">
+              <button class="btn btn--secondary" type="button" id="cjBack" hidden>Back</button>
+              <button class="btn btn--secondary" type="button" id="cjDraft">Save As Draft</button>
+              <button class="btn btn--primary" type="button" id="cjContinue">Continue</button>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ AUTO-REJECTION SETTINGS modal ============ -->
+<div class="ovl" id="autoRejectModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel ovl__panel--wide">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Auto-rejection settings</h3></div>
+      <button class="ovl__x" data-close aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+    <div class="cj-fld">
+      <label class="cj-fld__label">Reject candidates if their assessment score is below:</label>
+      <div class="cj-slider" style="margin-top:10px">
+        <div class="cj-slider__track">
+          <input type="range" id="arPct" min="0" max="100" value="45">
+          <div class="cj-slider__ends"><span>0%</span><span>100%</span></div>
+        </div>
+        <div class="ctl"><input type="number" id="arNum" min="0" max="100" value="45"><span class="ctl__suffix">%</span></div>
+      </div>
+    </div>
+    <div class="cj-fld">
+      <label class="cj-fld__label">Rejection reason <span class="req">*</span></label>
+      <div class="ctl ctl--area"><textarea rows="3" id="arReason">Candidate’s assessment score did not meet the minimum requirement.</textarea></div>
+    </div>
+    <div>
+      <label class="cj-inline-check" style="margin-top:0"><span class="checkbox"><input type="checkbox" id="arEmail"><span class="checkbox__box"></span></span>Send automated rejection email</label>
+      <p class="cj-stage__desc" style="margin:6px 0 0 26px">If enabled, candidates will be notified immediately upon falling below the score threshold.</p>
+    </div>
+    <div class="cj-fld">
+      <label class="cj-fld__label">Personalized notes (Optional)</label>
+      <div class="ctl ctl--area"><textarea rows="4" placeholder="Input text here"></textarea></div>
+      <span class="cj-help">These notes will be included in the rejection email to provide more context.</span>
+    </div>
+    <div class="ovl__foot ovl__foot--split">
+      <button class="flt-reset" type="button" id="arPreview" style="margin-left:0">Preview Email</button>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn--secondary" data-close>Cancel</button>
+        <button class="btn btn--primary" id="arSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PUBLISHED modal ============ -->
+<div class="ovl" id="publishedModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel cj-done">
+    <button class="cj-done__x" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button>
+    <div class="cj-done__art">Illustration — successfully published</div>
+    <h3 class="cj-done__title">Successfully published</h3>
+    <p class="cj-done__sub">You can view your published job.</p>
+    <div class="cj-done__acts">
+      <a class="btn btn--secondary" href="recruitment-job-listings.html">Close</a>
+      <div class="cj-viewwrap">
+        <button class="btn btn--primary" type="button" id="cjViewPlat">View In Platform<svg class="btn__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-left:8px"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="dropdown" id="cjViewMenu">
+          <button class="dropdown__opt" type="button">Career page</button>
+          <button class="dropdown__opt" type="button">LinkedIn</button>
+          <button class="dropdown__opt" type="button">JobStreet</button>
+          <button class="dropdown__opt" type="button">Indeed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DISCARD CHANGES modal ============ -->
+<div class="ovl" id="discardModal">
+  <div class="ovl__scrim"></div>
+  <div class="ovl__panel">
+    <div class="ovl__head">
+      <div><h3 class="ovl__title">Discard changes?</h3></div>
+      <button class="ovl__x" data-close aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+    <p style="font:500 14px/1.5 var(--font-body);color:var(--fg-2);margin:0">You have unsaved changes. If you leave now, all changes will be lost.</p>
+    <div class="ovl__foot">
+      <button class="btn btn--secondary" data-close>Keep Editing</button>
+      <a class="btn btn--danger" href="recruitment-job-listings.html">Discard</a>
+    </div>
+  </div>
+</div>
+
+<script>window.RC_PAGE = { active: 'jobs' };</script>
+<script src="js/recruitment-shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/recruitment-create.js"></script>
+</body>
+</html>

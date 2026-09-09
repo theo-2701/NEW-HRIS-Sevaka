@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEVAKA HRIS — Salary Processing</title>
+  <meta name="viewport" content="width=1440">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/colors_and_type.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/notifications.css">
+  <link rel="stylesheet" href="css/employee.css">
+  <link rel="stylesheet" href="css/add-employee.css?v=3">
+  <link rel="stylesheet" href="css/employee-modals.css?v=3">
+  <link rel="stylesheet" href="css/form-standard.css">
+  <link rel="stylesheet" href="css/table-standard.css">
+  <link rel="stylesheet" href="css/pagination-standard.css">
+  <link rel="stylesheet" href="css/employee-flows.css?v=2">
+  <link rel="stylesheet" href="css/finance.css">
+  <link rel="stylesheet" href="css/company.css">
+  <link rel="stylesheet" href="css/payroll-doc.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-screen-label="Salary Processing">
+
+<div class="app">
+  <header class="topnav" id="sevakaTopnav"></header>
+  <div class="app__body">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="app__main">
+      <div class="app__scroll">
+
+        <section class="pg-shell">
+        <div class="pg-shell__head">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <span class="crumbs__item crumbs__item--home" aria-label="Dashboard"><i data-lucide="home"></i></span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item">Payroll</span>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span class="crumbs__item crumbs__item--current" aria-current="page">Salary Processing</span>
+          </nav>
+          <div class="flow-head__row">
+            <div>
+              <h1 class="flow-title">Salary Processing</h1>
+              <p class="flow-sub">Run and recalculate a payroll period, review the numbers, close the 13 kinds of non-blocking findings, and import the running-year payroll history of migrated employees. Locking, reopening and handover authorisation belong to the checker in Authorization &amp; Handover.</p>
+            </div>
+            <div class="flow-head__actions"><button class="btn btn--primary" id="runOpen">Run period</button></div>
+          </div>
+        </div>
+        <div class="pg-shell__body">
+
+          <div class="tabnav" id="pdTabs">
+            <button class="tabnav__tab is-on" type="button" data-tab="run">Run &amp; Review Period<span class="tabnav__count" id="cntPer">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="find">Findings<span class="tabnav__count" id="cntFind">0</span></button>
+            <button class="tabnav__tab" type="button" data-tab="imp">Payroll History Import<span class="tabnav__count" id="cntImp">0</span></button>
+          </div>
+
+          <!-- ===================== RUN & REVIEW ===================== -->
+          <div class="tabpanel is-on" data-tabpanel="run">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Acting as <strong>Rudi Hartono</strong> — <code>ROLE_PAYROLL_OFFICER</code>. One form, two server branches: <strong>Run period</strong> inserts a new period (<code>201</code>) or recalculates an existing <code>CALCULATED</code> one (<code>200</code>) from the same endpoint. Gates 1 (time reconciliation) and 2 (finance deduction pull) are read-only here — they are only evaluated when the checker locks the period; gate 3 (param snapshot complete) is derived, and the ten parameters freeze in the same transaction as the run.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="perStatus" style="width:200px;height:40px">
+                  <span class="ctl__value">All statuses</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All statuses</div><div class="dropdown__opt">CALCULATED</div><div class="dropdown__opt">REVIEWED</div><div class="dropdown__opt">LOCKED</div><div class="dropdown__opt">HANDED_OVER</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right"><div class="co-search"><i data-lucide="search"></i><input type="text" id="perSearch" placeholder="Search period, e.g. 2026-09"></div></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Period</th><th class="ta-c">Status</th><th>Gate 1 · Time recon</th><th>Gate 2 · Finance pull</th><th>Gate 3 · Param snapshot</th><th>Calculated by</th><th>Reviewed by</th><th class="ta-r"></th></tr></thead>
+              <tbody id="perBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="pgPer"></div>
+            <div id="perDetail"></div>
+          </div>
+
+          <!-- ===================== FINDINGS ===================== -->
+          <div class="tabpanel" data-tabpanel="find">
+            <div class="subtabs"><span class="seg">
+              <button class="seg__btn is-on" type="button" data-sub="list">Finding list</button>
+              <button class="seg__btn" type="button" data-sub="enc">The 13 finding types</button>
+            </span></div>
+
+            <div class="subpanel is-on" data-subpanel="list">
+              <div class="note note--info" style="margin:14px 0"><i data-lucide="info"></i><span>Findings never hold salary back — they are exceptions to be closed. Two terminal states only: <strong>Diperbaiki</strong> and <strong>Diterima</strong>; <strong>Diterima</strong> always needs a written reason. Bulk resolve is locked to <strong>Diterima</strong> and refuses rows from different periods — the grid is scoped to one period at a time, so that guard can never be tripped from here.</span></div>
+              <div class="co-tbar">
+                <div class="co-tbar__left" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <button class="btn btn--secondary" type="button" data-filter-open="fltFind">Filter</button>
+                  <span class="cell-dim" data-filter-sum="fltFind" style="font-size:12px">No filter applied</span>
+                </div>
+                <div class="co-tbar__right" style="display:flex;gap:10px;align-items:center">
+                  <span class="pd-sel" id="fSelInfo"></span>
+                  <button class="btn btn--secondary" id="fBulk" disabled>Resolve selected</button>
+                </div>
+              </div>
+              <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+                <thead><tr><th style="width:38px"><input type="checkbox" id="fAll" aria-label="Select all"></th><th>Finding</th><th>Type</th><th>Employee</th><th class="ta-c">Final state</th><th>Raised</th><th>Resolved by</th><th class="ta-r"></th></tr></thead>
+                <tbody id="fBody"></tbody>
+              </table></div>
+              <div class="ph-foot" id="pgFind"></div>
+            </div>
+
+            <div class="subpanel" data-subpanel="enc">
+              <div class="note note--warn" style="margin:14px 0"><i data-lucide="alert-triangle"></i><span><strong>ANNUAL_TAX_RECALC_SKIPPED</strong> — conceptual for this dataset. It is only born in a <strong>December</strong> period whose January-onward history is incomplete; the current timeline (June–September 2026) never reaches December, so zero real rows exist.</span></div>
+              <div class="pd-card" style="margin-top:0">
+                <div class="pd-card__head"><div><div class="pd-card__t">Lifecycle — <code>finding_final_state</code></div><div class="pd-card__s">Two forward paths, no way back. Both end states are terminal.</div></div></div>
+                <div class="pd-grid pd-grid--3">
+                  <div class="pd-stat"><div class="pd-stat__k">Terbuka</div><div class="pd-stat__n" style="margin-top:8px"><code>final_state IS NULL</code> — the row is born here when the period is run, locked, or swept backwards.</div></div>
+                  <div class="pd-stat"><div class="pd-stat__k">→ Diperbaiki</div><div class="pd-stat__n" style="margin-top:8px">Manual resolve on 12 types, or the automatic system pickup for <code>PERIOD_NOT_PICKED_UP</code>. Reason optional.</div></div>
+                  <div class="pd-stat"><div class="pd-stat__k">→ Diterima</div><div class="pd-stat__n" style="margin-top:8px">Single or bulk resolve. Written <code>resolution_reason</code> is mandatory — free text, not a picklist.</div></div>
+                </div>
+              </div>
+              <div class="dtable-wrap dtable-wrap--scroll" style="margin-top:16px"><table class="dtable">
+                <thead><tr><th>Finding type</th><th>Subject</th><th>Born when</th><th>Meaning</th><th><code>detail</code> schema</th></tr></thead>
+                <tbody id="encBody"></tbody>
+              </table></div>
+            </div>
+          </div>
+
+          <!-- ===================== HISTORY IMPORT ===================== -->
+          <div class="tabpanel" data-tabpanel="imp">
+            <div class="note note--info" style="margin-bottom:14px"><i data-lucide="info"></i><span>Running-year summaries for employees migrated from a legacy system, so the December annual PPh21 recalculation has a complete history. Maker–checker: the verifier must not be the submitter (<code>403 PAY_MAKER_CHECKER_VIOLATION</code>), and the month must fall <strong>before</strong> the first payroll period ever run.</span></div>
+            <div class="co-tbar">
+              <div class="co-tbar__left">
+                <div class="ctl ctl--select" id="impVer" style="width:210px;height:40px">
+                  <span class="ctl__value">All verification states</span>
+                  <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <div class="dropdown"><div class="dropdown__opt is-sel">All verification states</div><div class="dropdown__opt">Verified</div><div class="dropdown__opt">Not verified</div></div>
+                </div>
+              </div>
+              <div class="co-tbar__right" style="display:flex;gap:10px"><div class="co-search"><i data-lucide="search"></i><input type="text" id="impSearch" placeholder="Search employee or month"></div><button class="btn btn--secondary" id="impAdd">Submit import</button></div>
+            </div>
+            <div class="dtable-wrap dtable-wrap--scroll"><table class="dtable">
+              <thead><tr><th>Import</th><th>Employee</th><th>Month</th><th class="ta-r">Gross taxable</th><th class="ta-r">PPh21 withheld</th><th class="ta-r">BPJS contribution</th><th>Source</th><th>Submitted by</th><th>Verified by</th><th class="ta-r"></th></tr></thead>
+              <tbody id="impBody"></tbody>
+            </table></div>
+            <div class="ph-foot" id="pgImp"></div>
+            <div class="note note--info" style="margin-top:16px"><i data-lucide="server"></i><span><strong>Headcount read door</strong> — the insight-service reads headcount straight from payroll server-to-server with a machine identity: employee_id + count only, no nominal, and the period must already be <code>LOCKED</code>/<code>HANDED_OVER</code> (<code>422 PAY_HEADCOUNT_PERIOD_NOT_LOCKED</code> otherwise). Deliberately <strong>zero client-facing screen</strong> — recorded here so the omission reads as intentional.</span></div>
+          </div>
+
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== B4 · FINDINGS FILTER ===== -->
+<div class="ovl" id="fltFind"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Filter findings</h3><p class="ovl__desc">Only the fields <code>findings/search</code> accepts — period, finding type and final state.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="fld"><label class="fld__label">Period <span class="req">*</span></label>
+      <div class="ctl ctl--select" id="fPeriod"><span class="ctl__value">PP-2026-09</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt is-sel">PP-2026-09</div><div class="dropdown__opt">PP-2026-08</div><div class="dropdown__opt">PP-2026-07</div><div class="dropdown__opt">PP-2026-06</div></div>
+      </div>
+      <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">The search is always scoped to one period — that is what keeps bulk resolve inside a single period.</span>
+    </div>
+    <div class="fld"><label class="fld__label">Finding type</label>
+      <div class="ctl ctl--select" id="fType"><span class="ctl__value">All finding types</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown" id="fTypeOpts"></div>
+      </div>
+    </div>
+    <div class="fld"><label class="fld__label">Final state</label>
+      <div class="ctl ctl--select" id="fState"><span class="ctl__value">All states</span>
+        <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="dropdown"><div class="dropdown__opt is-sel">All states</div><div class="dropdown__opt">Terbuka</div><div class="dropdown__opt">Diperbaiki</div><div class="dropdown__opt">Diterima</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="ovl__foot"><button class="btn btn--secondary" type="button" id="fltFindReset">Reset</button><button class="btn btn--primary" data-close>Apply</button></div>
+</div></div>
+
+<!-- ===== A2 · RUN PERIOD ===== -->
+<div class="ovl" id="mRun"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Run period</h3><p class="ovl__desc">One form, two server branches — <code>201</code> when the year/month pair is new, <code>200</code> when it already exists and is recalculated.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="runForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Period year <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="runYear"><span class="ctl__value">2026</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown"><div class="dropdown__opt is-sel">2026</div><div class="dropdown__opt">2027</div></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Period month <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="runMonth"><span class="ctl__value">Oktober</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="runMonthOpts"></div>
+        </div>
+        <span class="fld__hint" style="font:400 12px/1.4 var(--font-body);color:var(--fg-3)">Whole numbers 1–12 only.</span>
+      </div>
+    </div>
+    <div class="note note--info" id="runBranch"><i data-lucide="git-branch"></i><span></span></div>
+    <div class="note note--info"><i data-lucide="shield"></i><span>An <code>Idempotency-Key</code> header travels with the first attempt so a retried network call never runs the period twice.</span></div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="runGo">Run period</button></div>
+</div></div>
+
+<!-- ===== A4 · REVIEW ===== -->
+<div class="ovl" id="mReview"><div class="ovl__scrim"></div><div class="ovl__panel" style="max-width:520px">
+  <div class="ovl__head"><div><h3 class="ovl__title">Review period</h3><p class="ovl__desc">Pure lifecycle transition <code>CALCULATED → REVIEWED</code> — empty request body, no field edit.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="reviewBody"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="reviewGo">Mark as reviewed</button></div>
+</div></div>
+
+<!-- ===== B5 / B6 · RESOLVE FINDING ===== -->
+<div class="ovl" id="mResolve"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Resolve finding</h3><p class="ovl__desc" id="resDesc">Pick a terminal state. A written reason is mandatory on Diterima.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="resBody" style="display:flex;flex-direction:column;gap:16px"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="resGo">Resolve</button></div>
+</div></div>
+
+<!-- ===== B7 · BULK RESOLVE ===== -->
+<div class="ovl" id="mBulk"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Resolve selected findings</h3><p class="ovl__desc">Bulk resolve is locked to <strong>Diterima</strong> with one shared reason. Rows already closed are skipped and reported back.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="bulkBody" style="display:flex;flex-direction:column;gap:16px"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="bulkGo">Resolve as Diterima</button></div>
+</div></div>
+
+<!-- ===== B3 · FINDING DETAIL ===== -->
+<div class="ovl" id="mFind"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="findTitle">Finding detail</h3><p class="ovl__desc">The <code>detail</code> payload has a different shape per finding type — it is never compressed into one generic schema.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="findBody"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button></div>
+</div></div>
+
+<!-- ===== B12 · SUBMIT IMPORT ===== -->
+<div class="ovl" id="mImp"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title" id="impTitle">Submit payroll history import</h3><p class="ovl__desc">Marked <code>LEGACY_SYSTEM_IMPORT</code>. The month must fall before the first payroll period ever run.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <form id="impForm" style="display:flex;flex-direction:column;gap:16px" autocomplete="off">
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Employee <span class="req">*</span></label>
+        <div class="ctl ctl--select" id="impEmp"><span class="ctl__value">Cahyo Prasetyo</span>
+          <svg class="ctl__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown" id="impEmpOpts"></div>
+        </div>
+      </div>
+      <div class="fld"><label class="fld__label">Month <span class="req">*</span></label><div class="ctl"><input type="text" id="impMonth" placeholder="YYYY-MM, e.g. 2026-06" maxlength="7"></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">Gross taxable income <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="impGross" placeholder="0"></div></div>
+      <div class="fld"><label class="fld__label">PPh21 withheld <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="impPph" placeholder="0"></div></div>
+    </div>
+    <div class="co-grid2">
+      <div class="fld"><label class="fld__label">BPJS contribution <span class="req">*</span></label><div class="pp-money"><span class="pp-money__cur">RP</span><input type="text" id="impBpjs" placeholder="0"></div></div>
+      <div class="fld"><label class="fld__label">Source marker</label><div class="ctl"><input type="text" value="LEGACY_SYSTEM_IMPORT" disabled></div></div>
+    </div>
+  </form>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Cancel</button><button class="btn btn--primary" id="impSave">Submit import</button></div>
+</div></div>
+
+<!-- ===== B13 · VERIFY IMPORT ===== -->
+<div class="ovl" id="mVerify"><div class="ovl__scrim"></div><div class="ovl__panel">
+  <div class="ovl__head"><div><h3 class="ovl__title">Verify import</h3><p class="ovl__desc">Checker step. The verifier must differ from the submitter, and an already verified row cannot be verified twice.</p></div><button class="ovl__x" data-close><i data-lucide="x"></i></button></div>
+  <div id="verBody"></div>
+  <div class="ovl__foot"><button class="btn btn--secondary" data-close>Close</button><button class="btn btn--primary" id="verGo" disabled>Verify import</button></div>
+</div></div>
+
+<script>window.SEVAKA_PAGE = { dashboardActive: false, bellActive: false, notifDot: true, activeGroup: 'Payroll', activeItem: 'Salary Processing' };</script>
+<script src="js/shell.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/flow-common.js?v=4"></script>
+<script src="js/payroll-doc-data.js"></script>
+<script src="js/payroll-doc-processing.js"></script>
+</body>
+</html>

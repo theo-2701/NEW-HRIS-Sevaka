@@ -1,0 +1,160 @@
+/* =============================================================================
+   SEVAKA HRIS — TABLE STANDARDIZATION
+   -----------------------------------------------------------------------------
+   One rule for every scrollable data table across all modules:
+
+     • The FIRST column (the identifier — Transaction ID, Employee, Payroll
+       Period, etc.) is FROZEN to the LEFT. It never scrolls away.
+     • The ACTION column (View / Edit / Delete, "Action" button, row tools)
+       is FROZEN to the RIGHT. It is always reachable.
+     • Everything between the two scrolls horizontally underneath them.
+
+   A 1px rim divider (inset shadow) marks each frozen edge once the body
+   scrolls, exactly like the reference mockups.
+
+   Applies to the three wide enterprise table families:
+     .pp-table   — payroll processing / components / history
+     .ph-table   — payroll run list (a .pp-table variant)
+     .emp-table  — employee directory
+
+   Load this AFTER each module's own stylesheet so it wins.
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   Stacking order (shared across families)
+     header row .................... 5
+     frozen body cell (L or R) ..... 4
+     frozen header corner (L or R).. 7   (above both header row and frozen body)
+   --------------------------------------------------------------------------- */
+
+/* =========================================================================
+   .pp-table  (payroll processing, components, history run list)
+   ========================================================================= */
+
+/* ---- header sits above the scrolling body ---- */
+.pp-table thead th { z-index: 5; }
+
+/* ---- FROZEN LEFT: first column (ID / Employee / Period) ---- */
+.pp-table thead th:first-child,
+.pp-table tbody td:first-child {
+  position: sticky;
+  left: 0;
+}
+.pp-table thead th:first-child { z-index: 7; }
+.pp-table tbody td:first-child {
+  z-index: 4;
+  background: var(--color-primary-50);
+  box-shadow: inset -1px 0 0 #d7eaf4;
+}
+
+/* ---- FROZEN RIGHT: action column ---- */
+.pp-table thead th.pp-table__act,
+.pp-table tbody td.pp-cell-act {
+  position: sticky;
+  right: 0;
+}
+.pp-table thead th.pp-table__act { z-index: 7; }
+.pp-table tbody td.pp-cell-act {
+  z-index: 4;
+  background: var(--color-primary-50);
+  box-shadow: inset 1px 0 0 #d7eaf4;
+}
+
+/* ---- white-bodied variant (preview / detail cards) keeps frozen cells white ---- */
+.pp-detail-card .pp-table tbody td:first-child,
+.pp-detail-card .pp-table tbody td.pp-cell-act,
+.pc-detailpanel .pp-table tbody td:first-child,
+.pc-detailpanel .pp-table tbody td.pp-cell-act {
+  background: #fff;
+}
+
+/* =========================================================================
+   .ph-table  (payroll run list) — RE-FREEZE the action column.
+   payroll-history.css had pinned it to `static`; the standard overrides that
+   so the Action column behaves like every other module.
+   ========================================================================= */
+.ph-table thead th.ph-actcol {
+  position: sticky;
+  right: 0;
+  z-index: 7;
+  width: 150px;
+  background: linear-gradient(180deg, #9bd5ef 0%, #8ccbe9 100%);
+  border-top-right-radius: var(--radius-lg);
+}
+.ph-table tbody td.ph-actcell {
+  position: sticky;
+  right: 0;
+  z-index: 4;
+  background: var(--color-primary-50);
+  box-shadow: inset 1px 0 0 #d7eaf4;
+}
+
+/* =========================================================================
+   .emp-table  (employee directory)
+   First column is the select checkbox + the Employee identifier; the last
+   column is the row action. Freeze both ends.
+   ========================================================================= */
+.emp-table thead th { position: sticky; top: 0; z-index: 5; }
+
+.emp-table thead th:first-child,
+.emp-table tbody td:first-child {
+  position: sticky;
+  left: 0;
+}
+.emp-table thead th:first-child { z-index: 7; }
+.emp-table tbody td:first-child {
+  z-index: 4;
+  background: #fff;
+  box-shadow: inset -1px 0 0 var(--color-vapor);
+}
+
+.emp-table thead th:last-child,
+.emp-table tbody td.col-action,
+.emp-table tbody td:last-child {
+  position: sticky;
+  right: 0;
+}
+.emp-table thead th:last-child { z-index: 7; }
+.emp-table tbody td.col-action,
+.emp-table tbody td:last-child {
+  z-index: 4;
+  background: #fff;
+  box-shadow: inset 1px 0 0 var(--color-vapor);
+}
+
+/* keep the hover tint on the frozen cells too */
+.emp-table tbody tr:hover td:first-child,
+.emp-table tbody tr:hover td.col-action,
+.emp-table tbody tr:hover td:last-child {
+  background: var(--color-primary-100);
+}
+
+/* =========================================================================
+   Open action menus must clear the frozen cells of the rows below.
+   The sticky action column gives every action cell the same z-index, so a
+   dropdown opened in one row would otherwise paint behind the action cells
+   of later rows. When a row's menu is open, lift that whole row + its frozen
+   cells above the rest.
+   ========================================================================= */
+.emp-table tbody tr:has(.action-wrap.is-open),
+.pp-table tbody tr:has(.pc-actmenu.is-open),
+.pp-table tbody tr:has([data-actmenu].is-open),
+.ph-table tbody tr:has(.ph-rowmenu.is-open) { position: relative; z-index: 40; }
+
+.emp-table tbody td.col-action:has(.action-wrap.is-open),
+.emp-table tbody td:last-child:has(.action-wrap.is-open),
+.pp-table tbody td.pp-cell-act:has(.pc-actmenu.is-open),
+.pp-table tbody td.pp-cell-act:has([data-actmenu].is-open),
+.ph-table tbody td.ph-actcell:has(.ph-rowmenu.is-open) { z-index: 40; }
+
+/* =========================================================================
+   Mouse drag-to-pan affordance (wired by js/table-scroll.js)
+   ========================================================================= */
+.pp-table-wrap.is-draggable,
+.emp-table-wrap.is-draggable { cursor: grab; }
+.pp-table-wrap.is-grabbing,
+.emp-table-wrap.is-grabbing { cursor: grabbing; user-select: none; }
+/* interactive cell contents keep their own pointer */
+.pp-table-wrap a, .pp-table-wrap button, .pp-table-wrap input,
+.emp-table-wrap a, .emp-table-wrap button, .emp-table-wrap input { cursor: pointer; }
+.pp-table-wrap input[type="text"], .emp-table-wrap input[type="text"] { cursor: text; }
