@@ -8,6 +8,7 @@ import { NAV_PATHS } from '@/config/nav';
 
 // ---- Modul yang SUDAH dikonversi -------------------------------------------
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
 import { ReprimandTypeSettingPage } from '@/features/reprimand/pages/ReprimandTypeSettingPage';
@@ -48,6 +49,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/reprimand', element: <ReprimandPage /> },
   { path: 'employees/reprimand/type-setting', element: <ReprimandTypeSettingPage /> },
   { path: 'time/time-off/requests', element: <TimeOffRequestPage /> },
+  { path: 'time/time-off/balance', element: <TimeOffBalancePage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -72,6 +74,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/reprimand',
   '/employees/reprimand/type-setting',
   '/time/time-off/requests',
+  '/time/time-off/balance',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

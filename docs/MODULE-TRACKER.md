@@ -39,7 +39,7 @@ Baca dulu: `_prototype/EMPLOYEE-GAP-NOTES.md`.
 ## Batch 2 — Time Management
 
 - [x] Time Off **Request** — `time-off-request.html` (empat gerbang submit, cuti sakit AUTO_APPROVED + jendela tolak beku, SoD 403, penarikan → CANCELLED, delegasi §3.2, jejak akses surat dokter 403/410)
-- [ ] Time Off **Balance** — `time-off-balance.html`
+- [x] Time Off **Balance** — `time-off-balance.html` (saldo dijumlahkan dari ledger, ledger append-only, HR adjustment create-only dengan sumber terkunci + refId kosong, delta bertanda ≠ 0, proyeksi bukan gerbang)
 - [ ] Time Off **Settings** — `time-off-settings.html`
 - [ ] Attendance + settings
 - [ ] Overtime, Calendar

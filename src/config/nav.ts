@@ -167,7 +167,7 @@ export const NAV: NavSection[] = [
         icon: 'palmtree',
         children: [
           { label: 'Time Off Request', path: '/time/time-off/requests', source: 'time-off-request.html', status: 'done' },
-          { label: 'Time Off Balance', path: '/time/time-off/balance', source: 'time-off-balance.html', status: 'todo' },
+          { label: 'Time Off Balance', path: '/time/time-off/balance', source: 'time-off-balance.html', status: 'done' },
           { label: 'Settings', path: '/time/time-off/settings', source: 'time-off-settings.html', status: 'todo' },
         ],
       },

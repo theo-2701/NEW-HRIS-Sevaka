@@ -57,7 +57,7 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/time/overtime` | Overtime | `time-overtime.html` | todo |
 | `/time/scheduler` | Index | `time-scheduler-index.html` | todo |
 | `/time/scheduler/schedule` | Schedule | `time-scheduler-schedule.html` | todo |
-| `/time/time-off/balance` | Time Off Balance | `time-off-balance.html` | todo |
+| `/time/time-off/balance` | Time Off Balance | `time-off-balance.html` | done |
 | `/time/time-off/requests` | Time Off Request | `time-off-request.html` | done |
 | `/time/time-off/settings` | Settings | `time-off-settings.html` | todo |
 

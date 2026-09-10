@@ -184,3 +184,68 @@ export function canOpenMedical(session: Session): boolean {
  * supaya jendela tolak `leave-2` benar-benar terbuka saat layar dibuka.
  */
 export const DEMO_NOW = new Date('2026-07-24T09:00:00+07:00');
+
+/**
+ * Ledger saldo cuti (FSD-001-TIME §3 · UIC-001-TIME §4).
+ *
+ * Saldo **tidak pernah** disimpan sebagai angka yang diketik seseorang — ia
+ * jumlah seluruh mutasi di ledger. Satu-satunya jalur bertangan manusia adalah
+ * HR adjustment, dan itu pun **create-only**: menulis baris baru, tidak pernah
+ * mengubah baris lama.
+ */
+export type MutationSource =
+  | 'ACCRUAL_MONTHLY'
+  | 'LEAVE_TAKEN'
+  | 'LEAVE_REVERSED'
+  | 'JOINT_LEAVE'
+  | 'YEAR_END_CARRY_OVER'
+  | 'YEAR_END_FORFEIT'
+  | 'CARRY_OVER_EXPIRY'
+  | 'HR_ADJUSTMENT';
+
+export const MUTATION_SOURCE_LABEL: Record<MutationSource, string> = {
+  ACCRUAL_MONTHLY: 'Monthly accrual',
+  LEAVE_TAKEN: 'Leave taken',
+  LEAVE_REVERSED: 'Leave reversed',
+  JOINT_LEAVE: 'Joint leave',
+  YEAR_END_CARRY_OVER: 'Year-end carry-over',
+  YEAR_END_FORFEIT: 'Year-end forfeit',
+  CARRY_OVER_EXPIRY: 'Carry-over expiry',
+  HR_ADJUSTMENT: 'HR adjustment',
+};
+
+export interface LedgerEntry {
+  id: string;
+  employeeId: string;
+  leaveTypeId: string;
+  periodYear: number;
+  /** Tanggal kalender yang dimutasi — bukan tanggal baris ini ditulis. */
+  mutationDate: string;
+  /** Bertanda: positif menambah hak, negatif menguranginya. Nol ditolak. */
+  deltaDays: number;
+  source: MutationSource;
+  /** Referensi peristiwa; selalu kosong untuk HR adjustment. */
+  refId: string | null;
+  reason: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface AdjustmentDraft {
+  employeeId: string;
+  leaveTypeId: string;
+  periodYear: number;
+  mutationDate: string;
+  deltaDays: number;
+  reason: string;
+}
+
+export interface BalanceFilter {
+  employeeId?: string;
+  leaveTypeId?: string;
+  periodYear?: number;
+}
+
+export interface LedgerFilter extends BalanceFilter {
+  source?: MutationSource;
+}
