@@ -38,7 +38,9 @@ Baca dulu: `_prototype/EMPLOYEE-GAP-NOTES.md`.
 
 ## Batch 2 — Time Management
 
-- [ ] Time Off: request / balance / settings
+- [x] Time Off **Request** — `time-off-request.html` (empat gerbang submit, cuti sakit AUTO_APPROVED + jendela tolak beku, SoD 403, penarikan → CANCELLED, delegasi §3.2, jejak akses surat dokter 403/410)
+- [ ] Time Off **Balance** — `time-off-balance.html`
+- [ ] Time Off **Settings** — `time-off-settings.html`
 - [ ] Attendance + settings
 - [ ] Overtime, Calendar
 - [ ] Scheduler (index + schedule)
