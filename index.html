@@ -2,7 +2,15 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/brand/sevaka-mark.svg" />
+    <!--
+      Favicon: SVG dulu (tajam di semua ukuran), PNG 32px sebagai cadangan untuk
+      browser yang tidak memakai favicon SVG. Query `?v=` wajib dinaikkan setiap
+      kali berkas logonya diganti — browser menyimpan favicon sangat lama dan
+      tanpa ini ikon lama tetap terpasang di tab.
+    -->
+    <link rel="icon" type="image/svg+xml" href="/brand/sevaka-mark.svg?v=2" />
+    <link rel="alternate icon" type="image/png" sizes="32x32" href="/brand/sevaka-mark-32.png?v=2" />
+    <link rel="apple-touch-icon" href="/brand/sevaka-mark-32.png?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SEVAKA HRIS</title>
   </head>

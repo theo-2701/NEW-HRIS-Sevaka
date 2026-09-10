@@ -87,6 +87,10 @@ Aturan:
   deskripsi aplikasi muncul selama tagline HRIS diparkir.
 - File asli (hasil trace, dengan latar putih) diarsipkan di
   `_design-system/assets/logo-dummy/`.
+- **Favicon**: `index.html` memasang SVG (`sevaka-mark.svg`) plus PNG 32px
+  (`sevaka-mark-32.png`) sebagai cadangan. Setiap kali berkas logonya diganti,
+  **naikkan query `?v=`** di ketiga tautan ikon — browser menyimpan favicon
+  sangat lama, jadi tanpa itu tab masih memakai ikon lama meski file sudah baru.
 
 ### Gradien
 
