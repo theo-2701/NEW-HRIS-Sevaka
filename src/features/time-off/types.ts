@@ -39,6 +39,8 @@ export interface Employee {
 }
 
 export interface LeaveType {
+  /** Bisa menaikkan lapis persetujuan tambahan (`requires_extra_approval`). */
+  allowsExtraApproval?: boolean;
   id: string;
   code: string;
   name: string;
@@ -248,4 +250,81 @@ export interface BalanceFilter {
 
 export interface LedgerFilter extends BalanceFilter {
   source?: MutationSource;
+}
+
+/**
+ * Time Off Settings (FSD-001-TIME §4 · UIC-001-TIME §5) — tiga aturan yang
+ * dipakai menakar setiap pengajuan cuti: katalog jenis cuti, kebijakan akrual,
+ * dan periode blackout.
+ *
+ * Jenis cuti **statutory** disemai sistem: kode dan status statutory-nya tidak
+ * bisa diubah, barisnya tidak bisa dihapus — pensiunkan lewat flag Active.
+ */
+export type CarryOverPolicy = 'FORFEIT' | 'CARRY_CAPPED' | 'CARRY_FULL';
+
+export const CARRY_OVER_LABEL: Record<CarryOverPolicy, string> = {
+  FORFEIT: 'Forfeit — sisanya hangus di akhir tahun',
+  CARRY_CAPPED: 'Carry capped — sebagian hari digulirkan',
+  CARRY_FULL: 'Carry full — seluruh sisa digulirkan',
+};
+
+export const BLACKOUT_MODE_LABEL: Record<'HARD' | 'SOFT', string> = {
+  HARD: 'Machine-rejected — ditolak di gerbang submit, baris tidak pernah dibuat',
+  SOFT: 'Extra approval — pengajuan lewat, tapi harus melewati lapis tambahan',
+};
+
+export interface AccrualPolicy {
+  id: string;
+  leaveTypeId: string;
+  /** Katalognya milik personnel service; tenant ini baru memakai satu nilai. */
+  employmentType: string;
+  isEligible: boolean;
+  /** Wajib saat entitled, wajib kosong saat tidak. */
+  ratePerMonth: number | null;
+  maxBalanceDays: number | null;
+  carryOverPolicy: CarryOverPolicy;
+  carryOverMaxDays: number | null;
+  /** Format `MM-DD` — hanya untuk CARRY_CAPPED. */
+  carryOverExpiry: string | null;
+  effectiveFrom: string;
+  /** Mengisi ini satu-satunya cara sah menghentikan kebijakan berjalan. */
+  effectiveUntil: string | null;
+}
+
+export interface LeaveTypeDraft {
+  code: string;
+  name: string;
+  isPaid: boolean;
+  affectsBalance: boolean;
+  requiresDocument: boolean;
+  requiresApproval: boolean;
+  allowsExtraApproval: boolean;
+  isActive: boolean;
+  minAdvanceDays: number;
+}
+
+export interface AccrualPolicyDraft {
+  leaveTypeId: string;
+  employmentType: string;
+  isEligible: boolean;
+  ratePerMonth: number | null;
+  maxBalanceDays: number | null;
+  carryOverPolicy: CarryOverPolicy;
+  carryOverMaxDays: number | null;
+  carryOverExpiry: string | null;
+  effectiveFrom: string;
+}
+
+export interface BlackoutDraft {
+  name: string;
+  reason: string;
+  startDate: string;
+  endDate: string;
+  mode: 'HARD' | 'SOFT';
+  scopeRef: string | null;
+}
+
+export interface OrgUnit {
+  id: string;
+  name: string;
 }

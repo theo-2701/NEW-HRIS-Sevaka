@@ -1,4 +1,5 @@
 import type {
+  AccrualPolicy,
   Blackout,
   Delegation,
   Employee,
@@ -8,6 +9,7 @@ import type {
   LeaveType,
   LedgerEntry,
   MedicalAccessLog,
+  OrgUnit,
   Session,
 } from '@/features/time-off/types';
 
@@ -382,5 +384,56 @@ export const LEDGER: LedgerEntry[] = [
     reason: 'Cuti bersama Natal 2026.',
     createdAt: '2026-07-05T03:00:00+07:00',
     createdBy: 'emp-sys',
+  },
+];
+
+/** Unit organisasi — dipakai membatasi cakupan blackout. */
+export const UNITS: OrgUnit[] = [
+  { id: 'unit-fin', name: 'Finance' },
+  { id: 'unit-ops', name: 'Operations' },
+];
+
+/** Jenis kepegawaian yang diekspos tenant ini (katalognya milik personnel service). */
+export const EMPLOYMENT_TYPES = ['Tetap'];
+
+export const ACCRUAL_POLICIES: AccrualPolicy[] = [
+  {
+    id: 'policy-annual-tetap',
+    leaveTypeId: 'lt-annual',
+    employmentType: 'Tetap',
+    isEligible: true,
+    ratePerMonth: 1,
+    maxBalanceDays: 24,
+    carryOverPolicy: 'CARRY_CAPPED',
+    carryOverMaxDays: 6,
+    carryOverExpiry: '03-31',
+    effectiveFrom: '2026-01-01',
+    effectiveUntil: null,
+  },
+  {
+    id: 'policy-annual-2025',
+    leaveTypeId: 'lt-annual',
+    employmentType: 'Tetap',
+    isEligible: true,
+    ratePerMonth: 1,
+    maxBalanceDays: 24,
+    carryOverPolicy: 'CARRY_FULL',
+    carryOverMaxDays: null,
+    carryOverExpiry: null,
+    effectiveFrom: '2025-01-01',
+    effectiveUntil: '2025-12-31',
+  },
+  {
+    id: 'policy-sick-tetap',
+    leaveTypeId: 'lt-sick',
+    employmentType: 'Tetap',
+    isEligible: true,
+    ratePerMonth: 0,
+    maxBalanceDays: 12,
+    carryOverPolicy: 'FORFEIT',
+    carryOverMaxDays: null,
+    carryOverExpiry: null,
+    effectiveFrom: '2026-01-01',
+    effectiveUntil: null,
   },
 ];

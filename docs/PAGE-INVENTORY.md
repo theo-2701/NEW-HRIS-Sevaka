@@ -59,7 +59,7 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/time/scheduler/schedule` | Schedule | `time-scheduler-schedule.html` | todo |
 | `/time/time-off/balance` | Time Off Balance | `time-off-balance.html` | done |
 | `/time/time-off/requests` | Time Off Request | `time-off-request.html` | done |
-| `/time/time-off/settings` | Settings | `time-off-settings.html` | todo |
+| `/time/time-off/settings` | Settings | `time-off-settings.html` | done |
 
 ## Finance
 
