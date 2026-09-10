@@ -32,7 +32,7 @@ mengikuti.
 - [x] `/employees/mass-resignation` — `mass-resignation.html` (draft-first, dry-run blast-radius + ambang 15, SoD/rank-guard, selection hash beku → mismatch 409, circuit-breaker halt/resume/partial dengan correlation id, baris diri terkunci)
 - [x] `/employees/ptkp-adjustment` — `ptkp-adjustment.html` (atestasi wajib → 422, verifier ≠ pemohon → 403, backdate tahun pajak terkunci ditolak, periode berjalan ditutup H-1, riwayat append-only, dokumen sebagai id buram)
 - [x] `/employees/manpower/requisition` — `manpower-requisition.html` (draft-first: Save draft vs Submit; SoD maker≠checker → 409; rencana headcount per unit dengan Actual/Gap hasil hitung = GAP `PROB-FRONTEND-005`)
-- [ ] `/employees/reprimand` + `/employees/reprimand/type-setting`
+- [x] `/employees/reprimand` + `/employees/reprimand/type-setting` — `reprimand.html`, `reprimand-type-setting.html` (snapshot server-authoritative, checker ≠ maker ≠ subjek, `reason` PII disembunyikan di grid, standing derive-on-read + proyeksi, type-setting CRU dual-mode = GAP endpoint)
 
 Baca dulu: `_prototype/EMPLOYEE-GAP-NOTES.md`.
 

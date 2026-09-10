@@ -26,8 +26,11 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
 - `src/config/nav.ts` = single source of truth navigasi + status konversi. Router
   otomatis memasang `PlaceholderPage` untuk leaf yang belum dikonversi, jadi menu
   tidak pernah mati.
-- Sudah dikonversi: **Auth** (10 layar) dan **Dashboard**. Keduanya adalah pola
-  acuan — tiru strukturnya.
+- Sudah dikonversi: **Auth** (10 layar), **Dashboard**, dan seluruh **Batch 1 —
+  Employee Management** (Directory, Profile ESS, New Joiner + Add Employee,
+  Employee Transfer, Mass Resignation, PTKP Adjustment, Manpower & Requisition,
+  Reprimand + Type Setting). Auth dan Dashboard tetap jadi pola acuan struktur;
+  modul Batch 1 adalah contoh terbaru untuk pola tabel, modal, dan maker→checker.
 - Backend belum ada: setiap service punya blok `MOCK` yang aktif selama
   `VITE_API_BASE_URL` kosong.
 

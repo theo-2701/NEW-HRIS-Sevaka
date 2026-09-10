@@ -42,8 +42,8 @@ Prototype: 88 file HTML · Route bernav: 98
 | `/employees/new-joiner/add` | Add Employee | `add-employee.html` | done |
 | `/employees/organization` | Organization | `employee-directory.html` | done |
 | `/employees/ptkp-adjustment` | PTKP Status Adjustment | `ptkp-adjustment.html` | done |
-| `/employees/reprimand` | Reprimand List | `reprimand.html` | todo |
-| `/employees/reprimand/type-setting` | Type Setting | `reprimand-type-setting.html` | todo |
+| `/employees/reprimand` | Reprimand List | `reprimand.html` | done |
+| `/employees/reprimand/type-setting` | Type Setting | `reprimand-type-setting.html` | done |
 | `/employees/transfer` | Employee Transfer | `transition.html` | done |
 
 ## Time Management

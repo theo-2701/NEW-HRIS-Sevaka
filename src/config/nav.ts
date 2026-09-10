@@ -146,12 +146,12 @@ export const NAV: NavSection[] = [
         label: 'Reprimand',
         icon: 'alert-triangle',
         children: [
-          { label: 'Reprimand List', path: '/employees/reprimand', source: 'reprimand.html', status: 'todo' },
+          { label: 'Reprimand List', path: '/employees/reprimand', source: 'reprimand.html', status: 'done' },
           {
             label: 'Type Setting',
             path: '/employees/reprimand/type-setting',
             source: 'reprimand-type-setting.html',
-            status: 'todo',
+            status: 'done',
           },
         ],
       },
