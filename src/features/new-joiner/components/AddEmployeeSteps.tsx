@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { FieldArray, useFormikContext } from 'formik';
 import { CircleCheckBig } from 'lucide-react';
 import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { ToggleField } from '@/components/form/ToggleField';
@@ -69,7 +70,7 @@ export function PersonalDataStep() {
         <TextField name="phone" label="Nomor telepon" placeholder="0812…" />
         <TextField name="additionalPhone" label="Nomor telepon tambahan" />
         <TextField name="placeOfBirth" label="Tempat lahir" />
-        <TextField name="dateOfBirth" type="date" label="Tanggal lahir" required />
+        <DateField name="dateOfBirth" label="Tanggal lahir" required />
         <SelectField name="gender" label="Jenis kelamin" placeholder="Pilih jenis kelamin" options={GENDER_OPTIONS} />
         <SelectField name="maritalStatus" label="Status pernikahan" required options={MARITAL_OPTIONS} />
         <SelectField name="bloodType" label="Golongan darah" placeholder="Pilih golongan darah" options={BLOOD_TYPE_OPTIONS} />
@@ -80,7 +81,7 @@ export function PersonalDataStep() {
       <Grid>
         <TextField name="nik" label="NIK (16 digit)" inputMode="numeric" maxLength={16} />
         <TextField name="passportNumber" label="Nomor paspor" className="uppercase" />
-        <TextField name="passportExpiry" type="date" label="Masa berlaku paspor" />
+        <DateField name="passportExpiry" label="Masa berlaku paspor" />
         <TextField name="postalCode" label="Kode pos" required inputMode="numeric" maxLength={5} />
         <TextAreaField name="idCardAddress" label="Alamat sesuai KTP" containerClassName="md:col-span-2" />
         <ToggleField
@@ -113,7 +114,7 @@ export function EmploymentDataStep() {
           options={GROUP_STRUCTURE_OPTIONS}
         />
         <SelectField name="employmentStatus" label="Status kepegawaian" required options={EMPLOYMENT_STATUS_OPTIONS} />
-        <TextField name="joinDate" type="date" label="Tanggal masuk" required />
+        <DateField name="joinDate" label="Tanggal masuk" required />
         <SelectField name="branchId" label="Cabang" placeholder="Pilih cabang" options={BRANCH_OPTIONS} />
         <SelectField name="organizationId" label="Organisasi" required options={ORGANIZATION_OPTIONS} />
         <SelectField name="jobPositionId" label="Jabatan" required options={JOB_POSITION_OPTIONS} />
@@ -197,7 +198,7 @@ export function PayrollStep() {
         <SelectField name="ptkpStatus" label="Status PTKP" required options={PTKP_OPTIONS} />
         <SelectField name="taxMethod" label="Metode pajak" options={TAX_METHOD_OPTIONS} />
         <SelectField name="taxSalary" label="Tax salary" required options={TAX_SALARY_OPTIONS} />
-        <TextField name="taxableDate" type="date" label="Taxable date" hint="Mulai kapan karyawan dihitung kena pajak." />
+        <DateField name="taxableDate" label="Taxable date" hint="Mulai kapan karyawan dihitung kena pajak." />
         <SelectField
           name="employmentTaxStatus"
           label="Status pajak kepegawaian"
@@ -212,7 +213,7 @@ export function PayrollStep() {
       <Grid>
         <TextField name="bpjsEmploymentNumber" label="Nomor BPJS Ketenagakerjaan" inputMode="numeric" />
         <TextField name="nppBpjsEmployment" label="NPP BPJS Ketenagakerjaan" />
-        <TextField name="bpjsEmploymentDate" type="date" label="Tanggal BPJS Ketenagakerjaan" />
+        <DateField name="bpjsEmploymentDate" label="Tanggal BPJS Ketenagakerjaan" />
         <TextField name="bpjsHealthNumber" label="Nomor BPJS Kesehatan" inputMode="numeric" />
         <SelectField
           name="bpjsHealthFamily"
@@ -220,11 +221,11 @@ export function PayrollStep() {
           placeholder="Pilih tanggungan"
           options={BPJS_FAMILY_OPTIONS}
         />
-        <TextField name="bpjsHealthDate" type="date" label="Tanggal BPJS Kesehatan" />
+        <DateField name="bpjsHealthDate" label="Tanggal BPJS Kesehatan" />
         <SelectField name="bpjsHealthCost" label="Iuran BPJS Kesehatan" options={COST_BEARER_OPTIONS} />
         <SelectField name="jhtCost" label="Iuran JHT" options={COST_BEARER_OPTIONS} />
         <SelectField name="pensionCost" label="Iuran jaminan pensiun" options={COST_BEARER_OPTIONS} />
-        <TextField name="pensionDate" type="date" label="Tanggal jaminan pensiun" />
+        <DateField name="pensionDate" label="Tanggal jaminan pensiun" />
       </Grid>
     </div>
   );

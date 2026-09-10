@@ -2,7 +2,7 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { TriangleAlert, Workflow } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { Note } from '@/features/transitions/components/TransitionBits';
 import { useCreateTransition } from '@/features/transitions/hooks/useTransitions';
@@ -143,9 +143,8 @@ export function CreateTransitionModal({
                 {type === 'TRANSFER' && <TransferBlock />}
                 {type === 'OFFBOARDING' && <OffboardingBlock />}
 
-                <TextField
+                <DateField
                   name="effectiveDate"
-                  type="date"
                   label="Tanggal efektif"
                   required
                   containerClassName="max-w-[240px]"

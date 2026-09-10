@@ -3,6 +3,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { AddButton, RemoveRowButton } from '@/components/RowActions';
 import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { useCreatePlan } from '@/features/manpower/hooks/useManpower';
 import { planSchema } from '@/features/manpower/validation';
@@ -118,10 +119,9 @@ export function CreatePlanModal({ open, onClose }: { open: boolean; onClose: () 
               />
 
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField name="periodStart" type="date" label="Awal periode" required />
-                <TextField
+                <DateField name="periodStart" label="Awal periode" required />
+                <DateField
                   name="periodEnd"
-                  type="date"
                   label="Akhir periode"
                   required
                   hint="Harus sama atau setelah awal periode."

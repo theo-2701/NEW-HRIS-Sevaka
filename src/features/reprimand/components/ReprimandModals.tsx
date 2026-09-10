@@ -5,7 +5,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
-import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import {
@@ -150,7 +150,7 @@ export function IssueReprimandModal({
                   placeholder="Pilih kategori SP"
                   options={categoryOptions}
                 />
-                <TextField name="issuedDate" type="date" label="Tanggal terbit" required max={today} />
+                <DateField name="issuedDate" label="Tanggal terbit" required max={today} />
               </div>
 
               <TextAreaField

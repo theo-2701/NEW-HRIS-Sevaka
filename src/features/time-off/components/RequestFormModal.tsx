@@ -5,7 +5,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { CheckboxField } from '@/components/form/CheckboxField';
@@ -177,8 +177,8 @@ export function RequestFormModal({
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField name="startDate" type="date" label="Tanggal mulai" required />
-                <TextField name="endDate" type="date" label="Tanggal selesai" required />
+                <DateField name="startDate" label="Tanggal mulai" required />
+                <DateField name="endDate" label="Tanggal selesai" required />
               </div>
 
               <div className="flex max-w-[50%] flex-col gap-1">

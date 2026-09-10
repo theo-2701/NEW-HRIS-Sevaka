@@ -266,6 +266,20 @@ vs Cancel pada batch Mass Resignation, atau cabang WNI/WNA), pakai
 deskripsi di sebelah kanan tombolnya, memakai `<input type="radio">` sungguhan.
 `<Segmented>` hanya untuk pilihan pendek tanpa penjelasan (mis. sub-tab tabel).
 
+**Tanggal.** Semua pemilihan tanggal memakai `<DateField>` — pemicu 36px
+bergaya field standar + ikon kalender, dan popover kalender `<Calendar>`
+(port `.dp`: lebar 228px, tampilan hari → bulan → tahun lewat judul, footer
+"Set Date"). Nilainya disimpan ISO `YYYY-MM-DD`, yang tampil format rumah
+`12 Agu 2026`. **Jangan** memakai `<input type="date">` bawaan browser:
+tampilan dan bahasanya ikut sistem operasi, jadi tidak pernah seragam.
+Batas rentang lewat prop `min`/`max` (tanggal di luar rentang tidak bisa
+diklik), dan rentang dua tanggal saling mengunci — lihat `CreatedRange` di
+Employee Directory.
+
+**Tangga z-index.** modal **2500** · menu, select, dan popover **2600** ·
+toast **3000**. Popover harus di atas scrim modal, kalau tidak date picker di
+dalam modal ikut tertutup.
+
 ## 8. Form — `@/components/form/*`
 
 **Standar field (`_design-system/form-standard.css`) — angka ini mengikat:**

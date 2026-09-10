@@ -7,6 +7,7 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import {
@@ -150,7 +151,7 @@ function TrainingFormModal({ training, onClose }: { training: Training | null; o
             <TextField name="graduationScore" label="Nilai" placeholder="92.50" inputMode="decimal" />
             <TextField name="graduationGrade" label="Grade" placeholder="A" maxLength={2} />
             <TextField name="trainingCost" label="Biaya (Rp)" placeholder="5000000" inputMode="numeric" />
-            <TextField name="certificateExpiryDate" type="date" label="Masa berlaku sertifikat" />
+            <DateField name="certificateExpiryDate" label="Masa berlaku sertifikat" />
           </Form>
         </Modal>
       )}

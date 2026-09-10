@@ -4,7 +4,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { KeyValueList, KeyValueRow, Note } from '@/features/new-joiner/components/CandidateBits';
 import { useMaterializeCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
@@ -110,7 +110,7 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
               </KeyValueList>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField name="joinDate" type="date" label="Tanggal masuk" required />
+                <DateField name="joinDate" label="Tanggal masuk" required />
                 <SelectField
                   name="jobGradeId"
                   label="Job grade"

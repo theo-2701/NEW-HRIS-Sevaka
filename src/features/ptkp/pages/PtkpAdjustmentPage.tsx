@@ -8,7 +8,7 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { CheckboxField } from '@/components/form/CheckboxField';
@@ -132,9 +132,8 @@ export function PtkpAdjustmentPage() {
                           options={PTKP_CODE_OPTIONS}
                           hint="Harus ada di master PTKP (cnf_ptkp_effective)."
                         />
-                        <TextField
+                        <DateField
                           name="effectiveFrom"
-                          type="date"
                           label="Berlaku mulai"
                           required
                           min={LOCKED_TAX_YEAR_UNTIL}
@@ -142,9 +141,8 @@ export function PtkpAdjustmentPage() {
                         />
                       </div>
 
-                      <TextField
+                      <DateField
                         name="eventDate"
-                        type="date"
                         label="Tanggal kejadian"
                         hint="Opsional — tanggal peristiwa pemicunya (mis. kelahiran anak)."
                         containerClassName="max-w-[260px]"

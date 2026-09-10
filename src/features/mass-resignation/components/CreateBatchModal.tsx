@@ -5,7 +5,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowButton } from '@/components/RowActions';
-import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { ImpactBar, Note } from '@/features/mass-resignation/components/BatchBits';
@@ -223,7 +223,7 @@ export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: ()
             <Form className="flex flex-col gap-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <SelectField name="reason" label="Alasan" required placeholder="Pilih alasan" options={REASON_OPTIONS} />
-                <TextField name="leaveDate" type="date" label="Tanggal efektif keluar" required />
+                <DateField name="leaveDate" label="Tanggal efektif keluar" required />
               </div>
 
               <SelectionSync selected={selected} />

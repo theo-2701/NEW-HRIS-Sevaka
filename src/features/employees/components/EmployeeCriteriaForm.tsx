@@ -1,8 +1,9 @@
 import { Form, Formik, useField } from 'formik';
 import { ArrowUpRight, Search, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/form/FormField';
+import { DateField } from '@/components/form/DateField';
+import { Label } from '@/components/ui/label';
 import { TextField } from '@/components/form/TextField';
 import { SelectField } from '@/components/form/SelectField';
 import { EMPLOYMENT_STATUS_LABEL, EMPLOYMENT_STATUS_ORDER, BRANCHES, EMPTY_CRITERIA } from '@/features/employees/types';
@@ -65,20 +66,22 @@ function StatusChips() {
   );
 }
 
-/** Rentang `created_at` — dua input tanggal dalam satu baris. */
+/** Rentang `created_at` — dua date picker dalam satu baris. */
 function CreatedRange() {
-  const [from] = useField('createdFrom');
-  const [to, toMeta] = useField('createdTo');
-  const error = toMeta.touched && toMeta.error ? toMeta.error : undefined;
+  const [from] = useField<string>('createdFrom');
+  const [to] = useField<string>('createdTo');
 
   return (
-    <FormField name="createdFrom" label="Date range" hint="created_at" error={error}>
-      <div className="flex items-center gap-2">
-        <Input id="createdFrom" type="date" aria-label="Tanggal awal" {...from} />
-        <span className="font-body text-[11px] font-medium text-fg-4">to</span>
-        <Input id="createdTo" type="date" aria-label="Tanggal akhir" aria-invalid={Boolean(error)} {...to} />
+    <div className="flex flex-col gap-1">
+      <Label>Date range</Label>
+      <div className="flex items-end gap-2">
+        {/* Batas saling mengunci: awal tidak boleh melewati akhir, dan sebaliknya. */}
+        <DateField name="createdFrom" placeholder="Tanggal awal" max={to.value || undefined} containerClassName="flex-1" />
+        <span className="pb-2.5 font-body text-[11px] font-medium text-fg-4">to</span>
+        <DateField name="createdTo" placeholder="Tanggal akhir" min={from.value || undefined} containerClassName="flex-1" />
       </div>
-    </FormField>
+      <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">created_at</span>
+    </div>
   );
 }
 

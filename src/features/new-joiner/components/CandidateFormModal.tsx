@@ -3,6 +3,7 @@ import { Form, Formik, useField, useFormikContext } from 'formik';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { useCreateCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
 import { candidateSchema } from '@/features/new-joiner/validation';
@@ -209,9 +210,8 @@ export function CandidateFormModal({ open, onClose }: { open: boolean; onClose: 
                   placeholder="nama@email.com"
                   hint="Dipakai untuk undangan akun."
                 />
-                <TextField
+                <DateField
                   name="intendedJoinDate"
-                  type="date"
                   label="Rencana tanggal masuk"
                   required
                   min={today}

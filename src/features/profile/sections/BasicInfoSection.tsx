@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PanelActionButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { ToggleField } from '@/components/form/ToggleField';
@@ -252,7 +253,7 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
               />
               <TextField name="motherMaidenName" label="Mother's maiden name" />
 
-              <TextField name="dateOfBirth" type="date" label="Date of birth" required />
+              <DateField name="dateOfBirth" label="Date of birth" required />
               <TextField name="placeOfBirth" label="Place of birth" required />
 
               <SelectField name="gender" label="Gender" required options={GENDER_OPTIONS} />

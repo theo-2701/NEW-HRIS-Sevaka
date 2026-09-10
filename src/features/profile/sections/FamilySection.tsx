@@ -9,6 +9,7 @@ import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { TextField } from '@/components/form/TextField';
+import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { ToggleField } from '@/components/form/ToggleField';
@@ -77,7 +78,7 @@ export function RelativeFormModal({ relative, onClose }: { relative: Relative | 
             <SelectField name="relationshipType" label="Hubungan" required options={RELATIONSHIP_OPTIONS} />
             <TextField name="phoneNumber" label="Nomor telepon" required placeholder="0812…" />
             <TextField name="email" type="email" label="Email" placeholder="nama@mail.com" />
-            <TextField name="dateOfBirth" type="date" label="Tanggal lahir" />
+            <DateField name="dateOfBirth" label="Tanggal lahir" />
             <SelectField
               name="jobId"
               label="Pekerjaan"
