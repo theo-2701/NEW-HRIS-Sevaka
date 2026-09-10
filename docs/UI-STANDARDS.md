@@ -248,10 +248,16 @@ entitlement, whitelist) dan tabel-pilih di dalam modal.
 - Semua kontrol toolbar **40 px** (`.doc-tbar`). Kotak cari mengikuti
   `.co-search`: min-width 260 px · isi Cloud · border 1 px Silver · ikon 16 px ·
   teks 13/500 · fokus Ocean + ring 4 px.
-- **Filter di kiri, pencarian di kanan.**
-- **≤ 2 filter** → kontrol inline, tanpa modal filter.
-- **> 2 filter** → satu tombol "Filter" yang membuka modal, ditambah ringkasan
-  filter aktif di sebelahnya (`summary`).
+- **Filter di kiri, pencarian di kanan.** Filter dan pencarian **bukan hal yang
+  sama** — kotak cari tidak pernah dihitung sebagai filter dan tidak pernah ikut
+  masuk modal.
+- **≤ 2 filter** → kontrol inline di toolbar.
+- **3 filter atau lebih** → satu tombol "Filter" (`<FilterModal>`) yang membuka
+  modal, plus ringkasan filter aktif di sebelahnya (`summary`). Tombolnya
+  membawa jumlah filter aktif, mis. `Filter (2)`.
+- **Criteria search** (Employee Directory) adalah pola tersendiri dari kontrak —
+  panel kriteria dengan tombol Search/Reset, bukan toolbar filter. Jangan
+  disamakan dengan aturan di atas.
 - Jarak toolbar ke tabel **8 px** (`mb-2`) supaya toolbar terbaca sebagai
   bagian dari tabel, bukan blok terpisah. Bungkus toolbar + tabel + paginasi
   dalam satu `<div className="flex flex-col">` supaya `gap` kartu induk

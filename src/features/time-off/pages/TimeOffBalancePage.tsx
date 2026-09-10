@@ -6,17 +6,26 @@ import { Card, CardHead } from '@/components/Card';
 import { DataTable, CellIdentity } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
+import { FilterModal } from '@/components/FilterModal';
 import { Modal } from '@/components/Modal';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
 import { AdjustmentModal } from '@/features/time-off/components/AdjustmentModal';
+import { BalanceFilterFields, LedgerFilterFields } from '@/features/time-off/components/BalanceFilters';
+import {
+  EMPTY_BALANCE_FILTER,
+  EMPTY_LEDGER_FILTER,
+  countActive,
+  summarizeFilter,
+  type BalanceFilterState,
+  type LedgerFilterState,
+} from '@/features/time-off/balanceFilters';
 import { useBalanceYears, useBalances, useLedger } from '@/features/time-off/hooks/useBalance';
-import { EMPLOYEES, LEAVE_TYPES, VIEWERS, employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
+import { VIEWERS, employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
 import { MUTATION_SOURCE_LABEL } from '@/features/time-off/types';
 import type { LeaveBalance, LedgerEntry, MutationSource } from '@/features/time-off/types';
 import { formatDate } from '@/lib/format';
@@ -41,40 +50,40 @@ function DayNumber({ value, signed }: { value: number; signed?: boolean }) {
  * Saldo tidak pernah diketik: ia jumlah seluruh mutasi di ledger. Grid-nya
  * read-only dua arah, dan satu-satunya jalur manusia adalah HR adjustment yang
  * bersifat create-only.
+ *
+ * Kedua grid punya ≥ 3 filter, jadi filternya masuk modal (standar toolbar).
  */
 export function TimeOffBalancePage() {
   const [tab, setTab] = useState<Tab>('balances');
   const [adjusting, setAdjusting] = useState(false);
   const [detail, setDetail] = useState<LeaveBalance | null>(null);
 
-  const [balEmployee, setBalEmployee] = useState('ALL');
-  const [balType, setBalType] = useState('ALL');
-  const [balYear, setBalYear] = useState('ALL');
+  const [balanceFilterOpen, setBalanceFilterOpen] = useState(false);
+  const [ledgerFilterOpen, setLedgerFilterOpen] = useState(false);
+  const [balanceFilter, setBalanceFilter] = useState<BalanceFilterState>(EMPTY_BALANCE_FILTER);
+  const [ledgerFilter, setLedgerFilter] = useState<LedgerFilterState>(EMPTY_LEDGER_FILTER);
 
-  const [ledEmployee, setLedEmployee] = useState('ALL');
-  const [ledSource, setLedSource] = useState('ALL');
-  const [ledType, setLedType] = useState('ALL');
-
-  const balanceFilter = useMemo(
+  const balanceQuery = useMemo(
     () => ({
-      employeeId: balEmployee === 'ALL' ? undefined : balEmployee,
-      leaveTypeId: balType === 'ALL' ? undefined : balType,
-      periodYear: balYear === 'ALL' ? undefined : Number(balYear),
+      employeeId: balanceFilter.employeeId === 'ALL' ? undefined : balanceFilter.employeeId,
+      leaveTypeId: balanceFilter.leaveTypeId === 'ALL' ? undefined : balanceFilter.leaveTypeId,
+      periodYear: balanceFilter.periodYear === 'ALL' ? undefined : Number(balanceFilter.periodYear),
     }),
-    [balEmployee, balType, balYear],
+    [balanceFilter],
   );
 
-  const ledgerFilter = useMemo(
+  const ledgerQuery = useMemo(
     () => ({
-      employeeId: ledEmployee === 'ALL' ? undefined : ledEmployee,
-      leaveTypeId: ledType === 'ALL' ? undefined : ledType,
-      source: ledSource === 'ALL' ? undefined : (ledSource as MutationSource),
+      employeeId: ledgerFilter.employeeId === 'ALL' ? undefined : ledgerFilter.employeeId,
+      leaveTypeId: ledgerFilter.leaveTypeId === 'ALL' ? undefined : ledgerFilter.leaveTypeId,
+      periodYear: ledgerFilter.periodYear === 'ALL' ? undefined : Number(ledgerFilter.periodYear),
+      source: ledgerFilter.source === 'ALL' ? undefined : (ledgerFilter.source as MutationSource),
     }),
-    [ledEmployee, ledType, ledSource],
+    [ledgerFilter],
   );
 
-  const { data: balances = [], isLoading: balancesLoading } = useBalances(balanceFilter);
-  const { data: ledger = [], isLoading: ledgerLoading } = useLedger(ledgerFilter);
+  const { data: balances = [], isLoading: balancesLoading } = useBalances(balanceQuery);
+  const { data: ledger = [], isLoading: ledgerLoading } = useLedger(ledgerQuery);
   const { data: years = [] } = useBalanceYears();
 
   const pagedBalances = usePagedRows(balances);
@@ -88,6 +97,12 @@ export function TimeOffBalancePage() {
         entry.leaveTypeId === row.leaveTypeId &&
         entry.periodYear === row.periodYear,
     ).length;
+
+  const filterButton = (active: number, onClick: () => void) => (
+    <Button variant="secondary" onClick={onClick}>
+      {active > 0 ? `Filter (${active})` : 'Filter'}
+    </Button>
+  );
 
   return (
     <>
@@ -113,69 +128,8 @@ export function TimeOffBalancePage() {
 
               <div className="flex flex-col">
                 <TableToolbar
-                  filters={
-                    <>
-                      <Select
-                        value={balEmployee}
-                        onValueChange={(value) => {
-                          setBalEmployee(value);
-                          pagedBalances.resetPage();
-                        }}
-                      >
-                        <SelectTrigger className="h-10 w-[200px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All employees</SelectItem>
-                          {EMPLOYEES.map((row) => (
-                            <SelectItem key={row.id} value={row.id}>
-                              {row.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={balType}
-                        onValueChange={(value) => {
-                          setBalType(value);
-                          pagedBalances.resetPage();
-                        }}
-                      >
-                        <SelectTrigger className="h-10 w-[190px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All leave types</SelectItem>
-                          {LEAVE_TYPES.map((row) => (
-                            <SelectItem key={row.id} value={row.id}>
-                              {row.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={balYear}
-                        onValueChange={(value) => {
-                          setBalYear(value);
-                          pagedBalances.resetPage();
-                        }}
-                      >
-                        <SelectTrigger className="h-10 w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All years</SelectItem>
-                          {years.map((year) => (
-                            <SelectItem key={year} value={String(year)}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </>
-                  }
+                  filters={filterButton(countActive(balanceFilter), () => setBalanceFilterOpen(true))}
+                  summary={summarizeFilter(balanceFilter)}
                 />
 
                 <DataTable<LeaveBalance>
@@ -234,69 +188,8 @@ export function TimeOffBalancePage() {
 
               <div className="flex flex-col">
                 <TableToolbar
-                  filters={
-                    <>
-                      <Select
-                        value={ledEmployee}
-                        onValueChange={(value) => {
-                          setLedEmployee(value);
-                          pagedLedger.resetPage();
-                        }}
-                      >
-                        <SelectTrigger className="h-10 w-[200px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All employees</SelectItem>
-                          {EMPLOYEES.map((row) => (
-                            <SelectItem key={row.id} value={row.id}>
-                              {row.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={ledSource}
-                        onValueChange={(value) => {
-                          setLedSource(value);
-                          pagedLedger.resetPage();
-                        }}
-                      >
-                        <SelectTrigger className="h-10 w-[220px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All mutation sources</SelectItem>
-                          {(Object.keys(MUTATION_SOURCE_LABEL) as MutationSource[]).map((source) => (
-                            <SelectItem key={source} value={source}>
-                              {MUTATION_SOURCE_LABEL[source]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={ledType}
-                        onValueChange={(value) => {
-                          setLedType(value);
-                          pagedLedger.resetPage();
-                        }}
-                      >
-                        <SelectTrigger className="h-10 w-[190px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All leave types</SelectItem>
-                          {LEAVE_TYPES.map((row) => (
-                            <SelectItem key={row.id} value={row.id}>
-                              {row.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </>
-                  }
+                  filters={filterButton(countActive(ledgerFilter), () => setLedgerFilterOpen(true))}
+                  summary={summarizeFilter(ledgerFilter)}
                 />
 
                 <DataTable<LedgerEntry>
@@ -356,6 +249,46 @@ export function TimeOffBalancePage() {
           )}
         </div>
       </PageShell>
+
+      <FilterModal
+        open={balanceFilterOpen}
+        title="Filter balances"
+        description="Hanya field yang diterima kontrak pencarian."
+        onOpenChange={setBalanceFilterOpen}
+        onReset={() => {
+          setBalanceFilter(EMPTY_BALANCE_FILTER);
+          pagedBalances.resetPage();
+        }}
+      >
+        <BalanceFilterFields
+          value={balanceFilter}
+          years={years}
+          onChange={(next) => {
+            setBalanceFilter(next);
+            pagedBalances.resetPage();
+          }}
+        />
+      </FilterModal>
+
+      <FilterModal
+        open={ledgerFilterOpen}
+        title="Filter ledger"
+        description="Hanya field yang diterima kontrak pencarian."
+        onOpenChange={setLedgerFilterOpen}
+        onReset={() => {
+          setLedgerFilter(EMPTY_LEDGER_FILTER);
+          pagedLedger.resetPage();
+        }}
+      >
+        <LedgerFilterFields
+          value={ledgerFilter}
+          years={years}
+          onChange={(next) => {
+            setLedgerFilter(next);
+            pagedLedger.resetPage();
+          }}
+        />
+      </FilterModal>
 
       <AdjustmentModal open={adjusting} session={VIEWERS[0]} onClose={() => setAdjusting(false)} />
 
