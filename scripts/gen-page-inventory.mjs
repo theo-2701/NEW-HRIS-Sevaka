@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const { entries, htmlFiles } = JSON.parse(fs.readFileSync('docs/_inventory.json', 'utf8'));
+const { entries, htmlFiles, unmapped } = JSON.parse(fs.readFileSync('docs/_inventory.json', 'utf8'));
 
 const MODULES = [
   ['/me', 'Employee Profile (ESS)'],
@@ -56,12 +56,28 @@ for (const mod of order) {
   out += '\n';
 }
 
+// Layar tanpa baris menu — dihitung ulang dari `js/shell.js`, bukan didaftar
+// manual, supaya tidak ada menu karangan yang menyelinap masuk.
+const UNMAPPED_NOTES = {
+  'add-employee.html': 'Dibuka dari tombol di halaman New Joiner, bukan dari menu.',
+  'transition-dashboard.html': 'Detail transisi — dibuka lewat "View Detail" di daftar Employee Transfer.',
+  'auth.html': 'Layar login; di luar shell bernavigasi.',
+  'index.html': 'Dashboard — tile tersendiri di sidebar, bukan baris NAV.',
+  'document-verify.html': 'Verifikasi publik — memang permanen tanpa menu (DOC-80).',
+  'finance-loan-detail.html': 'Halaman detail; daftarkan sebagai bentuk `:id` saat modul Finance dikonversi.',
+  'company-asset-detail.html': 'Halaman detail aset; bentuk `:id` saat modul Assets dikonversi.',
+  'recruitment-job-listing-detail.html': 'Halaman detail; bentuk `:id` saat modul Recruitment dikonversi.',
+  'recruitment-import-log-detail.html': 'Halaman detail; bentuk `:id` saat modul Recruitment dikonversi.',
+};
+
 out += `## Belum masuk peta nav\n\n`;
+out += `Layar ini ada di prototype tapi **tidak punya baris menu** di \`js/shell.js\`.\n`;
+out += `Daftar ini dihitung ulang setiap regenerasi — jangan menambah baris menu untuk\n`;
+out += `layar di sini tanpa keputusan kontrak.\n\n`;
 out += `| Prototype | Catatan |\n|---|---|\n`;
-out += `| \`transition-dashboard.html\` | Sudah dikonversi jadi \`/employees/transfer/dashboard\`, tapi **sengaja tidak ada di menu** — dibuka lewat "View Detail" di daftar Employee Transfer. |\n`;
-out += `| \`finance-loan-detail.html\` | Halaman detail (bukan baris menu). Daftarkan sebagai \`/finance/loan/:id\` saat modul Finance dikonversi. |\n`;
-out += `| \`company-asset-detail.html\` | Terdaftar sebagai \`/company-management/assets/detail\`; ubah jadi \`/company-management/assets/:id\` saat modul Assets dikonversi. |\n`;
-out += `| \`recruitment-job-listing-detail.html\`, \`recruitment-import-log-detail.html\` | Sama: ubah ke bentuk \`:id\` saat modul Recruitment dikonversi. |\n`;
+for (const file of unmapped) {
+  out += `| \`${file}\` | ${UNMAPPED_NOTES[file] ?? 'Belum punya baris menu di kontrak.'} |\n`;
+}
 
 fs.writeFileSync('docs/PAGE-INVENTORY.md', out);
 console.log('written', out.length, 'chars');

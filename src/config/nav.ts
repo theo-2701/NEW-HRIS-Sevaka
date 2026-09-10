@@ -129,13 +129,14 @@ export const NAV: NavSection[] = [
           { label: 'Requisition', path: '/employees/manpower/requisition', source: 'manpower-requisition.html', status: 'done' },
         ],
       },
+      // `add-employee.html` sengaja TIDAK punya baris menu di prototype; layarnya
+      // dibuka dari tombol di halaman New Joiner.
       {
         label: 'New Joiner Submission',
         icon: 'user-plus',
-        children: [
-          { label: 'Submission List', path: '/employees/new-joiner', source: 'new-joiner.html', status: 'done' },
-          { label: 'Add Employee', path: '/employees/new-joiner/add', source: 'add-employee.html', status: 'done' },
-        ],
+        path: '/employees/new-joiner',
+        source: 'new-joiner.html',
+        status: 'done',
       },
       {
         label: 'Onboarding',
@@ -235,10 +236,9 @@ export const NAV: NavSection[] = [
       {
         label: 'Salary Processing',
         icon: 'wallet',
-        children: [
-          { label: 'Document Processing', path: '/payroll/salary-processing', source: 'payroll-doc-processing.html', status: 'todo' },
-          { label: 'Payroll Run', path: '/payroll/processing', source: 'payroll-processing.html', status: 'todo' },
-        ],
+        path: '/payroll/salary-processing',
+        source: 'payroll-doc-processing.html',
+        status: 'todo',
       },
       {
         label: 'Authorization & Handover',
@@ -254,9 +254,6 @@ export const NAV: NavSection[] = [
         source: 'payroll-doc-settings.html',
         status: 'todo',
       },
-      { label: 'Payroll Components', icon: 'layers', path: '/payroll/components', source: 'payroll-components.html', status: 'todo' },
-      { label: 'Tax Simulation', icon: 'calculator', path: '/payroll/tax-simulation', source: 'payroll-tax-simulation.html', status: 'todo' },
-      { label: 'Compliance', icon: 'file-check', path: '/payroll/compliance', source: 'payroll-compliance.html', status: 'todo' },
       { label: 'Payroll Allocation', icon: 'split' },
       { label: 'Reports', icon: 'bar-chart-3' },
     ],
@@ -326,13 +323,6 @@ export const NAV: NavSection[] = [
       { label: 'Cost Center', icon: 'wallet-cards', path: '/company/cost-center', source: 'company-cost-center.html', status: 'todo' },
       { label: 'SBU', icon: 'building-2', path: '/company/sbu', source: 'company-sbu.html', status: 'todo' },
       { label: 'Vendor', icon: 'truck', path: '/company/vendor', source: 'company-vendor.html', status: 'todo' },
-      {
-        label: 'Integration Contact',
-        icon: 'contact',
-        path: '/company/integration-contact',
-        source: 'company-integration-contact.html',
-        status: 'todo',
-      },
     ],
   },
 
@@ -344,7 +334,8 @@ export const NAV: NavSection[] = [
         icon: 'box',
         children: [
           { label: 'Asset List', path: '/company-management/assets', source: 'company-assets.html', status: 'todo' },
-          { label: 'Asset Detail', path: '/company-management/assets/detail', source: 'company-asset-detail.html', status: 'todo' },
+          { label: 'Assigned Assets', path: '/company-management/assets/assigned', source: 'company-assets.html', status: 'todo' },
+          { label: 'Asset Category', path: '/company-management/assets/category', source: 'company-assets.html', status: 'todo' },
           { label: 'Disposal', path: '/company-management/assets/disposal', source: 'company-disposal.html', status: 'todo' },
         ],
       },
@@ -420,6 +411,11 @@ export const NAV: NavSection[] = [
   },
 
   {
+    section: 'Authentication',
+    children: [{ label: 'Login & Authentication', icon: 'log-in', children: [{ label: 'Login' }] }],
+  },
+
+  {
     section: 'Settings — no menu row yet',
     note: 'Menu home belum diputuskan (PROB-FRONTEND-033) — dirutekan agar layar tetap bisa dibuka.',
     children: [
@@ -434,7 +430,10 @@ export const NAV: NavSection[] = [
   },
 ];
 
-/** Nav produk Recruitment (product picker di topnav). */
+/**
+ * Nav produk Recruitment — rail datar, persis `_prototype/js/recruitment-shell.js`.
+ * Layar detail (create / detail / import log) TIDAK punya baris menu di prototype.
+ */
 export const NAV_RECRUITMENT: NavSection[] = [
   {
     section: 'Recruitment',
@@ -443,57 +442,69 @@ export const NAV_RECRUITMENT: NavSection[] = [
       {
         label: 'Job Listings',
         icon: 'briefcase',
-        children: [
-          { label: 'Job Listings', path: '/recruitment/job-listings', source: 'recruitment-job-listings.html', status: 'todo' },
-          {
-            label: 'Create Job Listing',
-            path: '/recruitment/job-listings/create',
-            source: 'recruitment-create-job-listing.html',
-            status: 'todo',
-          },
-          {
-            label: 'Job Listing Detail',
-            path: '/recruitment/job-listings/detail',
-            source: 'recruitment-job-listing-detail.html',
-            status: 'todo',
-          },
-        ],
+        path: '/recruitment/job-listings',
+        source: 'recruitment-job-listings.html',
+        status: 'todo',
       },
-      {
-        label: 'Candidates',
-        icon: 'user-search',
-        children: [
-          { label: 'Add Candidate', path: '/recruitment/candidates/add', source: 'recruitment-add-candidate.html', status: 'todo' },
-        ],
-      },
-      {
-        label: 'Import Logs',
-        icon: 'file-clock',
-        children: [
-          { label: 'Import Logs', path: '/recruitment/import-logs', source: 'recruitment-import-logs.html', status: 'todo' },
-          {
-            label: 'Import Log Detail',
-            path: '/recruitment/import-logs/detail',
-            source: 'recruitment-import-log-detail.html',
-            status: 'todo',
-          },
-        ],
-      },
+      { label: 'Talent Pool', icon: 'user-round' },
+      { label: 'Candidates', icon: 'users' },
+      { label: 'Assessments', icon: 'clipboard-list' },
+      { label: 'Calendar', icon: 'calendar' },
+      { label: 'Activity Log', icon: 'book-open' },
+      { label: 'Reports', icon: 'bar-chart-3' },
+      { label: 'Settings', icon: 'settings' },
     ],
   },
 ];
 
-/** Nav produk Performance Management (product picker di topnav). */
+/** Nav produk Performance Management — persis `_prototype/js/performance-shell.js`. */
 export const NAV_PERFORMANCE: NavSection[] = [
   {
     section: 'Performance Management',
     children: [
-      { label: 'Cycles', icon: 'refresh-cw', path: '/performance/cycles', source: 'performance-cycles.html', status: 'todo' },
-      { label: 'KPI Items', icon: 'target', path: '/performance/kpi-items', source: 'performance-kpi-items.html', status: 'todo' },
-      { label: 'Sheets', icon: 'table', path: '/performance/sheets', source: 'performance-sheets.html', status: 'todo' },
-      { label: 'Approvals', icon: 'check-check', path: '/performance/approvals', source: 'performance-approvals.html', status: 'todo' },
-      { label: 'Objections', icon: 'message-square-warning', path: '/performance/objections', source: 'performance-objections.html', status: 'todo' },
-      { label: 'Reports', icon: 'bar-chart-3', path: '/performance/reports', source: 'performance-reports.html', status: 'todo' },
+      {
+        label: 'Cycles & Settings',
+        icon: 'calendar-range',
+        path: '/performance/cycles',
+        source: 'performance-cycles.html',
+        status: 'todo',
+      },
+      {
+        label: 'KPI Master & Weight',
+        icon: 'list-checks',
+        path: '/performance/kpi-items',
+        source: 'performance-kpi-items.html',
+        status: 'todo',
+      },
+      {
+        label: 'Review Sheets',
+        icon: 'clipboard-list',
+        path: '/performance/sheets',
+        source: 'performance-sheets.html',
+        status: 'todo',
+      },
+      {
+        label: 'Score Approvals',
+        icon: 'check-check',
+        path: '/performance/approvals',
+        source: 'performance-approvals.html',
+        status: 'todo',
+      },
+      {
+        label: 'Objections',
+        icon: 'message-square-warning',
+        path: '/performance/objections',
+        source: 'performance-objections.html',
+        status: 'todo',
+      },
+      {
+        label: 'Monitor & Reports',
+        icon: 'bar-chart-3',
+        path: '/performance/reports',
+        source: 'performance-reports.html',
+        status: 'todo',
+      },
+      { label: 'Settings', icon: 'settings' },
     ],
   },
 ];

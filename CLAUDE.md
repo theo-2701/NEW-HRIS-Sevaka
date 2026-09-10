@@ -26,6 +26,12 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
 - `src/config/nav.ts` = single source of truth navigasi + status konversi. Router
   otomatis memasang `PlaceholderPage` untuk leaf yang belum dikonversi, jadi menu
   tidak pernah mati.
+- **Sidebar TIDAK boleh diubah.** Pohon menunya milik kontrak dan sudah dikunci di
+  `_prototype/js/shell.js` (`NAV`, plus `recruitment-shell.js` /
+  `performance-shell.js` untuk produk lain). `nav.ts` hanya menyalinnya dan
+  menambahkan `path`/`source`/`status`. Jangan menambah, mengganti nama, atau
+  memecah baris menu — layar tanpa baris menu dibuka dari tombol di dalam halaman
+  dan dicatat di bagian "Belum masuk peta nav" pada `docs/PAGE-INVENTORY.md`.
 - Sudah dikonversi: **Auth** (10 layar), **Dashboard**, dan seluruh **Batch 1 —
   Employee Management** (Directory, Profile ESS, New Joiner + Add Employee,
   Employee Transfer, Mass Resignation, PTKP Adjustment, Manpower & Requisition,

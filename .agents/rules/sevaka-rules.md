@@ -104,3 +104,16 @@ baca `_prototype/<file>.html` → cek `docs/COMPONENT-MAP.md` → patuhi
 Kalau prototype dan kontrak (FSD/UIC atau `_prototype/*-GAP-NOTES.md`) bertabrakan:
 **ikuti kontrak dan laporkan selisihnya**. Jangan diam-diam menambah atau menghapus
 field.
+
+## Sidebar terkunci
+
+Pohon menu sidebar berasal dari kontrak dan sudah dibekukan di
+`_prototype/js/shell.js` (`NAV`) — plus `recruitment-shell.js` dan
+`performance-shell.js` untuk nav produk. `src/config/nav.ts` **hanya menyalin**
+pohon itu dan menambahkan `path`, `source`, dan `status`.
+
+Dilarang: menambah baris menu, mengganti nama label, memecah satu baris jadi
+beberapa anak, atau membuat section baru. Layar yang tidak punya baris menu
+(mis. `add-employee.html`, `transition-dashboard.html`) dibuka lewat tombol di
+dalam halaman, dan otomatis tercatat di bagian "Belum masuk peta nav"
+`docs/PAGE-INVENTORY.md` saat inventaris diregenerasi.

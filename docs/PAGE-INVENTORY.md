@@ -3,7 +3,7 @@
 Dibuat dari `src/config/nav.ts`. Kolom **Status** mengikuti field `status` di file itu:
 `done` = sudah jadi komponen React, `todo` = masih `PlaceholderPage`.
 
-Prototype: 88 file HTML · Route bernav: 98
+Prototype: 88 file HTML · Route bernav: 88
 
 > Saat sebuah layar selesai dikonversi: daftarkan route-nya di `src/app/routes.tsx`,
 > ubah `status` leaf-nya jadi `'done'` di `src/config/nav.ts`, lalu regenerasi dokumen ini.
@@ -38,8 +38,7 @@ Prototype: 88 file HTML · Route bernav: 98
 | `/employees/directory` | Directory | `employee-directory.html` | done |
 | `/employees/manpower/requisition` | Requisition | `manpower-requisition.html` | done |
 | `/employees/mass-resignation` | Mass Resignation | `mass-resignation.html` | done |
-| `/employees/new-joiner` | Submission List | `new-joiner.html` | done |
-| `/employees/new-joiner/add` | Add Employee | `add-employee.html` | done |
+| `/employees/new-joiner` | New Joiner Submission | `new-joiner.html` | done |
 | `/employees/organization` | Organization | `employee-directory.html` | done |
 | `/employees/ptkp-adjustment` | PTKP Status Adjustment | `ptkp-adjustment.html` | done |
 | `/employees/reprimand` | Reprimand List | `reprimand.html` | done |
@@ -78,12 +77,8 @@ Prototype: 88 file HTML · Route bernav: 98
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
 | `/payroll/authorization` | Authorization & Handover | `payroll-doc-authorization.html` | todo |
-| `/payroll/compliance` | Compliance | `payroll-compliance.html` | todo |
-| `/payroll/components` | Payroll Components | `payroll-components.html` | todo |
-| `/payroll/processing` | Payroll Run | `payroll-processing.html` | todo |
-| `/payroll/salary-processing` | Document Processing | `payroll-doc-processing.html` | todo |
+| `/payroll/salary-processing` | Salary Processing | `payroll-doc-processing.html` | todo |
 | `/payroll/salary-settings` | Salary Settings | `payroll-doc-settings.html` | todo |
-| `/payroll/tax-simulation` | Tax Simulation | `payroll-tax-simulation.html` | todo |
 
 ## Productivity
 
@@ -105,7 +100,8 @@ Prototype: 88 file HTML · Route bernav: 98
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
 | `/company-management/assets` | Asset List | `company-assets.html` | todo |
-| `/company-management/assets/detail` | Asset Detail | `company-asset-detail.html` | todo |
+| `/company-management/assets/assigned` | Assigned Assets | `company-assets.html` | todo |
+| `/company-management/assets/category` | Asset Category | `company-assets.html` | todo |
 | `/company-management/assets/disposal` | Disposal | `company-disposal.html` | todo |
 | `/company-management/files/company` | Company Files | `document-company-files.html` | todo |
 | `/company-management/files/employee` | Employee Files | `document-employee-files.html` | todo |
@@ -122,7 +118,6 @@ Prototype: 88 file HTML · Route bernav: 98
 | `/company/cost-center` | Cost Center | `company-cost-center.html` | todo |
 | `/company/grade-class` | Grade & Class | `company-grade-class.html` | todo |
 | `/company/group-structure` | Group Structure | `company-group-structure.html` | todo |
-| `/company/integration-contact` | Integration Contact | `company-integration-contact.html` | todo |
 | `/company/sbu` | SBU | `company-sbu.html` | todo |
 | `/company/vendor` | Vendor | `company-vendor.html` | todo |
 
@@ -155,29 +150,40 @@ Prototype: 88 file HTML · Route bernav: 98
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
 | `/recruitment` | Home | `recruitment-home.html` | todo |
-| `/recruitment/candidates/add` | Add Candidate | `recruitment-add-candidate.html` | todo |
-| `/recruitment/import-logs` | Import Logs | `recruitment-import-logs.html` | todo |
-| `/recruitment/import-logs/detail` | Import Log Detail | `recruitment-import-log-detail.html` | todo |
 | `/recruitment/job-listings` | Job Listings | `recruitment-job-listings.html` | todo |
-| `/recruitment/job-listings/create` | Create Job Listing | `recruitment-create-job-listing.html` | todo |
-| `/recruitment/job-listings/detail` | Job Listing Detail | `recruitment-job-listing-detail.html` | todo |
 
 ## Performance Management
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/performance/approvals` | Approvals | `performance-approvals.html` | todo |
-| `/performance/cycles` | Cycles | `performance-cycles.html` | todo |
-| `/performance/kpi-items` | KPI Items | `performance-kpi-items.html` | todo |
+| `/performance/approvals` | Score Approvals | `performance-approvals.html` | todo |
+| `/performance/cycles` | Cycles & Settings | `performance-cycles.html` | todo |
+| `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | todo |
 | `/performance/objections` | Objections | `performance-objections.html` | todo |
-| `/performance/reports` | Reports | `performance-reports.html` | todo |
-| `/performance/sheets` | Sheets | `performance-sheets.html` | todo |
+| `/performance/reports` | Monitor & Reports | `performance-reports.html` | todo |
+| `/performance/sheets` | Review Sheets | `performance-sheets.html` | todo |
 
 ## Belum masuk peta nav
 
+Layar ini ada di prototype tapi **tidak punya baris menu** di `js/shell.js`.
+Daftar ini dihitung ulang setiap regenerasi — jangan menambah baris menu untuk
+layar di sini tanpa keputusan kontrak.
+
 | Prototype | Catatan |
 |---|---|
-| `transition-dashboard.html` | Sudah dikonversi jadi `/employees/transfer/dashboard`, tapi **sengaja tidak ada di menu** — dibuka lewat "View Detail" di daftar Employee Transfer. |
-| `finance-loan-detail.html` | Halaman detail (bukan baris menu). Daftarkan sebagai `/finance/loan/:id` saat modul Finance dikonversi. |
-| `company-asset-detail.html` | Terdaftar sebagai `/company-management/assets/detail`; ubah jadi `/company-management/assets/:id` saat modul Assets dikonversi. |
-| `recruitment-job-listing-detail.html`, `recruitment-import-log-detail.html` | Sama: ubah ke bentuk `:id` saat modul Recruitment dikonversi. |
+| `add-employee.html` | Dibuka dari tombol di halaman New Joiner, bukan dari menu. |
+| `auth.html` | Layar login; di luar shell bernavigasi. |
+| `company-asset-detail.html` | Halaman detail aset; bentuk `:id` saat modul Assets dikonversi. |
+| `company-integration-contact.html` | Belum punya baris menu di kontrak. |
+| `finance-loan-detail.html` | Halaman detail; daftarkan sebagai bentuk `:id` saat modul Finance dikonversi. |
+| `index.html` | Dashboard — tile tersendiri di sidebar, bukan baris NAV. |
+| `payroll-compliance.html` | Belum punya baris menu di kontrak. |
+| `payroll-components.html` | Belum punya baris menu di kontrak. |
+| `payroll-processing.html` | Belum punya baris menu di kontrak. |
+| `payroll-tax-simulation.html` | Belum punya baris menu di kontrak. |
+| `recruitment-add-candidate.html` | Belum punya baris menu di kontrak. |
+| `recruitment-create-job-listing.html` | Belum punya baris menu di kontrak. |
+| `recruitment-import-log-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
+| `recruitment-import-logs.html` | Belum punya baris menu di kontrak. |
+| `recruitment-job-listing-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
+| `transition-dashboard.html` | Detail transisi — dibuka lewat "View Detail" di daftar Employee Transfer. |
