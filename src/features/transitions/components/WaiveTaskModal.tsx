@@ -2,7 +2,7 @@ import { Form, Formik } from 'formik';
 import { TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
-import { Segmented } from '@/components/Segmented';
+import { RadioBranch } from '@/components/RadioBranch';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { FormField } from '@/components/form/FormField';
 import { Note } from '@/features/transitions/components/TransitionBits';
@@ -85,12 +85,13 @@ export function WaiveTaskModal({
                 required
                 hint="Elevated wajib untuk task yang clearance-blocking."
               >
-                <Segmented<Control>
+                <RadioBranch<Control>
+                  name="waive-control"
                   value={values.control}
                   onChange={(next) => void setFieldValue('control', next)}
                   options={[
-                    { value: 'STANDARD', label: 'Standard' },
-                    { value: 'ELEVATED', label: 'Elevated' },
+                    { value: 'STANDARD', title: 'Standard' },
+                    { value: 'ELEVATED', title: 'Elevated' },
                   ]}
                 />
               </FormField>
