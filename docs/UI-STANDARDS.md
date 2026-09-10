@@ -276,6 +276,11 @@ Batas rentang lewat prop `min`/`max` (tanggal di luar rentang tidak bisa
 diklik), dan rentang dua tanggal saling mengunci — lihat `CreatedRange` di
 Employee Directory.
 
+**Lebar field.** Lebar field ditentukan **kolom grid-nya**, bukan dikunci per
+field. Jangan menempel `max-w-[…]` pada satu field — kalau ingin field pendek,
+taruh di grid `md:grid-cols-2` yang sama seperti baris di atasnya supaya
+tepinya tetap sejajar.
+
 **Tangga z-index.** modal **2500** · menu, select, dan popover **2600** ·
 toast **3000**. Popover harus di atas scrim modal, kalau tidak date picker di
 dalam modal ikut tertutup.

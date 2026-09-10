@@ -141,18 +141,20 @@ export function PtkpAdjustmentPage() {
                         />
                       </div>
 
-                      <DateField
-                        name="eventDate"
-                        label="Tanggal kejadian"
-                        hint="Opsional — tanggal peristiwa pemicunya (mis. kelahiran anak)."
-                        containerClassName="max-w-[260px]"
-                      />
-
-                      <DocumentField
-                        name="documentName"
-                        label="Dokumen pendukung"
-                        hint="Opsional. Dikirim sebagai id dokumen buram, bukan URL."
-                      />
+                      {/* Satu grid yang sama dengan baris di atasnya — lebar field
+                          selalu mengikuti kolomnya, bukan dikunci per field. */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <DateField
+                          name="eventDate"
+                          label="Tanggal kejadian"
+                          hint="Opsional — tanggal peristiwa pemicunya (mis. kelahiran anak)."
+                        />
+                        <DocumentField
+                          name="documentName"
+                          label="Dokumen pendukung"
+                          hint="Opsional. Dikirim sebagai id dokumen buram, bukan URL."
+                        />
+                      </div>
 
                       <TextAreaField
                         name="remarks"

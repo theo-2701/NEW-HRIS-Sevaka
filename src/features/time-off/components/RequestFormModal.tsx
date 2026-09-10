@@ -181,7 +181,7 @@ export function RequestFormModal({
                 <DateField name="endDate" label="Tanggal selesai" required />
               </div>
 
-              <div className="flex max-w-[50%] flex-col gap-1">
+              <div className="flex flex-col gap-1">
                 <Label htmlFor="requester">
                   Pemohon
                   <span className="ml-1.5 inline-flex items-center gap-1 align-middle font-body text-[10px] font-bold uppercase tracking-[0.05em] text-fg-4 [&_svg]:size-3">

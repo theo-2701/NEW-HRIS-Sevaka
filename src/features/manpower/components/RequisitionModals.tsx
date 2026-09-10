@@ -130,14 +130,9 @@ export function CreateRequisitionModal({
                 hint="Maksimal 150 karakter."
               />
 
-              <TextField
-                name="headcount"
-                type="number"
-                min={1}
-                label="Headcount"
-                required
-                containerClassName="max-w-[160px]"
-              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextField name="headcount" type="number" min={1} label="Headcount" required />
+              </div>
 
               <TextAreaField
                 name="justification"

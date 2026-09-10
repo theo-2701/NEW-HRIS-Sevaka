@@ -143,12 +143,7 @@ export function CreateTransitionModal({
                 {type === 'TRANSFER' && <TransferBlock />}
                 {type === 'OFFBOARDING' && <OffboardingBlock />}
 
-                <DateField
-                  name="effectiveDate"
-                  label="Tanggal efektif"
-                  required
-                  containerClassName="max-w-[240px]"
-                />
+                <DateField name="effectiveDate" label="Tanggal efektif" required />
 
                 <Note icon={<Workflow />}>{FLOW_NOTE[type]}</Note>
               </Form>
