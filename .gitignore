@@ -9,3 +9,6 @@ coverage
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Artefak antara generator inventaris halaman
+docs/_inventory.json

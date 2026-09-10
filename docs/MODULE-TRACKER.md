@@ -41,7 +41,8 @@ Baca dulu: `_prototype/EMPLOYEE-GAP-NOTES.md`.
 - [x] Time Off **Request** — `time-off-request.html` (empat gerbang submit, cuti sakit AUTO_APPROVED + jendela tolak beku, SoD 403, penarikan → CANCELLED, delegasi §3.2, jejak akses surat dokter 403/410)
 - [x] Time Off **Balance** — `time-off-balance.html` (saldo dijumlahkan dari ledger, ledger append-only, HR adjustment create-only dengan sumber terkunci + refId kosong, delta bertanda ≠ 0, proyeksi bukan gerbang)
 - [x] Time Off **Settings** — `time-off-settings.html` (katalog jenis cuti + statutory terkunci, unpaid×deducts ditolak, kode unik 409, satu kebijakan akrual hidup per jenis × jenis kepegawaian, berhenti hanya lewat tanggal akhir, blackout wajib bertanggal akhir)
-- [ ] Attendance + settings
+- [x] **Attendance** — `time-attendance.html` (tap append-only + gerbang selfie 422, `Idempotency-Key` per percobaan di-scope (karyawan, key), ringkasan harian nol endpoint tulis, `attendance-summary:search` bukan scope EMPLOYEE, audit tap investigatif HR_MANAGER-only, satu koreksi hidup per hari 409, pengaju ≠ penyetuju 403, setuju hanya menyalakan `is_excused` + `excused_reason` turunan)
+- [ ] Attendance **Settings** — `time-attendance-settings.html`
 - [ ] Overtime, Calendar
 - [ ] Scheduler (index + schedule)
 - [ ] On Call (schedule + activity)

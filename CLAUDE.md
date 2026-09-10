@@ -37,6 +37,9 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
   Employee Transfer, Mass Resignation, PTKP Adjustment, Manpower & Requisition,
   Reprimand + Type Setting). Auth dan Dashboard tetap jadi pola acuan struktur;
   modul Batch 1 adalah contoh terbaru untuk pola tabel, modal, dan maker→checker.
+  Batch 2 berjalan: **Time Off** (Request, Balance, Settings) dan **Attendance**
+  sudah jadi — Attendance adalah contoh terbaru untuk tab + sub-tab segmented,
+  modal filter ≥3 filter, dan layar baca-saja tanpa endpoint tulis.
 - Backend belum ada: setiap service punya blok `MOCK` yang aktif selama
   `VITE_API_BASE_URL` kosong.
 

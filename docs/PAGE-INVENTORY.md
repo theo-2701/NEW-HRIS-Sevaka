@@ -49,7 +49,7 @@ Prototype: 88 file HTML · Route bernav: 88
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/time/attendance` | Attendance | `time-attendance.html` | todo |
+| `/time/attendance` | Attendance | `time-attendance.html` | done |
 | `/time/attendance/settings` | Settings | `time-attendance-settings.html` | todo |
 | `/time/calendar` | Calendar | `time-calendar.html` | todo |
 | `/time/on-call` | On Call Schedule | `time-oncall.html` | todo |
