@@ -180,7 +180,7 @@ export const NAV: NavSection[] = [
         ],
       },
       { label: 'Overtime', icon: 'timer', path: '/time/overtime', source: 'time-overtime.html', status: 'done' },
-      { label: 'Calendar', icon: 'calendar', path: '/time/calendar', source: 'time-calendar.html', status: 'todo' },
+      { label: 'Calendar', icon: 'calendar', path: '/time/calendar', source: 'time-calendar.html', status: 'done' },
       {
         label: 'Scheduler',
         icon: 'calendar-clock',
