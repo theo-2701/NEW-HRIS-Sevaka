@@ -52,8 +52,8 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/time/attendance` | Attendance | `time-attendance.html` | done |
 | `/time/attendance/settings` | Settings | `time-attendance-settings.html` | done |
 | `/time/calendar` | Calendar | `time-calendar.html` | done |
-| `/time/on-call` | On Call Schedule | `time-oncall.html` | todo |
-| `/time/on-call/activity` | On Call Activity | `time-oncall-activity.html` | todo |
+| `/time/on-call` | On Call Schedule | `time-oncall.html` | done |
+| `/time/on-call/activity` | On Call Activity | `time-oncall-activity.html` | done |
 | `/time/overtime` | Overtime | `time-overtime.html` | done |
 | `/time/scheduler` | Index | `time-scheduler-index.html` | done |
 | `/time/scheduler/schedule` | Schedule | `time-scheduler-schedule.html` | done |

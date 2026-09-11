@@ -15,6 +15,8 @@ import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { CalendarPage } from '@/features/calendar/pages/CalendarPage';
 import { SchedulerIndexPage } from '@/features/scheduler/pages/SchedulerIndexPage';
 import { SchedulerSchedulePage } from '@/features/scheduler/pages/SchedulerSchedulePage';
+import { OncallSchedulePage } from '@/features/oncall/pages/OncallSchedulePage';
+import { OncallActivityPage } from '@/features/oncall/pages/OncallActivityPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -64,6 +66,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/calendar', element: <CalendarPage /> },
   { path: 'time/scheduler', element: <SchedulerIndexPage /> },
   { path: 'time/scheduler/schedule', element: <SchedulerSchedulePage /> },
+  { path: 'time/on-call', element: <OncallSchedulePage /> },
+  { path: 'time/on-call/activity', element: <OncallActivityPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -96,6 +100,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/calendar',
   '/time/scheduler',
   '/time/scheduler/schedule',
+  '/time/on-call',
+  '/time/on-call/activity',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

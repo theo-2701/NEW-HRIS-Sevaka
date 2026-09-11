@@ -193,8 +193,8 @@ export const NAV: NavSection[] = [
         label: 'On Call',
         icon: 'phone-call',
         children: [
-          { label: 'On Call Schedule', path: '/time/on-call', source: 'time-oncall.html', status: 'todo' },
-          { label: 'On Call Activity', path: '/time/on-call/activity', source: 'time-oncall-activity.html', status: 'todo' },
+          { label: 'On Call Schedule', path: '/time/on-call', source: 'time-oncall.html', status: 'done' },
+          { label: 'On Call Activity', path: '/time/on-call/activity', source: 'time-oncall-activity.html', status: 'done' },
         ],
       },
     ],
