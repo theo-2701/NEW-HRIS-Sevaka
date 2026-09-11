@@ -289,12 +289,15 @@ function SidebarNode({ node, depth, expanded }: { node: NavLeaf; depth: number; 
         'inline-flex w-full items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-md border-none bg-transparent text-left font-body text-sm font-medium text-secondary-700 transition-colors duration-200 ease-standard hover:bg-secondary-700/[0.07]',
         expanded ? 'min-h-10 px-3 py-1.5' : 'mx-auto my-0.5 size-11 justify-center p-0',
         depth === 1 && 'min-h-11 font-bold',
+        /* Baris aktif mempertahankan latarnya saat di-hover. Tanpa ini,
+           `hover:bg-…` yang generik menang atas gradien dan menyisakan teks
+           putih di atas latar nyaris putih. */
         isOn &&
           depth > 1 &&
-          '-ml-0.5 rounded-l-none pl-3.5 text-cloud [background:linear-gradient(90deg,#026A9F_0%,#026A9F_34%,rgba(2,106,159,0)_100%)] hover:text-cloud',
+          '-ml-0.5 rounded-l-none pl-3.5 text-cloud [background:linear-gradient(90deg,#026A9F_0%,#026A9F_34%,rgba(2,106,159,0)_100%)] hover:text-cloud hover:[background:linear-gradient(90deg,#01598A_0%,#01598A_34%,rgba(2,106,159,0)_100%)]',
         isOn &&
           depth === 1 &&
-          'text-white [background:var(--bg-primary-btn)] [box-shadow:var(--shadow-primary)] hover:text-white',
+          'text-white [background:var(--bg-primary-btn)] [box-shadow:var(--shadow-primary)] hover:text-white hover:[background:var(--bg-primary-btn-hover)] hover:[box-shadow:var(--shadow-primary-hover)]',
       )}
     >
       <NavIcon name={node.icon} className={cn('shrink-0', expanded ? 'size-5' : 'size-[22px]')} />
