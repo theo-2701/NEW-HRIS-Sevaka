@@ -11,6 +11,7 @@ import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { TimeOffSettingsPage } from '@/features/time-off/pages/TimeOffSettingsPage';
 import { AttendancePage } from '@/features/attendance/pages/AttendancePage';
 import { AttendanceSettingsPage } from '@/features/attendance/pages/AttendanceSettingsPage';
+import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -56,6 +57,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/time-off/settings', element: <TimeOffSettingsPage /> },
   { path: 'time/attendance', element: <AttendancePage /> },
   { path: 'time/attendance/settings', element: <AttendanceSettingsPage /> },
+  { path: 'time/overtime', element: <OvertimePage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -84,6 +86,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/time-off/settings',
   '/time/attendance',
   '/time/attendance/settings',
+  '/time/overtime',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

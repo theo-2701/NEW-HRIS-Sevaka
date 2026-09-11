@@ -40,7 +40,7 @@ baru kalau padanannya sudah ada.**
 | `.field` + `.field__label` + `.field__input` | `<TextField>` / `<FormField>` + `<Input>` |
 | `.field--pw` + `.field__eye` | `<PasswordField>` |
 | `.ctl--select` | `<SelectField>` / `<Select>` |
-| `.ctl--date` + `.dp` (date picker) | `<DateField>` + `<Calendar>` (komponen rumah baru) |
+| `.ctl--date` + `.dp` (date picker) | `<DateField>` di dalam form · `<DatePicker>` di luar form (toolbar/modal filter) — keduanya memakai `<Calendar>` |
 | `.checkbox` + `.checkbox__box` | `<Checkbox>` |
 | `.btn--primary/secondary/danger/ghost/light` | `<Button variant>` |
 | `.tabs` / `.tabs__tab` | `<Tabs>` / `<TabsList>` / `<TabsTrigger>` |

@@ -272,7 +272,7 @@ vs Cancel pada batch Mass Resignation, atau cabang WNI/WNA), pakai
 deskripsi di sebelah kanan tombolnya, memakai `<input type="radio">` sungguhan.
 `<Segmented>` hanya untuk pilihan pendek tanpa penjelasan (mis. sub-tab tabel).
 
-**Tanggal.** Semua pemilihan tanggal memakai `<DateField>` — pemicu 36px
+**Tanggal.** Semua pemilihan tanggal memakai `<DateField>` — pemicu 36px Di luar form (toolbar, modal filter) pakai `<DatePicker>` — pembungkus yang sama tanpa Formik; `<input type="date">` bawaan browser tetap terlarang.
 bergaya field standar + ikon kalender, dan popover kalender `<Calendar>`
 (port `.dp`: lebar 228px, tampilan hari → bulan → tahun lewat judul, footer
 "Set Date"). Nilainya disimpan ISO `YYYY-MM-DD`, yang tampil format rumah

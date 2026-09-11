@@ -43,7 +43,8 @@ Baca dulu: `_prototype/EMPLOYEE-GAP-NOTES.md`.
 - [x] Time Off **Settings** — `time-off-settings.html` (katalog jenis cuti + statutory terkunci, unpaid×deducts ditolak, kode unik 409, satu kebijakan akrual hidup per jenis × jenis kepegawaian, berhenti hanya lewat tanggal akhir, blackout wajib bertanggal akhir)
 - [x] **Attendance** — `time-attendance.html` (tap append-only + gerbang selfie 422, `Idempotency-Key` per percobaan di-scope (karyawan, key), ringkasan harian nol endpoint tulis, `attendance-summary:search` bukan scope EMPLOYEE, audit tap investigatif HR_MANAGER-only, satu koreksi hidup per hari 409, pengaju ≠ penyetuju 403, setuju hanya menyalakan `is_excused` + `excused_reason` turunan)
 - [x] Attendance **Settings** — `time-attendance-settings.html` (satu sumber daya `cnf_attendance_geofence`; nama unik hanya di antara baris aktif pada cabang yang sama 409 dan sengaja tidak dicek saat Ubah, radius kecil = peringatan bukan penolakan, matriks empat baris eksplisit terkunci sistem, Deactivate satu langkah tanpa dialog, Hapus ditolak 409 lewat banner di atas List)
-- [ ] Overtime, Calendar
+- [x] **Overtime** — `time-overtime.html` (mode/kategori/pemicu lapis diturunkan server, susulan wajib beralasan + jendela 7 hari, satu pending per karyawan×tanggal 409, jam disetujui boleh dipangkas tak pernah dinaikkan, SoD 403, penarikan soft-delete, ringkasan harian nol endpoint tulis dengan payable = MIN(aktual, pagu))
+- [ ] Calendar
 - [ ] Scheduler (index + schedule)
 - [ ] On Call (schedule + activity)
 
