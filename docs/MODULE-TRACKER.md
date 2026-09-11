@@ -53,7 +53,8 @@ Baca dulu: `_prototype/TIME-GAP-NOTES.md`.
 ## Batch 3 — Finance
 
 - [x] **Benefit Reimbursement** — `finance-benefit-reimbursement.html` (klaim menahan hak `HELD` → `CONSUMED`/`RELEASED`, keputusan approver 202 Accepted status ditulis belakangan, penahanan sengketa memblokir persetujuan 409, penolakan wajib beralasan + akui peringatan kemiripan, peringatan kemiripan tak pernah terlihat pengaju, lampiran data kesehatan terkunci, beneficiary satu baris per kerabat per periode dan tak pernah dihapus keras)
-- [ ] Loan (+ detail `:id`), Cash Advance
+- [x] **Loan** — `finance-loan.html` + `finance-loan-detail.html` (modul yang dimatikan per company menolak 403 FIN_MODULE_DISABLED, maksimal dua pinjaman aktif 422 FIN_ACTIVE_LOAN_COUNT_EXCEEDED, pokok di atas ruang pinjam 422 FIN_LOAN_LIMIT_EXCEEDED; bunga & jadwal tidak pernah dihitung HRIS pada company berbunga; keputusan atasan 202 Accepted status ditulis belakangan, penahanan sengketa memblokir keputusan 409, antrean atasan tak pernah memuat barisnya sendiri; tiga pintu keluar terpisah — Cancel hanya SUBMITTED, Withdraw setelah AWAITING_CALCULATION, DECLINE cabang acknowledgement 422 FIN_LOAN_NOT_AWAITING_ACKNOWLEDGEMENT; ACK menyalin tawaran pihak pemberi dana dan menerbitkan jadwal angsuran)
+- [ ] Cash Advance
 - [ ] Disbursement & Receivables
 - [ ] Finance Settings, Finance Security
 - [ ] `/me/finance` (ESS)

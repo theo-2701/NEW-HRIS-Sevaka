@@ -18,6 +18,8 @@ import { SchedulerSchedulePage } from '@/features/scheduler/pages/SchedulerSched
 import { OncallSchedulePage } from '@/features/oncall/pages/OncallSchedulePage';
 import { OncallActivityPage } from '@/features/oncall/pages/OncallActivityPage';
 import { BenefitReimbursementPage } from '@/features/benefit/pages/BenefitReimbursementPage';
+import { LoanPage } from '@/features/loan/pages/LoanPage';
+import { LoanDetailPage } from '@/features/loan/pages/LoanDetailPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -70,6 +72,9 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/on-call', element: <OncallSchedulePage /> },
   { path: 'time/on-call/activity', element: <OncallActivityPage /> },
   { path: 'finance/benefit-reimbursement', element: <BenefitReimbursementPage /> },
+  { path: 'finance/loan', element: <LoanPage /> },
+  /* Detail pinjaman tidak punya baris menu — dibuka dari baris tabel Loan. */
+  { path: 'finance/loan/detail', element: <LoanDetailPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -105,6 +110,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/on-call',
   '/time/on-call/activity',
   '/finance/benefit-reimbursement',
+  '/finance/loan',
+  '/finance/loan/detail',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

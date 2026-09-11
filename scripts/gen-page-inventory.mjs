@@ -64,7 +64,7 @@ const UNMAPPED_NOTES = {
   'auth.html': 'Layar login; di luar shell bernavigasi.',
   'index.html': 'Dashboard — tile tersendiri di sidebar, bukan baris NAV.',
   'document-verify.html': 'Verifikasi publik — memang permanen tanpa menu (DOC-80).',
-  'finance-loan-detail.html': 'Halaman detail; daftarkan sebagai bentuk `:id` saat modul Finance dikonversi.',
+  'finance-loan-detail.html': 'Sudah dikonversi ke `/finance/loan/detail?id=…`; dibuka dari baris tabel Loan, bukan dari menu.',
   'company-asset-detail.html': 'Halaman detail aset; bentuk `:id` saat modul Assets dikonversi.',
   'recruitment-job-listing-detail.html': 'Halaman detail; bentuk `:id` saat modul Recruitment dikonversi.',
   'recruitment-import-log-detail.html': 'Halaman detail; bentuk `:id` saat modul Recruitment dikonversi.',
