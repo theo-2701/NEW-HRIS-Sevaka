@@ -1,4 +1,5 @@
-import type { Shift, ShiftAssignment } from '@/features/scheduler/types';
+import { EMPLOYEES } from '@/features/time-off/mock-data';
+import type { Shift, ShiftAssignment, ShiftSwap } from '@/features/scheduler/types';
 
 /** Dataset Skenario Positif Scheduler (UIC-001-TIME §9) — disalin apa adanya. */
 
@@ -20,3 +21,24 @@ export const ASSIGNMENTS: ShiftAssignment[] = [
   { id: 'as-8', employeeId: 'emp-budi', workDate: '2026-07-28', shiftId: null, isOffDay: true, assignmentSource: 'INDIVIDUAL' },
   { id: 'as-9', employeeId: 'emp-hendra', workDate: '2026-07-27', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK' },
 ];
+
+export const SWAPS: ShiftSwap[] = [
+  { id: 'sw-1', requesterAssignmentId: 'as-1', counterpartAssignmentId: 'as-4', swapStatus: 'PENDING_APPROVAL', submittedAt: '2026-07-24T10:00:00+07:00', approvedBy: null },
+  { id: 'sw-2', requesterAssignmentId: 'as-2', counterpartAssignmentId: 'as-5', swapStatus: 'APPROVED', submittedAt: '2026-07-22T09:00:00+07:00', approvedBy: 'emp-hendra' },
+  { id: 'sw-3', requesterAssignmentId: 'as-7', counterpartAssignmentId: 'as-9', swapStatus: 'REJECTED', submittedAt: '2026-07-21T14:00:00+07:00', approvedBy: 'emp-hendra' },
+];
+
+/** Identitas yang sedang login di layar ini (pengganti token). */
+export const ME = 'emp-hendra';
+
+/** Minggu yang bisa dilihat proyeksi roster. */
+export const WEEK_OPTIONS = [
+  { value: '2026-07-27', label: '27 Jul – 02 Aug 2026' },
+  { value: '2026-08-03', label: '03 – 09 Aug 2026' },
+];
+
+export function employeeName(id: string): string {
+  return EMPLOYEES.find((row) => row.id === id)?.name ?? '—';
+}
+
+export { EMPLOYEES };

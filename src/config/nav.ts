@@ -185,8 +185,8 @@ export const NAV: NavSection[] = [
         label: 'Scheduler',
         icon: 'calendar-clock',
         children: [
-          { label: 'Index', path: '/time/scheduler', source: 'time-scheduler-index.html', status: 'todo' },
-          { label: 'Schedule', path: '/time/scheduler/schedule', source: 'time-scheduler-schedule.html', status: 'todo' },
+          { label: 'Index', path: '/time/scheduler', source: 'time-scheduler-index.html', status: 'done' },
+          { label: 'Schedule', path: '/time/scheduler/schedule', source: 'time-scheduler-schedule.html', status: 'done' },
         ],
       },
       {
