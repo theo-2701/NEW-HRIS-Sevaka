@@ -108,11 +108,15 @@ export function CorrectionFormModal({
       initialValues={EMPTY}
       validationSchema={correctionSchema}
       enableReinitialize
-      onSubmit={async (values, helpers) => {
-        await create.mutateAsync(values);
-        helpers.resetForm();
-        onClose();
-      }}
+      onSubmit={(values, helpers) =>
+        // Penolakan gerbang (409/422) tetap membuka modal supaya isinya bisa diperbaiki.
+        create.mutate(values, {
+          onSuccess: () => {
+            helpers.resetForm();
+            onClose();
+          },
+        })
+      }
     >
       {({ submitForm, resetForm }) => {
         const close = () => {

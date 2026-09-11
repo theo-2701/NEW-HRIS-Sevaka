@@ -12,7 +12,7 @@ melanjutkan** konversi per modul. Baca ini lebih dulu sebelum menyentuh kode.
 | Sumber | `HR Information System_v.27082026` (prototype HTML/CSS/JS) — disalin apa adanya ke `_prototype/` |
 | Target | Standar **Sevaka UI**: React 19 · TypeScript · Vite · Tailwind v4 · ShadCN · React Query · Formik + Yup · Zustand |
 | Node | 22.17.0 (`.nvmrc`) |
-| Sudah dikonversi | **Auth** (10 layar), **Dashboard**, **Employee Directory**, **Employee Profile** (7 seksi), **New Joiner** (list + Add Employee), **Employee Transfer** (list + dashboard), **Mass Resignation**, **PTKP Adjustment**, **Manpower & Requisition**, **Reprimand** (+ Type Setting) — Batch 1 selesai, plus **Time Off** lengkap — Request, Balance, Settings — dan **Attendance** (Batch 2 berjalan) |
+| Sudah dikonversi | **Auth** (10 layar), **Dashboard**, **Employee Directory**, **Employee Profile** (7 seksi), **New Joiner** (list + Add Employee), **Employee Transfer** (list + dashboard), **Mass Resignation**, **PTKP Adjustment**, **Manpower & Requisition**, **Reprimand** (+ Type Setting) — Batch 1 selesai, plus **Time Off** lengkap — Request, Balance, Settings — dan **Attendance** (+ Settings) (Batch 2 berjalan) |
 | Belum | Sisa layar — semua sudah punya route + `PlaceholderPage`, tinggal diisi |
 
 Status per layar: `docs/PAGE-INVENTORY.md`. Urutan pengerjaan: `docs/MODULE-TRACKER.md`.

@@ -116,3 +116,13 @@ export function employeeName(id: string): string {
 export function employeeBranch(id: string): string {
   return EMPLOYEES.find((row) => row.id === id)?.branch ?? 'br-1';
 }
+
+/** Katalog cabang — dibaca dari service perusahaan, tidak disimpan di modul ini. */
+export const BRANCHES = [
+  { id: 'br-1', name: 'Kantor Pusat Jakarta' },
+  { id: 'br-4', name: 'Kantor Cabang Makassar' },
+];
+
+export function branchName(id: string): string {
+  return BRANCHES.find((row) => row.id === id)?.name ?? id;
+}

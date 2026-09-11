@@ -59,6 +59,20 @@ export interface Geofence {
   rules: Record<WorkArrangement, GeofenceRule>;
 }
 
+/** Form titik kerja. Matriks selalu empat baris eksplisit — tanpa default tersirat. */
+export interface GeofenceDraft {
+  geofenceName: string;
+  scopeRef: string;
+  centerLatitude: number;
+  centerLongitude: number;
+  radiusMeters: number;
+  isActive: boolean;
+  rules: Record<WorkArrangement, GeofenceRule>;
+}
+
+/** Urutan baris matriks — dikunci sistem, tidak ada baris kelima. */
+export const ARRANGEMENTS: WorkArrangement[] = ['WFO', 'HYBRID', 'WFH', 'MOBILE'];
+
 export interface Punch {
   id: string;
   employeeId: string;

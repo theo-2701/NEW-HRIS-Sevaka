@@ -176,7 +176,7 @@ export const NAV: NavSection[] = [
         icon: 'fingerprint',
         children: [
           { label: 'Attendance', path: '/time/attendance', source: 'time-attendance.html', status: 'done' },
-          { label: 'Settings', path: '/time/attendance/settings', source: 'time-attendance-settings.html', status: 'todo' },
+          { label: 'Settings', path: '/time/attendance/settings', source: 'time-attendance-settings.html', status: 'done' },
         ],
       },
       { label: 'Overtime', icon: 'timer', path: '/time/overtime', source: 'time-overtime.html', status: 'todo' },

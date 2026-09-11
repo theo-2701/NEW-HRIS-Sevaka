@@ -23,3 +23,27 @@ export const correctionSchema = Yup.object({
     },
   ),
 });
+
+/**
+ * Form titik kerja (UIC §7.1/§7.3). Radius kecil bukan urusan schema —
+ * itu peringatan yang datang dari server, bukan penolakan.
+ */
+export const geofenceSchema = Yup.object({
+  geofenceName: Yup.string().trim().min(3, 'Nama titik minimal 3 karakter.').max(150, 'Nama titik maksimal 150 karakter.').required('Nama titik wajib diisi.'),
+  scopeRef: Yup.string().required('Pilih cabang pemilik titik ini.'),
+  centerLatitude: Yup.number()
+    .typeError('Lintang wajib diisi.')
+    .min(-90, 'Lintang harus di dalam ±90.')
+    .max(90, 'Lintang harus di dalam ±90.')
+    .required('Lintang wajib diisi.'),
+  centerLongitude: Yup.number()
+    .typeError('Bujur wajib diisi.')
+    .min(-180, 'Bujur harus di dalam ±180.')
+    .max(180, 'Bujur harus di dalam ±180.')
+    .required('Bujur wajib diisi.'),
+  radiusMeters: Yup.number()
+    .typeError('Radius wajib diisi.')
+    .integer('Radius harus bilangan bulat meter.')
+    .positive('Radius harus lebih besar dari nol.')
+    .required('Radius wajib diisi.'),
+});
