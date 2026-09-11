@@ -52,7 +52,8 @@ Baca dulu: `_prototype/TIME-GAP-NOTES.md`.
 
 ## Batch 3 — Finance
 
-- [ ] Benefit Reimbursement, Loan (+ detail `:id`), Cash Advance
+- [x] **Benefit Reimbursement** — `finance-benefit-reimbursement.html` (klaim menahan hak `HELD` → `CONSUMED`/`RELEASED`, keputusan approver 202 Accepted status ditulis belakangan, penahanan sengketa memblokir persetujuan 409, penolakan wajib beralasan + akui peringatan kemiripan, peringatan kemiripan tak pernah terlihat pengaju, lampiran data kesehatan terkunci, beneficiary satu baris per kerabat per periode dan tak pernah dihapus keras)
+- [ ] Loan (+ detail `:id`), Cash Advance
 - [ ] Disbursement & Receivables
 - [ ] Finance Settings, Finance Security
 - [ ] `/me/finance` (ESS)

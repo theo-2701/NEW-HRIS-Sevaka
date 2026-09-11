@@ -208,7 +208,7 @@ export const NAV: NavSection[] = [
         icon: 'receipt',
         path: '/finance/benefit-reimbursement',
         source: 'finance-benefit-reimbursement.html',
-        status: 'todo',
+        status: 'done',
       },
       { label: 'Loan', icon: 'landmark', path: '/finance/loan', source: 'finance-loan.html', status: 'todo' },
       { label: 'Cash Advance', icon: 'banknote', path: '/finance/cash-advance', source: 'finance-cash-advance.html', status: 'todo' },

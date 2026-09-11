@@ -4,6 +4,8 @@ export interface RadioBranchOption<V extends string> {
   value: V;
   title: string;
   description?: string;
+  /** Pilihan yang memang tidak sah pada konteks ini — tetap terlihat, tapi mati. */
+  disabled?: boolean;
 }
 
 /**
@@ -31,12 +33,19 @@ export function RadioBranch<V extends string>({
       {options.map((option) => {
         const active = option.value === value;
         return (
-          <label key={option.value} className="group flex cursor-pointer items-start gap-2.5">
+          <label
+            key={option.value}
+            className={cn(
+              'group flex items-start gap-2.5',
+              option.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+            )}
+          >
             <input
               type="radio"
               name={name}
               value={option.value}
               checked={active}
+              disabled={option.disabled}
               onChange={() => onChange(option.value)}
               className="peer sr-only"
             />
@@ -44,7 +53,8 @@ export function RadioBranch<V extends string>({
               aria-hidden="true"
               className={cn(
                 'mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full border-2 bg-white transition-colors duration-200 ease-standard',
-                active ? 'border-secondary-500' : 'border-silver group-hover:border-secondary-500',
+                active ? 'border-secondary-500' : 'border-silver',
+                !option.disabled && !active && 'group-hover:border-secondary-500',
                 // Fokus keyboard tetap terlihat meski input-nya disembunyikan.
                 'peer-focus-visible:ring-4 peer-focus-visible:ring-[rgba(2,132,199,.16)]',
               )}

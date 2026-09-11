@@ -17,6 +17,7 @@ import { SchedulerIndexPage } from '@/features/scheduler/pages/SchedulerIndexPag
 import { SchedulerSchedulePage } from '@/features/scheduler/pages/SchedulerSchedulePage';
 import { OncallSchedulePage } from '@/features/oncall/pages/OncallSchedulePage';
 import { OncallActivityPage } from '@/features/oncall/pages/OncallActivityPage';
+import { BenefitReimbursementPage } from '@/features/benefit/pages/BenefitReimbursementPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -68,6 +69,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/scheduler/schedule', element: <SchedulerSchedulePage /> },
   { path: 'time/on-call', element: <OncallSchedulePage /> },
   { path: 'time/on-call/activity', element: <OncallActivityPage /> },
+  { path: 'finance/benefit-reimbursement', element: <BenefitReimbursementPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -102,6 +104,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/scheduler/schedule',
   '/time/on-call',
   '/time/on-call/activity',
+  '/finance/benefit-reimbursement',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

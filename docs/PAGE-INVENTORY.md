@@ -65,7 +65,7 @@ Prototype: 88 file HTML · Route bernav: 88
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/finance/benefit-reimbursement` | Benefit Reimbursement | `finance-benefit-reimbursement.html` | todo |
+| `/finance/benefit-reimbursement` | Benefit Reimbursement | `finance-benefit-reimbursement.html` | done |
 | `/finance/cash-advance` | Cash Advance | `finance-cash-advance.html` | todo |
 | `/finance/disbursement` | Disbursement & Receivables | `finance-disbursement.html` | todo |
 | `/finance/loan` | Loan | `finance-loan.html` | todo |
