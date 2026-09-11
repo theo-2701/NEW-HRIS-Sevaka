@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead } from '@/components/Card';
+import { Segmented } from '@/components/Segmented';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
@@ -21,6 +22,8 @@ import { formatDate } from '@/lib/format';
 
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+type View = 'grid' | 'rows';
+
 /**
  * Time › Scheduler Index — port `_prototype/time-scheduler-index.html`
  * (FSD-001-TIME §8 · UIC-001-TIME §10).
@@ -32,6 +35,8 @@ const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export function SchedulerIndexPage() {
   const [weekStart, setWeekStart] = useState(WEEK_OPTIONS[0].value);
   const [source, setSource] = useState('ALL');
+  // Dua bentuk atas data yang sama — satu panel, satu tabel (standar rumah).
+  const [view, setView] = useState<View>('grid');
 
   const dates = useMemo(() => weekDates(weekStart), [weekStart]);
 
@@ -116,6 +121,16 @@ export function SchedulerIndexPage() {
           </Select>
         </div>
 
+        <Segmented<View>
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'grid', label: 'Roster grid' },
+            { value: 'rows', label: 'Roster rows' },
+          ]}
+        />
+
+        {view === 'grid' && (
         <Card>
           <CardHead title="Roster grid" sub="Hasil akhir per karyawan per tanggal" />
 
@@ -186,7 +201,9 @@ export function SchedulerIndexPage() {
             </span>
           </div>
         </Card>
+        )}
 
+        {view === 'rows' && (
         <Card>
           <CardHead title="Roster rows" sub="Baris mentah minggu ini" />
 
@@ -253,6 +270,7 @@ export function SchedulerIndexPage() {
             />
           </div>
         </Card>
+        )}
       </div>
     </PageShell>
   );
