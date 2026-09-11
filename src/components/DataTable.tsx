@@ -72,15 +72,15 @@ export function DataTable<T>({
   const frozen = Boolean(actions);
   const colSpan = columns.length + (actions ? 1 : 0);
 
+  // Selalu bisa digulir mendatar: kolom memakai lebar aslinya (`w-max`) dan
+  // melar sampai minimal selebar kontainer (`min-w-full`). Sebelumnya tabel
+  // tanpa kolom Action memakai `overflow-hidden`, jadi isi yang melewati lebar
+  // kontainer terpotong dan tidak pernah bisa dicapai.
   return (
     <div
-      className={cn(
-        'scroll-thin rounded-lg border border-border-1 bg-bg-surface',
-        frozen ? 'overflow-x-auto' : 'overflow-hidden',
-        className,
-      )}
+      className={cn('scroll-thin overflow-x-auto rounded-lg border border-border-1 bg-bg-surface', className)}
     >
-      <table className={cn('border-collapse', frozen ? 'w-max min-w-full' : 'w-full')}>
+      <table className="w-max min-w-full border-collapse">
         <thead>
           <tr>
             {columns.map((col, i) => (

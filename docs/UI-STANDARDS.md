@@ -200,6 +200,10 @@ Pembekuan kolom (`_design-system/table-standard.css`):
 - Kolom di antara keduanya **memang** scroll horizontal saat tabel lebih lebar
   dari panel — itu tujuan pembekuan, bukan bug. Jangan mengecilkan font atau
   memaksa semua kolom muat.
+- **Semua tabel bisa digulir mendatar**, dengan atau tanpa kolom Action:
+  kontainer `overflow-x-auto`, tabel `w-max min-w-full` (lebar kolom apa adanya,
+  minimal selebar panel). Jangan memakai `overflow-hidden` pada pembungkus
+  tabel — isinya akan terpotong dan tidak pernah bisa dicapai.
 - **Header kolom Action dikosongkan** — tidak ada teks "Action".
 - **1 aksi** → satu `<RowButton>` inline (jangan teks polos atau "—"; keadaan
   nonaktif = `RowButton` disabled).
