@@ -10,6 +10,7 @@ export const reprimandKeys = {
   standing: ['reprimands', 'standing'] as const,
   categories: ['reprimands', 'categories'] as const,
   policy: ['reprimands', 'policy'] as const,
+  policyVersions: ['reprimands', 'policy-versions'] as const,
 };
 
 export function useReprimands() {
@@ -22,6 +23,10 @@ export function useStanding() {
 
 export function useReprimandCategories() {
   return useQuery({ queryKey: reprimandKeys.categories, queryFn: () => reprimandService.categories() });
+}
+
+export function useReprimandPolicyVersions() {
+  return useQuery({ queryKey: reprimandKeys.policyVersions, queryFn: () => reprimandService.policyVersions() });
 }
 
 export function useReprimandPolicy() {
@@ -74,17 +79,8 @@ export const useSaveCategory = () =>
     }),
   );
 
-export const useDeactivateCategory = () =>
-  useReprimandMutation<{ code: string }>(
-    ({ code }) => reprimandService.deactivateCategory(code),
-    (_result, { code }) => ({
-      text: `${code} dinonaktifkan (soft — tidak ada hard-delete di server).`,
-      tone: 'warn',
-    }),
-  );
-
 export const useSavePolicy = () =>
   useReprimandMutation<{ mode: PolicyMode }>(
     ({ mode }) => reprimandService.savePolicy(mode),
-    (_result, { mode }) => ({ text: `Mode kebijakan standing disimpan: ${mode}.` }),
+    (_result, { mode }) => ({ text: `Versi kebijakan baru diterbitkan: ${mode}. Versi lama tetap tersimpan sebagai riwayat.` }),
   );

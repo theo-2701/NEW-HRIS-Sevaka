@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { acknowledge } from '@/services/decision';
+import type { DecisionAck } from '@/services/decision';
 import { ONCALL, employeeName } from '@/features/oncall/mock-data';
 import type { OncallSession } from '@/features/oncall/mock-data';
 import { deriveOncall, overlapping } from '@/features/oncall/rules';
@@ -131,7 +133,11 @@ export const oncallService = {
     return data;
   },
 
-  async decide(session: OncallSession, id: string, kind: 'APPROVED' | 'REJECTED'): Promise<OncallAssignment> {
+  async decide(
+    session: OncallSession,
+    id: string,
+    kind: 'APPROVED' | 'REJECTED',
+  ): Promise<DecisionAck<OncallAssignment>> {
     if (MOCK) {
       await delay(400);
       const row = findRow(id);
@@ -143,9 +149,9 @@ export const oncallService = {
         throw new Error('422 — hanya jendela yang masih menunggu keputusan yang bisa diputuskan.');
       }
       // K9: keputusan diterima; status ditulis saat workflow selesai.
-      return { ...row };
+      return acknowledge(row);
     }
-    const { data } = await api.post<OncallAssignment>(`/on-call-assignments/${id}/approval`, {
+    const { data } = await api.post<DecisionAck<OncallAssignment>>(`/on-call-assignments/${id}/approval`, {
       decision: kind === 'APPROVED' ? 'SCHEDULED' : 'REJECTED',
     });
     return data;

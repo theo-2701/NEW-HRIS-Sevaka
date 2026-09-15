@@ -15,6 +15,8 @@ export const basicInfoSchema = Yup.object({
   maritalStatus: Yup.string().required('Status pernikahan wajib dipilih.'),
   npwp: Yup.string(),
   npwpName: Yup.string(),
+  bpjsTenagaKerjaNumber: Yup.string().matches(/^\d{0,20}$/, 'Hanya angka, maksimal 20 digit.'),
+  bpjsKesehatanNumber: Yup.string().matches(/^\d{0,20}$/, 'Hanya angka, maksimal 20 digit.'),
   passportNumber: Yup.string().when('nationality', {
     is: 'FOREIGNER',
     then: (schema) => schema.required('Paspor wajib diisi untuk warga negara asing.'),

@@ -3,6 +3,8 @@ import { MOCK } from '@/services/mock';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER, LOCKED_TAX_YEAR_UNTIL } from '@/features/ptkp/types';
 import type { PtkpAdjustmentDraft, PtkpCode, PtkpPeriod, PtkpSubject } from '@/features/ptkp/types';
+import { relativesOf } from '@/features/profile/services/profile.service';
+import type { Relative } from '@/features/profile/types';
 
 /**
  * API service PTKP Adjustment.
@@ -25,6 +27,8 @@ const subjects: PtkpSubject[] = [
   { id: 'emp-eka', name: 'Eka Saputra', nik: 'EMP-0005', position: 'Staff Finance', branch: 'BR-Papua', companyId: 'COMPANY001' },
   { id: 'emp-dimas', name: 'Dimas Prabowo', nik: 'EMP-0012', position: 'Backend Engineer', branch: 'HQ', companyId: 'COMPANY001' },
   { id: 'emp-nadia', name: 'Nadia Rahman', nik: 'EMP-0021', position: 'Sales Executive', branch: 'BR-Surabaya', companyId: 'COMPANY001' },
+  // Pemilik data keluarga di Employee Profile — dipakai memvalidasi dependent_claims.
+  { id: 'emp-budi', name: 'Budi Santoso', nik: 'EMP-0030', position: 'Supervisor Operations', branch: 'HQ', companyId: 'COMPANY001' },
   { id: CURRENT_USER.id, name: CURRENT_USER.name, nik: 'EMP-0001', position: 'Administrator', branch: 'HQ', companyId: 'COMPANY001' },
 ];
 
@@ -114,12 +118,36 @@ export const ptkpService = {
     return data.rows;
   },
 
+  /**
+   * Kandidat `dependent_claims`: keluarga subjek dari employee-profile (`mst_relative`).
+   * Catatan GAP: `POST /employee-relatives/search` terkunci ke pemilik token (UIC-PROFILE §3.3),
+   * belum ada pintu baca HR atas keluarga karyawan lain.
+   */
+  async relatives(employeeId: string): Promise<Relative[]> {
+    if (MOCK) {
+      await delay(150);
+      return relativesOf(employeeId);
+    }
+    const { data } = await api.post<{ data: Relative[] }>('/employee-relatives/search', { filters: {} });
+    return data.data;
+  },
+
   async adjust(employeeId: string, draft: PtkpAdjustmentDraft): Promise<PtkpPeriod> {
     if (MOCK) {
       await delay();
 
       if (!draft.attestation) {
         throw new Error('422 — atestasi wajib dicentang sebelum PTKP bisa disimpan.');
+      }
+      if (typeof draft.isPrimaryEmployer !== 'boolean') {
+        throw new Error('422 — is_primary_employer wajib dinyatakan.');
+      }
+      const claims = draft.dependentClaims ?? [];
+      if (claims.length > 3) throw new Error('422 — dependent_claims maksimal 3 tanggungan.');
+      if (new Set(claims).size !== claims.length) throw new Error('422 — dependent_claims tidak boleh duplikat.');
+      const owned = relativesOf(employeeId).map((row) => row.id);
+      if (claims.some((id) => !owned.includes(id))) {
+        throw new Error('422 — tanggungan yang diklaim harus milik karyawan ini (employee-profile).');
       }
       if (employeeId === CURRENT_USER.id) {
         throw new Error('403 — verifier harus berbeda dari pemohon; Anda tidak bisa mengubah PTKP sendiri.');
@@ -151,6 +179,8 @@ export const ptkpService = {
         eventDate: draft.eventDate || undefined,
         remarks: draft.remarks || undefined,
         documentId: draft.documentName ? `doc-${newId().slice(0, 8)}` : undefined,
+        isPrimaryEmployer: draft.isPrimaryEmployer,
+        dependentClaims: claims,
       };
 
       mockPeriods = {
@@ -166,6 +196,8 @@ export const ptkpService = {
       eventDate: draft.eventDate || undefined,
       remarks: draft.remarks || undefined,
       attestation: draft.attestation,
+      isPrimaryEmployer: draft.isPrimaryEmployer,
+      dependentClaims: draft.dependentClaims,
     });
     return data;
   },

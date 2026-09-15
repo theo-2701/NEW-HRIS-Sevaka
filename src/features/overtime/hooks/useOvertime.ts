@@ -50,7 +50,10 @@ export function useDecideOvertime(session: OvertimeSession) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, kind, approvedHours }: { id: string; kind: 'APPROVED' | 'REJECTED'; approvedHours?: number }) =>
-      overtimeService.decide(session, id, kind, approvedHours),
+      overtimeService.decide(session, id, kind, approvedHours).then(() => {
+        toast('200 — keputusan diterima dan diteruskan ke proses persetujuan; status menyusul.', 'info');
+        return overtimeService.completeOvertimeWorkflow(session, id, kind, approvedHours);
+      }),
     onSuccess: (result: DecisionResult, { kind }) => {
       if (kind === 'REJECTED') {
         toast('200 — pengajuan ditolak dan jam itu tidak pernah bisa dibayar.', 'warn');

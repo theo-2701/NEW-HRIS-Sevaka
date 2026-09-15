@@ -21,4 +21,6 @@ export const ptkpAdjustmentSchema = Yup.object({
   remarks: Yup.string().max(300, 'Maksimal 300 karakter.'),
   documentName: Yup.string(),
   attestation: Yup.boolean().oneOf([true], 'Atestasi wajib dicentang sebelum menyimpan.'),
+  isPrimaryEmployer: Yup.boolean().required('Status pemberi kerja utama wajib dinyatakan.'),
+  dependentClaims: Yup.array(Yup.string()).max(3, 'Maksimal 3 tanggungan.'),
 });

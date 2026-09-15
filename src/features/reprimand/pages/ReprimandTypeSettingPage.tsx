@@ -8,21 +8,21 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioBranch } from '@/components/RadioBranch';
-import { RowActions, PanelActionButton } from '@/components/RowActions';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { PanelActionButton, RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TextField } from '@/components/form/TextField';
 import { ToggleField } from '@/components/form/ToggleField';
 import { Note, SnapshotPanel, SnapshotRow } from '@/features/reprimand/components/ReprimandBits';
 import {
-  useDeactivateCategory,
   useReprimandCategories,
   useReprimandPolicy,
+  useReprimandPolicyVersions,
   useSaveCategory,
   useSavePolicy,
 } from '@/features/reprimand/hooks/useReprimand';
 import { categorySchema } from '@/features/reprimand/validation';
-import type { PolicyMode, ReprimandCategory } from '@/features/reprimand/types';
+import type { PolicyMode, PolicyVersion, ReprimandCategory } from '@/features/reprimand/types';
+import { formatDate } from '@/lib/format';
 
 const EMPTY_CATEGORY: ReprimandCategory = {
   code: '',
@@ -31,6 +31,7 @@ const EMPTY_CATEGORY: ReprimandCategory = {
   validityMonths: 6,
   levelOrder: 1,
   terminal: false,
+  performanceWeight: 0,
   active: true,
 };
 
@@ -84,17 +85,26 @@ function CategoryEditor({
               name="code"
               label="Kode"
               required
-              maxLength={16}
+              maxLength={30}
               placeholder="mis. SP4"
               className="uppercase"
               hint="Huruf kapital, angka, dan garis bawah saja. Harus unik."
             />
-            <TextField name="label" label="Nama kategori" required maxLength={60} placeholder="mis. SP4 — skorsing" />
+            <TextField name="label" label="Nama kategori" required maxLength={150} placeholder="mis. Surat Peringatan 4" />
 
             <div className="grid gap-4 md:grid-cols-2">
               <TextField name="point" type="number" min={0} max={99} label="Poin demerit" required />
-              <TextField name="validityMonths" type="number" min={0} max={120} label="Masa berlaku (bulan)" required />
+              <TextField name="validityMonths" type="number" min={1} max={120} label="Masa berlaku (bulan)" required />
               <TextField name="levelOrder" type="number" min={0} max={99} label="Urutan level" required />
+              <TextField
+                name="performanceWeight"
+                type="number"
+                min={0}
+                step="0.01"
+                label="Bobot kinerja"
+                required
+                hint="performance_weight — kontribusi ke skor kinerja."
+              />
               <ToggleField
                 name="terminal"
                 label="Terminal"
@@ -111,19 +121,17 @@ function CategoryEditor({
 /**
  * Reprimand Type Setting — port `_prototype/reprimand-type-setting.html`.
  *
- * **GAP:** endpoint CRU `cnf_reprimand_category` / `cnf_reprimand_policy`
- * belum dispesifikasi di TSD §7.7. Layar ini mengikuti model terdokumentasi;
- * penegakannya ditunda sampai kontraknya ada.
+ * Kontrak UIC-EMPLOYEE 0.27 §7.5 (kategori CRU, tanpa delete, non-retroaktif) dan
+ * §7.6 (kebijakan append-only berversi; rilis ini hanya DIRECT).
  */
 export function ReprimandTypeSettingPage() {
   const { data: categories = [], isLoading } = useReprimandCategories();
   const { data: savedMode = 'DIRECT' } = useReprimandPolicy();
   const savePolicy = useSavePolicy();
-  const deactivate = useDeactivateCategory();
+  const { data: versions = [] } = useReprimandPolicyVersions();
 
   const [mode, setMode] = useState<PolicyMode>(savedMode);
   const [editing, setEditing] = useState<{ value: ReprimandCategory; originalCode?: string } | null>(null);
-  const [deactivating, setDeactivating] = useState<ReprimandCategory | null>(null);
 
   useEffect(() => setMode(savedMode), [savedMode]);
 
@@ -142,15 +150,15 @@ export function ReprimandTypeSettingPage() {
       >
         <div className="flex flex-col gap-5">
           <Note tone="warn" icon={<TriangleAlert />}>
-            <strong>GAP</strong> — endpoint CRU untuk <code className="font-mono">cnf_reprimand_category</code> /{' '}
-            <code className="font-mono">cnf_reprimand_policy</code> (dual-mode) <strong>belum dispesifikasi</strong>{' '}
-            di kontrak API. Layar ini mengikuti model terdokumentasi; penegakannya ditunda.
+            Kontrak terbit (UIC-EMPLOYEE §7.5/§7.6): kategori <strong>CRU tanpa delete</strong> dan non-retroaktif;
+            kebijakan <strong>append-only berversi</strong>. Rilis ini hanya mengaktifkan mode DIRECT — menerbitkan
+            ACCUMULATIVE ditolak <strong>422</strong>.
           </Note>
 
           <Card>
             <CardHead
               title="SP categories"
-              sub="Create / read / update · nonaktifkan, tanpa hard-delete"
+              sub="Create / read / update · tanpa delete (UIC §7.5)"
               action={
                 <PanelActionButton onClick={() => setEditing({ value: EMPTY_CATEGORY })}>
                   Add category
@@ -169,6 +177,7 @@ export function ReprimandTypeSettingPage() {
                 { key: 'point', header: 'Demerit', align: 'center', render: (row) => row.point },
                 { key: 'validity', header: 'Validity (mo)', align: 'center', render: (row) => row.validityMonths },
                 { key: 'level', header: 'Level', align: 'center', render: (row) => row.levelOrder },
+                { key: 'weight', header: 'Perf. Weight', align: 'center', render: (row) => row.performanceWeight },
                 {
                   key: 'terminal',
                   header: 'Terminal',
@@ -178,12 +187,7 @@ export function ReprimandTypeSettingPage() {
                 },
               ]}
               actions={(row) => (
-                <RowActions
-                  actions={[
-                    { label: 'Edit', onSelect: () => setEditing({ value: row, originalCode: row.code }) },
-                    { label: 'Deactivate', danger: true, onSelect: () => setDeactivating(row) },
-                  ]}
-                />
+                <RowButton onClick={() => setEditing({ value: row, originalCode: row.code })}>Edit</RowButton>
               )}
             />
           </Card>
@@ -215,7 +219,7 @@ export function ReprimandTypeSettingPage() {
                     value: 'ACCUMULATIVE',
                     title: 'Accumulative',
                     description:
-                      'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini.',
+                      'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini. Belum aktif pada rilis ini — menerbitkannya ditolak 422.',
                   },
                 ]}
               />
@@ -229,6 +233,22 @@ export function ReprimandTypeSettingPage() {
               </SnapshotPanel>
             )}
 
+            <DataTable<PolicyVersion>
+              rows={versions}
+              rowKey={(row) => row.id}
+              empty="Belum ada versi kebijakan."
+              columns={[
+                { key: 'version', header: 'Version', strong: true, render: (row) => `v${row.version}` },
+                { key: 'mode', header: 'Mode', render: (row) => row.mode },
+                { key: 'from', header: 'Effective From', muted: true, render: (row) => formatDate(row.effectiveFrom) },
+                {
+                  key: 'current',
+                  header: 'Current',
+                  render: (row) => (row.isCurrent ? <StatusBadge tone="ok">Current</StatusBadge> : <span className="text-fg-3">—</span>),
+                },
+              ]}
+            />
+
             <div className="flex flex-wrap justify-end gap-2 border-t border-border-1 pt-4">
               <Button variant="secondary" onClick={() => setMode(savedMode)} disabled={mode === savedMode}>
                 Reset
@@ -237,7 +257,7 @@ export function ReprimandTypeSettingPage() {
                 onClick={() => savePolicy.mutate({ mode })}
                 disabled={savePolicy.isPending || mode === savedMode}
               >
-                {savePolicy.isPending ? 'Menyimpan…' : 'Save policy'}
+                {savePolicy.isPending ? 'Menerbitkan…' : 'Publish new version'}
               </Button>
             </div>
           </Card>
@@ -246,18 +266,6 @@ export function ReprimandTypeSettingPage() {
 
       <CategoryEditor category={editing} onClose={() => setEditing(null)} />
 
-      <ConfirmDialog
-        open={Boolean(deactivating)}
-        title="Nonaktifkan kategori?"
-        description={`${deactivating?.code ?? ''} tidak lagi bisa dipilih saat menerbitkan reprimand. Reprimand lama tetap memakai snapshot-nya sendiri.`}
-        confirmLabel="Deactivate"
-        loading={deactivate.isPending}
-        onOpenChange={(open) => !open && setDeactivating(null)}
-        onConfirm={() =>
-          deactivating &&
-          deactivate.mutate({ code: deactivating.code }, { onSuccess: () => setDeactivating(null) })
-        }
-      />
     </>
   );
 }

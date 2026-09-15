@@ -57,6 +57,9 @@ export interface PersonalProfile {
   nationality: Nationality;
   npwp: string;
   npwpName: string;
+  /** varchar20 — ter-mask di detail, penuh hanya via reveal (UIC-PROFILE §2.2/§2.6). */
+  bpjsTenagaKerjaNumber: string;
+  bpjsKesehatanNumber: string;
   isDomicileSameAsIdCard: boolean;
   idCardAddress: string;
   domicileAddress: string;
@@ -223,4 +226,12 @@ export const TRAINING_CATEGORY_OPTIONS: Options<TrainingCategory> = [
 export function labelOf<T extends string>(options: Options<T>, value: T | '' | undefined): string {
   if (!value) return '—';
   return options.find((o) => o.value === value)?.label ?? value;
+}
+
+/** Balasan `GET /employee-profiles/{employee-id}/reveal` — PII penuh, menulis read-audit. */
+export interface ProfileReveal {
+  idCardNumber: string;
+  motherMaidenName: string;
+  bpjsTenagaKerjaNumber: string;
+  bpjsKesehatanNumber: string;
 }

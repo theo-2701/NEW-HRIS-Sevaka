@@ -51,3 +51,12 @@ export const useSaveWork = () =>
 
 export const useDeleteWork = () =>
   useProfileMutation<string>((id) => profileService.deleteWork(id), 'Riwayat pekerjaan dihapus.');
+
+/** Reveal PII penuh — satu baris read-audit per panggilan (UIC-PROFILE §2.6). */
+export function useRevealProfile() {
+  return useMutation({
+    mutationFn: () => profileService.reveal(),
+    onSuccess: () => toast('Nilai sensitif ditampilkan — satu baris read-audit ditulis (UIC-PROFILE §2.6).', 'warn'),
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}

@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth.store';
+import { useMe } from '@/features/dashboard/hooks/useDashboard';
 import { formatDateLong } from '@/lib/format';
 
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -16,6 +17,7 @@ const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 export function DashboardHero() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const { data: me } = useMe();
   const today = new Date();
 
   return (
@@ -26,7 +28,7 @@ export function DashboardHero() {
           <h1 className="m-0 font-display text-[32px] font-bold leading-tight tracking-[-0.02em] text-white">
             Selamat Datang,
             <br />
-            {user?.name ?? 'Budi Santoso'}!
+            {me?.nickname || me?.fullName || user?.name || 'Budi Santoso'}!
           </h1>
           <span className="mt-1.5 block font-body text-[13px] font-medium text-primary-200">
             {DAYS[today.getDay()]}, {formatDateLong(today)}

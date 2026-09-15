@@ -87,7 +87,7 @@ describe('RP-STANDING — derive-on-read dari snapshot', () => {
     const originalPoint = target.snapshot.point;
 
     await reprimandService.saveCategory(
-      { code: 'SP1', label: 'SP1 — diubah', point: 9, validityMonths: 12, levelOrder: 1, terminal: false, active: true },
+      { code: 'SP1', label: 'SP1 — diubah', point: 9, validityMonths: 12, levelOrder: 1, terminal: false, performanceWeight: 5, active: true },
       'SP1',
     );
 
@@ -112,21 +112,24 @@ describe('RP-TYPE-SETTING — konfigurasi', () => {
         validityMonths: 6,
         levelOrder: 5,
         terminal: false,
+        performanceWeight: 0,
         active: true,
       }),
     ).rejects.toThrow(/409/);
   });
 
-  it('menonaktifkan kategori tanpa menghapusnya', async () => {
-    await reprimandService.deactivateCategory('VERBAL');
+  it('performance_weight wajib ≥ 0 (UIC-EMPLOYEE §7.5)', async () => {
     const rows = await reprimandService.categories();
-    const verbal = rows.find((row) => row.code === 'VERBAL')!;
-    expect(verbal).toBeDefined();
-    expect(verbal.active).toBe(false);
+    const sp1 = rows.find((row) => row.code === 'SP1')!;
+    await expect(reprimandService.saveCategory({ ...sp1, performanceWeight: -1 }, 'SP1')).rejects.toThrow(/422/);
   });
 
-  it('menyimpan mode kebijakan standing', async () => {
-    await reprimandService.savePolicy('ACCUMULATIVE');
-    expect(await reprimandService.policy()).toBe('ACCUMULATIVE');
+  it('kebijakan append-only: ACCUMULATIVE ditolak 422 pada rilis ini', async () => {
+    await expect(reprimandService.savePolicy('ACCUMULATIVE')).rejects.toThrow(/422/);
+    expect(await reprimandService.policy()).toBe('DIRECT');
+    await reprimandService.savePolicy('DIRECT');
+    const versions = await reprimandService.policyVersions();
+    expect(versions[0]).toMatchObject({ version: 2, isCurrent: true });
+    expect(versions.filter((row) => row.isCurrent)).toHaveLength(1);
   });
 });

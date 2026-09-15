@@ -315,7 +315,7 @@ export const transitionService = {
     await api.post(`/transitions/${transitionId}/tasks/${taskId}/confirm`);
   },
 
-  /** GAP `PROB-FRONTEND-003` — endpoint waive belum ditegaskan di kontrak. */
+  /** `POST /transition-tasks/{id}/waive` (UIC-EMPLOYEE §5.4) — task yang sudah terminal ditolak 409. */
   async waiveTask(
     transitionId: string,
     taskId: string,
@@ -324,13 +324,16 @@ export const transitionService = {
     if (MOCK) {
       await delay(200);
       const row = findTask(transitionId, taskId);
+      if (row.status === 'COMPLETED' || row.status === 'WAIVED') {
+        throw new Error('409 — task sudah terminal; waive hanya untuk task yang belum selesai.');
+      }
       row.status = 'WAIVED';
       row.skipReason = payload.reason;
       row.waiveControl = payload.control;
       maybeComplete(find(transitionId));
       return;
     }
-    await api.post(`/transitions/${transitionId}/tasks/${taskId}/waive`, payload);
+    await api.post(`/transition-tasks/${taskId}/waive`, { waive_reason: payload.reason });
   },
 
   /** TR-CLEARANCE force-release — elevated, tercatat di audit log. */

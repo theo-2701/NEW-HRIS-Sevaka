@@ -27,8 +27,10 @@ describe('MR-CREATE — draft-first & blast radius', () => {
       leaveDate: '2026-12-01',
       employeeIds: ['emp-agus', 'emp-bunga', 'emp-tony'],
       notes: '',
+      batchTitle: 'Batch PHK Cabang X',
     });
     expect(row.status).toBe('DRAFT');
+    expect(row.batchTitle).toBe('Batch PHK Cabang X');
     expect(row.maker).toBe(CURRENT_USER);
     // Baris diri sendiri tidak ikut terhitung.
     expect(row.total).toBe(2);

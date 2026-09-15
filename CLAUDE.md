@@ -48,8 +48,10 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
   di memori, dan koneksi antar modul (mis. cuti disetujui → ledger saldo, New Joiner →
   Directory) memanggil fungsi service modul lain — bukan HTTP.
 - **Dokumen kontrak wajib dibaca sebelum membangun modul**, bukan hanya prototype:
-  `../HR Information System_v.21082026/uploads/` (FSD/UIC/TSD/ERD). Dokumen menang atas
-  prototype & Figma. Rekap audit: `docs/CONTRACT-AUDIT.md`.
+  `../HR Information System_v.21082026/uploads/` (FSD/UIC/TSD/ERD). FSD/UIC Auth, Employee,
+  Profile, Time, dan Company versi terbaru ada di
+  `../../HRIS-docs/New Source of Truth Docs - New Version/Dokumen HRIS/09_September/(150926)-FE-terusan/`.
+  Dokumen menang atas prototype & Figma. Rekap audit: `docs/CONTRACT-AUDIT.md`.
 
 ## Aturan yang paling sering dilanggar
 

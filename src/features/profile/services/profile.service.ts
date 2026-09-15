@@ -3,6 +3,7 @@ import { MOCK } from '@/services/mock';
 import { HR_RESTRICTED_FIELDS } from '@/features/profile/types';
 import type {
   EmployeeProfileData,
+  ProfileReveal,
   PersonalProfile,
   ProfileActor,
   Relative,
@@ -14,7 +15,7 @@ import type {
 /**
  * API service Employee Profile (ESS).
  *
- * Endpoint kontrak (UIC-001-PROFILE-0.2):
+ * Endpoint kontrak (UIC-001-PROFILE-0.6):
  *   GET  /employee-profiles/{employee-id}         — detail HOT+COLD (PII ter-mask)
  *   PUT  /employee-profiles/{employee-id}         — HOT+COLD satu transaksi;
  *                                                   field HR-restricted via ESS → 403
@@ -30,11 +31,20 @@ import type {
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
+/** Pemilik profil ESS di dataset (Budi Santoso) — `employee_id` pada path kontrak. */
+export const PROFILE_OWNER_ID = 'emp-budi';
+
+let revealAudit: { employeeId: string; revealedAt: string }[] = [];
+/** Jejak read-audit reveal (TSD §6.6) — untuk pengujian. */
+export const revealAuditTrail = () => revealAudit.map((row) => ({ ...row }));
+
 let mockData: EmployeeProfileData = {
   profile: {
     nationality: 'CITIZEN',
     npwp: '01.234.567.8-901.000',
     npwpName: 'Budi Santoso',
+    bpjsTenagaKerjaNumber: '0011223344',
+    bpjsKesehatanNumber: '0001112223333',
     isDomicileSameAsIdCard: true,
     idCardAddress: 'Jl. Merdeka No. 1, Bandung',
     domicileAddress: 'Jl. Merdeka No. 1, Bandung',
@@ -163,12 +173,12 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TRAINING_CATEGORIES: TrainingCategory[] = ['TECHNICAL', 'SOFT_SKILL', 'LEADERSHIP', 'COMPLIANCE', 'CERTIFICATION', 'OTHER'];
 
 export const profileService = {
-  async get(): Promise<EmployeeProfileData> {
+  async get(employeeId: string = PROFILE_OWNER_ID): Promise<EmployeeProfileData> {
     if (MOCK) {
       await delay();
       return structuredClone(mockData);
     }
-    const { data } = await api.get<EmployeeProfileData>('/employee-profiles/me');
+    const { data } = await api.get<EmployeeProfileData>(`/employee-profiles/${employeeId}`);
     return data;
   },
 
@@ -176,7 +186,11 @@ export const profileService = {
    * PUT HOT + COLD dalam satu transaksi (UIC §2.4). Server membaca baris terkini
    * lebih dulu; field HR-restricted yang diubah aktor ESS ditolak 403.
    */
-  async updateProfile(patch: Partial<PersonalProfile>, actor: ProfileActor = 'ESS'): Promise<void> {
+  async updateProfile(
+    patch: Partial<PersonalProfile>,
+    actor: ProfileActor = 'ESS',
+    employeeId: string = PROFILE_OWNER_ID,
+  ): Promise<void> {
     if (MOCK) {
       await delay();
       const current = mockData.profile;
@@ -196,10 +210,28 @@ export const profileService = {
       if (!next.idCardAddress.trim() || next.idCardAddress.length > 500) {
         throw new Error('422 — id_card_address wajib, maksimal 500 karakter.');
       }
+      if ([next.bpjsTenagaKerjaNumber, next.bpjsKesehatanNumber].some((value) => value && !/^\d{1,20}$/.test(value))) {
+        throw new Error('422 — nomor BPJS hanya angka, maksimal 20 digit.');
+      }
       mockData = { ...mockData, profile: next };
       return;
     }
-    await api.put('/employee-profiles/me', patch);
+    await api.put(`/employee-profiles/${employeeId}`, patch);
+  },
+
+  /**
+   * `GET /employee-profiles/{employee-id}/reveal` — KTP, nama gadis ibu, dan dua nomor
+   * BPJS penuh; scope `employee:profile:reveal` + menulis read-audit (UIC §2.6).
+   */
+  async reveal(employeeId: string = PROFILE_OWNER_ID): Promise<ProfileReveal> {
+    if (MOCK) {
+      await delay(200);
+      const { idCardNumber, motherMaidenName, bpjsTenagaKerjaNumber, bpjsKesehatanNumber } = mockData.profile;
+      revealAudit = [...revealAudit, { employeeId, revealedAt: new Date().toISOString() }];
+      return { idCardNumber, motherMaidenName, bpjsTenagaKerjaNumber, bpjsKesehatanNumber };
+    }
+    const { data } = await api.get<ProfileReveal>(`/employee-profiles/${employeeId}/reveal`);
+    return data;
   },
 
   async saveRelative(relative: Relative): Promise<void> {
@@ -286,3 +318,12 @@ export const profileService = {
     await api.delete(`/work-experiences/${id}`);
   },
 };
+
+/**
+ * Mock lintas modul — daftar keluarga (`mst_relative`) milik satu karyawan, dipakai
+ * PTKP Adjustment untuk memvalidasi `dependent_claims` (UIC-EMPLOYEE §8.1). Lingkup
+ * baris dikunci ke pemilik (UIC-PROFILE §3.3).
+ */
+export function relativesOf(employeeId: string): Relative[] {
+  return employeeId === PROFILE_OWNER_ID ? mockData.relatives.map((row) => ({ ...row })) : [];
+}

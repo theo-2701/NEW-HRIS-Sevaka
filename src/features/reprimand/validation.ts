@@ -27,9 +27,9 @@ export const categorySchema = Yup.object({
   code: Yup.string()
     .trim()
     .required('Kode wajib diisi.')
-    .max(16, 'Maksimal 16 karakter.')
+    .max(30, 'Maksimal 30 karakter.')
     .matches(/^[A-Z0-9_]+$/, 'Hanya huruf kapital, angka, dan garis bawah.'),
-  label: Yup.string().trim().required('Nama kategori wajib diisi.').max(60, 'Maksimal 60 karakter.'),
+  label: Yup.string().trim().required('Nama kategori wajib diisi.').max(150, 'Maksimal 150 karakter.'),
   point: Yup.number()
     .typeError('Poin harus berupa angka.')
     .required('Poin demerit wajib diisi.')
@@ -40,7 +40,7 @@ export const categorySchema = Yup.object({
     .typeError('Masa berlaku harus berupa angka.')
     .required('Masa berlaku wajib diisi.')
     .integer('Masa berlaku harus bilangan bulat.')
-    .min(0, 'Masa berlaku tidak boleh negatif.')
+    .min(1, 'Masa berlaku minimal 1 bulan.')
     .max(120, 'Maksimal 120 bulan.'),
   levelOrder: Yup.number()
     .typeError('Urutan level harus berupa angka.')
@@ -48,5 +48,10 @@ export const categorySchema = Yup.object({
     .integer('Urutan level harus bilangan bulat.')
     .min(0, 'Urutan level tidak boleh negatif.')
     .max(99, 'Maksimal 99.'),
+  performanceWeight: Yup.number()
+    .typeError('Bobot harus berupa angka.')
+    .required('Bobot kinerja wajib diisi.')
+    .min(0, 'Bobot tidak boleh negatif.')
+    .max(999.99, 'Maksimal 999,99.'),
   terminal: Yup.boolean(),
 });

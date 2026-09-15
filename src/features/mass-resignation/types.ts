@@ -30,6 +30,8 @@ export interface MassBatch {
   status: BatchStatus;
   maker: string;
   notes?: string;
+  /** `batch_title` opsional, maks 150 (UIC §6.1). */
+  batchTitle?: string;
   /** Hash seleksi yang dibekukan saat approve — kunci anti-TOCTOU. */
   selectionHash?: string;
   /** Correlation id batch; menempel di tiap offboarding yang dilahirkan. */
@@ -52,6 +54,7 @@ export interface BatchDraft {
   leaveDate: string;
   employeeIds: string[];
   notes: string;
+  batchTitle?: string;
 }
 
 export const STATUS_LABEL: Record<BatchStatus, string> = {

@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { LEAVE_BALANCES, LEDGER } from '@/features/time-off/mock-data';
+import { LEAVE_BALANCES, LEAVE_TYPES, LEDGER } from '@/features/time-off/mock-data';
 import type {
   AdjustmentDraft,
   BalanceFilter,
@@ -165,3 +165,24 @@ export const balanceService = {
     return data.years;
   },
 };
+
+export interface LeaveBalanceMeSummary {
+  leaveCode: string;
+  periodYear: number;
+  /** `null` bila pemanggil belum punya baris saldo cuti tahunan. */
+  balanceDays: number | null;
+}
+
+/** #95 `GET /leave-balances/me-summary` — saldo cuti tahunan saja (`leave_code='CUTI-TAHUNAN'`). */
+export async function leaveBalanceMeSummary(employeeId: string, periodYear: number): Promise<LeaveBalanceMeSummary> {
+  if (MOCK) {
+    await delay(150);
+    const annual = LEAVE_TYPES.find((row) => row.code === 'CUTI-TAHUNAN');
+    const row = computeBalances().find(
+      (item) => item.employeeId === employeeId && item.leaveTypeId === annual?.id && item.periodYear === periodYear,
+    );
+    return { leaveCode: 'CUTI-TAHUNAN', periodYear, balanceDays: row?.balanceDays ?? null };
+  }
+  const { data } = await api.get<LeaveBalanceMeSummary>('/leave-balances/me-summary');
+  return data;
+}

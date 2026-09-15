@@ -67,6 +67,7 @@ export function ReviewCandidateModal({
           <KeyValueList>
             <KeyValueRow label="Kandidat">{candidate.name}</KeyValueRow>
             <KeyValueRow label="Email">{candidate.email}</KeyValueRow>
+            <KeyValueRow label="No. HP">{candidate.phone}</KeyValueRow>
             <KeyValueRow label="Posisi">{labelOf(POSITION_OPTIONS, candidate.positionId)}</KeyValueRow>
             <KeyValueRow label="Kewarganegaraan">{NATIONALITY_LABEL[candidate.nationality]}</KeyValueRow>
             <KeyValueRow label="Identitas">

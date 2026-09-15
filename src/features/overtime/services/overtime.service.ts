@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { acknowledge } from '@/services/decision';
+import type { DecisionAck } from '@/services/decision';
 import { OT_DAILY, OT_REQUESTS, OVERTIME_TODAY, RETRO_WINDOW_DAYS, employeeName } from '@/features/overtime/mock-data';
 import { approvedHoursOn, derive, payableHours, retroWindowStart } from '@/features/overtime/rules';
 import { canFileOvertime, canSearchAllOvertime, isOvertimeApprover } from '@/features/overtime/types';
@@ -210,7 +212,7 @@ export const overtimeService = {
     id: string,
     kind: 'APPROVED' | 'REJECTED',
     approvedHours?: number,
-  ): Promise<DecisionResult> {
+  ): Promise<DecisionAck<OvertimeRequest>> {
     if (MOCK) {
       await delay(400);
       const row = findRequest(id);
@@ -232,20 +234,35 @@ export const overtimeService = {
         }
       }
 
-      row.overtimeStatus = kind;
-      row.approvedHours = kind === 'APPROVED' ? approvedHours! : null;
-      row.approvedAt = `${OVERTIME_TODAY}T11:00:00+07:00`;
-      row.approvedBy = session.employeeId;
-
-      const recomputed = kind === 'APPROVED' ? recomputeDaily(row) : false;
-      return { row: { ...row }, recomputed };
+      // K9 (UIC-TIME §1.2/§8.1.5): keputusan diterima; status ditulis saat workflow selesai.
+      return acknowledge(row);
     }
 
-    const { data } = await api.post<OvertimeRequest>(`/overtime-requests/${id}/approval`, {
+    const { data } = await api.post<DecisionAck<OvertimeRequest>>(`/overtime-requests/${id}/approval`, {
       decision: kind,
       approved_hours: approvedHours,
     });
-    return { row: data, recomputed: false };
+    return data;
+  },
+
+  /**
+   * Mock saja — pengganti konsumsi `workflow.process.completed` lembur (K9): status,
+   * jam disetujui, dan hitung ulang ringkasan harian ditulis di sini.
+   */
+  async completeOvertimeWorkflow(
+    session: OvertimeSession,
+    id: string,
+    kind: 'APPROVED' | 'REJECTED',
+    approvedHours?: number,
+  ): Promise<DecisionResult> {
+    await delay(150);
+    const row = findRequest(id);
+    row.overtimeStatus = kind;
+    row.approvedHours = kind === 'APPROVED' ? (approvedHours ?? null) : null;
+    row.approvedAt = `${OVERTIME_TODAY}T11:00:00+07:00`;
+    row.approvedBy = session.employeeId;
+    const recomputed = kind === 'APPROVED' ? recomputeDaily(row) : false;
+    return { row: { ...row }, recomputed };
   },
 
   /** Soft-delete: barisnya tetap terbaca sebagai Cancelled. */

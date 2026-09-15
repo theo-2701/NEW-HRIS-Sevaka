@@ -5,6 +5,7 @@ import { CURRENT_USER, EMPLOYEE_OPTIONS, deriveLevel, isEffective, labelOf } fro
 import type {
   PolicyMode,
   Reprimand,
+  PolicyVersion,
   ReprimandCategory,
   ReprimandDraft,
   Standing,
@@ -29,13 +30,18 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
 let mockCategories: ReprimandCategory[] = [
-  { code: 'VERBAL', label: 'Verbal warning', point: 0, validityMonths: 3, levelOrder: 0, terminal: false, active: true },
-  { code: 'SP1', label: 'SP1 — peringatan tertulis pertama', point: 1, validityMonths: 6, levelOrder: 1, terminal: false, active: true },
-  { code: 'SP2', label: 'SP2 — peringatan tertulis kedua', point: 2, validityMonths: 6, levelOrder: 2, terminal: false, active: true },
-  { code: 'SP3', label: 'SP3 — peringatan terakhir', point: 3, validityMonths: 6, levelOrder: 3, terminal: true, active: true },
+  { code: 'VERBAL', label: 'Verbal warning', point: 0, validityMonths: 3, levelOrder: 0, terminal: false, performanceWeight: 0, active: true },
+  { code: 'SP1', label: 'SP1 — peringatan tertulis pertama', point: 1, validityMonths: 6, levelOrder: 1, terminal: false, performanceWeight: 5, active: true },
+  { code: 'SP2', label: 'SP2 — peringatan tertulis kedua', point: 2, validityMonths: 6, levelOrder: 2, terminal: false, performanceWeight: 10, active: true },
+  { code: 'SP3', label: 'SP3 — peringatan terakhir', point: 3, validityMonths: 6, levelOrder: 3, terminal: true, performanceWeight: 20, active: true },
 ];
 
-let mockPolicy: PolicyMode = 'DIRECT';
+/** `cnf_reprimand_policy` append-only berversi (UIC-EMPLOYEE §7.6, CD-019). */
+let mockPolicyVersions: PolicyVersion[] = [
+  { id: 'rpol-1', version: 1, mode: 'DIRECT', isCurrent: true, effectiveFrom: '2026-01-01' },
+];
+
+const currentPolicyMode = (): PolicyMode => mockPolicyVersions.find((row) => row.isCurrent)?.mode ?? 'DIRECT';
 
 /** Snapshot dibekukan dari konfigurasi yang berlaku SAAT diterbitkan. */
 function freezeSnapshot(code: string) {
@@ -140,7 +146,7 @@ export const reprimandService = {
   async standing(): Promise<Standing[]> {
     if (MOCK) {
       await delay(200);
-      return computeStanding(mockRows, mockPolicy);
+      return computeStanding(mockRows, currentPolicyMode());
     }
     const { data } = await api.get<{ rows: Standing[] }>('/reprimands/standing');
     return data.rows;
@@ -231,15 +237,15 @@ export const reprimandService = {
     await api.post(`/reprimands/${id}/revoke`, { note });
   },
 
-  // ---------- RP-TYPE-SETTING (GAP: endpoint CRU belum dispesifikasi) ----------
+  // ---------- RP-TYPE-SETTING (UIC-EMPLOYEE §7.5 kategori CRU · §7.6 policy append-only) ----------
 
   async categories(): Promise<ReprimandCategory[]> {
     if (MOCK) {
       await delay(200);
       return mockCategories.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: ReprimandCategory[] }>('/config/reprimand-categories');
-    return data.rows;
+    const { data } = await api.post<{ data: ReprimandCategory[] }>('/reprimand-categories/search', {});
+    return data.data;
   },
 
   async saveCategory(category: ReprimandCategory, originalCode?: string): Promise<void> {
@@ -249,6 +255,7 @@ export const reprimandService = {
         (row) => row.code === category.code && row.code !== originalCode,
       );
       if (duplicate) throw new Error('409 — kode kategori sudah dipakai.');
+      if (!(category.performanceWeight >= 0)) throw new Error('422 — performance_weight wajib, minimal 0.');
 
       mockCategories = originalCode
         ? mockCategories.map((row) => (row.code === originalCode ? { ...category } : row))
@@ -256,42 +263,49 @@ export const reprimandService = {
       return;
     }
     if (originalCode) {
-      await api.put(`/config/reprimand-categories/${originalCode}`, category);
+      await api.put(`/reprimand-categories/${originalCode}`, category);
       return;
     }
-    await api.post('/config/reprimand-categories', category);
+    await api.post('/reprimand-categories', category);
   },
 
-  /**
-   * Menonaktifkan kategori — **soft**, tidak ada hard-delete. Reprimand lama
-   * tetap memakai snapshot-nya masing-masing.
-   */
-  async deactivateCategory(code: string): Promise<void> {
-    if (MOCK) {
-      await delay(200);
-      const active = mockCategories.filter((row) => row.active);
-      if (active.length <= 1) throw new Error('422 — minimal satu kategori harus tetap aktif.');
-      mockCategories = mockCategories.map((row) => (row.code === code ? { ...row, active: false } : row));
-      return;
-    }
-    await api.post(`/config/reprimand-categories/${code}/deactivate`);
-  },
-
+  /** `GET /reprimand-policies/current` — `{}` bila belum ada versi (bawaan DIRECT). */
   async policy(): Promise<PolicyMode> {
     if (MOCK) {
       await delay(150);
-      return mockPolicy;
+      return currentPolicyMode();
     }
-    const { data } = await api.get<{ mode: PolicyMode }>('/config/reprimand-policy');
-    return data.mode;
+    const { data } = await api.get<{ mode?: PolicyMode }>('/reprimand-policies/current');
+    return data.mode ?? 'DIRECT';
   },
 
+  /** `POST /reprimand-policies/search` — riwayat versi, terbaru dulu. */
+  async policyVersions(): Promise<PolicyVersion[]> {
+    if (MOCK) {
+      await delay(150);
+      return [...mockPolicyVersions].sort((a, b) => b.version - a.version).map((row) => ({ ...row }));
+    }
+    const { data } = await api.post<{ data: PolicyVersion[] }>('/reprimand-policies/search', {});
+    return data.data;
+  },
+
+  /**
+   * `POST /reprimand-policies` — menerbitkan versi baru; tidak ada PUT/DELETE (CD-019).
+   * Rilis ini hanya mengaktifkan DIRECT: `ACCUMULATIVE` ditolak 422.
+   */
   async savePolicy(mode: PolicyMode): Promise<void> {
     if (MOCK) {
       await delay();
-      mockPolicy = mode;
+      if (mode === 'ACCUMULATIVE') {
+        throw new Error('422 — mode ACCUMULATIVE belum aktif pada rilis ini (CD-019); hanya DIRECT yang bisa diterbitkan.');
+      }
+      const next = Math.max(0, ...mockPolicyVersions.map((row) => row.version)) + 1;
+      mockPolicyVersions = [
+        ...mockPolicyVersions.map((row) => ({ ...row, isCurrent: false })),
+        { id: `rpol-${next}`, version: next, mode, isCurrent: true, effectiveFrom: new Date().toISOString().slice(0, 10) },
+      ];
       return;
     }
-    await api.put('/config/reprimand-policy', { mode });
+    await api.post('/reprimand-policies', { mode, thresholds: null });
   },
 };

@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { acknowledge } from '@/services/decision';
+import type { DecisionAck } from '@/services/decision';
 import { DAILY } from '@/features/attendance/mock-data';
 import { HOLIDAYS, ME, WORK_CALENDARS } from '@/features/calendar/mock-data';
 import { APPROVAL_STATUS_LABEL } from '@/features/calendar/types';
@@ -167,7 +169,7 @@ export const calendarService = {
    * keputusan (200) — status baru tertulis saat `workflow.process.completed`
    * dikonsumsi (K9). Catatan opsional di kedua cabang (FSD §1.4).
    */
-  async decideHoliday(id: string, kind: 'APPROVED' | 'REJECTED', note: string): Promise<{ accepted: true }> {
+  async decideHoliday(id: string, kind: 'APPROVED' | 'REJECTED', note: string): Promise<DecisionAck<CalendarHoliday>> {
     if (MOCK) {
       await delay(400);
       const row = findHoliday(id);
@@ -178,10 +180,13 @@ export const calendarService = {
         throw new Error('422 — hanya baris yang menunggu keputusan yang bisa diputuskan.');
       }
       void note;
-      return { accepted: true };
+      return acknowledge(cloneHoliday(row));
     }
-    await api.post(`/holidays/${id}/approval`, { decision: kind, note: note || undefined });
-    return { accepted: true };
+    const { data } = await api.post<DecisionAck<CalendarHoliday>>(`/holidays/${id}/approval`, {
+      decision: kind,
+      note: note || undefined,
+    });
+    return data;
   },
 
   /** Mock saja — pengganti konsumsi `workflow.process.completed` untuk libur. */

@@ -110,20 +110,24 @@ describe('Keputusan', () => {
 
   it('jam yang disetujui boleh dipangkas, tidak pernah dinaikkan', async () => {
     await expect(overtimeService.decide(HENDRA, 'ot-3', 'APPROVED', 5)).rejects.toThrow(/dinaikkan/);
-    const result = await overtimeService.decide(HENDRA, 'ot-3', 'APPROVED', 1.5);
+    const ack = await overtimeService.decide(HENDRA, 'ot-3', 'APPROVED', 1.5);
+    expect(ack).toMatchObject({ overtimeStatus: 'PENDING_APPROVAL', decisionReceived: true });
+    const result = await overtimeService.completeOvertimeWorkflow(HENDRA, 'ot-3', 'APPROVED', 1.5);
     expect(result.row.approvedHours).toBe(1.5);
     expect(result.row.approvedBy).toBe('emp-hendra');
   });
 
   it('persetujuan saja tidak melahirkan baris fakta harian', async () => {
-    const result = await overtimeService.decide(BUDI, 'ot-3', 'APPROVED', 3);
+    await overtimeService.decide(BUDI, 'ot-3', 'APPROVED', 3);
+    const result = await overtimeService.completeOvertimeWorkflow(BUDI, 'ot-3', 'APPROVED', 3);
     expect(result.recomputed).toBe(false);
     const rows = await overtimeService.daily(HENDRA);
     expect(rows.find((row) => row.overtimeDate === '2026-07-30')).toBeUndefined();
   });
 
   it('menolak tidak menyisakan jam yang bisa dibayar', async () => {
-    const result = await overtimeService.decide(HENDRA, 'ot-3', 'REJECTED');
+    await overtimeService.decide(HENDRA, 'ot-3', 'REJECTED');
+    const result = await overtimeService.completeOvertimeWorkflow(HENDRA, 'ot-3', 'REJECTED');
     expect(result.row.overtimeStatus).toBe('REJECTED');
     expect(result.row.approvedHours).toBeNull();
   });

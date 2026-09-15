@@ -24,7 +24,7 @@ import {
   TwoCol,
   monoClass,
 } from '@/features/profile/components/ProfileBits';
-import { useUpdateProfile } from '@/features/profile/hooks/useProfile';
+import { useRevealProfile, useUpdateProfile } from '@/features/profile/hooks/useProfile';
 import { basicInfoSchema } from '@/features/profile/validation';
 import {
   BLOOD_TYPE_OPTIONS,
@@ -39,12 +39,17 @@ import {
 } from '@/features/profile/types';
 import type { PersonalProfile, ProfileActor } from '@/features/profile/types';
 import { formatDate } from '@/lib/format';
-import { toast } from '@/store/ui.store';
 
 /** KTP disamarkan sampai pengguna menekan Reveal (menulis read-audit). */
 function maskIdCard(value: string) {
   if (!value) return '—';
   return `${value.slice(0, 4)}••••••••${value.slice(-4)}`;
+}
+
+/** Nomor BPJS ter-mask sebagian (UIC-PROFILE §2.2); penuh hanya setelah reveal. */
+function BpjsValue({ value, full }: { value: string; full?: string }) {
+  if (!value) return <Empty />;
+  return <span className={monoClass}>{full ?? `${value.slice(0, 4)}••••${value.slice(-2)}`}</span>;
 }
 
 /** Penanda field yang hanya boleh diubah HR — port `.ep-locked-note`. */
@@ -71,7 +76,8 @@ function DomicileMirror() {
 
 export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile; actor: ProfileActor }) {
   const [editing, setEditing] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const reveal = useRevealProfile();
+  const revealed = reveal.data ?? null;
   const update = useUpdateProfile(actor);
   const hrLocked = actor === 'ESS';
 
@@ -95,7 +101,7 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
         action={<PanelActionButton onClick={() => setEditing(true)}>Edit</PanelActionButton>}
       >
         <Note icon={<Lock />}>
-          PII disamarkan secara bawaan (<Code>id_card_number</Code>, <Code>mother_maiden_name</Code>). Nilai penuh
+          PII disamarkan secara bawaan (<Code>id_card_number</Code>, <Code>mother_maiden_name</Code>, dua nomor BPJS). Nilai penuh
           hanya tampil lewat <Code>GET /{'{id}'}/reveal</Code>, yang menulis satu baris read-audit append-only.
         </Note>
 
@@ -108,7 +114,7 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
               <KeyValueRow label="KTP number">
                 {revealed ? (
                   <>
-                    <span className={monoClass}>{profile.idCardNumber}</span>{' '}
+                    <span className={monoClass}>{revealed.idCardNumber}</span>{' '}
                     <span className="font-body text-[11px] font-semibold text-success-700">· revealed</span>
                   </>
                 ) : (
@@ -116,10 +122,8 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
                     <span className={monoClass}>{maskIdCard(profile.idCardNumber)}</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setRevealed(true);
-                        toast('Nilai sensitif ditampilkan — satu baris read-audit ditulis (§6.6).', 'warn');
-                      }}
+                      onClick={() => reveal.mutate()}
+                      disabled={reveal.isPending}
                       className="inline-flex h-[26px] items-center gap-1.5 rounded-[7px] border border-fog bg-white px-2.5 font-body text-[11px] font-bold text-secondary-700 transition-colors hover:border-secondary-500 hover:bg-primary-50"
                     >
                       <Eye className="size-3" />
@@ -132,6 +136,12 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
                 {profile.npwp ? <span className={monoClass}>{profile.npwp}</span> : <Empty />}
               </KeyValueRow>
               <KeyValueRow label="NPWP name">{profile.npwpName || <Empty />}</KeyValueRow>
+              <KeyValueRow label="BPJS Ketenagakerjaan">
+                <BpjsValue value={profile.bpjsTenagaKerjaNumber} full={revealed?.bpjsTenagaKerjaNumber} />
+              </KeyValueRow>
+              <KeyValueRow label="BPJS Kesehatan">
+                <BpjsValue value={profile.bpjsKesehatanNumber} full={revealed?.bpjsKesehatanNumber} />
+              </KeyValueRow>
               <KeyValueRow label="Domicile = KTP">{profile.isDomicileSameAsIdCard ? 'Ya' : 'Tidak'}</KeyValueRow>
               <KeyValueRow label="KTP address">{profile.idCardAddress}</KeyValueRow>
               <KeyValueRow label="Domicile address">{profile.domicileAddress}</KeyValueRow>
@@ -158,7 +168,7 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
               </KeyValueRow>
               <KeyValueRow label="Mother's maiden name">
                 {revealed ? (
-                  <span className={monoClass}>{profile.motherMaidenName}</span>
+                  <span className={monoClass}>{revealed.motherMaidenName}</span>
                 ) : (
                   <PiiHidden>tersembunyi (rahasia KBA)</PiiHidden>
                 )}
@@ -243,6 +253,8 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
 
               <TextField name="npwp" label="NPWP" placeholder="01.234.567.8-901.000" />
               <TextField name="npwpName" label="NPWP name" />
+              <TextField name="bpjsTenagaKerjaNumber" label="BPJS Ketenagakerjaan" maxLength={20} placeholder="Nomor kepesertaan" />
+              <TextField name="bpjsKesehatanNumber" label="BPJS Kesehatan" maxLength={20} placeholder="Nomor kepesertaan" />
 
               <TextField
                 name="passportNumber"

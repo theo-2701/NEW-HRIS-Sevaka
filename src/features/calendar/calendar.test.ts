@@ -83,7 +83,7 @@ describe('Holiday — maker–checker', () => {
   });
 
   it('catatan keputusan opsional, termasuk saat menolak (FSD §1.4)', async () => {
-    await expect(calendarService.decideHoliday('hol-4', 'REJECTED', '')).resolves.toEqual({ accepted: true });
+    await expect(calendarService.decideHoliday('hol-4', 'REJECTED', '')).resolves.toMatchObject({ id: 'hol-4', approvalStatus: 'PENDING_APPROVAL', decisionReceived: true });
   });
 
   it('keputusan hanya diterima; status ditulis saat workflow selesai (K9)', async () => {

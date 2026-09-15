@@ -10,6 +10,9 @@ export const batchSchema = Yup.object({
   leaveDate: Yup.string().required('Tanggal efektif keluar wajib diisi.'),
   employeeIds: Yup.array(Yup.string()).min(1, 'Pilih minimal satu karyawan.'),
   notes: Yup.string().max(150, 'Maksimal 150 karakter.'),
+  batchTitle: Yup.string()
+    .max(150, 'Maksimal 150 karakter.')
+    .matches(/^[A-Za-z0-9 .,'()-]*$/, "Hanya huruf, angka, spasi, dan . , ' ( ) -"),
 });
 
 /** Catatan checker wajib — masuk audit bersama keputusannya (UIC §6.2). */

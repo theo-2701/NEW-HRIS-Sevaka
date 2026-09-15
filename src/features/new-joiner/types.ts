@@ -24,6 +24,8 @@ export interface Candidate {
   id: string;
   name: string;
   email: string;
+  /** `candidate_phone` (UIC-EMPLOYEE §4.1) — disimpan dalam bentuk `+62…`. */
+  phone: string;
   positionId: string;
   requisitionId: string;
   nationality: Nationality;
@@ -51,6 +53,7 @@ export interface CandidateDraft {
   idCardNumber: string;
   passportNumber: string;
   email: string;
+  phone: string;
   intendedJoinDate: string;
 }
 

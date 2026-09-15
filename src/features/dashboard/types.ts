@@ -1,21 +1,3 @@
-export interface GenderSlice {
-  label: string;
-  value: number;
-  color: string;
-}
-
-export interface SeriesPoint {
-  label: string;
-  value: number;
-}
-
-export interface JobLevelSlice {
-  label: string;
-  count: number;
-  percent: number;
-  color: string;
-}
-
 export interface LeaveBalance {
   annualLeaveDays: number;
   sickLeaveUsedDays: number;
@@ -48,13 +30,28 @@ export interface ContractRow {
 }
 
 export interface DashboardSummary {
-  gender: GenderSlice[];
-  staffActive: SeriesPoint[];
-  turnover: SeriesPoint[];
-  jobLevels: JobLevelSlice[];
-  totalEmployees: number;
   leave: LeaveBalance;
   whosOff: WhosOffEntry[];
   lockedAccounts: LockedAccount[];
   contracts: ContractRow[];
+}
+
+/** Nilai lima kartu HOME dua lapis (FSD-AUTH §2.9). `null` = kartu gagal/kosong. */
+export interface HomeStats {
+  periodYear: number;
+  leaveBalanceDays: number | null;
+  /** `yyyy-MM` */
+  month: string;
+  presentDays: number | null;
+  activeEmployees: number | null;
+  workDate: string;
+  presentToday: number | null;
+  onLeaveToday: number | null;
+}
+
+/** Bagian `GET /api/v1/auth/me` yang dipakai sapaan HOME. */
+export interface AuthMe {
+  fullName: string;
+  nickname: string | null;
+  role: string;
 }

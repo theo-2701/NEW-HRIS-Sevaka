@@ -21,7 +21,8 @@ import {
   PtkpCodeChip,
 } from '@/features/ptkp/components/PtkpBits';
 import { ChangeSubjectModal } from '@/features/ptkp/components/ChangeSubjectModal';
-import { useAdjustPtkp, usePtkpPeriods, usePtkpSubjects } from '@/features/ptkp/hooks/usePtkp';
+import { DependentClaimsField } from '@/features/ptkp/components/DependentClaimsField';
+import { useAdjustPtkp, usePtkpPeriods, usePtkpRelatives, usePtkpSubjects } from '@/features/ptkp/hooks/usePtkp';
 import { ptkpAdjustmentSchema } from '@/features/ptkp/validation';
 import { CURRENT_USER, LOCKED_TAX_YEAR_UNTIL, PTKP_CODE_OPTIONS } from '@/features/ptkp/types';
 import type { PtkpAdjustmentDraft, PtkpPeriod, PtkpSubject } from '@/features/ptkp/types';
@@ -37,6 +38,8 @@ const EMPTY_DRAFT: PtkpAdjustmentDraft = {
   remarks: '',
   documentName: '',
   attestation: false,
+  isPrimaryEmployer: false,
+  dependentClaims: [],
 };
 
 /**
@@ -57,6 +60,7 @@ export function PtkpAdjustmentPage() {
 
   const { data: periods = [], isLoading } = usePtkpPeriods(subject?.id);
   const adjust = useAdjustPtkp(subject?.id);
+  const { data: relatives = [] } = usePtkpRelatives(subject?.id);
 
   const running = periods.find((row) => row.status === 'ACTIVE');
   const paged = usePagedRows(periods);
@@ -164,6 +168,13 @@ export function PtkpAdjustmentPage() {
                         placeholder="mis. Anak kedua lahir — perubahan jumlah tanggungan."
                         hint="Opsional."
                       />
+
+                      <CheckboxField name="isPrimaryEmployer">
+                        <strong>Pemberi kerja utama.</strong> Perusahaan ini adalah pemberi kerja utama karyawan
+                        pada periode PTKP ini — ikut atestasi dan persetujuan yang sama.
+                      </CheckboxField>
+
+                      <DependentClaimsField relatives={relatives} />
 
                       <CheckboxField name="attestation">
                         <strong>Atestasi.</strong> Saya menyatakan status PTKP di atas benar dan sesuai

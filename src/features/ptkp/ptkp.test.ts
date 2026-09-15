@@ -10,6 +10,8 @@ const valid = {
   remarks: '',
   documentName: '',
   attestation: true,
+  isPrimaryEmployer: true,
+  dependentClaims: [] as string[],
 };
 
 describe('PTKP-ADJUST — validasi form', () => {
@@ -83,5 +85,19 @@ describe('Format kode PTKP', () => {
   it('memendekkan kode master jadi bentuk tampilan', () => {
     expect(shortCode('TK0')).toBe('TK/0');
     expect(shortCode('K3')).toBe('K/3');
+  });
+});
+
+describe('PTKP-ADJUST — pemberi kerja utama & tanggungan (UIC-EMPLOYEE §8.1)', () => {
+  it('menolak lebih dari 3 tanggungan', async () => {
+    await expect(ptkpService.adjust('emp-budi', { ...valid, dependentClaims: ['a', 'b', 'c', 'd'] })).rejects.toThrow(/maksimal 3/);
+  });
+
+  it('tanggungan wajib milik karyawan ini — dibaca dari Employee Profile', async () => {
+    await expect(ptkpService.adjust('emp-eka', { ...valid, dependentClaims: ['rel-x'] })).rejects.toThrow(/milik karyawan ini/);
+    const relatives = await ptkpService.relatives('emp-budi');
+    const claims = relatives.slice(0, 2).map((row) => row.id);
+    const created = await ptkpService.adjust('emp-budi', { ...valid, effectiveFrom: '2026-09-01', dependentClaims: claims });
+    expect(created).toMatchObject({ isPrimaryEmployer: true, dependentClaims: claims });
   });
 });

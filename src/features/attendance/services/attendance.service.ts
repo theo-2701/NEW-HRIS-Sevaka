@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { acknowledge } from '@/services/decision';
+import type { DecisionAck } from '@/services/decision';
 import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
 import { captureChannel, nextPunchType, punchesToday } from '@/features/attendance/rules';
 import {
@@ -277,7 +279,7 @@ export const attendanceService = {
     session: AttendanceSession,
     id: string,
     kind: 'APPROVED' | 'REJECTED',
-  ): Promise<Correction> {
+  ): Promise<DecisionAck<Correction>> {
     if (MOCK) {
       await delay(400);
       const row = findCorrection(id);
@@ -291,9 +293,11 @@ export const attendanceService = {
         throw new Error('422 — koreksi ini sudah diputuskan.');
       }
       // K9: keputusan diterima (200); status & baris harian ditulis saat workflow selesai.
-      return { ...row };
+      return acknowledge(row);
     }
-    const { data } = await api.post<Correction>(`/attendance-corrections/${id}/approval`, { decision: kind });
+    const { data } = await api.post<DecisionAck<Correction>>(`/attendance-corrections/${id}/approval`, {
+      decision: kind,
+    });
     return data;
   },
 
@@ -335,3 +339,52 @@ export const attendanceService = {
     return data;
   },
 };
+
+export interface AttendanceMeMonthly {
+  month: string;
+  presentDays: number;
+}
+
+export interface AttendanceTodayOverview {
+  workDate: string;
+  presentCount: number;
+  onLeaveCount: number;
+}
+
+/** #96 `GET /attendance-summaries/me-monthly` — hari hadir bulan berjalan: `attendance_status IN (PRESENT, LATE)`. */
+export async function attendanceMeMonthly(
+  employeeId: string,
+  month = ATTENDANCE_TODAY.slice(0, 7),
+): Promise<AttendanceMeMonthly> {
+  if (MOCK) {
+    await delay(150);
+    const presentDays = mockDays.filter(
+      (day) =>
+        day.employeeId === employeeId &&
+        day.workDate.startsWith(month) &&
+        (day.attendanceStatus === 'PRESENT' || day.attendanceStatus === 'LATE'),
+    ).length;
+    return { month, presentDays };
+  }
+  const { data } = await api.get<AttendanceMeMonthly>('/attendance-summaries/me-monthly');
+  return data;
+}
+
+/**
+ * #97 `GET /attendance-summaries/today-overview` — satu alamat untuk kartu "Hadir Hari Ini"
+ * dan "Sedang Cuti Hari Ini"; dilarang memulangkan baris perorangan. Sedang cuti =
+ * `attendance_status IN (ON_LEAVE, SICK)` (D3).
+ */
+export async function attendanceTodayOverview(workDate = ATTENDANCE_TODAY): Promise<AttendanceTodayOverview> {
+  if (MOCK) {
+    await delay(150);
+    const today = mockDays.filter((day) => day.workDate === workDate);
+    return {
+      workDate,
+      presentCount: today.filter((day) => day.attendanceStatus === 'PRESENT' || day.attendanceStatus === 'LATE').length,
+      onLeaveCount: today.filter((day) => day.attendanceStatus === 'ON_LEAVE' || day.attendanceStatus === 'SICK').length,
+    };
+  }
+  const { data } = await api.get<AttendanceTodayOverview>('/attendance-summaries/today-overview');
+  return data;
+}

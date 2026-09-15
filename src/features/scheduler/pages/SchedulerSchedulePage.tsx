@@ -311,7 +311,7 @@ export function SchedulerSchedulePage() {
                     },
                     {
                       key: 'decided',
-                      header: 'Decided By',
+                      header: 'Approved By',
                       muted: true,
                       render: (row) => (row.approvedBy ? employeeName(row.approvedBy) : '—'),
                     },

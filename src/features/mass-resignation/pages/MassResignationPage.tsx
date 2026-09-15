@@ -86,7 +86,20 @@ export function MassResignationPage() {
                 loading={isLoading}
                 empty="Belum ada batch."
                 columns={[
-                  { key: 'id', header: 'Batch', strong: true, nowrap: true, render: (row) => row.id },
+                  {
+                    key: 'id',
+                    header: 'Batch',
+                    strong: true,
+                    nowrap: true,
+                    render: (row) => (
+                      <span className="flex flex-col gap-0.5">
+                        <span>{row.id}</span>
+                        {row.batchTitle && (
+                          <span className="font-body text-[11px] font-medium text-fg-3">{row.batchTitle}</span>
+                        )}
+                      </span>
+                    ),
+                  },
                   { key: 'reason', header: 'Reason', render: (row) => labelOf(REASON_OPTIONS, row.reason) },
                   {
                     key: 'leave',

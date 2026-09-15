@@ -89,14 +89,16 @@ describe('Correction — pengajuan', () => {
 
   it('menolak hari yang sudah punya koreksi menunggu keputusan', async () => {
     await expect(
-      attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-27' }),
+      attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-3' }),
     ).rejects.toThrow(/409/);
   });
 
   it('hari dengan koreksi hidup keluar dari daftar pilihan', async () => {
+    const before = eligibleDays(RINA, DAILY, await attendanceService.corrections(SARI));
+    expect(before.map((row) => row.id)).toContain('day-rina-26');
+    await attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-26' });
     const rows = eligibleDays(RINA, DAILY, await attendanceService.corrections(SARI));
-    expect(rows.map((row) => row.id)).toContain('day-rina-26');
-    expect(rows.map((row) => row.id)).not.toContain('day-rina-27');
+    expect(rows.map((row) => row.id)).not.toContain('day-rina-26');
   });
 
   it('HR_STAFF boleh mengajukan atas nama pemilik hari yang berbeda', async () => {
@@ -152,19 +154,22 @@ describe('Correction — keputusan', () => {
 
 describe('Correction — penarikan', () => {
   it('hanya pengaju yang bisa menarik', async () => {
-    await expect(attendanceService.withdrawCorrection(SARI, 'cor-1')).rejects.toThrow(/403/);
+    const created = await attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-26' });
+    await expect(attendanceService.withdrawCorrection(SARI, created.id)).rejects.toThrow(/403/);
   });
 
   it('penarikan bukan penghapusan — barisnya tinggal sebagai Cancelled', async () => {
-    const row = await attendanceService.withdrawCorrection(RINA, 'cor-1');
+    const created = await attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-26' });
+    const row = await attendanceService.withdrawCorrection(RINA, created.id);
     expect(row.correctionStatus).toBe('CANCELLED');
     const rows = await attendanceService.corrections(RINA);
-    expect(rows.find((item) => item.id === 'cor-1')).toBeTruthy();
+    expect(rows.find((item) => item.id === created.id)).toBeTruthy();
   });
 
   it('hari itu bebas dikoreksi lagi setelah penarikan', async () => {
-    await attendanceService.withdrawCorrection(RINA, 'cor-1');
-    const row = await attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-27' });
+    const created = await attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-26' });
+    await attendanceService.withdrawCorrection(RINA, created.id);
+    const row = await attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-rina-26' });
     expect(row.correctionStatus).toBe('PENDING_APPROVAL');
   });
 });

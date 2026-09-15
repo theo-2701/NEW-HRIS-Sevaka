@@ -19,6 +19,7 @@ const EMPTY: CandidateDraft = {
   idCardNumber: '',
   passportNumber: '',
   email: '',
+  phone: '',
   intendedJoinDate: '',
 };
 
@@ -209,6 +210,13 @@ export function CandidateFormModal({ open, onClose }: { open: boolean; onClose: 
                   required
                   placeholder="nama@email.com"
                   hint="Dipakai untuk undangan akun."
+                />
+                <TextField
+                  name="phone"
+                  label="No. HP kandidat"
+                  required
+                  placeholder="0812… atau +62812…"
+                  hint="Diseragamkan ke +62… saat disimpan."
                 />
                 <DateField
                   name="intendedJoinDate"

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { DashboardHero } from '@/features/dashboard/components/DashboardHero';
-import { StatCard } from '@/features/dashboard/components/StatCard';
-import { GenderDonut, JobLevelBar, StaffActiveChart, TurnoverChart } from '@/features/dashboard/components/StatCharts';
+import { HomeStatCards } from '@/features/dashboard/components/HomeStatCards';
 import {
   LeaveBalanceCard,
   PromoBanner,
@@ -15,7 +14,7 @@ import { useDashboardSummary } from '@/features/dashboard/hooks/useDashboard';
 
 /**
  * Dashboard — port `_prototype/index.html` + `js/dashboard.js`.
- * Susunan: hero · 4 kartu statistik · mid-row (Keamanan Akun + Quick Links |
+ * Susunan: hero · lima kartu angka dua lapis (FSD-AUTH 0.7 §2.9) · mid-row (Keamanan Akun + Quick Links |
  * banner + kartu bertab | saldo cuti + Who's Off).
  * Kartu bertab sengaja berada di kolom yang sama dengan banner sehingga
  * lebarnya mengikuti banner dan duduk tepat di bawahnya.
@@ -28,24 +27,8 @@ export function DashboardPage() {
     <>
       <DashboardHero />
 
-      {/* ---- Stat grid ---- */}
-      <section className="grid gap-4 xl:grid-cols-[1.05fr_1fr_1.1fr_1.2fr]">
-        <StatCard title="Gender Diversity" info="Komposisi gender karyawan aktif.">
-          {data && <GenderDonut data={data.gender} />}
-        </StatCard>
-
-        <StatCard title="Staff Active" info="Jumlah karyawan aktif enam bulan terakhir.">
-          {data && <StaffActiveChart data={data.staffActive} />}
-        </StatCard>
-
-        <StatCard title="Monthly Turnover" info="Persentase karyawan keluar per bulan.">
-          {data && <TurnoverChart data={data.turnover} />}
-        </StatCard>
-
-        <StatCard title="Job Level" info="Distribusi jenjang jabatan terhadap total karyawan.">
-          {data && <JobLevelBar data={data.jobLevels} total={data.totalEmployees} />}
-        </StatCard>
-      </section>
+      {/* ---- Kartu angka HOME dua lapis (FSD-AUTH 0.7 §2.9) ---- */}
+      <HomeStatCards />
 
       {/* ---- Mid row ---- */}
       <section className="grid items-start gap-4 xl:grid-cols-[260px_1fr_280px]">

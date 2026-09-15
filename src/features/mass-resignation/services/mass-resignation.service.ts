@@ -120,8 +120,9 @@ export const massResignationService = {
       await delay(200);
       return mockRows.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: MassBatch[] }>('/mass-resignations');
-    return data.rows;
+    // UIC-EMPLOYEE §6.7 — grid MR-DASH.
+    const { data } = await api.post<{ data: MassBatch[] }>('/mass-resignations/search', { page: 1, size: 100 });
+    return data.data;
   },
 
   async pool(): Promise<PoolEmployee[]> {
@@ -156,6 +157,10 @@ export const massResignationService = {
       const eligible = draft.employeeIds.filter((id) => !pool.find((item) => item.id === id)?.self);
       if (!eligible.length) throw new Error('422 — pilih minimal satu karyawan (tanpa diri sendiri).');
       if (!draft.reason || !draft.leaveDate) throw new Error('422 — reason_category dan effective_leave_date wajib diisi.');
+      const title = draft.batchTitle?.trim() ?? '';
+      if (title && !/^[A-Za-z0-9 .,'()-]{1,150}$/.test(title)) {
+        throw new Error('422 — batch_title maksimal 150 karakter, format §8.6.');
+      }
       const row: MassBatch = {
         id: `MR-00${43 + mockRows.length}`,
         reason: draft.reason,
@@ -165,6 +170,7 @@ export const massResignationService = {
         status: 'DRAFT',
         maker: CURRENT_USER,
         notes: draft.notes,
+        batchTitle: title || undefined,
       };
       mockRows = [row, ...mockRows];
       return row;

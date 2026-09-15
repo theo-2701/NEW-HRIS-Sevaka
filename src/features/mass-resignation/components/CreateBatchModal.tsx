@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RowButton } from '@/components/RowActions';
 import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
+import { TextField } from '@/components/form/TextField';
 import { SelectField } from '@/components/form/SelectField';
 import { ImpactBar, Note } from '@/features/mass-resignation/components/BatchBits';
 import { useCreateBatch, useDryRun, useEmployeePool } from '@/features/mass-resignation/hooks/useMassResignation';
@@ -184,7 +185,7 @@ export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: ()
 
   return (
     <Formik<BatchDraft>
-      initialValues={{ reason: '', leaveDate: '', employeeIds: [], notes: '' }}
+      initialValues={{ reason: '', leaveDate: '', employeeIds: [], notes: '', batchTitle: '' }}
       validationSchema={batchSchema}
       onSubmit={(values, helpers) =>
         create.mutate(values, {
@@ -225,6 +226,14 @@ export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: ()
                 <SelectField name="reason" label="Alasan" required placeholder="Pilih alasan" options={REASON_OPTIONS} />
                 <DateField name="leaveDate" label="Tanggal efektif keluar" required />
               </div>
+
+              <TextField
+                name="batchTitle"
+                label="Judul batch"
+                maxLength={150}
+                placeholder="mis. Batch PHK Cabang X"
+                hint="Opsional — memudahkan mencari batch di daftar."
+              />
 
               <SelectionSync selected={selected} />
               <SelectionTable selected={selected} onToggle={toggle} />

@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { acknowledge } from '@/services/decision';
+import type { DecisionAck } from '@/services/decision';
 import { ASSIGNMENTS, ME, SHIFTS, SWAPS } from '@/features/scheduler/mock-data';
 import { datesBetween } from '@/features/scheduler/rules';
 import type {
@@ -375,7 +377,7 @@ export const schedulerService = {
     return data;
   },
 
-  async decideSwap(id: string, kind: 'APPROVED' | 'REJECTED'): Promise<ShiftSwap> {
+  async decideSwap(id: string, kind: 'APPROVED' | 'REJECTED'): Promise<DecisionAck<ShiftSwap>> {
     if (MOCK) {
       await delay(400);
       const row = findSwap(id);
@@ -388,9 +390,11 @@ export const schedulerService = {
       }
       // K9 (UIC-TIME §10.3.4): keputusan diterima; roster bergerak saat workflow selesai.
       void kind;
-      return { ...row };
+      return acknowledge(row);
     }
-    const { data } = await api.post<ShiftSwap>(`/shift-swap-requests/${id}/approval`, { decision: kind });
+    const { data } = await api.post<DecisionAck<ShiftSwap>>(`/shift-swap-requests/${id}/approval`, {
+      decision: kind,
+    });
     return data;
   },
 

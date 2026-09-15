@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { acknowledge } from '@/services/decision';
+import type { DecisionAck } from '@/services/decision';
 import { evaluateGates, primaryExtraReason } from '@/features/time-off/gates';
 import { appendLedgerEntry } from '@/features/time-off/services/balance.service';
 import {
@@ -214,7 +216,7 @@ export const timeOffService = {
     decision: 'APPROVED' | 'REJECTED',
     note: string,
     now: Date,
-  ): Promise<void> {
+  ): Promise<DecisionAck<LeaveRequest>> {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
@@ -225,12 +227,13 @@ export const timeOffService = {
       if (row.status !== 'PENDING_APPROVAL') throw new Error('422 — pengajuan ini sudah tidak menunggu keputusan.');
       if (decision === 'REJECTED' && !note.trim()) throw new Error('422 — alasan penolakan wajib diisi.');
       void now;
-      return;
+      return acknowledge(row);
     }
-    await api.post(`/leave-requests/${id}/approval`, {
+    const { data } = await api.post<DecisionAck<LeaveRequest>>(`/leave-requests/${id}/approval`, {
       decision,
       reject_reason: decision === 'REJECTED' ? note : undefined,
     });
+    return data;
   },
 
   /**

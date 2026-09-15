@@ -178,10 +178,10 @@ export function OncallSchedulePage() {
                   header: 'Status',
                   render: (row) => <OncallStatusBadge status={row.oncallStatus} />,
                 },
-                { key: 'creator', header: 'Drafted By', muted: true, render: (row) => employeeName(row.createdBy) },
+                { key: 'creator', header: 'Composed By', muted: true, render: (row) => employeeName(row.createdBy) },
                 {
                   key: 'approver',
-                  header: 'Decided By',
+                  header: 'Approved By',
                   muted: true,
                   render: (row) => (row.approvedBy ? employeeName(row.approvedBy) : '—'),
                 },

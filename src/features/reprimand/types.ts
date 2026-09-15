@@ -59,11 +59,22 @@ export interface ReprimandCategory {
   validityMonths: number;
   levelOrder: number;
   terminal: boolean;
+  /** `performance_weight` numeric(5,2) ≥ 0 (UIC §7.5). */
+  performanceWeight: number;
   active: boolean;
 }
 
 /** Mode kebijakan standing (`cnf_reprimand_policy`) — satu mode per perusahaan. */
 export type PolicyMode = 'DIRECT' | 'ACCUMULATIVE';
+
+/** Satu versi `cnf_reprimand_policy` — append-only, tepat satu `isCurrent` (UIC §7.6). */
+export interface PolicyVersion {
+  id: string;
+  version: number;
+  mode: PolicyMode;
+  isCurrent: boolean;
+  effectiveFrom: string;
+}
 
 export const STATUS_LABEL: Record<ReprimandStatus, string> = {
   IN_APPROVAL: 'In approval',

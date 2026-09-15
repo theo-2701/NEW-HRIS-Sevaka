@@ -136,3 +136,15 @@ describe('server profile — gerbang UIC-PROFILE-0.2', () => {
     ).rejects.toThrow(/422/);
   });
 });
+
+describe('Reveal & BPJS (UIC-PROFILE 0.6 §2.1/§2.6)', () => {
+  it('reveal memulangkan PII penuh termasuk dua nomor BPJS', async () => {
+    const full = await profileService.reveal();
+    expect(full).toMatchObject({ bpjsTenagaKerjaNumber: '0011223344', bpjsKesehatanNumber: '0001112223333' });
+    expect(full.idCardNumber).toHaveLength(16);
+  });
+
+  it('nomor BPJS hanya angka, maksimal 20 digit', async () => {
+    await expect(profileService.updateProfile({ bpjsKesehatanNumber: '12-34' }, 'ESS')).rejects.toThrow(/422/);
+  });
+});

@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER } from '@/features/new-joiner/types';
 import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
@@ -43,6 +44,7 @@ let mockRows: Candidate[] = [
     id: 'nj-1',
     name: 'Putri Maharani',
     email: 'putri.m@email.com',
+    phone: '+628120000010',
     positionId: 'pos-be',
     requisitionId: 'REQ-0230',
     nationality: 'CITIZEN',
@@ -56,6 +58,7 @@ let mockRows: Candidate[] = [
     id: 'nj-2',
     name: 'James Okafor',
     email: 'j.okafor@email.com',
+    phone: '+628120000011',
     positionId: 'pos-be',
     requisitionId: 'REQ-0230',
     nationality: 'FOREIGNER',
@@ -69,6 +72,7 @@ let mockRows: Candidate[] = [
     id: 'nj-3',
     name: 'Andi Wijaya',
     email: 'andi.w@email.com',
+    phone: '+628120000012',
     positionId: 'pos-fin',
     requisitionId: 'REQ-0231',
     nationality: 'CITIZEN',
@@ -82,6 +86,7 @@ let mockRows: Candidate[] = [
     id: 'nj-4',
     name: 'Siti Nurhaliza',
     email: 'siti.n@email.com',
+    phone: '+628120000013',
     positionId: 'pos-hrbp',
     requisitionId: '',
     nationality: 'CITIZEN',
@@ -96,6 +101,7 @@ let mockRows: Candidate[] = [
     id: 'nj-5',
     name: 'Rudi Santoso',
     email: 'rudi.s@email.com',
+    phone: '+628120000014',
     positionId: 'pos-sales',
     requisitionId: '',
     nationality: 'CITIZEN',
@@ -110,6 +116,7 @@ let mockRows: Candidate[] = [
     id: 'nj-6',
     name: 'Maya Kusuma',
     email: 'maya.k@email.com',
+    phone: '+628120000015',
     positionId: 'pos-fin',
     requisitionId: 'REQ-0231',
     nationality: 'CITIZEN',
@@ -124,6 +131,7 @@ let mockRows: Candidate[] = [
     id: 'nj-7',
     name: 'Bima Sakti',
     email: 'bima.s@email.com',
+    phone: '+628120000016',
     positionId: 'pos-sales',
     requisitionId: '',
     nationality: 'CITIZEN',
@@ -137,6 +145,7 @@ let mockRows: Candidate[] = [
     id: 'nj-8',
     name: 'Clara Dubois',
     email: 'clara.d@email.com',
+    phone: '+628120000017',
     positionId: 'pos-hrbp',
     requisitionId: '',
     nationality: 'FOREIGNER',
@@ -150,6 +159,7 @@ let mockRows: Candidate[] = [
     id: 'nj-9',
     name: 'Yoga Pratama',
     email: 'yoga.p@email.com',
+    phone: '+628120000018',
     positionId: 'pos-be',
     requisitionId: '',
     nationality: 'CITIZEN',
@@ -199,8 +209,9 @@ export const newJoinerService = {
       await delay();
       return mockRows.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Candidate[] }>('/new-joiners');
-    return data.rows;
+    // UIC-EMPLOYEE §4.5 — grid NJ-LIST.
+    const { data } = await api.post<{ data: Candidate[] }>('/new-joiners/search', { page: 1, size: 100 });
+    return data.data;
   },
 
   async create(draft: CandidateDraft, submitNow: boolean): Promise<void> {
@@ -210,6 +221,10 @@ export const newJoinerService = {
       const name = draft.name.trim();
       if (!name || name.length > 150) throw new Error('422 — candidate_name wajib, maksimal 150 karakter.');
       if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email tidak valid.');
+      const phone = normalizePhone(draft.phone ?? '');
+      if (!CANDIDATE_PHONE.test(phone)) {
+        throw new Error('422 — candidate_phone wajib, format §8.3 (mis. +628123456789).');
+      }
       if (draft.nationality === 'CITIZEN' && !/^\d{16}$/.test(draft.idCardNumber)) {
         throw new Error('422 — id_card_number wajib 16 digit untuk CITIZEN.');
       }
@@ -224,6 +239,7 @@ export const newJoinerService = {
           id: newId(),
           name: draft.name.trim(),
           email: draft.email.trim(),
+          phone,
           positionId: draft.positionId,
           requisitionId: draft.requisitionId,
           nationality: draft.nationality,
@@ -240,7 +256,7 @@ export const newJoinerService = {
       if (submitNow) mockRows[0].status = 'SUBMITTED';
       return;
     }
-    await api.post('/new-joiners', draft);
+    await api.post('/new-joiners', { ...draft, phone: normalizePhone(draft.phone) });
     if (submitNow) {
       // Kontrak memisahkan create (DRAFT) dan submit.
     }

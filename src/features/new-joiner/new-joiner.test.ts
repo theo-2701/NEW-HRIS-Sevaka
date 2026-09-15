@@ -11,6 +11,7 @@ const base = {
   requisitionId: '',
   name: 'Kandidat Uji',
   email: 'kandidat@email.com',
+  phone: '081234567890',
   intendedJoinDate: '2099-01-01',
 };
 
@@ -19,6 +20,7 @@ function candidate(patch: Partial<Candidate>): Candidate {
     id: 'x',
     name: 'X',
     email: 'x@email.com',
+    phone: '081234567890',
     positionId: 'pos-be',
     requisitionId: '',
     nationality: 'CITIZEN',
@@ -98,6 +100,7 @@ describe('NJ-CREATE — KTP transient', () => {
         idCardNumber: '3171021505901234',
         passportNumber: '',
         email: 'transient@email.com',
+        phone: '081234567890',
         intendedJoinDate: '2099-01-01',
       },
       false,
@@ -181,5 +184,17 @@ describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)',
     await expect(
       newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' }),
     ).rejects.toThrow(/409/);
+  });
+});
+
+describe('NJ-CREATE — candidate_phone (UIC-EMPLOYEE §4.1)', () => {
+  it('nomor HP wajib dan diseragamkan ke +62', async () => {
+    await expect(newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505909999', passportNumber: '', phone: '' }, false)).rejects.toThrow(/candidate_phone/);
+    await newJoinerService.create(
+      { ...base, name: 'Phone Test', nationality: 'CITIZEN', idCardNumber: '3171021505908888', passportNumber: '', phone: '0812-3456-7890' },
+      false,
+    );
+    const saved = (await newJoinerService.list()).find((row) => row.name === 'Phone Test');
+    expect(saved?.phone).toBe('+6281234567890');
   });
 });

@@ -11,6 +11,18 @@ import * as Yup from 'yup';
  */
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** Regex `candidate_phone` (UIC-EMPLOYEE §9, TSD §8.3). */
+export const CANDIDATE_PHONE = /^[0-9+][0-9]{6,19}$/;
+
+/** Seragamkan nomor calon ke `+62…` sebelum dikirim ke auth-service saat materialize (UIC §4.1). */
+export function normalizePhone(value: string): string {
+  const compact = value.replace(/[\s-]/g, '');
+  if (compact.startsWith('+')) return compact;
+  if (compact.startsWith('62')) return `+${compact}`;
+  if (compact.startsWith('0')) return `+62${compact.slice(1)}`;
+  return compact;
+}
+
 export const candidateSchema = Yup.object({
   positionId: Yup.string().required('Posisi wajib dipilih.'),
   requisitionId: Yup.string(),
@@ -33,6 +45,10 @@ export const candidateSchema = Yup.object({
     otherwise: (schema) => schema,
   }),
   email: Yup.string().required('Email kandidat wajib diisi.').email('Format email tidak valid.'),
+  phone: Yup.string()
+    .trim()
+    .required('Nomor HP kandidat wajib diisi.')
+    .test('phone', 'Format nomor HP tidak valid (mis. 0812… atau +62812…).', (value) => !value || CANDIDATE_PHONE.test(normalizePhone(value))),
   intendedJoinDate: Yup.string()
     .required('Tanggal rencana masuk wajib diisi.')
     .test('not-past', 'Tanggal rencana masuk tidak boleh di masa lalu.', (value) => !value || value >= today()),

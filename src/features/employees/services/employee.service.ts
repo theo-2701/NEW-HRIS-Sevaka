@@ -383,3 +383,13 @@ export const employeeService = {
     return data;
   },
 };
+
+/** `GET /employees/active-count` (TSD-EMPLOYEE §7.17) — cacah saja, dilarang memulangkan baris perorangan. */
+export async function activeEmployeeCount(): Promise<{ activeCount: number }> {
+  if (MOCK) {
+    await delay(150);
+    return { activeCount: MOCK_EMPLOYEES.filter((row) => row.employmentStatus === 'ACTIVE').length };
+  }
+  const { data } = await api.get<{ activeCount: number }>('/employees/active-count');
+  return data;
+}

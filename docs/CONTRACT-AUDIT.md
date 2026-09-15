@@ -18,13 +18,16 @@ dengan versi tanpa sufiks — diabaikan.
 
 | Service | FSD | UIC | TSD | ERD | Modul di repo |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Auth | 0.2 | 0.8 | 0.23 | 0.11 | `auth`, unlock di `dashboard` |
-| Employee | 0.2 | 0.9 | 0.13 | 0.9 | `employees`, `manpower`, `new-joiner`, `transitions`, `mass-resignation`, `reprimand`, `ptkp` |
-| Employee Profile | 0.2 | 0.2 | — | 0.2 | `profile` |
-| Time | 0.1 | 0.1 | 0.6 | 0.4 | `calendar`, `time-off`, `attendance`, `overtime`, `scheduler`, `oncall` |
+| Auth | 0.7 | 0.14 | 0.23 | 0.11 | `auth`, unlock di `dashboard` |
+| Employee | 0.12 | 0.27 | 0.13 | 0.9 | `employees`, `manpower`, `new-joiner`, `transitions`, `mass-resignation`, `reprimand`, `ptkp` |
+| Employee Profile | 0.4 | 0.6 | — | 0.2 | `profile` |
+| Time | 0.3 | 0.6 | 0.6 | 0.4 | `calendar`, `time-off`, `attendance`, `overtime`, `scheduler`, `oncall` |
 | Finance | 0.2 | 0.2 | 0.3 | 0.2 | `benefit`, `loan`, `cash-advance`, `disbursement`, `finance-settings`, `finance-security` |
 
-Dashboard tidak punya dokumen kontrak tersendiri (shell aplikasi bersama).
+FSD/UIC Auth, Employee, Profile, dan Time memakai rilis **FE-terusan 15 September 2026**
+(`HRIS-docs/New Source of Truth Docs - New Version/Dokumen HRIS/09_September/(150926)-FE-terusan/`);
+TSD/ERD dan Finance tetap versi di atas. Company (FSD/UIC 0.9) ikut rilis itu tetapi modulnya belum dibangun.
+Home/Dashboard kini dikontrakkan FSD-AUTH §2.9 (lima kartu HOME).
 
 ## 2. Mode data dummy
 
@@ -88,6 +91,26 @@ Dashboard tidak punya dokumen kontrak tersendiri (shell aplikasi bersama).
 | Finance Security | Seed hold terduplikasi di Benefit & Loan (statis, tak bisa dipasang/dicabut); jumlah baris ekspor acak; cabut lewat `…/release` di jangkar Figma | Satu `holds-store` dibaca Benefit, Loan, Pencairan; baris ekspor dihitung dari data modul; `PATCH /dispute-holds/{id}` (PROB-FRONTEND-017); pemasangan ulang = baris baru |
 | Disbursement & Receivables | Dibangun langsung dari kontrak | Daftar diturunkan hidup dari tabel sumber (prototype memakai seed payable terpisah); mark-paid atomik (prototype menandai sebagian); `WITH_PAYROLL` ditolak juga untuk non-LOAN (TSD §3.3 poin 2); Super Admin tidak boleh declare-settled (FD-112); kolom `exit_date` prototype dibuang (bukan kolom ERD) |
 
+## 4A. Sinkronisasi rilis FE-terusan (15 September 2026)
+
+| Service | Perubahan dokumen | Penyesuaian di repo |
+| :--- | :--- | :--- |
+| Auth (FSD 0.7) | HOME: empat kartu grafik tanpa kontrak dihapus, diganti **lima kartu angka dua lapis** dengan alamat FINAL; sapaan dari `GET /auth/me` | `HomeStatCards`: lapis Milik Saya (sisa cuti tahunan #95, kehadiran bulan berjalan #96) + lapis Perusahaan untuk HR/manajemen (karyawan aktif §7.17, hadir & sedang cuti hari ini #97); gagal-sebagian tampil "—"; sapaan via `getMe` |
+| Time (UIC 0.4–0.6, FSD 0.2) | Enam pintu persetujuan membalas baris saat ini + `decision_received: true`; grid Tukar Shift + `approved_by`, Roster Siaga + `created_by`/`approved_by`; dataset `corr-1` APPROVED | `DecisionAck<T>` di Holiday, Time Off, Koreksi Absen, Overtime, Tukar Shift, On Call; **Overtime dipecah K9** (`completeOvertimeWorkflow`); kolom Approved/Composed By; `cor-1` APPROVED + `day-rina-27` `APPROVED_CORRECTION` |
+| Profile (UIC 0.3–0.6, FSD 0.3) | Path `/{employee-id}` (bukan `/me`); +`bpjs_tenaga_kerja_number`/`bpjs_kesehatan_number` ter-mask, penuh via reveal | Path & `reveal()` (read-audit); BPJS di detail/form, 422 bila bukan angka ≤20 |
+| Employee (UIC 0.10–0.27, FSD 0.3–0.12) | NJ `candidate_phone` wajib (+62); PTKP `is_primary_employer` wajib + `dependent_claims` ≤3; MR `batch_title`; Type Setting kategori CRU (+`performance_weight`) & policy append-only (ACCUMULATIVE 422); waive `/transition-tasks/{id}/waive`; alamat search NJ/MR | Semua field & gerbang di atas; tanggungan PTKP dibaca dari keluarga Employee Profile; aksi Deactivate kategori dihapus (tak ada di kontrak); riwayat versi policy tampil |
+
+**Belum dikerjakan dari rilis ini (dicatat, bukan dikarang):**
+
+| Butir | Alasan |
+| :--- | :--- |
+| Bulk Import Karyawan (FSD-EMPLOYEE §8, 4 layar) | Menu baru — tidak ada baris sidebar (sidebar dikunci); perlu keputusan penempatan |
+| Company (FSD/UIC 0.9) | Modul belum dibangun |
+| Directory: `join_date`/`leave_date` di-omit untuk Dept Manager | Layar Directory belum punya pemilih peran |
+| Picker unit/posisi (`group_struct_main_id`, `parent_pos_id`, `group_struct_pos_id`, `target_pos_id`) | UIC-EMPLOYEE G7 sendiri GAGAL — company-service belum mengontrakkan alamat lookup |
+| Pintu baca HR atas keluarga karyawan lain untuk `dependent_claims` | `employee-relatives/search` terkunci ke pemilik token (UIC-PROFILE §3.3) |
+| Kategori SP `level_order` ≥ 1 | Seed `VERBAL` memakai level 0; validasi form belum dinaikkan |
+
 ## 5. Koneksi antar modul (tanpa API)
 
 | Dari | Ke | Pemicu |
@@ -100,6 +123,8 @@ Dashboard tidak punya dokumen kontrak tersendiri (shell aplikasi bersama).
 | Finance Settings | Cash Advance | Daftar & gerbang jenis keperluan dibaca dari store Settings — jenis nonaktif ditolak 422 saat pengajuan |
 | Finance Security | Benefit, Loan, Pencairan & Piutang | Hold dipasang/dicabut di layar ini → penanda di grid & modal Benefit, modal keputusan Loan, gerbang 422 `FIN_DISPUTE_HOLD_ACTIVE` mark-paid |
 | Benefit, Loan, Cash Advance, Pencairan | Finance Security (ekspor) | Isi & `row_count` berkas dibaca dari data modul sumber / penanda pencairan |
+| Employee Profile | PTKP Adjustment | `dependent_claims` divalidasi terhadap keluarga karyawan di Profile (422 bila bukan miliknya) |
+| Time Off, Attendance, Employee | Home/Dashboard | Lima kartu HOME membaca saldo cuti, ringkasan kehadiran, dan cacah karyawan aktif |
 | Pencairan & Piutang | Benefit (Disbursement History) | Tab riwayat membaca penanda yang sama (`marks-store`) — tidak ada seed payable kedua |
 | Pencairan & Piutang | Cash Advance | Tanda `CASH_ADVANCE` → `disbursementMarked` (bantahan tertutup; dibalik → terbuka lagi); tanda `CASH_ADVANCE_SHORTFALL` → selisih `APPROVED` → `SETTLED` |
 

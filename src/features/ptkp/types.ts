@@ -39,6 +39,8 @@ export interface PtkpPeriod {
   remarks?: string;
   /** Id dokumen buram dari Document Service — bukan URL. */
   documentId?: string;
+  isPrimaryEmployer?: boolean;
+  dependentClaims?: string[];
 }
 
 export interface PtkpAdjustmentDraft {
@@ -48,6 +50,10 @@ export interface PtkpAdjustmentDraft {
   remarks: string;
   documentName: string;
   attestation: boolean;
+  /** Deklarasi pemberi kerja utama periode ini — wajib (UIC §8.1). */
+  isPrimaryEmployer: boolean;
+  /** `mst_relative.id` milik subjek, maksimal 3 (UIC §8.1). */
+  dependentClaims: string[];
 }
 
 /** Master `cnf_ptkp_effective` — kode di luar daftar ini ditolak server. */

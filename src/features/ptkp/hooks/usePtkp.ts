@@ -37,3 +37,12 @@ export function useAdjustPtkp(employeeId: string | undefined) {
     onError: (error: Error) => toast(error.message, 'danger'),
   });
 }
+
+/** Keluarga subjek (employee-profile) — kandidat dependent_claims. */
+export function usePtkpRelatives(employeeId?: string) {
+  return useQuery({
+    queryKey: ['ptkp', 'relatives', employeeId],
+    queryFn: () => ptkpService.relatives(employeeId as string),
+    enabled: Boolean(employeeId),
+  });
+}
