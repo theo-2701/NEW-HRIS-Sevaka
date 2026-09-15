@@ -48,12 +48,6 @@ const MOCK_SUMMARY: DashboardSummary = {
     { label: 'CEO', count: 1, percent: 0.1, color: '#062234' },
   ],
   totalEmployees: 1000,
-  leave: { annualLeaveDays: 10, sickLeaveUsedDays: 4 },
-  whosOff: [
-    { id: 'CP012', name: 'Mitsui Tiga', reason: 'Cuti Tahunan' },
-    { id: 'CP018', name: 'Mitsui Empat', reason: 'Cuti Tahunan' },
-    { id: 'CP021', name: 'Mitsui Lima', reason: 'Cuti Tahunan' },
-  ],
   lockedAccounts: [
     {
       id: 'CP007',

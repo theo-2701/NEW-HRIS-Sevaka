@@ -4,11 +4,9 @@ import {
   Award,
   Building,
   CalendarClock,
-  ChevronDown,
   FileStack,
   FileText,
   GraduationCap,
-  Info,
   Lightbulb,
   Puzzle,
   Repeat,
@@ -16,12 +14,7 @@ import {
   User,
   UsersRound,
 } from 'lucide-react';
-import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
-import { formatDateLong } from '@/lib/format';
-import type { LeaveBalance, WhosOffEntry } from '@/features/dashboard/types';
-
-const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** Kartu Keamanan Akun — port `.security-card`. */
 export function SecurityCard({ lockedCount, onUnlock }: { lockedCount: number; onUnlock: () => void }) {
@@ -145,104 +138,6 @@ export function PromoBanner() {
           />
         ))}
       </div>
-    </section>
-  );
-}
-
-/** Kartu saldo cuti — port `.leave-card`. */
-export function LeaveBalanceCard({ leave }: { leave: LeaveBalance }) {
-  return (
-    <section className="flex flex-col gap-3.5 rounded-xl border border-border-1 bg-bg-surface px-5 py-[18px] shadow-card-sm">
-      <LeaveSection
-        label="Annual Leave Balance"
-        info="Sisa cuti tahunan Anda pada periode berjalan."
-        value={leave.annualLeaveDays}
-        cta="Request annual leave"
-        to="/time/time-off/requests"
-      />
-      <div className="h-px bg-border-1" />
-      <LeaveSection
-        label="Sick Leave Used"
-        value={leave.sickLeaveUsedDays}
-        cta="Request sick leave"
-        to="/time/time-off/requests"
-      />
-      <Link to="/time/time-off/balance" className="font-body text-xs font-bold text-secondary-600 hover:underline">
-        View all
-      </Link>
-    </section>
-  );
-}
-
-function LeaveSection({
-  label,
-  info,
-  value,
-  cta,
-  to,
-}: {
-  label: string;
-  info?: string;
-  value: number;
-  cta: string;
-  to: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="inline-flex items-center gap-1.5 font-body text-[13px] font-bold leading-tight text-fg-1">
-        {label}
-        {info && (
-          <span title={info} className="inline-flex cursor-help items-center text-fg-4">
-            <Info className="size-3.5" />
-          </span>
-        )}
-      </span>
-      <span className="font-display text-[32px] font-bold leading-none tracking-[-0.02em] text-fg-1">
-        {value} <small className="font-body text-sm font-medium text-fg-3">Days</small>
-      </span>
-      <Link
-        to={to}
-        className="inline-flex items-center gap-1.5 font-body text-[13px] font-semibold text-secondary-600 hover:underline"
-      >
-        {cta}
-        <ArrowRight className="size-3.5" />
-      </Link>
-    </div>
-  );
-}
-
-/** Kartu Who's Off — port `.whoisoff-card`. */
-export function WhosOffCard({ entries }: { entries: WhosOffEntry[] }) {
-  const today = new Date();
-
-  return (
-    <section className="flex flex-col gap-2.5 rounded-xl border border-border-1 bg-bg-surface px-5 py-[18px] shadow-card-sm">
-      <header className="flex items-center justify-between gap-2">
-        <h4 className="m-0 font-display text-base font-bold leading-tight text-fg-1">Who&apos;s Off</h4>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 font-body text-xs font-semibold text-secondary-600 transition-colors hover:bg-mist"
-        >
-          Today
-          <ChevronDown className="size-3.5" />
-        </button>
-      </header>
-
-      <span className="font-body text-xs font-medium text-fg-3">
-        {DAYS_SHORT[today.getDay()]}, {formatDateLong(today)}
-      </span>
-
-      <ul className="m-0 flex list-none flex-col p-0">
-        {entries.map((entry) => (
-          <li key={entry.id} className="flex items-center gap-2.5 border-b border-vapor py-2 last:border-b-0">
-            <Avatar name={entry.name} size="sm" />
-            <div className="flex flex-col">
-              <span className="font-body text-[13px] font-bold leading-tight text-fg-1">{entry.name}</span>
-              <span className="font-body text-[11px] font-medium leading-tight text-fg-3">{entry.reason}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
