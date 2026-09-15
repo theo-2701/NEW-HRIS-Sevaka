@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Info, KeyRound, MapPin } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
 import { ARRANGEMENT_LABEL } from '@/features/attendance/types';
@@ -11,10 +13,63 @@ import { toast } from '@/store/ui.store';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 /**
+ * Lokasi kerja di kartu jam — nama lokasi selalu terlihat, syarat lengkapnya
+ * (arrangement, radius, selfie) dibuka lewat ikon info saat hover, fokus, atau ketuk.
+ */
+function LocationInfo({ channel }: { channel: CaptureChannel }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mb-3.5 flex min-w-0 items-center gap-1.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
+      <MapPin className="size-3.5 shrink-0" />
+      <span className="truncate">{channel.geofence.geofenceName}</span>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label="Work location requirements"
+            onMouseEnter={() => setOpen(true)}
+            onMouseLeave={() => setOpen(false)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setOpen(false)}
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-white transition-colors duration-150 ease-standard hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <Info className="size-3.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          side="bottom"
+          align="start"
+          className="w-[290px] p-3.5"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <p className="m-0 mb-2.5 font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">
+            Work location
+          </p>
+          <dl className="m-0 grid grid-cols-[88px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
+            <dt className="font-medium text-fg-3">Arrangement</dt>
+            <dd className="m-0 font-semibold text-fg-1">{ARRANGEMENT_LABEL[channel.arrangement]}</dd>
+            <dt className="font-medium text-fg-3">Location</dt>
+            <dd className="m-0 font-semibold text-fg-1">{channel.geofence.geofenceName}</dd>
+            <dt className="font-medium text-fg-3">Radius</dt>
+            <dd className="m-0 font-semibold text-fg-1">
+              {channel.geofence.radiusMeters} m · {channel.radius ? 'must be inside' : 'not required'}
+            </dd>
+            <dt className="font-medium text-fg-3">Selfie</dt>
+            <dd className="m-0 font-semibold text-fg-1">{channel.selfie ? 'Required' : 'Not required'}</dd>
+          </dl>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+/**
  * Konsol tap — port `.tm-punch`.
  *
  * Tombolnya tidak pernah dipilih: keadaan hari yang menentukan mana yang
  * muncul. Waktu, koordinat, akurasi, dan detail perangkat diambil di latar.
+ * Kartu jam di kiri, isi `children` (tabel tap hari ini) di kanan.
  */
 export function PunchConsole({
   workDate,
@@ -26,6 +81,7 @@ export function PunchConsole({
   onTakeSelfie,
   onPunch,
   busy,
+  children,
 }: {
   workDate: string;
   channel: CaptureChannel;
@@ -36,6 +92,7 @@ export function PunchConsole({
   onTakeSelfie: () => void;
   onPunch: () => void;
   busy: boolean;
+  children?: ReactNode;
 }) {
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => {
@@ -54,60 +111,58 @@ export function PunchConsole({
       : 'Both taps recorded. Punch is append-only: there is no edit and no delete here.';
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(280px,340px)_1fr]">
-      <div className="flex flex-col gap-1.5 rounded-2xl bg-[linear-gradient(180deg,rgb(122,185,212),rgb(2,99,149))] p-6 text-white shadow-card">
-        <span className="font-body text-[11px] font-semibold uppercase leading-none tracking-[0.08em] opacity-85">
-          Device clock
-        </span>
-        <span className="font-display text-5xl font-bold leading-none tabular-nums tracking-[-0.03em]">{hhmmss}</span>
-        <span className="mb-3.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
-          {formatDate(workDate)} · Asia/Jakarta (WIB)
-        </span>
+    <div className="flex flex-col gap-5">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(280px,340px)_1fr]">
+        <div className="flex flex-col gap-1.5 rounded-2xl bg-[linear-gradient(180deg,rgb(122,185,212),rgb(2,99,149))] p-6 text-white shadow-card">
+          <span className="font-body text-[11px] font-semibold uppercase leading-none tracking-[0.08em] opacity-85">
+            Device clock
+          </span>
+          <span className="font-display text-5xl font-bold leading-none tabular-nums tracking-[-0.03em]">{hhmmss}</span>
+          <span className="font-body text-[13px] font-medium leading-[1.4] opacity-90">
+            {formatDate(workDate)} · Asia/Jakarta (WIB)
+          </span>
+          <LocationInfo channel={channel} />
 
-        <button
-          type="button"
-          disabled={!nextType || busy}
-          onClick={onPunch}
-          className="h-12 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {nextType === 'IN' ? 'TAP IN' : nextType === 'OUT' ? 'TAP OUT' : 'DAY COMPLETE'}
-        </button>
+          <button
+            type="button"
+            disabled={!nextType || busy}
+            onClick={onPunch}
+            className="h-12 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {nextType === 'IN' ? 'TAP IN' : nextType === 'OUT' ? 'TAP OUT' : 'DAY COMPLETE'}
+          </button>
 
-        <span className="mt-3 font-body text-xs font-medium leading-[1.5] opacity-90">{state}</span>
+          <span className="mt-3 font-body text-xs font-medium leading-[1.5] opacity-90">{state}</span>
 
-        {channel.selfie && (
-          <div className="mt-4 flex w-full flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button variant="light" className="w-full" onClick={onTakeSelfie}>
-                {selfieCaptured ? 'Retake' : 'Take selfie'}
-              </Button>
-              {selfieCaptured && (
-                <span className="font-body text-xs font-medium leading-[1.4] text-white/90">
-                  Frame ready — camera source
-                </span>
-              )}
+          {channel.selfie && (
+            <div className="mt-4 flex w-full flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Button variant="light" className="w-full" onClick={onTakeSelfie}>
+                  {selfieCaptured ? 'Retake' : 'Take selfie'}
+                </Button>
+                {selfieCaptured && (
+                  <span className="font-body text-xs font-medium leading-[1.4] text-white/90">
+                    Frame ready — camera source
+                  </span>
+                )}
+              </div>
+              <span className="font-body text-[11px] font-medium leading-[1.45] text-white/80">
+                Required by this capture channel. Live camera only — no file picker, so a photo out of the gallery can
+                never stand in for the person tapping. Without a frame the tap is refused 422.
+              </span>
             </div>
-            <span className="font-body text-[11px] font-medium leading-[1.45] text-white/80">
-              Required by this capture channel. Live camera only — no file picker, so a photo out of the gallery can
-              never stand in for the person tapping. Without a frame the tap is refused 422.
-            </span>
-          </div>
-        )}
+          )}
+        </div>
+
+        <div className="min-w-0">{children}</div>
       </div>
 
-      <div className="flex flex-col gap-3.5">
+      <div className="grid gap-3.5 xl:grid-cols-3">
         <Note icon={<Info />}>
           Which button you see is decided by the state of the day, not by a choice: no <code>IN</code> yet → Tap in; an{' '}
           <code>IN</code> with no <code>OUT</code> → Tap out. The timestamp, the coordinates, the accuracy and the
           device details are all captured in the background — a future time is refused, and the timezone sent is the
           employee&rsquo;s, never the server&rsquo;s.
-        </Note>
-
-        <Note icon={<MapPin />}>
-          Capture channel — <strong>{ARRANGEMENT_LABEL[channel.arrangement]}</strong> ×{' '}
-          <strong>{channel.geofence.geofenceName}</strong> (radius {channel.geofence.radiusMeters} m):{' '}
-          {channel.radius ? 'inside the radius is required' : 'no radius requirement'},{' '}
-          {channel.selfie ? 'a selfie is required' : 'no selfie required'}. The crossing is the rule, not the button.
         </Note>
 
         <Note icon={<KeyRound />}>
@@ -118,7 +173,8 @@ export function PunchConsole({
         <Note icon={<MapPin />}>
           If the device refuses location permission, both coordinates stay empty and <strong>the tap is still saved</strong>.
           Whether it was inside the radius is computed by the server — never accepted from the client — and an empty
-          verdict means <em>could not be evaluated</em>, not a violation.
+          verdict means <em>could not be evaluated</em>, not a violation. The crossing of arrangement × location is the
+          rule, not the button.
         </Note>
       </div>
     </div>
