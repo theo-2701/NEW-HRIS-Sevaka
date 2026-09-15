@@ -63,7 +63,7 @@ export const CLAIM_BACKDATE_LIMIT_DAYS = 90;
 /** `finance.benefit.max_family_beneficiaries` (TSD §16, bawaan 5). */
 export const MAX_FAMILY_BENEFICIARIES = 5;
 /** Regex anti-XSS nomor nota (FSD §2.3.1 / TSD §14.2.7). */
-const RECEIPT_PATTERN = /^[A-Za-z0-9\-\/. ]{1,60}$/;
+const RECEIPT_PATTERN = /^[A-Za-z0-9\-/. ]{1,60}$/;
 
 const isoToday = () => {
   const date = new Date();
