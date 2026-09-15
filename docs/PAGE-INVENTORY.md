@@ -70,7 +70,7 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/finance/disbursement` | Disbursement & Receivables | `finance-disbursement.html` | done |
 | `/finance/loan` | Loan | `finance-loan.html` | done |
 | `/finance/security` | Finance Security | `finance-security.html` | todo |
-| `/finance/settings` | Finance Settings | `finance-settings.html` | todo |
+| `/finance/settings` | Finance Settings | `finance-settings.html` | done |
 
 ## Payroll
 

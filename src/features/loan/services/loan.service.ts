@@ -1,6 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import type { PayableSource } from '@/features/disbursement/types';
+import { activeLoanLimitFor } from '@/features/finance-settings/settings-store';
 import {
   EXPOSURE,
   INSTALLMENTS,
@@ -114,6 +115,14 @@ function releaseReservation(loan: Loan) {
   };
 }
 
+/**
+ * Plafon dibaca hidup dari Finance Settings (`mst_loan_limit`, FT1) pada saat
+ * pengajuan — perubahan nominal tidak berlaku surut ke pinjaman berjalan.
+ */
+function currentExposure(): LoanExposure {
+  return { ...mockExposure, limitAmount: activeLoanLimitFor(mockExposure.jobGradeId)?.limitAmount ?? 0 };
+}
+
 export const loanService = {
   async config(): Promise<LoanConfig> {
     if (MOCK) {
@@ -127,7 +136,7 @@ export const loanService = {
   async exposure(): Promise<LoanExposure> {
     if (MOCK) {
       await delay(150);
-      return { ...mockExposure };
+      return currentExposure();
     }
     const { data } = await api.get<LoanExposure>('/loan-exposures/me');
     return data;
@@ -189,7 +198,7 @@ export const loanService = {
         throw new Error('422 FIN_TENOR_INVALID — tenor itu tidak ada di pola tenor company ini.');
       }
 
-      const room = roomOf(mockExposure);
+      const room = roomOf(currentExposure());
       if (amount > room) {
         throw new Error(
           `422 FIN_LOAN_LIMIT_EXCEEDED — pokok melewati ruang pinjam yang tersisa (Rp ${room.toLocaleString('id-ID')}).`,

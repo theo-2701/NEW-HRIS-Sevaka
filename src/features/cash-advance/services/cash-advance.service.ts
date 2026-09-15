@@ -1,13 +1,13 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import type { PayableSource } from '@/features/disbursement/types';
+import { listPurposeTypes } from '@/features/finance-settings/settings-store';
 import {
   ADVANCES,
   CASH_ADVANCE_CFG,
   DIFFERENCES,
   EMPLOYEES,
   MANAGER_OF,
-  PURPOSE_TYPES,
   REJECTION_REASONS,
   SETTLEMENTS,
 } from '@/features/cash-advance/mock-data';
@@ -134,7 +134,7 @@ export const cashAdvanceService = {
   async purposeTypes(): Promise<PurposeType[]> {
     if (MOCK) {
       await delay(100);
-      return PURPOSE_TYPES.map((row) => ({ ...row }));
+      return listPurposeTypes();
     }
     const { data } = await api.get<{ rows: PurposeType[] }>('/cash-advance-purpose-types');
     return data.rows;
@@ -206,7 +206,7 @@ export const cashAdvanceService = {
       }
       if (!EMPLOYEES.some((row) => row.id === recipientId)) throw new Error('403 — penerima tidak ada di company ini.');
 
-      const purpose = PURPOSE_TYPES.find((row) => row.id === draft.purposeTypeId);
+      const purpose = listPurposeTypes().find((row) => row.id === draft.purposeTypeId);
       if (!purpose || !purpose.isActive) throw new Error('422 — pilih jenis keperluan yang aktif.');
 
       const amount = parseAmount(draft.amount);
@@ -351,7 +351,7 @@ export const cashAdvanceService = {
       }
 
       // Kewajiban nota dibaca hidup dari jenisnya, bukan dari snapshot.
-      const purpose = PURPOSE_TYPES.find((row) => row.id === advance.purposeTypeId);
+      const purpose = listPurposeTypes().find((row) => row.id === advance.purposeTypeId);
       const requiresReceipt = purpose?.requiresReceipt ?? true;
       if (requiresReceipt && !draft.items.length) throw new Error('422 — jenis ini mewajibkan minimal satu nota.');
 
