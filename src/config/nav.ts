@@ -86,7 +86,7 @@ export const NAV: NavSection[] = [
           { label: 'Payslip', path: '/me/payslip', source: 'payroll-doc-payslip.html', status: 'todo' },
         ],
       },
-      { label: 'Finance', icon: 'hand-coins', path: '/me/finance', source: 'finance-ess.html', status: 'todo' },
+      { label: 'Finance', icon: 'hand-coins', path: '/me/finance', source: 'finance-ess.html', status: 'done' },
       { label: 'Files', icon: 'folder', path: '/me/files', source: 'document-ess-files.html', status: 'todo' },
       { label: 'Assets', icon: 'box' },
       {
