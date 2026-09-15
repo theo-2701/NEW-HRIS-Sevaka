@@ -243,19 +243,17 @@ export function AttendancePage() {
           />
 
           {tab === 'punch' && (
-            <div className="flex flex-col gap-5">
-              <PunchConsole
-                workDate={ATTENDANCE_TODAY}
-                channel={channel}
-                nextType={next}
-                hasTaps={today.length > 0}
-                tappedInAt={tappedIn ? hhmm(tappedIn.punchAt) : null}
-                selfieCaptured={selfieCaptured}
-                onTakeSelfie={() => setSelfieOpen(true)}
-                onPunch={doPunch}
-                busy={punch.isPending}
-              />
-
+            <PunchConsole
+              workDate={ATTENDANCE_TODAY}
+              channel={channel}
+              nextType={next}
+              hasTaps={today.length > 0}
+              tappedInAt={tappedIn ? hhmm(tappedIn.punchAt) : null}
+              selfieCaptured={selfieCaptured}
+              onTakeSelfie={() => setSelfieOpen(true)}
+              onPunch={doPunch}
+              busy={punch.isPending}
+            >
               <Card>
                 <CardHead title="Today's taps" sub="Append-only — tidak ada ubah dan tidak ada hapus" />
                 <div className="flex flex-col">
@@ -286,7 +284,7 @@ export function AttendancePage() {
                   />
                 </div>
               </Card>
-            </div>
+            </PunchConsole>
           )}
 
           {tab === 'history' && (

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import {  MapPin } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Info, MapPin } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
-import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
 import { ARRANGEMENT_LABEL } from '@/features/attendance/types';
 import type { CaptureChannel } from '@/features/attendance/types';
@@ -11,10 +13,63 @@ import { toast } from '@/store/ui.store';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 /**
+ * Lokasi kerja di kartu jam — nama lokasi selalu terlihat, syarat lengkapnya
+ * (arrangement, radius, selfie) dibuka lewat ikon info saat hover, fokus, atau ketuk.
+ */
+function LocationInfo({ channel }: { channel: CaptureChannel }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mb-3.5 flex min-w-0 items-center gap-1.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
+      <MapPin className="size-3.5 shrink-0" />
+      <span className="truncate">{channel.geofence.geofenceName}</span>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label="Work location requirements"
+            onMouseEnter={() => setOpen(true)}
+            onMouseLeave={() => setOpen(false)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setOpen(false)}
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-white transition-colors duration-150 ease-standard hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <Info className="size-3.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          side="bottom"
+          align="start"
+          className="w-[290px] p-3.5"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <p className="m-0 mb-2.5 font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">
+            Work location
+          </p>
+          <dl className="m-0 grid grid-cols-[88px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
+            <dt className="font-medium text-fg-3">Arrangement</dt>
+            <dd className="m-0 font-semibold text-fg-1">{ARRANGEMENT_LABEL[channel.arrangement]}</dd>
+            <dt className="font-medium text-fg-3">Location</dt>
+            <dd className="m-0 font-semibold text-fg-1">{channel.geofence.geofenceName}</dd>
+            <dt className="font-medium text-fg-3">Radius</dt>
+            <dd className="m-0 font-semibold text-fg-1">
+              {channel.geofence.radiusMeters} m · {channel.radius ? 'must be inside' : 'not required'}
+            </dd>
+            <dt className="font-medium text-fg-3">Selfie</dt>
+            <dd className="m-0 font-semibold text-fg-1">{channel.selfie ? 'Required' : 'Not required'}</dd>
+          </dl>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+/**
  * Konsol tap — port `.tm-punch`.
  *
  * Tombolnya tidak pernah dipilih: keadaan hari yang menentukan mana yang
  * muncul. Waktu, koordinat, akurasi, dan detail perangkat diambil di latar.
+ * Kartu jam di kiri, isi `children` (tabel tap hari ini) di kanan.
  */
 export function PunchConsole({
   workDate,
@@ -26,6 +81,7 @@ export function PunchConsole({
   onTakeSelfie,
   onPunch,
   busy,
+  children,
 }: {
   workDate: string;
   channel: CaptureChannel;
@@ -36,6 +92,7 @@ export function PunchConsole({
   onTakeSelfie: () => void;
   onPunch: () => void;
   busy: boolean;
+  children?: ReactNode;
 }) {
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => {
@@ -60,9 +117,10 @@ export function PunchConsole({
           Device clock
         </span>
         <span className="font-display text-5xl font-bold leading-none tabular-nums tracking-[-0.03em]">{hhmmss}</span>
-        <span className="mb-3.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
+        <span className="font-body text-[13px] font-medium leading-[1.4] opacity-90">
           {formatDate(workDate)} · Asia/Jakarta (WIB)
         </span>
+        <LocationInfo channel={channel} />
 
         <button
           type="button"
@@ -94,14 +152,7 @@ export function PunchConsole({
         )}
       </div>
 
-      <div className="flex flex-col gap-3.5">
-        <Note icon={<MapPin />}>
-          Work location — <strong>{ARRANGEMENT_LABEL[channel.arrangement]}</strong> ·{' '}
-          <strong>{channel.geofence.geofenceName}</strong> (radius {channel.geofence.radiusMeters} m):{' '}
-          {channel.radius ? 'you must be inside the radius' : 'no radius requirement'},{' '}
-          {channel.selfie ? 'a selfie is required' : 'no selfie required'}.
-        </Note>
-      </div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
@@ -248,9 +299,7 @@ export function PunchSavedModal({
             <KeyValueRow label="Radius verdict">
               <RadiusCell punch={result.punch} />
             </KeyValueRow>
-            <KeyValueRow label="Selfie">
-              {selfieRequired ? 'Captured' : 'Not required'}
-            </KeyValueRow>
+            <KeyValueRow label="Selfie">{selfieRequired ? 'Captured' : 'Not required'}</KeyValueRow>
           </KeyValueList>
         </div>
       )}
