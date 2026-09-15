@@ -35,10 +35,15 @@ export function roomOf(exposure: LoanExposure): number {
 }
 
 /**
- * Pilihan tenor mengikuti setting company. Pada pola `MULTIPLE_OF_THREE`
- * hanya kelipatan tiga sampai `tenorMax` yang boleh dikirim klien.
+ * Pilihan tenor mengikuti setting company (TSD §6.3.3): `UNIFORM` satu angka
+ * tetap; `EMPLOYEE_CHOICE` dibangun dari `EVERY_MONTH` / `MULTIPLE_OF_THREE` /
+ * `CUSTOM_LIST` sampai `tenorMax`. Tenor di luar daftar ⇒ `FIN_TENOR_INVALID`.
  */
 export function tenorOptions(config: LoanConfig): number[] {
+  if (config.tenorMode === 'UNIFORM') return config.uniformTenor ? [config.uniformTenor] : [];
+  if (config.tenorChoicePattern === 'CUSTOM_LIST') {
+    return (config.tenorChoices ?? []).filter((tenor) => tenor > 0 && tenor <= config.tenorMax);
+  }
   const step = config.tenorChoicePattern === 'MULTIPLE_OF_THREE' ? 3 : 1;
   const out: number[] = [];
   for (let tenor = step; tenor <= config.tenorMax; tenor += step) out.push(tenor);

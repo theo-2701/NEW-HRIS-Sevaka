@@ -86,8 +86,7 @@ export function LoanDecisionModal({
               Reject
             </Button>
             <Button
-              disabled={Boolean(hold) || approve.isPending}
-              title={hold ? 'Diblokir penahanan sengketa yang masih aktif' : undefined}
+              disabled={approve.isPending}
               onClick={() => approve.mutate({ id: loan.id, status: loan.status }, { onSuccess: onClose })}
             >
               Approve
@@ -99,9 +98,9 @@ export function LoanDecisionModal({
       {loan && (
         <div className="flex flex-col gap-4">
           {hold && (
-            <Note tone="danger" icon={<ShieldAlert />}>
-              Permintaan ini sedang ditahan sengketa ({hold.targetRequestNo}). Keputusan diblokir sampai penahanannya
-              dilepas.
+            <Note tone="warn" icon={<ShieldAlert />}>
+              Permintaan ini sedang ditahan sengketa ({hold.targetRequestNo}). Penahanan menggerbang penandaan
+              pencairan (422 FIN_DISPUTE_HOLD_ACTIVE), bukan keputusan ini.
             </Note>
           )}
 

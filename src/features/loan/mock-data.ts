@@ -19,7 +19,10 @@ export const ME = 'emp-budi';
 /** Atasan langsung yang memegang antrean keputusan — tidak memutus barisnya sendiri. */
 export const MGR = 'emp-sinta';
 
-/** Batas pinjaman aktif per karyawan (`FIN_ACTIVE_LOAN_COUNT_EXCEEDED`). */
+/**
+ * `finance.loan.max_active_count` company ini. Bawaan TSD §16 adalah `1`; dataset
+ * prototype memegang dua pinjaman aktif untuk Budi, jadi setelan skenario ini `2`.
+ */
 export const MAX_ACTIVE = 2;
 
 export const EMPLOYEES = [
@@ -44,6 +47,7 @@ export const LOAN_CFG: LoanConfig = {
   tenorMode: 'EMPLOYEE_CHOICE',
   tenorChoicePattern: 'MULTIPLE_OF_THREE',
   tenorMax: 24,
+  maxActiveCount: MAX_ACTIVE,
   enabled: true,
   earlySettlement: false,
 };

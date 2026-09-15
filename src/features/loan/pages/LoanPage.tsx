@@ -32,7 +32,7 @@ import {
   useLoanExposure,
   useLoans,
 } from '@/features/loan/hooks/useLoan';
-import { MAX_ACTIVE, ME, MGR, employeeOf, gradeName } from '@/features/loan/mock-data';
+import { ME, MGR, employeeOf, gradeName } from '@/features/loan/mock-data';
 import { activeLoans, approvalQueue, offerTotal, roomOf } from '@/features/loan/rules';
 import {
   EMPTY_LOAN_FILTER,
@@ -100,12 +100,12 @@ export function LoanPage() {
 
   const openForm = () => {
     if (!config?.enabled) {
-      toast('403 FIN_MODULE_DISABLED — modul pinjaman dimatikan untuk company ini.', 'danger');
+      toast('422 FIN_MODULE_DISABLED — modul pinjaman dimatikan untuk company ini.', 'danger');
       return;
     }
-    if (running >= MAX_ACTIVE) {
+    if (config && running >= config.maxActiveCount) {
       toast(
-        `422 FIN_ACTIVE_LOAN_COUNT_EXCEEDED — ${running} dari ${MAX_ACTIVE} pinjaman aktif yang diizinkan sudah berjalan.`,
+        `422 FIN_ACTIVE_LOAN_COUNT_EXCEEDED — ${running} dari ${config.maxActiveCount} pinjaman aktif yang diizinkan sudah berjalan.`,
         'danger',
       );
       return;

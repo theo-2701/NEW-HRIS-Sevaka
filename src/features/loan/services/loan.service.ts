@@ -1,17 +1,14 @@
 import { api } from '@/services/api';
 import {
   EXPOSURE,
-  HOLDS,
   INSTALLMENTS,
   LOANS,
   LOAN_CFG,
-  MAX_ACTIVE,
   ME,
   MGR,
   REJECTION_REASONS,
 } from '@/features/loan/mock-data';
 import {
-  activeHoldOn,
   activeLoans,
   buildInstallments,
   offerTotal,
@@ -34,23 +31,26 @@ import type {
  *
  * Endpoint kontrak:
  *   GET/POST /loans · POST …/{id}/cancel · …/{id}/withdraw
- *   POST …/{id}/approve · …/{id}/reject · POST …/{id}/schedule-acknowledgements
+ *   POST …/{id}/decisions · POST …/{id}/schedule-acknowledgements
  *
  * Aturan yang ditegakkan di sini:
- *  • Modul yang dimatikan per company menolak setiap tulisan — **403
- *    FIN_MODULE_DISABLED**.
- *  • Maksimal dua pinjaman aktif per karyawan — **422
- *    FIN_ACTIVE_LOAN_COUNT_EXCEEDED**.
+ *  • Modul yang dimatikan per company menolak pengajuan baru — **422
+ *    FIN_MODULE_DISABLED** (UIC §4 / TSD §14.3).
+ *  • Jumlah pinjaman aktif dibatasi `finance.loan.max_active_count` — **422
+ *    FIN_ACTIVE_LOAN_COUNT_EXCEEDED**. Tenor di luar pola — **422 FIN_TENOR_INVALID**.
  *  • Pokok tidak boleh melewati ruang pinjam — **422 FIN_LOAN_LIMIT_EXCEEDED**.
  *  • Pengajuan menahan pokok (`HELD`) dan memulai instance workflow (201).
- *  • Keputusan atasan dikirim ke proses approval → **202 Accepted**; status
- *    barisnya tidak ditulis di sini. Atasan tidak memutus barisnya sendiri
- *    (403), dan baris yang sedang ditahan sengketa tidak bisa diputus (409).
+ *  • Keputusan atasan satu endpoint `POST /loans/{id}/decisions`
+ *    (`APPROVE`|`REJECT`) → **202 Accepted**; status barisnya tidak ditulis di
+ *    sini. Di luar `SUBMITTED` → **409 FIN_ALREADY_DECIDED**; atasan tidak
+ *    memutus barisnya sendiri (403). Dispute hold **tidak** memblokir keputusan —
+ *    kontraknya menggerbang penandaan pencairan (FT5, 422 FIN_DISPUTE_HOLD_ACTIVE).
  *  • Menolak wajib beralasan; alasan bertanda `requires_free_text` wajib
  *    disertai catatan (422).
  *  • Tiga pintu keluar yang berbeda dan tidak bisa saling menggantikan:
- *    **Cancel** (pengaju, hanya `SUBMITTED`), **Withdraw** (pengaju, setelah
- *    ambang `AWAITING_CALCULATION`), dan **DECLINE** (cabang acknowledgement).
+ *    **Cancel** (pengaju, hanya `SUBMITTED`, lewat ⇒ 409 FIN_ALREADY_DECIDED),
+ *    **Withdraw** (pengaju, `AWAITING_CALCULATION` lewat ambang, selain itu 422
+ *    FIN_LOAN_WITHDRAWAL_NOT_ELIGIBLE), dan **DECLINE** (cabang acknowledgement).
  *    Memanggil ACK/DECLINE di luar `AWAITING_ACKNOWLEDGEMENT` ditolak **422
  *    FIN_LOAN_NOT_AWAITING_ACKNOWLEDGEMENT**.
  *  • ACK mengisi bunga, total kewajiban dan jadwal angsuran dari tawaran pihak
@@ -75,7 +75,7 @@ export function resetLoanMocks() {
   mockConfig = { ...LOAN_CFG };
 }
 
-/** Hanya untuk pengujian gerbang 403: mematikan modul per company. */
+/** Hanya untuk pengujian gerbang modul mati (422): mematikan modul per company. */
 export function setLoanModuleEnabled(enabled: boolean) {
   mockConfig = { ...mockConfig, enabled };
 }
@@ -83,6 +83,13 @@ export function setLoanModuleEnabled(enabled: boolean) {
 export interface LoanFilter {
   statuses?: LoanStatus[];
   search?: string;
+}
+
+export interface LoanDecisionInput {
+  id: string;
+  decision: 'APPROVE' | 'REJECT';
+  reasonId: string;
+  reasonNote: string;
 }
 
 export interface LoanRejectInput {
@@ -164,21 +171,21 @@ export const loanService = {
     if (MOCK) {
       await delay(400);
       if (!mockConfig.enabled) {
-        throw new Error('403 FIN_MODULE_DISABLED — modul pinjaman dimatikan untuk company ini.');
+        throw new Error('422 FIN_MODULE_DISABLED — modul pinjaman dimatikan untuk company ini.');
       }
 
       const running = activeLoans(mockLoans, ME).length;
-      if (running >= MAX_ACTIVE) {
+      if (running >= mockConfig.maxActiveCount) {
         throw new Error(
-          `422 FIN_ACTIVE_LOAN_COUNT_EXCEEDED — ${running} dari ${MAX_ACTIVE} pinjaman aktif yang diizinkan sudah berjalan.`,
+          `422 FIN_ACTIVE_LOAN_COUNT_EXCEEDED — ${running} dari ${mockConfig.maxActiveCount} pinjaman aktif yang diizinkan sudah berjalan.`,
         );
       }
 
       const amount = parseAmount(draft.amount);
       if (amount <= 0) throw new Error('422 — pokok pinjaman harus lebih besar dari nol.');
-      if (!draft.tenorMonths) throw new Error('422 — pilih tenor lebih dulu.');
+      if (!draft.tenorMonths) throw new Error('422 FIN_TENOR_INVALID — pilih tenor lebih dulu.');
       if (!tenorOptions(mockConfig).includes(draft.tenorMonths)) {
-        throw new Error('422 — tenor itu tidak ada di pola tenor company ini.');
+        throw new Error('422 FIN_TENOR_INVALID — tenor itu tidak ada di pola tenor company ini.');
       }
 
       const room = roomOf(mockExposure);
@@ -226,7 +233,7 @@ export const loanService = {
       const row = findLoan(id);
       if (row.employeeId !== ME) throw new Error('403 — hanya pengaju yang bisa membatalkan permintaannya sendiri.');
       if (row.status !== 'SUBMITTED') {
-        throw new Error('422 — pembatalan hanya berlaku selagi permintaannya masih SUBMITTED.');
+        throw new Error('409 FIN_ALREADY_DECIDED — pembatalan hanya berlaku selagi permintaannya masih SUBMITTED.');
       }
       row.status = 'CANCELLED';
       releaseReservation(row);
@@ -243,7 +250,9 @@ export const loanService = {
       const row = findLoan(id);
       if (row.employeeId !== ME) throw new Error('403 — hanya pengaju yang bisa menarik permintaannya sendiri.');
       if (row.status !== 'AWAITING_CALCULATION') {
-        throw new Error('422 — penarikan baru berlaku setelah permintaannya duduk di AWAITING_CALCULATION.');
+        throw new Error(
+          '422 FIN_LOAN_WITHDRAWAL_NOT_ELIGIBLE — penarikan hanya berlaku pada AWAITING_CALCULATION yang sudah melewati ambang.',
+        );
       }
       row.status = 'WITHDRAWN';
       releaseReservation(row);
@@ -254,50 +263,42 @@ export const loanService = {
   },
 
   /**
-   * Keputusan atasan. Kontraknya asinkron: server menerima (202) dan status
-   * barisnya ditulis saat workflow selesai — jadi di sini pun tidak berubah.
+   * Keputusan atasan — `POST /loans/{id}/decisions` (UIC F3.06, pola K9).
+   * Server menerima (202) dan status barisnya ditulis saat workflow selesai,
+   * jadi di sini pun barisnya tidak berubah.
    */
-  async approveLoan(id: string): Promise<{ accepted: true }> {
-    if (MOCK) {
-      await delay(400);
-      const row = findLoan(id);
-      // Penahanan sengketa diperiksa lebih dulu: baris yang ditahan tidak boleh
-      // diputus sama sekali, apa pun statusnya.
-      if (activeHoldOn(HOLDS, row.id)) {
-        throw new Error('409 — permintaan ini sedang ditahan sengketa; keputusan diblokir sampai penahanannya dilepas.');
-      }
-      if (row.employeeId === MGR) throw new Error('403 — atasan tidak memutuskan permintaannya sendiri.');
-      if (row.status !== 'SUBMITTED') {
-        throw new Error('422 — hanya permintaan yang menunggu keputusan yang bisa diputuskan.');
-      }
-      return { accepted: true };
-    }
-    await api.post(`/loans/${id}/approve`);
-    return { accepted: true };
-  },
-
-  async rejectLoan(input: LoanRejectInput): Promise<{ accepted: true }> {
+  async decideLoan(input: LoanDecisionInput): Promise<{ accepted: true }> {
     if (MOCK) {
       await delay(400);
       const row = findLoan(input.id);
-      if (activeHoldOn(HOLDS, row.id)) {
-        throw new Error('409 — permintaan ini sedang ditahan sengketa; keputusan diblokir sampai penahanannya dilepas.');
-      }
       if (row.employeeId === MGR) throw new Error('403 — atasan tidak memutuskan permintaannya sendiri.');
       if (row.status !== 'SUBMITTED') {
-        throw new Error('422 — hanya permintaan yang menunggu keputusan yang bisa diputuskan.');
+        throw new Error('409 FIN_ALREADY_DECIDED — hanya permintaan yang menunggu keputusan yang bisa diputuskan.');
       }
-      if (!input.reasonId) throw new Error('422 — alasan penolakan wajib dipilih.');
-
-      const reason = REJECTION_REASONS.find((item) => item.id === input.reasonId);
-      if (!reason) throw new Error('422 — alasan penolakan tidak dikenal.');
-      if (reason.requiresFreeText && !input.note.trim()) {
-        throw new Error('422 — alasan ini wajib disertai catatan.');
+      if (input.decision === 'REJECT') {
+        if (!input.reasonId) throw new Error('422 — alasan penolakan wajib dipilih.');
+        const reason = REJECTION_REASONS.find((item) => item.id === input.reasonId);
+        if (!reason) throw new Error('422 — alasan penolakan tidak dikenal.');
+        if (reason.requiresFreeText && !input.reasonNote.trim()) {
+          throw new Error('422 — alasan ini wajib disertai catatan.');
+        }
       }
       return { accepted: true };
     }
-    await api.post(`/loans/${input.id}/reject`, input);
+    await api.post(`/loans/${input.id}/decisions`, {
+      decision: input.decision,
+      reason_id: input.reasonId || undefined,
+      reason_note: input.reasonNote || undefined,
+    });
     return { accepted: true };
+  },
+
+  approveLoan(id: string) {
+    return loanService.decideLoan({ id, decision: 'APPROVE', reasonId: '', reasonNote: '' });
+  },
+
+  rejectLoan(input: LoanRejectInput) {
+    return loanService.decideLoan({ id: input.id, decision: 'REJECT', reasonId: input.reasonId, reasonNote: input.note });
   },
 
   /**

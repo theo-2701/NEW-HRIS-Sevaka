@@ -39,6 +39,12 @@ export function LoanFormModal({
   }, [open]);
 
   const room = roomOf(exposure);
+  const uniform = config.tenorMode === 'UNIFORM';
+
+  useEffect(() => {
+    // UNIFORM: tenornya satu angka tetap — tetap dikirim klien (FD-118).
+    if (open && uniform && config.uniformTenor) setTenor(String(config.uniformTenor));
+  }, [open, uniform, config.uniformTenor]);
   const typed = parseAmount(amount);
   const overRoom = typed > room;
   const ready = typed > 0 && Boolean(tenor) && !overRoom;
@@ -97,7 +103,7 @@ export function LoanFormModal({
           <Label>
             Tenor<em>*</em>
           </Label>
-          <Select value={tenor} onValueChange={setTenor}>
+          <Select value={tenor} onValueChange={setTenor} disabled={uniform}>
             <SelectTrigger>
               <SelectValue placeholder="Select tenor" />
             </SelectTrigger>
@@ -110,7 +116,9 @@ export function LoanFormModal({
             </SelectContent>
           </Select>
           <span className="font-body text-xs font-normal text-fg-3">
-            Pilihan tenor mengikuti setting company — kelipatan tiga sampai {config.tenorMax} bulan.
+            {uniform
+              ? 'Tenor seragam ditetapkan company — tetap dikirim bersama pengajuan.'
+              : `Pilihan tenor mengikuti setting company (${config.tenorChoicePattern}) sampai ${config.tenorMax} bulan.`}
           </span>
         </div>
 

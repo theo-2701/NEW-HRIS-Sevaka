@@ -31,13 +31,14 @@ export type LoanStatus =
 /** Pokok yang ditahan terhadap plafon: ditahan → terpakai → dilepas. */
 export type ReservationState = 'HELD' | 'CONSUMED' | 'RELEASED';
 
-export type InstallmentStatus = 'PENDING' | 'CONFIRMED';
+export type InstallmentStatus = 'PENDING' | 'CONFIRMED' | 'PARTIAL' | 'WAIVED';
 
 /** Satu endpoint, dua hasil (`F3.07` `POST .../schedule-acknowledgements`). */
 export type AcknowledgementOutcome = 'ACK' | 'DECLINE';
 
-export type TenorMode = 'EMPLOYEE_CHOICE' | 'FIXED_BY_COMPANY';
-export type TenorChoicePattern = 'MULTIPLE_OF_THREE' | 'ANY';
+/** TSD §6.3.3 — `UNIFORM` = satu angka tetap, `EMPLOYEE_CHOICE` = karyawan memilih dari pola. */
+export type TenorMode = 'UNIFORM' | 'EMPLOYEE_CHOICE';
+export type TenorChoicePattern = 'EVERY_MONTH' | 'MULTIPLE_OF_THREE' | 'CUSTOM_LIST';
 export type ScheduleSource = 'RECEIVED_FROM_EXTERNAL' | 'CALCULATED_BY_HRIS';
 
 export interface BankSnapshot {
@@ -94,7 +95,13 @@ export interface LoanConfig {
   tenorMode: TenorMode;
   tenorChoicePattern: TenorChoicePattern;
   tenorMax: number;
-  /** Modul dimatikan per company — setiap tulisan ditolak 403. */
+  /** Dipakai `UNIFORM`: tenor tunggal yang ditampilkan read-only. */
+  uniformTenor?: number;
+  /** Dipakai `CUSTOM_LIST`: daftar tenor yang diizinkan. */
+  tenorChoices?: number[];
+  /** `finance.loan.max_active_count` — bawaan TSD `1`. */
+  maxActiveCount: number;
+  /** `finance.loan.enabled` — mati ⇒ pengajuan baru ditolak 422 FIN_MODULE_DISABLED. */
   enabled: boolean;
   earlySettlement: boolean;
 }
@@ -151,6 +158,8 @@ export const RESERVATION_LABEL: Record<ReservationState, string> = {
 export const INSTALLMENT_STATUS_LABEL: Record<InstallmentStatus, string> = {
   PENDING: 'Pending',
   CONFIRMED: 'Confirmed',
+  PARTIAL: 'Partial',
+  WAIVED: 'Waived',
 };
 
 export const SCHEDULE_SOURCE_LABEL: Record<ScheduleSource, string> = {

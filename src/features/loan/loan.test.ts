@@ -40,7 +40,9 @@ describe('Aturan plafon dan reservasi', () => {
 
   it('pilihan tenor mengikuti pola company — kelipatan tiga sampai batasnya', () => {
     expect(tenorOptions(LOAN_CFG)).toEqual([3, 6, 9, 12, 15, 18, 21, 24]);
-    expect(tenorOptions({ ...LOAN_CFG, tenorChoicePattern: 'ANY', tenorMax: 4 })).toEqual([1, 2, 3, 4]);
+    expect(tenorOptions({ ...LOAN_CFG, tenorChoicePattern: 'EVERY_MONTH', tenorMax: 4 })).toEqual([1, 2, 3, 4]);
+    expect(tenorOptions({ ...LOAN_CFG, tenorChoicePattern: 'CUSTOM_LIST', tenorChoices: [6, 12, 36] })).toEqual([6, 12]);
+    expect(tenorOptions({ ...LOAN_CFG, tenorMode: 'UNIFORM', uniformTenor: 12 })).toEqual([12]);
   });
 
   it('nominal berpemisah ribuan dibaca sebagai angka', () => {
@@ -61,7 +63,7 @@ describe('Aturan plafon dan reservasi', () => {
 describe('Pengajuan pinjaman', () => {
   it('modul yang dimatikan menolak setiap pengajuan', async () => {
     setLoanModuleEnabled(false);
-    await expect(loanService.submitLoan(draft)).rejects.toThrow(/403 FIN_MODULE_DISABLED/);
+    await expect(loanService.submitLoan(draft)).rejects.toThrow(/422 FIN_MODULE_DISABLED/);
   });
 
   it('lebih dari dua pinjaman aktif ditolak', async () => {
@@ -80,7 +82,7 @@ describe('Pengajuan pinjaman', () => {
 
   it('tenor di luar pola company ditolak', async () => {
     await loanService.acknowledgeSchedule('loan-18', 'DECLINE');
-    await expect(loanService.submitLoan({ amount: '5.000.000', tenorMonths: 7 })).rejects.toThrow(/pola tenor/);
+    await expect(loanService.submitLoan({ amount: '5.000.000', tenorMonths: 7 })).rejects.toThrow(/FIN_TENOR_INVALID/);
   });
 
   it('pokok nol dan tenor kosong ditolak', async () => {
@@ -108,7 +110,7 @@ describe('Pengajuan pinjaman', () => {
 
 describe('Pintu keluar milik pengaju', () => {
   it('membatalkan hanya berlaku selagi masih SUBMITTED', async () => {
-    await expect(loanService.cancelLoan('loan-18')).rejects.toThrow(/422/);
+    await expect(loanService.cancelLoan('loan-18')).rejects.toThrow(/409 FIN_ALREADY_DECIDED/);
   });
 
   it('hanya pengaju sendiri yang bisa membatalkan', async () => {
@@ -117,7 +119,7 @@ describe('Pintu keluar milik pengaju', () => {
   });
 
   it('menarik hanya berlaku setelah AWAITING_CALCULATION', async () => {
-    await expect(loanService.withdrawLoan('loan-18')).rejects.toThrow(/422/);
+    await expect(loanService.withdrawLoan('loan-18')).rejects.toThrow(/FIN_LOAN_WITHDRAWAL_NOT_ELIGIBLE/);
     // loan-21 memang AWAITING_CALCULATION, tapi milik Rahmat.
     await expect(loanService.withdrawLoan('loan-21')).rejects.toThrow(/403/);
   });
@@ -138,9 +140,9 @@ describe('Pintu keluar milik pengaju', () => {
 });
 
 describe('Keputusan atasan', () => {
-  it('penahanan sengketa aktif memblokir keputusan', async () => {
+  it('dispute hold tidak menggerbang keputusan — yang menolak loan-21 adalah statusnya', async () => {
     expect(activeHoldOn(HOLDS, 'loan-21')).toBeTruthy();
-    await expect(loanService.approveLoan('loan-21')).rejects.toThrow(/409/);
+    await expect(loanService.approveLoan('loan-21')).rejects.toThrow(/409 FIN_ALREADY_DECIDED/);
   });
 
   it('antrean atasan tidak pernah memuat barisnya sendiri', async () => {
@@ -151,7 +153,7 @@ describe('Keputusan atasan', () => {
   });
 
   it('hanya permintaan yang menunggu keputusan yang bisa diputuskan', async () => {
-    await expect(loanService.approveLoan('loan-18')).rejects.toThrow(/422/);
+    await expect(loanService.approveLoan('loan-18')).rejects.toThrow(/409 FIN_ALREADY_DECIDED/);
   });
 
   it('menyetujui kembali 202 dan tidak mengubah status barisnya', async () => {

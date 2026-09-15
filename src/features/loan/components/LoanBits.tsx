@@ -31,6 +31,13 @@ const RESERVATION_TONE: Record<ReservationState, BadgeTone> = {
   RELEASED: 'mute',
 };
 
+const INSTALLMENT_TONE: Record<InstallmentStatus, BadgeTone> = {
+  PENDING: 'warn',
+  CONFIRMED: 'ok',
+  PARTIAL: 'info',
+  WAIVED: 'mute',
+};
+
 export function LoanStatusBadge({ status }: { status: LoanStatus }) {
   return <StatusBadge tone={LOAN_TONE[status]}>{LOAN_STATUS_LABEL[status]}</StatusBadge>;
 }
@@ -41,7 +48,7 @@ export function ReservationBadge({ state }: { state: ReservationState }) {
 
 export function InstallmentStatusBadge({ status }: { status: InstallmentStatus }) {
   return (
-    <StatusBadge tone={status === 'CONFIRMED' ? 'ok' : 'warn'}>{INSTALLMENT_STATUS_LABEL[status]}</StatusBadge>
+    <StatusBadge tone={INSTALLMENT_TONE[status]}>{INSTALLMENT_STATUS_LABEL[status]}</StatusBadge>
   );
 }
 
