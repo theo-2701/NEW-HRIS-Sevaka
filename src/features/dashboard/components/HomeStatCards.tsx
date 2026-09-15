@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { CalendarCheck, CalendarDays, Palmtree, UserCheck, Users } from 'lucide-react';
+import { Segmented } from '@/components/Segmented';
 import { useHomeStats } from '@/features/dashboard/hooks/useDashboard';
 import { useAuthStore } from '@/store/auth.store';
 import { formatDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 const MONTHS = [
   'Januari',
@@ -23,7 +24,19 @@ const MONTHS = [
 /** Lapis Perusahaan hanya untuk peran HR/manajemen (FSD-AUTH §2.9, DS-5). */
 const COMPANY_LAYER_ROLE = /admin|hr|manager|manajer/i;
 
-function StatTile({
+type Layer = 'me' | 'company';
+
+const LAYER_KEY = 'sevaka-home-layer';
+
+function readLayer(): Layer {
+  try {
+    return localStorage.getItem(LAYER_KEY) === 'company' ? 'company' : 'me';
+  } catch {
+    return 'me';
+  }
+}
+
+function StatRow({
   icon,
   label,
   value,
@@ -40,95 +53,118 @@ function StatTile({
 }) {
   const empty = !loading && value === null;
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-border-1 bg-bg-surface p-[18px] shadow-card-sm">
-      <header className="flex items-center gap-2.5">
-        <span className="inline-flex size-9 items-center justify-center rounded-lg bg-primary-50 text-secondary-700 [&_svg]:size-[18px]">
-          {icon}
+    <li className="flex items-center gap-3 border-b border-vapor py-3 first:pt-1 last:border-b-0 last:pb-0">
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-secondary-700 [&_svg]:size-[18px]">
+        {icon}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="font-body text-[13px] font-bold leading-tight text-fg-1">{label}</span>
+        <span className="truncate font-body text-[11px] font-medium leading-tight text-fg-3">
+          {empty ? 'Data belum tersedia' : foot}
         </span>
-        <h3 className="m-0 font-body text-sm font-bold leading-tight text-fg-1">{label}</h3>
-      </header>
-      <p className="m-0 flex items-baseline gap-1.5">
-        <span className="font-display text-[28px] font-bold leading-none tracking-[-0.02em] text-fg-1">
+      </div>
+      <span className="flex shrink-0 items-baseline gap-1">
+        <span className="font-display text-2xl font-bold leading-none tracking-[-0.02em] text-fg-1">
           {loading ? '…' : empty ? '—' : value}
         </span>
-        {unit && !loading && !empty && <span className="font-body text-[13px] font-semibold text-fg-3">{unit}</span>}
-      </p>
-      <span className="font-body text-xs font-medium text-fg-3">{empty ? 'Data belum tersedia' : foot}</span>
-    </section>
-  );
-}
-
-function Layer({ title, sub, cols, children }: { title: string; sub: string; cols: string; children: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-2.5">
-      <div className="flex flex-wrap items-baseline gap-2">
-        <h2 className="m-0 font-body text-[13px] font-bold uppercase tracking-[0.06em] text-fg-2">{title}</h2>
-        <span className="font-body text-xs font-medium text-fg-3">{sub}</span>
-      </div>
-      <div className={cn('grid gap-4', cols)}>{children}</div>
-    </div>
+        {unit && !loading && !empty && <span className="font-body text-xs font-medium text-fg-3">{unit}</span>}
+      </span>
+    </li>
   );
 }
 
 /**
- * Lima kartu angka HOME dua lapis (FSD-AUTH 0.7 §2.9) — menggantikan empat kartu
- * grafik prototype yang tidak punya backing kontrak. Nilai dari alamat agregat FINAL:
- * `leave-balances/me-summary` (#95), `attendance-summaries/me-monthly` (#96),
- * `employees/active-count` (§7.17), `attendance-summaries/today-overview` (#97).
- * Kartu yang gagal dimuat tampil "—" tanpa menggagalkan layar.
+ * Lima kartu angka HOME dua lapis (FSD-AUTH 0.7 §2.9), diringkas jadi satu panel di
+ * kolom kanan supaya grafik ringkasan tetap di baris atas. Lapis **Milik Saya** tampil
+ * untuk semua peran; peran HR/manajemen mendapat segmented untuk berpindah ke lapis
+ * **Perusahaan** (pilihan terakhir diingat per browser). Nilai dari alamat agregat FINAL
+ * `#95`–`#97` dan `employees/active-count`; kartu yang gagal dimuat tampil "—".
  */
 export function HomeStatCards() {
   const user = useAuthStore((s) => s.user);
   const { data, isLoading } = useHomeStats();
   const companyLayer = COMPANY_LAYER_ROLE.test(user?.role ?? '');
+  const [picked, setPicked] = useState<Layer>(readLayer);
+  const layer: Layer = companyLayer ? picked : 'me';
   const monthLabel = data ? `${MONTHS[Number(data.month.slice(5, 7)) - 1]} ${data.month.slice(0, 4)}` : 'bulan berjalan';
 
-  return (
-    <section className={cn('grid gap-4', companyLayer && 'xl:grid-cols-[2fr_3fr]')}>
-      <Layer title="Milik Saya" sub="Seluruh peran" cols="sm:grid-cols-2">
-        <StatTile
-          icon={<Palmtree />}
-          label="Sisa Cuti Saya"
-          value={data?.leaveBalanceDays ?? null}
-          unit="hari"
-          foot={`Cuti tahunan · periode ${data?.periodYear ?? ''}`}
-          loading={isLoading}
-        />
-        <StatTile
-          icon={<CalendarCheck />}
-          label="Kehadiran Saya Bulan Berjalan"
-          value={data?.presentDays ?? null}
-          unit="hari"
-          foot={`Hadir atau terlambat · ${monthLabel}`}
-          loading={isLoading}
-        />
-      </Layer>
+  const pick = (next: Layer) => {
+    setPicked(next);
+    try {
+      localStorage.setItem(LAYER_KEY, next);
+    } catch {
+      /* penyimpanan browser tidak tersedia — pilihan hanya berlaku di sesi ini */
+    }
+  };
 
-      {companyLayer && (
-        <Layer title="Perusahaan" sub="HR & manajemen" cols="sm:grid-cols-3">
-          <StatTile
-            icon={<Users />}
-            label="Jumlah Karyawan Aktif"
-            value={data?.activeEmployees ?? null}
-            foot="Status kerja Active"
-            loading={isLoading}
+  return (
+    <section className="flex flex-col gap-3 rounded-xl border border-border-1 bg-bg-surface px-5 py-[18px] shadow-card-sm">
+      <header className="flex flex-col gap-2.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <h4 className="m-0 font-display text-base font-bold leading-tight text-fg-1">Ringkasan</h4>
+          <span className="font-body text-[11px] font-medium text-fg-3">
+            {layer === 'me' ? 'Data milik Anda' : 'Seluruh perusahaan'}
+          </span>
+        </div>
+        {companyLayer && (
+          <Segmented<Layer>
+            className="w-full self-stretch [&>button]:flex-1"
+            value={layer}
+            onChange={pick}
+            options={[
+              { value: 'me', label: 'Milik Saya' },
+              { value: 'company', label: 'Perusahaan' },
+            ]}
           />
-          <StatTile
-            icon={<UserCheck />}
-            label="Hadir Hari Ini"
-            value={data?.presentToday ?? null}
-            foot={data ? formatDate(data.workDate) : 'Hari ini'}
-            loading={isLoading}
-          />
-          <StatTile
-            icon={<CalendarDays />}
-            label="Sedang Cuti Hari Ini"
-            value={data?.onLeaveToday ?? null}
-            foot="Cuti atau sakit"
-            loading={isLoading}
-          />
-        </Layer>
-      )}
+        )}
+      </header>
+
+      <ul className="m-0 flex list-none flex-col p-0">
+        {layer === 'me' ? (
+          <>
+            <StatRow
+              icon={<Palmtree />}
+              label="Sisa Cuti Saya"
+              value={data?.leaveBalanceDays ?? null}
+              unit="hari"
+              foot={`Cuti tahunan · ${data?.periodYear ?? ''}`}
+              loading={isLoading}
+            />
+            <StatRow
+              icon={<CalendarCheck />}
+              label="Kehadiran Saya"
+              value={data?.presentDays ?? null}
+              unit="hari"
+              foot={`Hadir atau terlambat · ${monthLabel}`}
+              loading={isLoading}
+            />
+          </>
+        ) : (
+          <>
+            <StatRow
+              icon={<Users />}
+              label="Karyawan Aktif"
+              value={data?.activeEmployees ?? null}
+              foot="Status kerja Active"
+              loading={isLoading}
+            />
+            <StatRow
+              icon={<UserCheck />}
+              label="Hadir Hari Ini"
+              value={data?.presentToday ?? null}
+              foot={data ? formatDate(data.workDate) : 'Hari ini'}
+              loading={isLoading}
+            />
+            <StatRow
+              icon={<CalendarDays />}
+              label="Sedang Cuti Hari Ini"
+              value={data?.onLeaveToday ?? null}
+              foot="Cuti atau sakit"
+              loading={isLoading}
+            />
+          </>
+        )}
+      </ul>
     </section>
   );
 }

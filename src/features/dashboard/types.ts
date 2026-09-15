@@ -1,3 +1,21 @@
+export interface GenderSlice {
+  label: string;
+  value: number;
+  color: string;
+}
+
+export interface SeriesPoint {
+  label: string;
+  value: number;
+}
+
+export interface JobLevelSlice {
+  label: string;
+  count: number;
+  percent: number;
+  color: string;
+}
+
 export interface LeaveBalance {
   annualLeaveDays: number;
   sickLeaveUsedDays: number;
@@ -30,6 +48,11 @@ export interface ContractRow {
 }
 
 export interface DashboardSummary {
+  gender: GenderSlice[];
+  staffActive: SeriesPoint[];
+  turnover: SeriesPoint[];
+  jobLevels: JobLevelSlice[];
+  totalEmployees: number;
   leave: LeaveBalance;
   whosOff: WhosOffEntry[];
   lockedAccounts: LockedAccount[];
