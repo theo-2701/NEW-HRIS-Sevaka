@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, Info, ShieldAlert } from 'lucide-react';
+import {  Info, ShieldAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -78,7 +78,6 @@ export function LoanDecisionModal({
       open={Boolean(loan)}
       onOpenChange={(next) => !next && onClose()}
       title={loan ? `Decision — ${loan.requestNo}` : ''}
-      description="Diambil dengan token principal Anda sendiri — token service ditolak 403."
       size="wide"
       footer={
         loan ? (
@@ -100,17 +99,11 @@ export function LoanDecisionModal({
         <div className="flex flex-col gap-4">
           {hold && (
             <Note tone="warn" icon={<ShieldAlert />}>
-              Permintaan ini sedang ditahan sengketa ({hold.targetRequestNo}). Penahanan menggerbang penandaan
-              pencairan (422 FIN_DISPUTE_HOLD_ACTIVE), bukan keputusan ini.
+              Permintaan ini sedang ditahan sengketa ({hold.targetRequestNo}), jadi belum bisa dicairkan sampai hold dicabut.
             </Note>
           )}
 
           <LoanSummary loan={loan} full />
-
-          <Note icon={<Clock />}>
-            <strong>Statusnya tidak ditulis di sini.</strong> Kedua cabang kembali 202 Accepted — "diteruskan, menunggu
-            prosesnya".
-          </Note>
         </div>
       )}
     </Modal>

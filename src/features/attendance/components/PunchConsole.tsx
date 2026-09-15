@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Info, KeyRound, MapPin } from 'lucide-react';
+import {  MapPin } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
@@ -51,7 +51,7 @@ export function PunchConsole({
     ? 'No tap recorded today.'
     : nextType === 'OUT'
       ? `Tapped in at ${tappedInAt} — the day is still open.`
-      : 'Both taps recorded. Punch is append-only: there is no edit and no delete here.';
+      : 'Both taps recorded for today.';
 
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(280px,340px)_1fr]">
@@ -88,37 +88,18 @@ export function PunchConsole({
               )}
             </div>
             <span className="font-body text-[11px] font-medium leading-[1.45] text-white/80">
-              Required by this capture channel. Live camera only — no file picker, so a photo out of the gallery can
-              never stand in for the person tapping. Without a frame the tap is refused 422.
+              Required for this location. Live camera only — photos from the gallery are not accepted.
             </span>
           </div>
         )}
       </div>
 
       <div className="flex flex-col gap-3.5">
-        <Note icon={<Info />}>
-          Which button you see is decided by the state of the day, not by a choice: no <code>IN</code> yet → Tap in; an{' '}
-          <code>IN</code> with no <code>OUT</code> → Tap out. The timestamp, the coordinates, the accuracy and the
-          device details are all captured in the background — a future time is refused, and the timezone sent is the
-          employee&rsquo;s, never the server&rsquo;s.
-        </Note>
-
         <Note icon={<MapPin />}>
-          Capture channel — <strong>{ARRANGEMENT_LABEL[channel.arrangement]}</strong> ×{' '}
+          Work location — <strong>{ARRANGEMENT_LABEL[channel.arrangement]}</strong> ·{' '}
           <strong>{channel.geofence.geofenceName}</strong> (radius {channel.geofence.radiusMeters} m):{' '}
-          {channel.radius ? 'inside the radius is required' : 'no radius requirement'},{' '}
-          {channel.selfie ? 'a selfie is required' : 'no selfie required'}. The crossing is the rule, not the button.
-        </Note>
-
-        <Note icon={<KeyRound />}>
-          An <code>Idempotency-Key</code> is generated per tap <em>attempt</em> and reused verbatim on retry — a slow
-          connection and a second press never produce a second row. It is scoped to (employee, key), not globally.
-        </Note>
-
-        <Note icon={<MapPin />}>
-          If the device refuses location permission, both coordinates stay empty and <strong>the tap is still saved</strong>.
-          Whether it was inside the radius is computed by the server — never accepted from the client — and an empty
-          verdict means <em>could not be evaluated</em>, not a violation.
+          {channel.radius ? 'you must be inside the radius' : 'no radius requirement'},{' '}
+          {channel.selfie ? 'a selfie is required' : 'no selfie required'}.
         </Note>
       </div>
     </div>
@@ -249,7 +230,7 @@ export function PunchSavedModal({
       open={Boolean(result)}
       onOpenChange={(next) => !next && onClose()}
       title="Tap recorded"
-      description="This screen never shows the day's verdict; the recompute runs outside the tap transaction."
+      description="Your tap has been saved."
       size="wide"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -262,24 +243,15 @@ export function PunchSavedModal({
           <KeyValueList>
             <KeyValueRow label="Type">{result.punch.punchType === 'IN' ? 'Tap in' : 'Tap out'}</KeyValueRow>
             <KeyValueRow label="Tap time">{formatDateTime(result.punch.punchAt)}</KeyValueRow>
-            <KeyValueRow label="Idempotency-Key">
-              <span className="font-mono text-xs">{result.idempotencyKey}</span>
-            </KeyValueRow>
-            <KeyValueRow label="Timezone">Asia/Jakarta (WIB) — the employee&rsquo;s zone, not the server&rsquo;s</KeyValueRow>
-            <KeyValueRow label="Work date (server-derived)">{formatDate(result.punch.workDate)}</KeyValueRow>
+            <KeyValueRow label="Timezone">Asia/Jakarta (WIB)</KeyValueRow>
+            <KeyValueRow label="Work date">{formatDate(result.punch.workDate)}</KeyValueRow>
             <KeyValueRow label="Radius verdict">
               <RadiusCell punch={result.punch} />
             </KeyValueRow>
             <KeyValueRow label="Selfie">
-              {selfieRequired ? 'Required by this channel — captured live, camera source' : 'Not required by this channel'}
+              {selfieRequired ? 'Captured' : 'Not required'}
             </KeyValueRow>
           </KeyValueList>
-          {result.replayed && (
-            <Note icon={<KeyRound />}>
-              Kunci idempotensi yang sama dikirim ulang, jadi baris yang sudah ada dikembalikan apa adanya — tidak ada
-              tap kedua yang lahir.
-            </Note>
-          )}
         </div>
       )}
     </Modal>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Fingerprint, GitCommitHorizontal, OctagonX, Shield, TriangleAlert } from 'lucide-react';
+import { Fingerprint, OctagonX, Shield, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -107,8 +107,7 @@ export function ApproveBatchModal({ batch, onClose }: { batch: MassBatch | null;
           </KeyValueList>
 
           <Note tone="warn" icon={<Shield />}>
-            Rank-guard: checker harus HR Manager ke atas <strong>dan</strong> berbeda dari maker (SoD). Hash yang
-            dibekukan mencegah seleksi berubah antara persetujuan dan pemrosesan (anti-TOCTOU).
+            Checker harus HR Manager ke atas <strong>dan</strong> berbeda dari maker. Seleksi karyawan dikunci saat persetujuan.
           </Note>
 
           <ReasonField
@@ -174,13 +173,7 @@ export function ProcessBatchModal({ batch, onClose }: { batch: MassBatch | null;
           </div>
 
           <Note tone="warn" icon={<TriangleAlert />}>
-            Hash harus sama persis dengan seleksi yang dibekukan saat persetujuan. Ketidakcocokan ditolak dengan{' '}
-            <strong>409 Conflict</strong> — batch tetap APPROVED dan tidak ada yang dilahirkan (anti-TOCTOU).
-          </Note>
-
-          <Note icon={<GitCommitHorizontal />}>
-            Batch correlation id ditempelkan ke setiap offboarding yang dilahirkan supaya satu run bisa di-halt atau
-            ditangguhkan massal sekaligus.
+            Seleksi harus sama persis dengan yang dikunci saat persetujuan. Jika berbeda, proses ditolak dan batch tetap APPROVED.
           </Note>
         </div>
       )}
@@ -202,7 +195,7 @@ export function HaltBatchModal({ batch, onClose }: { batch: MassBatch | null; on
       open={Boolean(batch)}
       onOpenChange={(open) => !open && onClose()}
       title="Halt processing"
-      description="Circuit-breaker menangguhkan instance offboarding yang sedang berjalan berdasarkan correlation id."
+      description="Menangguhkan offboarding yang sedang berjalan di batch ini."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>

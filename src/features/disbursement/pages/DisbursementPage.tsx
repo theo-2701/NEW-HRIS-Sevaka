@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Info, Server, ShieldAlert, TriangleAlert } from 'lucide-react';
+import { Info, ShieldAlert, TriangleAlert } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
@@ -170,8 +170,7 @@ export function DisbursementPage() {
 
   const accessGate = (
     <Note tone="danger" icon={<ShieldAlert />}>
-      <strong>403 — nol akses.</strong> ROLE_EMPLOYEE dan ROLE_DEPT_MANAGER tidak punya akses ke kedua sub-layar
-      Pencairan & Piutang (TSD §6.5.1). Ini akar GAP PROB-FRONTEND-016 pada riwayat pencairan ESS.
+      <strong>Tidak ada akses.</strong> Peran Anda tidak memiliki akses ke menu Pencairan & Piutang.
     </Note>
   );
 
@@ -180,7 +179,7 @@ export function DisbursementPage() {
       <PageShell
         crumbs={[{ label: 'Finance' }, { label: 'Disbursement & Receivables' }]}
         title="Disbursement & Receivables"
-        description="Potongan mendatar atas klaim benefit, pinjaman, dan uang muka — bukan jenis pengajuan keempat. Finance tidak pernah mengeksekusi pembayaran di sini: setiap endpoint menulis atau membaca penanda bahwa sesuatu sudah dibayar, bukan instruksi transfer."
+        description="Penanda pembayaran atas klaim benefit, pinjaman, dan uang muka. Menu ini mencatat bahwa sesuatu sudah dibayar — bukan instruksi transfer."
         actions={
           <Select
             value={actor.employeeId}
@@ -362,16 +361,6 @@ export function DisbursementPage() {
                   />
                 </div>
               )}
-
-              <Note icon={<Server />}>
-                <strong>Empat pintu integrasi mesin sengaja tanpa UI</strong> (baca payables, tulis payment marks, baca &
-                tulis loan calculations — server-to-server, paginasi cursor, identitas mesin). Baris hasil pintu itu
-                membawa badge Client system: terbaca di detail, tidak pernah bisa ditulis dari layar ini.
-              </Note>
-              <Note tone="warn" icon={<TriangleAlert />}>
-                <strong>Reverse tidak punya frame di FSD</strong> (§5.5) — dibangun dari UIC §6.2 op 5 sebagai aksi baris.
-                Tombol Export CSV di prototype milik Keamanan Finance (log_export_download), tidak dibawa ke layar ini.
-              </Note>
             </Card>
           )}
 
@@ -471,9 +460,7 @@ export function DisbursementPage() {
               )}
 
               <Note icon={<Info />}>
-                Outstanding amount adalah <strong>satu angka gabungan</strong> pinjaman dan uang muka, snapshot sekali saat
-                peristiwa keluar diterima — tidak ikut bergerak. Cleared by repayment ditulis proses pengamat tanpa tindakan
-                manusia, jadi tidak punya layar. Kolom Exit Date di prototype bukan kolom ERD — tidak dibawa.
+                Outstanding amount adalah <strong>satu angka gabungan</strong> pinjaman dan uang muka, dicatat saat karyawan keluar dan tidak berubah sesudahnya.
               </Note>
             </Card>
           )}

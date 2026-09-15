@@ -65,13 +65,11 @@ export function OncallActivityPage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'On Call' }, { label: 'On Call Activity' }]}
         title="On Call Activity"
-        description="Bacaan tersaring atas baris lembur yang sama dengan menu Overtime — hanya yang lahir otomatis dari kehadiran yang jatuh di dalam jendela siaga yang disetujui. Layar terminal: tidak ada apa pun di sini yang menuntun ke tempat lain."
+        description="Call-out lembur yang tercatat otomatis dari kehadiran di dalam jendela siaga yang disetujui."
       >
         <div className="flex flex-col gap-5">
           <Note icon={<Lock />}>
-            Baca-saja, tanpa tambah manual di mana pun. Call-out yang benar-benar terjadi dicatat otomatis dari
-            kehadiran — tidak pernah diketik siapa pun. Menyetujui atau menolak call-out juga tidak diduplikasi di
-            sini: permukaan itu tetap satu pintu di menu Overtime.
+            Baca saja. Call-out dicatat otomatis dari kehadiran; persetujuannya dilakukan di menu Overtime.
           </Note>
 
           <Card>
@@ -180,10 +178,7 @@ export function OncallActivityPage() {
           </Card>
 
           <Note icon={<Info />}>
-            Jendela yang tidak pernah menerbitkan call-out sekadar tidak punya baris di sini — bukan baris kosong.
-            Sisi <strong>Requested</strong> selalu kosong: baris ini lahir otomatis dan tidak pernah melewati
-            pengajuan jam tertulis. Sisi <strong>Approved</strong> adalah salinan pagu jendelanya, dan mengalir ke
-            ringkasan harian lembur yang sama dengan pengajuan manusia.
+            Jendela siaga tanpa call-out tidak ditampilkan. Kolom <strong>Requested</strong> selalu kosong karena baris dibuat otomatis; <strong>Approved</strong> mengikuti pagu jendelanya.
           </Note>
         </div>
       </PageShell>

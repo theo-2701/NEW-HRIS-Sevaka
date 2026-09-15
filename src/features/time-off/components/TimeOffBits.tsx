@@ -116,7 +116,7 @@ export function GatePreview({
   return (
     <section className="flex flex-col gap-2 rounded-md border border-border-1 bg-mist p-4">
       <h4 className="m-0 font-body text-xs font-bold uppercase tracking-[0.05em] text-fg-3">
-        Hasil hitung gerbang submit
+        Ringkasan pengajuan
       </h4>
       <div className="flex items-baseline gap-2">
         <span className="font-display text-xl font-bold text-fg-1">{totalDays}</span>
@@ -135,7 +135,7 @@ export function GatePreview({
 
       {errors.length === 0 && extra.length > 0 && (
         <p className="m-0 font-body text-xs font-medium leading-[1.45] text-warning-800">
-          Lolos gerbang, tapi terangkat ke lapis persetujuan tambahan:{' '}
+          Pengajuan ini butuh persetujuan tambahan:{' '}
           {extra.map((reason) => EXTRA_REASON_LABEL[reason]).join(', ')}.
         </p>
       )}

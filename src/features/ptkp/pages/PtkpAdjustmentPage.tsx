@@ -107,14 +107,12 @@ export function PtkpAdjustmentPage() {
                 <CardHead title="Adjust PTKP Status" />
 
                 <Note icon={<ShieldCheck />}>
-                  Segregation of duties — verifier harus berbeda dari pemohon. Aktor audit dicap server dari
-                  token Anda, bukan dikirim dari layar ini.
+                  Verifier harus berbeda dari pemohon.
                 </Note>
 
                 {isSelf && (
                   <Note tone="warn" icon={<ShieldCheck />}>
-                    Anda sedang membuka data diri sendiri. Menyimpan akan ditolak <strong>403</strong> — minta
-                    HR lain yang memverifikasi.
+                    Anda sedang membuka data diri sendiri dan tidak dapat memverifikasinya — minta HR lain.
                   </Note>
                 )}
 
@@ -134,7 +132,7 @@ export function PtkpAdjustmentPage() {
                           required
                           placeholder="Pilih kode PTKP"
                           options={PTKP_CODE_OPTIONS}
-                          hint="Harus ada di master PTKP (cnf_ptkp_effective)."
+                          hint="Pilih status PTKP yang berlaku."
                         />
                         <DateField
                           name="effectiveFrom"

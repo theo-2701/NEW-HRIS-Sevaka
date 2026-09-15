@@ -116,7 +116,7 @@ export function OncallSchedulePage() {
           </div>
 
         <Card>
-          <CardHead title="Standby windows" sub="emp_oncall_assignment" />
+          <CardHead title="Standby windows" />
 
           <div className="flex flex-col">
             <TableToolbar

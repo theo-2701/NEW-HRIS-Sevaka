@@ -281,7 +281,7 @@ export type ExitMode = 'cancel' | 'repudiate' | 'travel';
 const EXIT_COPY: Record<ExitMode, { title: string; description: string; confirm: string; reason: 'optional' | 'required' }> = {
   cancel: {
     title: 'Cancel request',
-    description: 'Hanya selagi SUBMITTED dan belum ada task persetujuan selesai — lewat itu server menolak 409 FIN_ALREADY_DECIDED.',
+    description: 'Hanya bisa dibatalkan selagi masih SUBMITTED dan belum ada persetujuan yang selesai.',
     confirm: 'Cancel request',
     reason: 'optional',
   },
@@ -351,8 +351,7 @@ export function AdvanceExitModal({
         <div className="flex flex-col gap-4">
           {mode === 'repudiate' ? (
             <Note tone="warn" icon={<ShieldCheck />}>
-              Dikirim dari dalam aplikasi setelah login penuh — tidak pernah dari tautan notifikasi. Jalur keluar status
-              REPUDIATED belum diputus kontrak (GAP-8).
+              Pernyataan ini hanya bisa dikirim dari dalam aplikasi setelah login.
             </Note>
           ) : mode === 'travel' ? (
             <Note tone="warn" icon={<TriangleAlert />}>

@@ -12,16 +12,12 @@ import { SelectField } from '@/components/form/SelectField';
 import { Briefcase, CalendarCheck, ClipboardList } from 'lucide-react';
 import {
   CertMark,
-  Code,
   Empty,
-  EndpointChip,
-  GapLegend,
   KeyValueList,
   KeyValueRow,
   Note,
   SectionCard,
-  monoClass,
-} from '@/features/profile/components/ProfileBits';
+  monoClass } from '@/features/profile/components/ProfileBits';
 import { useDeleteWork, useSaveWork, useUpdateProfile } from '@/features/profile/hooks/useProfile';
 import { additionalInfoSchema, workExperienceSchema } from '@/features/profile/validation';
 import {
@@ -132,17 +128,11 @@ export function WorkExperienceSection({ works }: { works: WorkExperience[] }) {
       <SectionCard
         icon={<Briefcase />}
         title="Working Experience"
-        description={
-          <>
-            Riwayat kerja eksternal · <Code>mst_work_experience</Code> · presisi bulan-tahun
-          </>
-        }
-        endpoint={<EndpointChip method="POST" path="/work-experiences" />}
+        description="Riwayat kerja sebelumnya"
         action={<PanelActionButton onClick={() => setEditing(EMPTY_WORK)}>Add Experience</PanelActionButton>}
       >
         <Note icon={<CalendarCheck />}>
-          Tanggal disimpan sebagai <strong>bulan + tahun</strong> (hari = 01) dan tanggal keluar harus sama atau
-          setelah tanggal masuk (<Code>leave_date ≥ join_date</Code>) — ditegakkan di form dan lewat DB CHECK.
+          Tanggal dicatat sebagai <strong>bulan + tahun</strong>, dan tanggal keluar harus sama atau setelah tanggal masuk.
         </Note>
         <DataTable<WorkExperience>
           rows={paged.rows}
@@ -214,12 +204,7 @@ export function AdditionalInfoSection({ profile }: { profile: PersonalProfile })
       <SectionCard
         icon={<ClipboardList />}
         title="Additional Info"
-        description={
-          <>
-            Sisa biodata COLD · <Code>mst_employee_personal</Code> · update-only
-          </>
-        }
-        endpoint={<EndpointChip method="PUT" path="/employee-profiles/{id}" />}
+        description="Data pribadi tambahan"
         action={<PanelActionButton onClick={() => setOpen(true)}>Edit</PanelActionButton>}
       >
         <KeyValueList cols="220px 1fr">
@@ -233,12 +218,6 @@ export function AdditionalInfoSection({ profile }: { profile: PersonalProfile })
           </KeyValueRow>
           <KeyValueRow label="Disability status">{labelOf(DISABILITY_OPTIONS, profile.disabilityStatus)}</KeyValueRow>
         </KeyValueList>
-
-        <GapLegend tag="FINAL">
-          Field <strong>rhesus darah (+/−)</strong> terpisah <strong>tidak ditambahkan</strong> — keputusan final
-          (<Code>PROB-FRONTEND-006</Code> a, CLOSE 04 Agu 2026); <Code>blood_type</Code> (A/B/AB/O/OTHER) sudah
-          cukup. Tidak ada field khusus HR di sini; semuanya bisa Anda ubah sendiri.
-        </GapLegend>
       </SectionCard>
 
       <Formik

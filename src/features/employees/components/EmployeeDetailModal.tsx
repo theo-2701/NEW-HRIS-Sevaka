@@ -81,11 +81,10 @@ export function EmployeeDetailModal({ employeeId, scope, onClose }: EmployeeDeta
 
           <p className="m-0 flex items-start gap-2.5 rounded-md border border-primary-200 bg-primary-50 px-3.5 py-2.5 font-body text-[12px] font-medium leading-normal text-secondary-900">
             <Lock className="mt-0.5 size-3.5 shrink-0 text-secondary-700" />
-            Read-only. Rekening &amp; PII disamarkan pada data subjek lain; membuka record ini menulis satu baris
-            read-audit append-only (§12.2).
+            Read-only. Rekening &amp; data pribadi disamarkan untuk karyawan lain; setiap pembukaan data ini tercatat.
           </p>
 
-          <Group icon={<Briefcase className="size-[15px]" />} title="Work data" note="emp_work_detail.*">
+          <Group icon={<Briefcase className="size-[15px]" />} title="Work data">
             <Row label="NIK">
               <span className={mono}>{maskNik(data.nik, scope, Boolean(isSelf))}</span>
             </Row>
@@ -121,7 +120,6 @@ export function EmployeeDetailModal({ employeeId, scope, onClose }: EmployeeDeta
           <Group
             icon={<Landmark className="size-[15px]" />}
             title="Bank account"
-            note="disamarkan — 4 digit terakhir (§1.8)"
           >
             <Row label="Bank">{data.bank.bankCode}</Row>
             <Row label="Account number">
@@ -133,7 +131,6 @@ export function EmployeeDetailModal({ employeeId, scope, onClose }: EmployeeDeta
           <Group
             icon={<IdCard className="size-[15px]" />}
             title="Position & identity"
-            note="proyeksi via auth / company — GAP PROB-FRONTEND-002"
           >
             <Row label="Name">{data.name}</Row>
             <Row label="Email">{data.email}</Row>

@@ -12,14 +12,10 @@ import { SelectField } from '@/components/form/SelectField';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import {
   CertMark,
-  Code,
   Empty,
-  EndpointChip,
-  GapLegend,
   SectionCard,
   SingleValue,
-  Tag,
-} from '@/features/profile/components/ProfileBits';
+  Tag } from '@/features/profile/components/ProfileBits';
 import {
   useDeleteTraining,
   useSaveTraining,
@@ -41,12 +37,7 @@ export function FormalEducationSection({ lastEducation }: { lastEducation: LastE
       <SectionCard
         icon={<GraduationCap />}
         title="Formal Education"
-        description={
-          <>
-            Field tunggal · <Code>mst_employee_personal.last_education</Code> · update-only
-          </>
-        }
-        endpoint={<EndpointChip method="PUT" path="/employee-profiles/{id}" />}
+        description="Jenjang pendidikan tertinggi"
         action={<PanelActionButton onClick={() => setOpen(true)}>Change Level</PanelActionButton>}
       >
         <SingleValue
@@ -54,13 +45,6 @@ export function FormalEducationSection({ lastEducation }: { lastEducation: LastE
           label="Highest education level"
           value={labelOf(LAST_EDUCATION_OPTIONS, lastEducation)}
         />
-
-        <GapLegend tag="FINAL">
-          <strong>Riwayat pendidikan formal</strong> yang rinci (institusi / jurusan / berkas ijazah){' '}
-          <strong>dibatalkan</strong> — keputusan final (<Code>PROB-FRONTEND-006</Code> b, CLOSE); hanya jenjang
-          tunggal <Code>last_education</Code> yang ada. Field ini <strong>bukan</strong> field khusus HR, jadi Anda
-          bisa mengubahnya sendiri.
-        </GapLegend>
       </SectionCard>
 
       <Formik
@@ -129,7 +113,7 @@ function TrainingFormModal({ training, onClose }: { training: Training | null; o
           onOpenChange={(open) => !open && onClose()}
           size="wide"
           title={training?.id ? 'Edit Training' : 'Add Training'}
-          description="Hanya kategori yang divalidasi terhadap enum; field lain opsional."
+          description="Hanya kategori yang wajib; field lain opsional."
           footer={
             <>
               <Button variant="secondary" onClick={onClose}>
@@ -171,12 +155,7 @@ export function TrainingSection({ trainings }: { trainings: Training[] }) {
       <SectionCard
         icon={<BookOpen />}
         title="Informal Education (Training)"
-        description={
-          <>
-            Pelatihan &amp; sertifikasi · <Code>mst_training</Code> · CRUD soft-delete
-          </>
-        }
-        endpoint={<EndpointChip method="POST" path="/trainings" />}
+        description="Pelatihan & sertifikasi"
         action={<PanelActionButton onClick={() => setEditing(EMPTY_TRAINING)}>Add Training</PanelActionButton>}
       >
         <DataTable<Training>
@@ -252,12 +231,6 @@ export function TrainingSection({ trainings }: { trainings: Training[] }) {
           onPageChange={paged.setPage}
           onPageSizeChange={paged.setPageSize}
         />
-
-        <GapLegend tag="ACTIVE">
-          <Code>training_activity</Code> sudah <strong>aktif di kontrak §7.4</strong> (TSD-PROFILE delta 0.4) dan kini
-          dirender sebagai field opsional — bukan gap lagi. Masa berlaku (<Code>certificate_expiry_date</Code>)
-          dipakai untuk deteksi "kedaluwarsa"; DELETE mengembalikan <strong>204 No Content</strong>.
-        </GapLegend>
       </SectionCard>
 
       <TrainingFormModal training={editing} onClose={() => setEditing(null)} />

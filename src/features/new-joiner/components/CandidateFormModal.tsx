@@ -101,7 +101,7 @@ function IdentityBranch() {
           inputMode="numeric"
           maxLength={16}
           placeholder="16 digit"
-          hint={`${values.idCardNumber.length}/16 digit · dikirim transient, tidak pernah disimpan mentah`}
+          hint={`${values.idCardNumber.length}/16 digit`}
         />
       </div>
     );

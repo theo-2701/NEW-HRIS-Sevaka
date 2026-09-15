@@ -1,11 +1,9 @@
 import { Form, Formik } from 'formik';
-import { TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { RadioBranch } from '@/components/RadioBranch';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { FormField } from '@/components/form/FormField';
-import { Note } from '@/features/transitions/components/TransitionBits';
 import { useWaiveTask } from '@/features/transitions/hooks/useTransitions';
 import { waiveSchema } from '@/features/transitions/validation';
 import type { TransitionTask } from '@/features/transitions/types';
@@ -74,11 +72,6 @@ export function WaiveTaskModal({
             }
           >
             <Form className="flex flex-col gap-4">
-              <Note tone="warn" icon={<TriangleAlert />}>
-                <strong>GAP · PROB-FRONTEND-003</strong> — endpoint waive task (kelas kontrol D3) belum dikonfirmasi
-                di kontrak API. Aksi ini mengikuti model data yang terdokumentasi; penegakannya ditunda.
-              </Note>
-
               <FormField
                 name="control"
                 label="Kelas kontrol"

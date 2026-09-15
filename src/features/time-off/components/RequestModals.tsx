@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, FileLock2, Info, ShieldAlert } from 'lucide-react';
+import { Clock, Info, ShieldAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -49,7 +49,6 @@ export function RequestDetailModal({
 }) {
   const [tab, setTab] = useState<DetailTab>('detail');
   const [purpose, setPurpose] = useState<AccessPurpose | ''>('');
-  const [revealed, setRevealed] = useState(false);
   const { data: accessLog = [] } = useMedicalAccess();
   const openNote = useOpenDoctorNote(session);
 
@@ -57,7 +56,6 @@ export function RequestDetailModal({
     if (request) {
       setTab('detail');
       setPurpose('');
-      setRevealed(false);
     }
   }, [request]);
 
@@ -118,13 +116,11 @@ export function RequestDetailModal({
               <Note tone={windowOpen ? 'warn' : 'info'} icon={<Clock />}>
                 {windowOpen ? (
                   <>
-                    Jendela tolak tertutup <strong>{formatDateTime(request.rejectDeadlineAt)}</strong> — dibekukan
-                    saat pengajuan. Menolak di dalamnya membalik saldo dan status harinya.
+                    Cuti sakit ini masih bisa ditolak sampai <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>. Menolak akan mengembalikan saldo dan status harinya.
                   </>
                 ) : (
                   <>
-                    Jendela tolak sudah tertutup pada <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>.
-                    Cuti sakit ini permanen — penolakan setelahnya ditolak <code>422</code>.
+                    Batas penolakan sudah lewat pada <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>. Cuti sakit ini sudah permanen.
                   </>
                 )}
               </Note>
@@ -142,8 +138,7 @@ export function RequestDetailModal({
                 </>
               ) : (
                 <>
-                  Peran Anda tidak berhak membuka surat dokter — permintaan dijawab <code>403</code> dan{' '}
-                  <strong>tidak</strong> menghasilkan baris jejak.
+                  Peran Anda tidak berhak membuka surat dokter.
                 </>
               )}
             </Note>
@@ -168,22 +163,13 @@ export function RequestDetailModal({
                 disabled={!allowed || !purpose || openNote.isPending}
                 onClick={() =>
                   purpose &&
-                  openNote.mutate(
-                    { id: request.id, purpose },
-                    { onSuccess: () => setRevealed(true) },
-                  )
+                  openNote.mutate({ id: request.id, purpose })
                 }
               >
                 {openNote.isPending ? 'Membuka…' : "Open doctor's note"}
               </Button>
             </div>
 
-            {revealed && (
-              <Note icon={<FileLock2 />}>
-                Surat dokter dibuka. Isi berkas belum tersedia selama mekanisme unggah HRIS masih tertunda —
-                yang berjalan penuh di sini adalah jejak aksesnya.
-              </Note>
-            )}
 
             <DataTable<MedicalAccessLog>
               rows={rows}
@@ -232,7 +218,7 @@ export function DecisionModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title={`Leave approval — ${request.id}`}
-      description="Menyetujui boleh membawa catatan; menolak wajib beralasan. Keduanya dijawab 200 diterima — status final ditulis setelah proses persetujuan selesai."
+      description="Menyetujui boleh membawa catatan; menolak wajib beralasan."
       footer={
         <>
           <Button

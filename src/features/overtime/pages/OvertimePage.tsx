@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { UserRound } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
@@ -13,7 +12,6 @@ import { RowActions, RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
-import { Note } from '@/features/time-off/components/TimeOffBits';
 import { TmFlag } from '@/features/attendance/components/AttendanceBits';
 import {
   OvertimeApproveModal,
@@ -168,7 +166,7 @@ export function OvertimePage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Overtime' }]}
         title="Overtime"
-        description="Mode pengajuan, kategori, dan pemicu lapis approval tidak pernah dikirim layar ini — ketiganya dihitung server. Pemicu lapis menaikkan sebuah pengajuan ke lapis berikutnya; ia bukan penolakan. Ringkasan harian adalah fakta mesin: jam terbayar selalu yang lebih kecil antara aktual dan pagu yang disetujui."
+        description="Pengajuan lembur dan ringkasan jam lembur harian. Jam terbayar adalah yang lebih kecil antara jam aktual dan jam yang disetujui."
         actions={filer ? <Button onClick={() => openForm(null)}>Request overtime</Button> : undefined}
       >
         <div className="flex flex-col gap-5">
@@ -198,30 +196,6 @@ export function OvertimePage() {
             </Select>
           </div>
 
-          <Note icon={<UserRound />}>
-            {approver ? (
-              <>
-                <strong>Approver view ({session.role}).</strong> Seluruh antrean pending terdaftar. Baris milik Anda
-                sendiri tidak punya aksi keputusan — pemisahan tugas ditegakkan di server (<code>403</code>), bukan
-                sekadar disembunyikan di sini. Tombol mengajukan absen: <code>overtime-request:create</code> adalah
-                scope <code>EMPLOYEE</code>, jadi lembur tidak pernah diajukan atas nama siapa pun.
-              </>
-            ) : session.role === 'HR_STAFF' ? (
-              <>
-                <strong>Reader view (HR_STAFF).</strong> <code>overtime-request:search</code> membuka seluruh antrean
-                lintas karyawan, tetapi <code>overtime-request:approve</code> hanya dipegang <code>HR_MANAGER</code> ·{' '}
-                <code>DEPT_MANAGER</code> dan <code>overtime-request:create</code> hanya <code>EMPLOYEE</code> — tidak
-                ada permukaan keputusan maupun pengajuan untuk Anda di sini.
-              </>
-            ) : (
-              <>
-                <strong>ESS mode.</strong> Layar dan endpoint yang sama — barisnya dipersempit ke{' '}
-                <strong>{employeeName(session.employeeId)}</strong> dari klaim identitas, dan tidak ada aksi keputusan
-                untuk Anda sama sekali.
-              </>
-            )}
-          </Note>
-
           <TabMenu<Tab>
             value={tab}
             onChange={setTab}
@@ -233,7 +207,7 @@ export function OvertimePage() {
 
           {tab === 'requests' && (
             <Card>
-              <CardHead title="Overtime requests" sub="emp_overtime_request" />
+              <CardHead title="Overtime requests" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -339,7 +313,7 @@ export function OvertimePage() {
 
           {tab === 'daily' && (
             <Card>
-              <CardHead title="Daily summary" sub="emp_overtime_daily — fakta mesin, nol endpoint tulis" />
+              <CardHead title="Daily summary" sub="Jam terbayar per hari" />
 
               <div className="flex flex-col">
                 <TableToolbar

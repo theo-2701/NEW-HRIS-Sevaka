@@ -174,22 +174,6 @@ export function TimeOffRequestPage() {
             </Select>
           </div>
 
-          <Note icon={<UserRound />}>
-            {approver ? (
-              <>
-                Tampilan approver — setiap pengajuan dalam rentang kendali Anda terdaftar. Baris milik Anda sendiri
-                tidak punya aksi keputusan: pemisahan tugas ditegakkan di server (<code>403</code>), bukan sekadar
-                disembunyikan di sini.
-              </>
-            ) : (
-              <>
-                Mode ESS — layar dan endpoint yang sama; barisnya dipersempit ke{' '}
-                <strong>{employeeName(session.employeeId)}</strong> dari klaim identitas, dan tidak ada aksi
-                keputusan untuk Anda.
-              </>
-            )}
-          </Note>
-
           <TabMenu<Tab>
             value={tab}
             onChange={setTab}
@@ -223,7 +207,7 @@ export function TimeOffRequestPage() {
               />
 
               <Card>
-                <CardHead title="Requests" sub="Disaring dari klaim identitas — layar dan endpoint yang sama" />
+                <CardHead title="Requests" />
 
                 <div className="flex flex-col">
                   <TableToolbar

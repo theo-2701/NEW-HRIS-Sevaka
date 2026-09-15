@@ -1,12 +1,11 @@
 import { useRef } from 'react';
 import { Form, Formik, useField } from 'formik';
-import { ShieldCheck } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
-import { KeyValueList, KeyValueRow, Note } from '@/features/new-joiner/components/CandidateBits';
+import { KeyValueList, KeyValueRow } from '@/features/new-joiner/components/CandidateBits';
 import { useMaterializeCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
 import { materializeSchema } from '@/features/new-joiner/validation';
 import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
@@ -117,15 +116,10 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
                   required
                   placeholder="Pilih job grade"
                   options={JOB_GRADE_OPTIONS}
-                  hint="Baris tingkat kelas saja — ditulis ke emp_work_detail.job_grade_id."
+                  hint="Tingkat kelas jabatan karyawan."
                 />
                 <ContractFileField />
               </div>
-
-              <Note icon={<ShieldCheck />}>
-                Request membawa <strong>Idempotency-Key</strong>, jadi submit yang terulang tidak akan membuat
-                karyawan ganda.
-              </Note>
             </Form>
           )}
         </Modal>

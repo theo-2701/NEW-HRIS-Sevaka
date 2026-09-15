@@ -100,8 +100,8 @@ export function ClaimDetailModal({
       title={claim ? `${asApprover ? 'Claim approval' : 'Claim'} ${claim.requestNo}` : ''}
       description={
         asApprover
-          ? 'Nota bersifat baca-saja bagi approver. Keputusan diteruskan ke proses approval dan kembali 202 Accepted — statusnya ditulis belakangan.'
-          : 'Snapshot milik server yang dibekukan saat pengajuan dan saat keputusan.'
+          ? 'Nota bersifat baca-saja bagi approver. Status diperbarui setelah proses approval selesai.'
+          : 'Data klaim sebagaimana tercatat saat pengajuan dan keputusan.'
       }
       size="wide"
       footer={
@@ -141,8 +141,7 @@ export function ClaimDetailModal({
 
           {hold && (
             <Note tone="warn" icon={<ShieldAlert />}>
-              Klaim ini sedang ditahan sengketa ({hold.targetRequestNo}). Penahanan menggerbang penandaan pencairan
-              (422 FIN_DISPUTE_HOLD_ACTIVE), bukan keputusan ini.
+              Klaim ini sedang ditahan sengketa ({hold.targetRequestNo}), jadi belum bisa dicairkan sampai hold dicabut.
             </Note>
           )}
 

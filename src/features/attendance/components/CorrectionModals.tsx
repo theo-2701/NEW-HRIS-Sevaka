@@ -280,8 +280,7 @@ export function CorrectionDecisionModal({
       {correction && (
         <div className="flex flex-col gap-4">
           <Note icon={<ShieldCheck />}>
-            Separation of duties — a correction can never be approved by the person who filed it. The refusal is a{' '}
-            <code>403</code> at the server, not a hidden button.
+            A correction can never be approved by the person who filed it.
           </Note>
           <CorrectionSummary correction={correction} day={day} />
         </div>

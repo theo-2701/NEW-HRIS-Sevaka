@@ -114,9 +114,7 @@ export function ManpowerRequisitionPage() {
               ))}
 
               <Note icon={<Info />}>
-                <strong>Actual</strong> dan <strong>Gap</strong> dihitung terhadap jumlah posisi hidup di
-                company-service — employee-service tidak menyimpan kolom kapasitas.{' '}
-                <strong>PROB-FRONTEND-005:</strong> kontrak read agregatnya belum dikonfirmasi (penegakan ditunda).
+                <strong>Actual</strong> dan <strong>Gap</strong> dihitung dari jumlah posisi yang terisi di struktur organisasi.
               </Note>
             </div>
           )}

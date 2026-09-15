@@ -193,15 +193,12 @@ export function LoanPage() {
 
               {config && (
                 <Note icon={<Info />}>
-                  Skema company ini: <strong>interest-bearing</strong> · mode tenor <code>{config.tenorMode}</code>{' '}
-                  dengan pola <code>{config.tenorChoicePattern}</code> (3, 6, 9 … {config.tenorMax}). Tenor selalu
-                  dikirim klien; bunga <strong>tidak pernah dihitung HRIS</strong> pada company berbunga — ia datang
-                  dari pihak pemberi dana.
+                  Pinjaman di perusahaan ini berbunga; tenor maksimal {config.tenorMax} bulan. Bunga dihitung oleh pihak pemberi dana, bukan HRIS.
                 </Note>
               )}
 
               <Card>
-                <CardHead title="My requests" sub="emp_loan — baris milik Anda sendiri" />
+                <CardHead title="My requests" sub="Pinjaman milik Anda" />
 
                 <div className="flex flex-col">
                   <DataTable<Loan>
@@ -263,12 +260,10 @@ export function LoanPage() {
 
           {tab === 'approval' && (
             <Card>
-              <CardHead title="Approval queue" sub="Antrean atasan langsung — disaring ke SUBMITTED saja" />
+              <CardHead title="Approval queue" sub="Menunggu keputusan Anda" />
 
               <Note icon={<Users />}>
-                Antrean <strong>atasan langsung</strong> — layarnya sendiri, berisi permintaan yang menunggu keputusan
-                Anda. Keputusan diambil dengan token principal Anda sendiri; token service ditolak 403. Back office
-                tidak pernah memegang pintu ini.
+                Permintaan pinjaman dari bawahan langsung yang menunggu keputusan Anda.
               </Note>
 
               <div className="flex flex-col">
@@ -340,13 +335,11 @@ export function LoanPage() {
             <Card>
               <CardHead
                 title="Schedule acknowledgement"
-                sub="Satu endpoint, dua hasil — ACK menyetujui pinjaman, DECLINE melepas reservasinya"
+                sub="ACK menyetujui pinjaman, DECLINE melepas reservasinya"
               />
 
               <Note tone="warn" icon={<TriangleAlert />}>
-                Pengakuan diberikan <strong>di dalam aplikasi setelah login penuh</strong> — tidak pernah dari tautan di
-                notifikasi. Setiap panggilan menambah baris baru; DECLINE melepas reservasi dan Anda boleh mengajukan
-                permintaan baru.
+                Setiap pengakuan menambah baris baru. DECLINE melepas reservasi dan Anda boleh mengajukan permintaan baru.
               </Note>
 
               {ackRows.length ? (

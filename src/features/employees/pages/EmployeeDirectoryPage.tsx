@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Filter, GitPullRequestArrow } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { Segmented } from '@/components/Segmented';
 import { DataTable, CellIdentity } from '@/components/DataTable';
@@ -118,19 +118,6 @@ export function EmployeeDirectoryPage() {
                   setPage(1);
                 }}
               />
-
-              {/* GAP PROB-FRONTEND-002 — lihat _prototype/EMPLOYEE-GAP-NOTES.md §A */}
-              <div className="flex items-start gap-2.5 rounded-[10px] border border-warning-200 bg-warning-50 px-3.5 py-3 font-body text-[11.5px] font-medium leading-normal text-warning-950">
-                <GitPullRequestArrow className="mt-0.5 size-4 shrink-0 text-warning-700" />
-                <span>
-                  <span className="mr-1.5 inline-flex h-[18px] items-center rounded-[5px] bg-warning-500 px-1.5 font-body text-[8.5px] font-bold uppercase tracking-[0.04em] text-white">
-                    GAP · PROB-FRONTEND-002
-                  </span>
-                  Kolom <strong>Name</strong> dan <strong>Unit/Branch</strong> bukan kolom{' '}
-                  <code className="font-mono">emp_work_detail</code> — keduanya proyeksi join lintas-service (auth
-                  &amp; company). Ketersediaannya menunggu kontrak read gabungan yang belum ditegaskan.
-                </span>
-              </div>
 
               <section className="overflow-hidden rounded-lg border border-border-1 bg-bg-surface">
                 <header className="flex flex-wrap items-center gap-3 border-b border-border-1 px-[18px] py-3.5">

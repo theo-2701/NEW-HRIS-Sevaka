@@ -195,7 +195,7 @@ export function OvertimeFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Edit overtime request' : 'Request overtime'}
-            description="Lembur selalu diajukan untuk diri sendiri. Mode, kategori, dan pemicu lapis approval dihitung server — bukan dikirim layar ini."
+            description="Lembur selalu diajukan untuk diri sendiri."
             size="wide"
             footer={
               <>
@@ -310,8 +310,7 @@ export function OvertimeApproveModal({
               <DecisionHead row={row} />
               {sod && (
                 <Note tone="danger" icon={<ShieldCheck />}>
-                  403 — pemisahan tugas: pemutus tidak pernah boleh jadi pengaju. Penolakannya ada di server, bukan
-                  sekadar tombol yang dimatikan di sini.
+                  Anda tidak dapat memutuskan pengajuan Anda sendiri.
                 </Note>
               )}
               <TextField
@@ -370,7 +369,7 @@ export function OvertimeRejectModal({
           <DecisionHead row={row} />
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              403 — pemisahan tugas: pemutus tidak pernah boleh jadi pengaju.
+              Anda tidak dapat memutuskan pengajuan Anda sendiri.
             </Note>
           )}
         </div>

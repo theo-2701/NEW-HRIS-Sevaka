@@ -15,15 +15,11 @@ import { SelectField } from '@/components/form/SelectField';
 import { ToggleField } from '@/components/form/ToggleField';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Code,
   Empty,
-  EndpointChip,
-  GapLegend,
   Note,
   SectionCard,
   Tag,
-  monoClass,
-} from '@/features/profile/components/ProfileBits';
+  monoClass } from '@/features/profile/components/ProfileBits';
 import { useDeleteRelative, useSaveRelative } from '@/features/profile/hooks/useProfile';
 import { relativeSchema } from '@/features/profile/validation';
 import { RELATIONSHIP_OPTIONS, RELATIVE_JOB_OPTIONS, labelOf } from '@/features/profile/types';
@@ -88,7 +84,6 @@ export function RelativeFormModal({ relative, onClose }: { relative: Relative | 
             <TextAreaField
               name="address"
               label="Alamat"
-              hint="Tanpa kolom padanan di mst_relative (tambahan yang ditandai)."
               containerClassName="md:col-span-2"
             />
             <ToggleField
@@ -126,12 +121,7 @@ export function FamilySection({ relatives }: { relatives: Relative[] }) {
       <SectionCard
         icon={<Users />}
         title="Family"
-        description={
-          <>
-            Keluarga &amp; tanggungan · <Code>mst_relative</Code> · CRUD soft-delete
-          </>
-        }
-        endpoint={<EndpointChip method="POST" path="/employee-relatives" />}
+        description="Keluarga & tanggungan"
         action={
           <PanelActionButton onClick={() => setEditing(EMPTY_RELATIVE)}>Add Family Member</PanelActionButton>
         }
@@ -239,15 +229,6 @@ export function FamilySection({ relatives }: { relatives: Relative[] }) {
             onPageSizeChange={paged.setPageSize}
           />
         </div>
-
-        <GapLegend tag="FINAL">
-          <strong>Tanda tangan digital</strong> untuk anggota keluarga <strong>tidak ditambahkan</strong> —
-          keputusan final (<Code>PROB-FRONTEND-006</Code> c, CLOSE 04 Agu 2026): tidak ada use case konkret,
-          sehingga <Code>signature</Code> tetap hanya di <Code>mst_employee_personal</Code>. Field{' '}
-          <strong>Address</strong> mengikuti form Figma tapi <strong>belum punya kolom padanan</strong> di{' '}
-          <Code>mst_relative</Code>. Tanggungan <strong>tidak</strong> otomatis diklaim untuk PTKP; keputusan
-          itu ada di payroll (CD-016).
-        </GapLegend>
       </SectionCard>
 
       <RelativeFormModal relative={editing} onClose={() => setEditing(null)} />
@@ -287,19 +268,11 @@ export function EmergencyContactSection({ relatives }: { relatives: Relative[] }
       <SectionCard
         icon={<PhoneCall />}
         title="Emergency Contact"
-        description={
-          <>
-            Proyeksi Family yang <Code>is_emergency_contact = true</Code>
-          </>
-        }
-        endpoint={<EndpointChip icon="call" path="search is_emergency_contact:true" />}
+        description="Anggota keluarga yang ditandai sebagai kontak darurat"
       >
         <Note icon={<Info />}>
-          Menu ini adalah <strong>proyeksi, bukan resource terpisah</strong>. Tambah kontak dari{' '}
-          <strong>Family</strong> (centang "Jadikan kontak darurat"). Di sini Anda hanya bisa{' '}
-          <strong>Edit</strong> atau <strong>Release</strong> — melepas berarti mengubah{' '}
-          <Code>is_emergency_contact = false</Code> (UPDATE, <strong>bukan</strong> delete); orangnya tetap
-          ada di Family.
+          Tambah kontak dari <strong>Family</strong> (centang &quot;Jadikan kontak darurat&quot;). Di sini Anda hanya bisa{' '}
+          <strong>Edit</strong> atau <strong>Release</strong> — melepas tidak menghapus orangnya dari Family.
         </Note>
 
         <div className="flex flex-col">

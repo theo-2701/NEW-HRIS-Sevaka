@@ -133,8 +133,7 @@ export function DelegationModal({
         </div>
 
         <Note icon={<Info />}>
-          Cakupannya selalu <strong>ALL_APPROVALS</strong> — kontrak tidak mengenal cakupan lain. Tanpa delegasi,
-          seluruh task persetujuan Anda tertahan selama cuti.
+          Delegasi mencakup semua persetujuan. Tanpa delegasi, seluruh task persetujuan Anda tertahan selama cuti.
         </Note>
       </div>
     </Modal>

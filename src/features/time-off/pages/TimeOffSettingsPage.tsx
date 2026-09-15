@@ -362,7 +362,7 @@ export function TimeOffSettingsPage() {
       <ConfirmDialog
         open={Boolean(deletingType)}
         title="Hapus jenis cuti ini?"
-        description={`${deletingType?.name ?? ''} akan dihapus lunak. Jenis statutory dan yang masih dirujuk akan ditolak server.`}
+        description={`${deletingType?.name ?? ''} akan dihapus. Jenis statutory dan yang masih dipakai tidak bisa dihapus.`}
         loading={deleteType.isPending}
         onOpenChange={(open) => !open && setDeletingType(null)}
         onConfirm={() =>
@@ -373,7 +373,7 @@ export function TimeOffSettingsPage() {
       <ConfirmDialog
         open={Boolean(deletingBlackout)}
         title="Hapus periode blackout ini?"
-        description={`${deletingBlackout?.name ?? ''} tidak lagi dibaca gerbang submit.`}
+        description={`${deletingBlackout?.name ?? ''} tidak lagi berlaku untuk pengajuan cuti.`}
         loading={deleteBlackout.isPending}
         onOpenChange={(open) => !open && setDeletingBlackout(null)}
         onConfirm={() =>

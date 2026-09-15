@@ -103,13 +103,8 @@ export function PlaceHoldModal({ actor, open, onClose }: { actor: Actor; open: b
               ))}
             </SelectContent>
           </Select>
-          <Hint>Ditampilkan per nomor pengajuan; payload membawa id baris. Target yang sudah on hold ditolak 409.</Hint>
+          <Hint>Target yang sudah on hold tidak bisa dipilih.</Hint>
         </div>
-
-        <Note icon={<Info />}>
-          <strong>Tidak ada field alasan di sini — disengaja.</strong> Memasang hold tidak menuntut sebab; mencabutnya
-          wajib bersebab. Kolom pelepasan tetap kosong pada baris baru.
-        </Note>
       </div>
     </Modal>
   );
@@ -263,7 +258,6 @@ export function NewExportModal({ actor, open, onClose }: { actor: Actor; open: b
               ))}
             </SelectContent>
           </Select>
-          <Hint>Scope asing ditolak 422 FIN_EXPORT_SCOPE_INVALID. Request membawa Idempotency-Key.</Hint>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
@@ -299,10 +293,10 @@ interface ReferenceRow {
 const REFERENCE: Record<ReferenceKind, { title: string; description: string; headers: [string, string, string]; rows: ReferenceRow[] }> = {
   asymmetry: {
     title: 'Place versus release — a deliberate asymmetry',
-    description: 'Mengapa memasang hold tanpa sebab, sedangkan mencabutnya selalu bersebab (FSD §6 1.5).',
+    description: 'Mengapa memasang hold tanpa sebab, sedangkan mencabutnya selalu bersebab.',
     headers: ['Aspect', 'Place', 'Release'],
     rows: [
-      { aspect: 'Reason required', left: 'Tidak — tidak ada field alasan di form maupun payload', right: 'Ya — satu catatan pelepasan teks bebas, kosong ditolak' },
+      { aspect: 'Reason required', left: 'Tidak — tidak ada field alasan', right: 'Ya — satu catatan pelepasan teks bebas, kosong ditolak' },
       { aspect: 'Who may act', left: 'Finance Officer · HR Manager · Super Admin', right: 'Sama persis, termasuk lintas peran' },
       { aspect: 'Notification', left: 'Tidak wajib', right: 'Pelepas Finance Officer ⇒ HR Manager dikabari, bukan diminta persetujuan' },
       { aspect: 'Why', left: 'Tindakan protektif berisiko rendah — sebab wajib hanya memperlambat respons', right: 'Membuka kembali baris ke sapuan retensi — keputusan berdampak, wajib berjejak' },
@@ -310,13 +304,13 @@ const REFERENCE: Record<ReferenceKind, { title: string; description: string; hea
   },
   duties: {
     title: 'Separation of duties — opener is not auditor',
-    description: 'Dua peran sengaja dipisah atas satu kelas data: lampiran nota yang memuat data kesehatan (FSD §6 1.6).',
+    description: 'Dua peran sengaja dipisah atas satu kelas data: lampiran nota yang memuat data kesehatan.',
     headers: ['Role', 'Capability', 'Explicit prohibition'],
     rows: [
       {
         aspect: 'Opener — Health Data Officer (juga HR Manager)',
-        left: 'Membuka isi satu lampiran; setiap buka menulis jejak sebelum hasil dikembalikan, percobaan 403 tidak menulis apa pun',
-        right: 'Tidak diberi endpoint peninjauan jejak — perannya membuka, bukan mengaudit',
+        left: 'Membuka isi satu lampiran; setiap buka menulis jejak sebelum hasil dikembalikan',
+        right: 'Tidak meninjau jejak — perannya membuka, bukan mengaudit',
       },
       {
         aspect: 'Auditor — HR Manager (juga Super Admin)',

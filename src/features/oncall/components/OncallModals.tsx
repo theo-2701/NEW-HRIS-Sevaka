@@ -247,7 +247,7 @@ export function OncallDecisionModal({
         <div className="flex flex-col gap-4">
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              403 — pemisahan tugas: pembuat tidak pernah memutuskan jendelanya sendiri.
+              Anda tidak dapat memutuskan jendela siaga yang Anda buat sendiri.
             </Note>
           )}
           {row.requiresExtraApprovalReason && (

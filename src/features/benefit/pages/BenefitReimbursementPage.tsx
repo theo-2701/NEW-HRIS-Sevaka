@@ -140,7 +140,7 @@ export function BenefitReimbursementPage() {
       <PageShell
         crumbs={[{ label: 'Finance' }, { label: 'Benefit Reimbursement' }]}
         title="Benefit Reimbursement"
-        description="Satu klaim menahan hak Anda lebih dulu, memakainya saat disetujui, dan melepasnya saat ditolak atau dibatalkan. Keputusan approver diteruskan ke proses approval dan kembali 202 Accepted — statusnya ditulis saat prosesnya selesai, bukan seketika di layar ini."
+        description="Satu klaim menahan hak Anda lebih dulu, memakainya saat disetujui, dan melepasnya saat ditolak atau dibatalkan. Status diperbarui setelah proses approval selesai."
         actions={
           tab === 'claims' ? (
             <Button onClick={() => setClaimForm(true)}>New claim</Button>
@@ -174,7 +174,7 @@ export function BenefitReimbursementPage() {
 
           {tab === 'claims' && (
             <Card>
-              <CardHead title="Claims" sub="emp_benefit_claim — baris yang boleh Anda lihat disaring server" />
+              <CardHead title="Claims" sub="Klaim yang bisa Anda lihat" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -319,7 +319,7 @@ export function BenefitReimbursementPage() {
             <Card>
               <CardHead
                 title="Transaction history"
-                sub="log_benefit_balance_ledger — saldo berjalan dihitung saat dibaca"
+                sub="Saldo berjalan per transaksi"
               />
 
               <div className="flex flex-col">
@@ -385,11 +385,6 @@ export function BenefitReimbursementPage() {
           {tab === 'disbursement' && (
             <Card>
               <CardHead title="Disbursement history" sub="Payable hanya lahir setelah klaimnya disetujui" />
-              <Note icon={<Info />}>
-                <strong>GAP PROB-FRONTEND-016.</strong> Kontrak tidak menyediakan endpoint pencairan untuk ROLE_EMPLOYEE —
-                POST /disbursements/search hanya untuk Finance Officer/HR Manager. Grid ini membaca penanda dummy yang sama dengan layar Pencairan & Piutang.
-              </Note>
-
               <div className="flex flex-col">
                 <DataTable<Payable>
                   rows={pagedPayables.rows}
@@ -517,7 +512,7 @@ export function BenefitReimbursementPage() {
 
               {settingsTab === 'types' && (
                 <Card>
-                  <CardHead title="Benefit type" sub="cnf_benefit_type" />
+                  <CardHead title="Benefit type" />
                   <DataTable<BenefitType>
                     rows={types}
                     rowKey={(row) => row.id}
@@ -560,7 +555,7 @@ export function BenefitReimbursementPage() {
 
               {settingsTab === 'entitlements' && (
                 <Card>
-                  <CardHead title="Entitlement per grade" sub="cnf_benefit_entitlement — hak tahunan per golongan" />
+                  <CardHead title="Entitlement per grade" sub="Hak tahunan per golongan" />
                   <DataTable<Entitlement>
                     rows={ENTITLEMENTS}
                     rowKey={(row) => row.id}

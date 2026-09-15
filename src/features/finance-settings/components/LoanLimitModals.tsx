@@ -74,7 +74,7 @@ export function LoanLimitFormModal({
       description={
         limit
           ? 'Golongan adalah identitas baris dan tidak bisa diubah. Nominal baru hanya berlaku untuk pengajuan sesudahnya.'
-          : 'Satu baris per golongan. Golongan yang sudah punya baris ditolak 409.'
+          : 'Satu baris per golongan.'
       }
       footer={
         <>
@@ -110,8 +110,8 @@ export function LoanLimitFormModal({
           )}
           <Hint>
             {limit
-              ? 'Read-only saat edit — perubahan plafon tidak berlaku surut (TSD §14.1.5).'
-              : 'Anchor lintas service ke company.mst_job_grade — tanpa foreign key (GAP-1).'}
+              ? 'Golongan tidak bisa diubah saat edit.'
+              : 'Golongan yang sudah punya plafon tidak muncul di daftar.'}
           </Hint>
         </div>
 

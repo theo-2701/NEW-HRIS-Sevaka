@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
@@ -199,7 +199,7 @@ export function CashAdvancePage() {
             <Card>
               <CardHead
                 title="Cash advance requests"
-                sub={actor.role === 'ROLE_EMPLOYEE' ? 'Baris milik Anda sebagai penerima — dipaksa server' : 'Seluruh company'}
+                sub={actor.role === 'ROLE_EMPLOYEE' ? 'Pengajuan dengan Anda sebagai penerima' : 'Seluruh company'}
               />
 
               <div className="flex flex-col">
@@ -329,22 +329,12 @@ export function CashAdvancePage() {
                 Penerima adalah identitas yang menentukan — pengajuan atas nama menjadi milik penerima, bukan pembuatnya.
                 Bantahan hanya milik penerima, hanya pada pengajuan atas nama yang belum ditandai cair.
               </Note>
-              <Note tone="warn" icon={<TriangleAlert />}>
-                <strong>Gap cakupan visual yang didokumentasikan.</strong> Perubahan tanggal pulang (5.7/5.8
-                date-changes) berkontrak penuh tapi tidak punya frame di FSD — dicatat, tidak diimprovisasi.
-              </Note>
             </Card>
           )}
 
           {tab === 'settlement' && (
             <Card>
-              <CardHead title="Settlement stages" sub="Tahap 1 menandai (200 UNDER_REVIEW) · Tahap 2 memutus (202)" />
-
-              <Note icon={<Info />}>
-                <strong>CA-B0 adalah frame tambahan.</strong> Menyerahkan nota (5.9) berkontrak penuh di UIC tapi tidak
-                punya frame di FSD — dibangun sebagai aksi baris <em>Submit settlement</em> pada uang muka APPROVED
-                (FINANCE-GAP-NOTES).
-              </Note>
+              <CardHead title="Settlement stages" sub="Tahap 1 ditinjau Finance Officer · Tahap 2 diputus atasan" />
 
               <div className="flex flex-col">
                 <DataTable<SettlementView>
@@ -451,8 +441,7 @@ export function CashAdvancePage() {
               </div>
 
               <Note icon={<Info />}>
-                Memanggil cara pengembalian atas kekurangan ditolak 422 — jalurnya lewat Pencairan
-                (payable_type = CASH_ADVANCE_SHORTFALL). Kekurangan besar butuh atasan berikutnya, beda dari pemutus tahap.
+                Kekurangan dibayarkan lewat menu Pencairan & Piutang. Kekurangan besar butuh persetujuan atasan berikutnya.
               </Note>
             </Card>
           )}

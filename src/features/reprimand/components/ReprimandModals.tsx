@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Form, Formik, useFormikContext } from 'formik';
-import { ArrowRight, ShieldCheck, TrendingUp } from 'lucide-react';
+import { ArrowRight, TrendingUp } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,12 +11,10 @@ import { SelectField } from '@/components/form/SelectField';
 import {
   KeyValueList,
   KeyValueRow,
-  Note,
   ReprimandStatusBadge,
   SnapshotPanel,
   SnapshotRow,
-  StandingPill,
-} from '@/features/reprimand/components/ReprimandBits';
+  StandingPill } from '@/features/reprimand/components/ReprimandBits';
 import {
   useApproveReprimand,
   useCreateReprimand,
@@ -164,11 +162,6 @@ export function IssueReprimandModal({
               />
 
               <SnapshotPreview />
-
-              <Note icon={<ShieldCheck />}>
-                Poin, masa berlaku, urutan level, dan status terminal <strong>dibekukan server</strong> saat
-                penerbitan — layar ini tidak mengirimkannya.
-              </Note>
             </Form>
           </Modal>
         );

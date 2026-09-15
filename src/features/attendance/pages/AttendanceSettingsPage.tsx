@@ -98,7 +98,7 @@ export function AttendanceSettingsPage() {
           )}
 
           <Card>
-            <CardHead title="Work points" sub="cnf_attendance_geofence" />
+            <CardHead title="Work points" />
 
             <div className="flex flex-col">
               <TableToolbar

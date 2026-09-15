@@ -129,7 +129,7 @@ export function SchedulerSchedulePage() {
 
           {tab === 'shifts' && (
             <Card>
-              <CardHead title="Shift catalogue" sub="cnf_shift — pola siklus tidak pernah bisa dipasang ke roster" />
+              <CardHead title="Shift catalogue" sub="Pola siklus tidak bisa dipasang ke roster" />
 
               <div className="flex flex-col">
                 <TableToolbar summary={`${shifts.filter((row) => row.isActive).length} pola aktif`} />
@@ -198,7 +198,7 @@ export function SchedulerSchedulePage() {
 
           {tab === 'roster' && (
             <Card>
-              <CardHead title="Roster" sub="emp_shift_assignment — satu baris per karyawan × tanggal" />
+              <CardHead title="Roster" sub="Satu baris per karyawan × tanggal" />
 
               <div className="flex flex-col">
                 <TableToolbar summary="Sentuhan tangan dicap individual; bulk berikutnya melangkahinya" />
@@ -265,7 +265,7 @@ export function SchedulerSchedulePage() {
 
           {tab === 'swap' && (
             <Card>
-              <CardHead title="Swap requests" sub="emp_shift_swap_request — roster baru bergerak setelah disetujui" />
+              <CardHead title="Swap requests" sub="Roster berubah setelah disetujui" />
 
               <div className="flex flex-col">
                 <TableToolbar summary={`${swaps.filter((row) => row.swapStatus === 'PENDING_APPROVAL').length} menunggu keputusan`} />

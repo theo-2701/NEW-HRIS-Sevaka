@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Lock, UserRound } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Segmented } from '@/components/Segmented';
@@ -62,9 +62,7 @@ import {
   DAY_TYPE_LABEL,
   canApproveCorrection,
   canCreateCorrection,
-  canSearchPunch,
-  canSearchSummary,
-} from '@/features/attendance/types';
+  canSearchPunch } from '@/features/attendance/types';
 import type { AttendanceDay, AttendanceSession, Correction, Punch } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { formatDate, formatDateTime } from '@/lib/format';
@@ -197,7 +195,7 @@ export function AttendancePage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Attendance' }]}
         title="Attendance"
-        description="A tap is evidence: append-only, with no edit and no delete anywhere on this screen. The daily summary is a machine verdict with zero write endpoints at all. The one lawful way to move a day's assessment is a correction request — and its author can never be its approver."
+        description="Your daily taps and attendance summary. To fix a day's record, submit a correction request."
         actions={
           tab === 'correction' && creator ? (
             <Button onClick={() => setFiling(true)}>
@@ -233,28 +231,6 @@ export function AttendancePage() {
               </SelectContent>
             </Select>
           </div>
-
-          <Note icon={<UserRound />}>
-            {session.role === 'EMPLOYEE' ? (
-              <>
-                <strong>ESS mode.</strong> Rows are narrowed from the identity claim, not by a second screen.{' '}
-                <code>attendance-summary:search</code> is not an EMPLOYEE scope, so the daily grid shows only your own
-                days; the tap audit search is investigative and closed to you altogether — today&rsquo;s taps are
-                visible on the Punch tab.
-              </>
-            ) : session.role === 'HR_STAFF' ? (
-              <>
-                <strong>HR staff.</strong> May file a correction on behalf of a field employee and read the daily
-                summary grid — but holds neither the approval scope nor the investigative tap audit search.
-              </>
-            ) : (
-              <>
-                <strong>Checker.</strong> Holds the approval scope and the investigative tap audit.{' '}
-                <code>attendance-correction:create</code> is not an HR_MANAGER scope, so filing is unavailable in this
-                session.
-              </>
-            )}
-          </Note>
 
           <TabMenu<Tab>
             value={tab}
@@ -328,14 +304,8 @@ export function AttendancePage() {
                 <Card>
                   <CardHead
                     title="Daily summary"
-                    sub="Putusan mesin — layar ini tidak punya satu pun endpoint tulis"
+                    sub="Hasil kehadiran harian"
                   />
-                  {!canSearchSummary(session) && (
-                    <Note icon={<Lock />}>
-                      <code>attendance-summary:search</code> bukan scope EMPLOYEE — barisnya dipersempit ke hari milik{' '}
-                      <strong>{employeeName(session.employeeId)}</strong> dari klaim identitas.
-                    </Note>
-                  )}
                   <div className="flex flex-col">
                     <TableToolbar
                       filters={filterButton(countActive(dayFilter), () => setDayFilterOpen(true))}
@@ -428,13 +398,9 @@ export function AttendancePage() {
 
               {subTab === 'taps' && (
                 <Card>
-                  <CardHead title="Tap history" sub="Audit mentah — kewenangan penyelidikan" />
+                  <CardHead title="Tap history" sub="Seluruh tap yang tercatat" />
                   {!canSearchPunch(session) ? (
-                    <Note tone="warn" icon={<Lock />}>
-                      The raw tap audit (<code>attendance-punch:search</code>) is an investigative authority held by
-                      HR_MANAGER and SUPER_ADMIN only — a DEPT_MANAGER holding <code>:read</code> still does not hold
-                      it. Nothing is loaded here in this session.
-                    </Note>
+                    <Note tone="warn" icon={<Lock />}>You don&rsquo;t have access to the tap history.</Note>
                   ) : (
                     <div className="flex flex-col">
                       <TableToolbar

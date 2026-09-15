@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Form, Formik } from 'formik';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
@@ -68,7 +68,7 @@ function CategoryEditor({
           onOpenChange={(open) => !open && onClose()}
           size="wide"
           title={category?.originalCode ? 'Edit category' : 'Add category'}
-          description="Field di sini memetakan cnf_reprimand_category. Kode inilah yang dipakai saat menerbitkan reprimand."
+          description="Kode inilah yang dipakai saat menerbitkan reprimand."
           footer={
             <>
               <Button variant="secondary" onClick={onClose}>
@@ -146,19 +146,13 @@ export function ReprimandTypeSettingPage() {
           { label: 'Type Setting' },
         ]}
         title="Reprimand Type Setting"
-        description="Atur kategori SP dan kebijakan standing untuk perusahaan ini (create / read / update — tanpa hard-delete). Standing selalu diturunkan dari snapshot beku saat penerbitan, bukan dari konfigurasi yang berlaku."
+        description="Atur kategori SP dan kebijakan standing untuk perusahaan ini. Standing selalu diturunkan dari snapshot beku saat penerbitan, bukan dari konfigurasi yang berlaku."
       >
         <div className="flex flex-col gap-5">
-          <Note tone="warn" icon={<TriangleAlert />}>
-            Kontrak terbit (UIC-EMPLOYEE §7.5/§7.6): kategori <strong>CRU tanpa delete</strong> dan non-retroaktif;
-            kebijakan <strong>append-only berversi</strong>. Rilis ini hanya mengaktifkan mode DIRECT — menerbitkan
-            ACCUMULATIVE ditolak <strong>422</strong>.
-          </Note>
-
           <Card>
             <CardHead
               title="SP categories"
-              sub="Create / read / update · tanpa delete (UIC §7.5)"
+              sub="Kategori tidak bisa dihapus"
               action={
                 <PanelActionButton onClick={() => setEditing({ value: EMPTY_CATEGORY })}>
                   Add category
@@ -219,7 +213,7 @@ export function ReprimandTypeSettingPage() {
                     value: 'ACCUMULATIVE',
                     title: 'Accumulative',
                     description:
-                      'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini. Belum aktif pada rilis ini — menerbitkannya ditolak 422.',
+                      'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini. Belum tersedia pada rilis ini.',
                   },
                 ]}
               />

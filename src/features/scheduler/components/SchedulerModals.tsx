@@ -667,7 +667,7 @@ export function SwapDecisionModal({
         <div className="flex flex-col gap-4">
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              403 — pemisahan tugas: pengaju tidak pernah memutuskan tukarnya sendiri.
+              Anda tidak dapat memutuskan tukar shift yang Anda ajukan sendiri.
             </Note>
           )}
           <KeyValueList>
@@ -769,8 +769,8 @@ export function SchedulerDeleteModal({
         <div className="flex flex-col gap-4">
           <Note tone="warn" icon={<TriangleAlert />}>
             {target.kind === 'shift'
-              ? 'Pola yang masih dirujuk roster ditolak dengan 409 — pensiunkan lewat Deactivate.'
-              : 'Baris yang jadi bagian tukar yang belum diputuskan ditolak dengan 409.'}
+              ? 'Pola yang masih dipakai roster tidak bisa dihapus — nonaktifkan lewat Deactivate.'
+              : 'Baris yang menjadi bagian tukar shift yang belum diputuskan tidak bisa dihapus.'}
           </Note>
           <KeyValueList>
             {target.kind === 'shift' ? (

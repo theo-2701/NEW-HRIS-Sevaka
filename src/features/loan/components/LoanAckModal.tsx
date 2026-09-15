@@ -1,4 +1,4 @@
-import { GitBranch, Lock, ShieldCheck } from 'lucide-react';
+import { GitBranch, Lock } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/DataTable';
@@ -65,17 +65,9 @@ export function LoanAckModal({ loan, onClose }: { loan: Loan | null; onClose: ()
             <KeyValueRow label="Total obligation">{formatCurrency(total ?? 0)}</KeyValueRow>
           </KeyValueList>
 
-          <Note icon={<ShieldCheck />}>
-            Dikirim dari dalam aplikasi setelah login penuh — permintaannya tidak pernah diterima dari tautan
-            notifikasi.
-          </Note>
-
           <Note icon={<GitBranch />}>
-            <strong>Decline adalah hasil yang dikontrakkan, bukan pembatalan.</strong> DECLINE menulis{' '}
-            <code>loan_status = DECLINED_BY_EMPLOYEE</code>, melepas reservasinya, dan Anda boleh mengajukan permintaan
-            baru. <strong>Cancel</strong> hanya ada selagi masih SUBMITTED, dan <strong>Withdraw</strong> berlaku
-            setelah AWAITING_CALCULATION — memanggil ACK/DECLINE di luar AWAITING_ACKNOWLEDGEMENT ditolak{' '}
-            <strong>422 FIN_LOAN_NOT_AWAITING_ACKNOWLEDGEMENT</strong>.
+            <strong>Decline bukan pembatalan.</strong> Menolak jadwal melepas reservasi pinjaman ini, dan Anda boleh
+            mengajukan permintaan baru.
           </Note>
         </div>
       )}

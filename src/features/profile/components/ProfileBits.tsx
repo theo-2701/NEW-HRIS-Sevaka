@@ -68,8 +68,6 @@ export function IdentityCard({
             </div>
           </div>
         </div>
-
-        <EndpointChip icon="db" path="schema employee_profile" />
       </div>
 
       {/* Scope bar — di produksi datang dari klaim JWT, bukan dipilih pengguna;
@@ -88,12 +86,6 @@ export function IdentityCard({
           HR Manager · restricted fields
         </ScopePill>
 
-        <span className="ml-auto font-body text-[11.5px] font-medium leading-normal text-fg-3">
-          <code className="rounded bg-vapor px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-fg-4">
-            employee_id
-          </code>{' '}
-          diambil dari klaim JWT (anti-IDOR); id di body diabaikan.
-        </span>
       </div>
     </section>
   );
@@ -252,7 +244,7 @@ export function DetailBlock({
 }: {
   icon: ReactNode;
   title: string;
-  table: string;
+  table?: string;
   variant?: 'hot' | 'cold';
   children: ReactNode;
 }) {
@@ -266,7 +258,7 @@ export function DetailBlock({
       <h3 className="mb-3 flex flex-wrap items-center gap-2 font-body text-[11px] font-bold uppercase leading-none tracking-[0.06em] text-fg-3">
         <span className="text-secondary-500 [&_svg]:size-[15px]">{icon}</span>
         {title}
-        <span className="font-mono text-[10.5px] font-medium normal-case tracking-normal text-fg-4">· {table}</span>
+        {table && <span className="font-mono text-[10.5px] font-medium normal-case tracking-normal text-fg-4">· {table}</span>}
       </h3>
       {children}
     </div>

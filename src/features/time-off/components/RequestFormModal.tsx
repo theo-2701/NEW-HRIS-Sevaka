@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Form, Formik, useFormikContext } from 'formik';
-import { Info, Lock } from 'lucide-react';
+import {  Lock } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { CheckboxField } from '@/components/form/CheckboxField';
-import { GatePreview, Note } from '@/features/time-off/components/TimeOffBits';
+import { GatePreview } from '@/features/time-off/components/TimeOffBits';
 import { useLeaveRequests, useLeaveTypes, useSubmitRequest } from '@/features/time-off/hooks/useTimeOff';
 import { evaluateGates } from '@/features/time-off/gates';
 import { employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
@@ -68,10 +68,6 @@ function DynamicSection({
           <CheckboxField name="hasDoctorNote">
             Surat dokter tersedia untuk pengajuan ini (disyaratkan jenis cuti ini).
           </CheckboxField>
-          <Note icon={<Info />}>
-            Mekanisme unggah berkas masih tertunda di seluruh HRIS — form ini baru merekam
-            <strong> ketersediaan</strong> suratnya, belum berkasnya.
-          </Note>
         </>
       )}
 

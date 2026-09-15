@@ -176,7 +176,7 @@ export function CalendarPage() {
 
           {tab === 'holiday' && (
             <Card>
-              <CardHead title="Holidays" sub="mst_holiday — dua lapis, satu slot per tanggal × tipe × scope" />
+              <CardHead title="Holidays" sub="Satu slot per tanggal × tipe × scope" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -252,7 +252,7 @@ export function CalendarPage() {
 
               {subTab === 'patterns' && (
                 <Card>
-                  <CardHead title="Working patterns" sub="cnf_work_calendar — selalu berlaku ke depan" />
+                  <CardHead title="Working patterns" sub="Selalu berlaku ke depan" />
 
                   <div className="flex flex-col">
                     <TableToolbar
@@ -343,7 +343,7 @@ export function CalendarPage() {
                     Hanya nama pola dan tanggal akhir yang bisa diubah setelah tersimpan. Scope, tujuh sakelar hari,
                     dan tanggal mulai beku — mengubah cara satu minggu bekerja berarti baris baru yang berlaku dari
                     tanggal ke depan, sehingga penilaian lampau tidak pernah ditulis ulang. Dua pola aktif pada scope
-                    yang sama tidak boleh bertindih (<code>409</code>).
+                    yang sama tidak boleh bertindih.
                   </Note>
                 </Card>
               )}

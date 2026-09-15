@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, Info, TriangleAlert } from 'lucide-react';
+import { Clock, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -80,7 +80,7 @@ export function SettlementFormModal({
       open={Boolean(advance)}
       onOpenChange={(next) => !next && onClose()}
       title={advance ? `Submit settlement — ${advance.requestNo}` : ''}
-      description="Nomor nota unik lintas modul finance; bentrok ditolak 409 FIN_DUPLICATE_RECEIPT."
+      description="Nomor nota harus unik di seluruh modul finance."
       size="wide"
       footer={
         <>
@@ -163,11 +163,6 @@ export function SettlementFormModal({
             </KeyValueRow>
             <KeyValueRow label="Projected difference">{projection(advance.amount, total, isFinalStage)}</KeyValueRow>
           </KeyValueList>
-
-          <Note icon={<Info />}>
-            Setiap lampiran diperiksa keberadaannya di document-service <strong>sebelum</strong> transaksi domain dimulai,
-            dan pengiriman membawa Idempotency-Key.
-          </Note>
         </div>
       )}
     </Modal>
@@ -334,7 +329,7 @@ export function DecisionModal({ settlement, actor, onClose }: { settlement: Sett
       open={Boolean(settlement)}
       onOpenChange={(next) => !next && onClose()}
       title={settlement ? `Settlement — ${settlement.settlementNo}` : ''}
-      description="Hanya atasan langsung penerima yang memutus. Kedua cabang kembali 202 — status final dan selisih ditulis setelah prosesnya selesai."
+      description="Hanya atasan langsung penerima yang memutus. Status dan selisih diperbarui setelah proses selesai."
       size="wide"
       footer={
         decidable && settlement ? (
@@ -376,22 +371,13 @@ export function DecisionModal({ settlement, actor, onClose }: { settlement: Sett
 
           <ItemsTable settlement={settlement} />
 
-          <Note icon={<Clock />}>
-            {decidable ? (
-              <>
-                <strong>Keputusan ≠ penulisan status.</strong> Endpoint kembali 202; status final ditulis saat
-                workflow.process.completed dikonsumsi.
-              </>
-            ) : settlement.status === 'SUBMITTED' ? (
-              <>
-                <strong>Tahap 1 belum selesai.</strong> Nota belum ditandai Finance Officer — keputusan butuh UNDER_REVIEW.
-              </>
-            ) : (
-              <>
-                <strong>Sudah diputus.</strong> Keputusan kedua atas tahap yang sama ditolak 409 FIN_ALREADY_DECIDED.
-              </>
-            )}
-          </Note>
+          {!decidable && (
+            <Note icon={<Clock />}>
+              {settlement.status === 'SUBMITTED'
+                ? 'Nota belum ditinjau Finance Officer, jadi belum bisa diputus.'
+                : 'Tahap ini sudah diputus.'}
+            </Note>
+          )}
         </div>
       )}
     </Modal>

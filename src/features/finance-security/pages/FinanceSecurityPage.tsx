@@ -156,11 +156,6 @@ export function FinanceSecurityPage() {
         }
       >
         <div className="flex flex-col gap-5">
-          <Note tone="warn" icon={<TriangleAlert />}>
-            <strong>GAP terdokumentasi — PROB-FRONTEND-014.</strong> Menu ini didukung penuh kontrak teknis, tetapi belum
-            ditempatkan di peta navigasi dokumen arsitektur (SAD §4.6). Posisinya di sidebar bersifat sementara.
-          </Note>
-
           <TabMenu<Tab>
             value={tab}
             onChange={setTab}
@@ -275,10 +270,7 @@ export function FinanceSecurityPage() {
               </div>
 
               <Note icon={<Info />}>
-                Hold aktif menggerbang pencairan: menandai baris itu dibayar ditolak <strong>422 FIN_DISPUTE_HOLD_ACTIVE</strong>{' '}
-                di Pencairan & Piutang, dan penandanya tampil di Benefit Reimbursement serta modal keputusan Loan. Hold aktif
-                kedua atas target yang sama ditolak <strong>409</strong>. Endpoint cabut adalah PATCH /dispute-holds/{'{id}'},
-                bukan …/release seperti jangkar Figma (PROB-FRONTEND-017).
+                Hold aktif menahan pencairan: baris itu tidak bisa ditandai dibayar di Pencairan & Piutang, dan penandanya tampil di Benefit Reimbursement serta modal keputusan Loan. Satu target hanya bisa punya satu hold aktif.
               </Note>
             </Card>
           )}
@@ -365,9 +357,7 @@ export function FinanceSecurityPage() {
               </div>
 
               <Note icon={<Lock />}>
-                Hanya Finance Officer dan Super Admin — <strong>bukan</strong> HR Manager, karena ekspor adalah kewenangan
-                kelas CRUD finance. Berkas turun langsung sebagai unduhan, bukan lewat document-service. Jejak berhenti di
-                titik unduhan: HRIS tahu siapa mengunduh, bukan ke mana berkas pergi.
+                Ekspor hanya bisa dilakukan Finance Officer dan Super Admin. Setiap unduhan tercatat di daftar ini.
               </Note>
             </Card>
           )}
@@ -428,9 +418,7 @@ export function FinanceSecurityPage() {
               </div>
 
               <Note icon={<Info />}>
-                Ditinjau HR Manager dan Super Admin. Health Data Officer membuka lampiran tetapi tidak mengaudit jejaknya
-                (403), dan Finance Officer ditolak pada keduanya. Kolom <strong>Opened By</strong> adalah pelaku pembukaan,
-                berbeda dari karyawan pemilik klaim.
+                Ditinjau HR Manager dan Super Admin. Kolom <strong>Opened By</strong> adalah orang yang membuka lampiran, berbeda dari karyawan pemilik klaim.
               </Note>
             </Card>
           )}

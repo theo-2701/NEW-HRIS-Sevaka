@@ -12,18 +12,15 @@ import { SelectField } from '@/components/form/SelectField';
 import { ToggleField } from '@/components/form/ToggleField';
 import {
   CertMark,
-  Code,
   DetailBlock,
   Empty,
-  EndpointChip,
   KeyValueList,
   KeyValueRow,
   Note,
   PiiHidden,
   SectionCard,
   TwoCol,
-  monoClass,
-} from '@/features/profile/components/ProfileBits';
+  monoClass } from '@/features/profile/components/ProfileBits';
 import { useRevealProfile, useUpdateProfile } from '@/features/profile/hooks/useProfile';
 import { basicInfoSchema } from '@/features/profile/validation';
 import {
@@ -84,29 +81,21 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
   return (
     <>
       <Note tone="warn" icon={<ShieldAlert />}>
-        <strong>Field khusus HR.</strong> <Code>nationality</Code> dan <Code>marital_status</Code> hanya bisa diubah
-        HR (dipakai untuk dedup identitas &amp; PTKP). Sebagai karyawan Anda bisa mengubah selebihnya; dua field itu
-        tetap terkunci di form edit.
+        <strong>Field khusus HR.</strong> Kewarganegaraan dan status pernikahan hanya bisa diubah HR. Selebihnya bisa Anda ubah sendiri.
       </Note>
 
       <SectionCard
         icon={<User />}
         title="Basic Info"
-        description={
-          <>
-            Biodata HOT (<Code>mst_employee_profile</Code>) + COLD (<Code>mst_employee_personal</Code>) · 1:1
-          </>
-        }
-        endpoint={<EndpointChip method="GET" path="/employee-profiles/{id}" />}
+        description="Biodata dan data pribadi"
         action={<PanelActionButton onClick={() => setEditing(true)}>Edit</PanelActionButton>}
       >
         <Note icon={<Lock />}>
-          PII disamarkan secara bawaan (<Code>id_card_number</Code>, <Code>mother_maiden_name</Code>, dua nomor BPJS). Nilai penuh
-          hanya tampil lewat <Code>GET /{'{id}'}/reveal</Code>, yang menulis satu baris read-audit append-only.
+          Data sensitif (nomor KTP, nama ibu kandung, nomor BPJS) disamarkan. Tekan <strong>Reveal</strong> untuk melihat nilai lengkap — setiap pembukaan tercatat.
         </Note>
 
         <TwoCol>
-          <DetailBlock icon={<IdCard />} title="Identity &amp; Residence" table="mst_employee_profile">
+          <DetailBlock icon={<IdCard />} title="Identity &amp; Residence">
             <KeyValueList>
               <KeyValueRow label="Nationality">
                 <StatusBadge tone="info">{labelOf(NATIONALITY_OPTIONS, profile.nationality)}</StatusBadge>
@@ -157,7 +146,7 @@ export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile;
             </KeyValueList>
           </DetailBlock>
 
-          <DetailBlock icon={<UserRound />} title="Personal Data" table="mst_employee_personal" variant="cold">
+          <DetailBlock icon={<UserRound />} title="Personal Data" variant="cold">
             <KeyValueList>
               <KeyValueRow label="Passport number">
                 {profile.passportNumber ? (

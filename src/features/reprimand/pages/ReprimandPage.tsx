@@ -66,7 +66,7 @@ export function ReprimandPage() {
       <PageShell
         crumbs={[{ label: 'Employee Management' }, { label: 'Reprimand' }]}
         title="Reprimand"
-        description="Terbitkan surat peringatan lewat tinjauan maker→checker. Snapshot kategori dibekukan server saat penerbitan, dan standing diturunkan dari snapshot itu — bukan dari konfigurasi yang berlaku sekarang."
+        description="Terbitkan surat peringatan lewat tinjauan maker→checker. Standing karyawan dihitung dari reprimand yang aktif."
         actions={
           <>
             <Button variant="secondary" asChild>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Info, TriangleAlert } from 'lucide-react';
+import {  TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -157,11 +157,6 @@ export function PayableDetailModal({ actor, row, onClose }: { actor: Actor; row:
               },
             ]}
           />
-
-          <Note icon={<Info />}>
-            <code>actual_paid_at</code> hanya keterangan — tidak diterima endpoint mana pun dan tidak pernah dipakai
-            menghitung. Waktu penandaan dan pelaku ditulis server, bukan diketik klien.
-          </Note>
         </div>
       )}
     </Modal>
@@ -295,8 +290,7 @@ export function MarkPaidModal({
               ]}
             />
             <Note tone="warn" icon={<TriangleAlert />}>
-              Baris gagal gerbang tidak ikut dikirim. Mark-paid satu transaksi atomik — satu baris gagal di server berarti
-              tidak ada yang ditandai.
+              Baris yang tidak lolos pemeriksaan tidak ikut dikirim. Jika satu baris gagal disimpan, tidak ada yang ditandai.
             </Note>
           </>
         )}
@@ -318,8 +312,7 @@ export function MarkPaidModal({
             </SelectContent>
           </Select>
           <span className="font-body text-[11px] font-medium text-fg-3">
-            Satu nilai untuk semua baris — metode berbeda wajib dipecah jadi dua tindakan. With payroll hanya sah untuk
-            pinjaman yang potongannya sudah dikonfirmasi payroll; selain itu 422 FIN_PAYROLL_CONFIRMATION_REQUIRED.
+            Satu metode untuk semua baris. With payroll hanya untuk pinjaman yang potongannya sudah dikonfirmasi payroll.
           </span>
         </div>
 
@@ -397,7 +390,7 @@ export function ReverseMarkModal({ actor, row, onClose }: { actor: Actor; row: P
             value={note}
             onChange={setNote}
             placeholder="Koreksi cara pembayaran, salah pilih tunai"
-            hint="Wajib — pembalikan kedua atas tanda yang sama ditolak 409"
+            hint="Wajib diisi"
           />
         </div>
       )}
@@ -504,7 +497,7 @@ export function DeclareSettledModal({
             value={note}
             onChange={setNote}
             placeholder="Dihapusbukukan, nominal di bawah ambang penagihan"
-            hint="Selalu wajib. Baris yang sudah diresolusi sesi lain ditolak 409 FIN_OUTSTANDING_ALREADY_RESOLVED"
+            hint="Wajib diisi"
           />
         </div>
       )}

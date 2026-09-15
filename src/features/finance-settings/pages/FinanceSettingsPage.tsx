@@ -77,7 +77,7 @@ export function FinanceSettingsPage() {
       <PageShell
         crumbs={[{ label: 'Finance' }, { label: 'Finance Settings' }]}
         title="Cross-Module Finance Settings"
-        description="Data induk yang dipakai bersama Benefit Reimbursement, Loan, dan Cash Advance. Loan Limit dikelola penuh di sini; Advance Purpose Type dan Rejection Reasons tampil sebagai papan baca — kontrak CRUD lengkapnya tetap di API (FT1, 47 endpoint)."
+        description="Data induk yang dipakai bersama Benefit Reimbursement, Loan, dan Cash Advance. Loan Limit dikelola di sini; Advance Purpose Type dan Rejection Reasons hanya ditampilkan."
         actions={
           <div className="flex flex-wrap items-center gap-2.5">
             <Select
@@ -121,9 +121,7 @@ export function FinanceSettingsPage() {
               />
 
               <Note icon={<Info />}>
-                Perubahan plafon <strong>tidak berlaku surut</strong> — mst_loan_limit dibaca Loan (FT3) saat pengajuan,
-                jadi pinjaman berjalan tetap memakai nominal saat pengajuannya sendiri. Satu baris per golongan: baris
-                kedua untuk golongan yang sama ditolak <strong>409</strong>.
+                Perubahan plafon <strong>tidak berlaku surut</strong> — pinjaman yang sudah berjalan tetap memakai plafon saat diajukan. Satu golongan hanya punya satu baris.
               </Note>
 
               <div className="flex flex-col">
@@ -193,12 +191,6 @@ export function FinanceSettingsPage() {
                   }
                 />
               </div>
-
-              <Note tone="warn" icon={<TriangleAlert />}>
-                <strong>GAP kontrak — PROB-FRONTEND-018.</strong> Tabel ringkasan TSD §6.1.5 memberi ROLE_EMPLOYEE baca atas
-                loan-limits, sedangkan narasi §6.1.5 dan §14.1.9 menyatakan nol akses. Layar ini mengikuti tabel ringkasan
-                (baca boleh, tulis hanya Finance Officer/Super Admin) sampai ada keputusan principal.
-              </Note>
             </Card>
           )}
 
@@ -235,9 +227,7 @@ export function FinanceSettingsPage() {
               />
 
               <Note icon={<Info />}>
-                <strong>Invariant deny-by-default.</strong> Baris dengan max_amount kosong dan is_unlimited_ack = false sah
-                tersimpan tapi <strong>tidak bisa dipilih</strong> saat mengajukan uang muka. Jenis ini dibaca langsung oleh
-                layar Cash Advance. Mengubah penanda perjalanan dinas wajib disertai sebab (F1.38).
+                Jenis tanpa batas nominal yang belum ditandai &quot;unlimited&quot; <strong>tidak bisa dipilih</strong> saat mengajukan uang muka. Mengubah penanda perjalanan dinas wajib disertai alasan.
               </Note>
             </Card>
           )}
@@ -268,10 +258,7 @@ export function FinanceSettingsPage() {
               />
 
               <Note icon={<Info />}>
-                is_system_default ditentukan server dan tidak berubah setelah dibuat — tepat satu baris "Other" per company
-                (ERD §6.9); menghapusnya ditolak <strong>422 FIN_REJECTION_REASON_SYSTEM_DEFAULT</strong>. Prototype menandai
-                lima baris sebagai bawaan; diluruskan ke ERD. Mekanisme seeding lima baris bawaan untuk company baru masih
-                catatan desain terbuka (§14.1.8).
+                Baris bawaan sistem (&quot;Other&quot;) tidak bisa diubah atau dihapus.
               </Note>
             </Card>
           )}

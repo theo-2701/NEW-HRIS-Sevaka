@@ -295,7 +295,7 @@ export function HolidayDecisionModal({
         <div className="flex flex-col gap-4">
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              403 — pemisahan tugas: pengaju tidak pernah memutuskan barisnya sendiri.
+              Anda tidak dapat memutuskan pengajuan yang Anda buat sendiri.
             </Note>
           )}
           <KeyValueList>
