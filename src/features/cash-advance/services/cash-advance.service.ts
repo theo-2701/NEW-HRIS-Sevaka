@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import type { PayableSource } from '@/features/disbursement/types';
 import {
   ADVANCES,
   CASH_ADVANCE_CFG,
@@ -573,3 +574,53 @@ export const cashAdvanceService = {
     return { ...row };
   },
 };
+
+/**
+ * Mock lintas modul — FT5 membaca `emp_cash_advance` read-only (TSD §3.1):
+ * layak bila `APPROVED`; identitas = penerima, bukan pembuat atas nama.
+ */
+export function advancePayableSources(): PayableSource[] {
+  return mockAdvances.map((advance): PayableSource => ({
+    payableType: 'CASH_ADVANCE',
+    payableId: advance.id,
+    requestNo: advance.requestNo,
+    employeeId: advance.recipientEmployeeId,
+    amount: advance.amount,
+    submittedAt: advance.createdAt,
+    eligible: advance.status === 'APPROVED',
+  }));
+}
+
+/** Kekurangan `SHORTFALL` + `APPROVED` — payable kedua atas uang muka yang sama, request_no dari induk. */
+export function shortfallPayableSources(): PayableSource[] {
+  return mockDifferences
+    .filter((row) => row.differenceType === 'SHORTFALL')
+    .map((row): PayableSource => {
+      const advance = mockAdvances.find((item) => item.id === row.cashAdvanceId);
+      const closing = mockSettlements.find((item) => item.id === row.closingSettlementId);
+      return {
+        payableType: 'CASH_ADVANCE_SHORTFALL',
+        payableId: row.id,
+        requestNo: advance?.requestNo ?? row.requestNo,
+        employeeId: advance?.recipientEmployeeId ?? row.employeeId,
+        amount: row.amount,
+        submittedAt: closing?.submittedAt ?? advance?.createdAt ?? '',
+        eligible: row.status === 'APPROVED',
+      };
+    });
+}
+
+/** Efek FT5 — uang muka sudah / tidak lagi ditandai cair (jendela bantahan FD-86). */
+export function markAdvanceDisbursed(id: string, marked: boolean) {
+  const row = mockAdvances.find((item) => item.id === id);
+  if (row) row.disbursementMarked = marked;
+}
+
+/** Efek samping mark-paid `CASH_ADVANCE_SHORTFALL` (TSD §3.3 poin 4): APPROVED → SETTLED dalam tindakan yang sama. */
+export function settleShortfallByDisbursement(id: string) {
+  const row = mockDifferences.find((item) => item.id === id);
+  if (!row || row.differenceType !== 'SHORTFALL' || row.status !== 'APPROVED') return;
+  row.status = 'SETTLED';
+  const advance = mockAdvances.find((item) => item.id === row.cashAdvanceId);
+  if (advance && advance.status === 'APPROVED') advance.status = 'SETTLED';
+}

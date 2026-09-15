@@ -217,7 +217,7 @@ export const NAV: NavSection[] = [
         icon: 'coins',
         path: '/finance/disbursement',
         source: 'finance-disbursement.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Finance Settings',

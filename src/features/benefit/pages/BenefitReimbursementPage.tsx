@@ -387,7 +387,7 @@ export function BenefitReimbursementPage() {
               <CardHead title="Disbursement history" sub="Payable hanya lahir setelah klaimnya disetujui" />
               <Note icon={<Info />}>
                 <strong>GAP PROB-FRONTEND-016.</strong> Kontrak tidak menyediakan endpoint pencairan untuk ROLE_EMPLOYEE —
-                POST /disbursements/search hanya untuk Finance Officer/HR Manager. Grid ini memakai data dummy.
+                POST /disbursements/search hanya untuk Finance Officer/HR Manager. Grid ini membaca penanda dummy yang sama dengan layar Pencairan & Piutang.
               </Note>
 
               <div className="flex flex-col">

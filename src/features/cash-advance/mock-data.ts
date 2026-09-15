@@ -13,7 +13,9 @@ import type {
  * `_prototype/js/finance-data.js`, dengan enum yang diluruskan ke ERD §6.6–§6.7:
  *  • status selisih `OUTSTANDING` di prototype bukan nilai ERD → `OPEN`;
  *  • `item.status = null` di prototype → `item_status` bawaan ERD `ACCEPTED`;
- *  • tahap pertanggungjawaban diberi `settlement_no`/`stage_no` sesuai ERD.
+ *  • tahap pertanggungjawaban diberi `settlement_no`/`stage_no` sesuai ERD;
+ *  • kekurangan `dif-78` berstatus `APPROVED` — dataset FT5 (UIC §6.2) masih memuatnya
+ *    sebagai payable belum ditandai; `SETTLED` ditulis layar Pencairan & Piutang.
  */
 
 export const EMPLOYEES = [
@@ -127,7 +129,7 @@ export const DIFFERENCES: Difference[] = [
   {
     id: 'dif-78', cashAdvanceId: 'adv-78', closingSettlementId: 'stl-78', requestNo: 'ADV-2026-000078', employeeId: 'emp-budi',
     differenceType: 'SHORTFALL', amount: 150_000, settlementMethod: null, requiresExtraApproval: false, dueDate: null,
-    status: 'SETTLED', settlementDecidedBy: 'emp-sinta',
+    status: 'APPROVED', settlementDecidedBy: 'emp-sinta',
   },
   {
     id: 'dif-72', cashAdvanceId: 'adv-72', closingSettlementId: 'stl-72', requestNo: 'ADV-2026-000072', employeeId: 'emp-maya',

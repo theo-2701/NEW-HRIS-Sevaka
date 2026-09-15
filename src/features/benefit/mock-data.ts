@@ -7,7 +7,6 @@ import type {
   Entitlement,
   FamilyRelationshipRule,
   LedgerEntry,
-  Payable,
   RejectionReason,
   Relative,
 } from '@/features/benefit/types';
@@ -173,18 +172,6 @@ export const LEDGER: LedgerEntry[] = [
   { id: 'lg-5', createdAt: '2026-07-10', entryType: 'RESERVATION', amount: 850_000, benefitTypeName: 'Pengobatan Rawat Jalan', sourceClaimId: 'clm-45', requestNo: 'CLM-2026-000045' },
   { id: 'lg-6', createdAt: '2026-07-12', entryType: 'USAGE', amount: 850_000, benefitTypeName: 'Pengobatan Rawat Jalan', sourceClaimId: 'clm-45', requestNo: 'CLM-2026-000045' },
   { id: 'lg-7', createdAt: '2026-07-22', entryType: 'RESERVATION', amount: 1_250_000, benefitTypeName: 'Pengobatan Rawat Jalan', sourceClaimId: 'clm-46', requestNo: 'CLM-2026-000046' },
-];
-
-export const PAYABLES: Payable[] = [
-  {
-    payableType: 'BENEFIT_CLAIM', payableId: 'clm-45', requestNo: 'CLM-2026-000045', employeeId: 'emp-budi',
-    amount: 850_000, submittedAt: '2026-07-10', markStatus: 'MARKED',
-    mark: { disbursementMarkId: 'mark-claim-000045-1', markedAt: '2026-07-13', markSource: 'MANUAL', paymentMethod: 'BANK_TRANSFER', actionId: 'act-rahmat-0713', reasonNote: 'Transfer batch mingguan 13 Jul 2026' },
-  },
-  {
-    payableType: 'BENEFIT_CLAIM', payableId: 'clm-41', requestNo: 'CLM-2026-000041', employeeId: 'emp-maya',
-    amount: 1_500_000, submittedAt: '2026-06-03', markStatus: 'UNMARKED', mark: null,
-  },
 ];
 
 export const HOLDS: DisputeHold[] = [

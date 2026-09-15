@@ -21,6 +21,7 @@ import { BenefitReimbursementPage } from '@/features/benefit/pages/BenefitReimbu
 import { LoanPage } from '@/features/loan/pages/LoanPage';
 import { LoanDetailPage } from '@/features/loan/pages/LoanDetailPage';
 import { CashAdvancePage } from '@/features/cash-advance/pages/CashAdvancePage';
+import { DisbursementPage } from '@/features/disbursement/pages/DisbursementPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -77,6 +78,7 @@ const IMPLEMENTED: RouteObject[] = [
   /* Detail pinjaman tidak punya baris menu — dibuka dari baris tabel Loan. */
   { path: 'finance/loan/detail', element: <LoanDetailPage /> },
   { path: 'finance/cash-advance', element: <CashAdvancePage /> },
+  { path: 'finance/disbursement', element: <DisbursementPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -115,6 +117,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/finance/loan',
   '/finance/loan/detail',
   '/finance/cash-advance',
+  '/finance/disbursement',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

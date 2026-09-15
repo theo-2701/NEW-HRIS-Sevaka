@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import type { PayableSource } from '@/features/disbursement/types';
 import {
   EXPOSURE,
   INSTALLMENTS,
@@ -342,3 +343,27 @@ export const loanService = {
     return data;
   },
 };
+
+/**
+ * Mock lintas modul — FT5 membaca `emp_loan_request` read-only (TSD §3.1):
+ * layak ditandai bila `status = APPROVED`, nominal `principal_amount`.
+ */
+export function loanPayableSources(): PayableSource[] {
+  return mockLoans.map((loan): PayableSource => ({
+    payableType: 'LOAN',
+    payableId: loan.id,
+    requestNo: loan.requestNo,
+    employeeId: loan.employeeId,
+    amount: loan.principalAmount,
+    submittedAt: loan.submittedAt,
+    eligible: loan.status === 'APPROVED',
+  }));
+}
+
+/**
+ * Gerbang `WITH_PAYROLL` (TSD §3.3 poin 2): payroll-proxy sudah mengonfirmasi
+ * potongan — di mock, pinjaman sudah punya angsuran `CONFIRMED`.
+ */
+export function loanPayrollConfirmed(loanId: string): boolean {
+  return (mockInstallments[loanId] ?? []).some((row) => row.status === 'CONFIRMED');
+}

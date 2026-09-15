@@ -7,12 +7,13 @@ import {
   LEDGER,
   FAMILY_RELATIONSHIP_RULES,
   ME,
-  PAYABLES,
   REJECTION_REASONS,
   RELATIVES,
   employeeName,
 } from '@/features/benefit/mock-data';
 import { draftTotal } from '@/features/benefit/rules';
+import { activeMarkOf } from '@/features/disbursement/marks-store';
+import type { PayableSource } from '@/features/disbursement/types';
 import type {
   Beneficiary,
   BenefitClaim,
@@ -86,7 +87,6 @@ let mockClaims: BenefitClaim[] = CLAIMS.map(cloneClaim);
 let mockTypes: BenefitType[] = BENEFIT_TYPES.map((row) => ({ ...row }));
 let mockBeneficiaries: Beneficiary[] = BENEFICIARIES.map((row) => ({ ...row }));
 let mockLedger: LedgerEntry[] = LEDGER.map((row) => ({ ...row }));
-let mockPayables: Payable[] = PAYABLES.map((row) => ({ ...row, mark: row.mark ? { ...row.mark } : null }));
 /** `finance.benefit.enabled` — bawaan TSD §16 menyala. */
 let benefitEnabled = true;
 
@@ -100,7 +100,6 @@ export function resetBenefitMocks() {
   mockTypes = BENEFIT_TYPES.map((row) => ({ ...row }));
   mockBeneficiaries = BENEFICIARIES.map((row) => ({ ...row }));
   mockLedger = LEDGER.map((row) => ({ ...row }));
-  mockPayables = PAYABLES.map((row) => ({ ...row, mark: row.mark ? { ...row.mark } : null }));
   benefitEnabled = true;
 }
 
@@ -363,19 +362,6 @@ export const benefitService = {
         const beneficiary = mockBeneficiaries.find((ben) => ben.id === item.beneficiaryId);
         if (beneficiary) beneficiary.slotConsumed = true;
       });
-      mockPayables = [
-        ...mockPayables,
-        {
-          payableType: 'BENEFIT_CLAIM',
-          payableId: row.id,
-          requestNo: row.requestNo,
-          employeeId: row.employeeId,
-          amount: row.totalAmount,
-          submittedAt: row.submittedAt,
-          markStatus: 'UNMARKED',
-          mark: null,
-        },
-      ];
     }
     return cloneClaim(row);
   },
@@ -512,15 +498,37 @@ export const benefitService = {
     return data.rows;
   },
 
-  /** Payable hanya lahir setelah klaimnya disetujui. */
+  /**
+   * Payable hanya lahir setelah klaimnya disetujui. Status tandanya dibaca dari
+   * penanda Pencairan & Piutang (FT5), jadi penandaan di layar itu langsung tampil di sini.
+   */
   async disbursements(): Promise<Payable[]> {
     if (MOCK) {
       await delay();
-      return mockPayables.filter((row) => {
-        if (row.payableType !== 'BENEFIT_CLAIM') return false;
-        const claim = mockClaims.find((item) => item.id === row.payableId);
-        return !claim || claim.status === 'APPROVED';
-      }).map((row) => ({ ...row }));
+      return mockClaims
+        .filter((claim) => claim.status === 'APPROVED')
+        .map((claim): Payable => {
+          const mark = activeMarkOf({ payableType: 'BENEFIT_CLAIM', payableId: claim.id });
+          return {
+            payableType: 'BENEFIT_CLAIM',
+            payableId: claim.id,
+            requestNo: mark?.requestNoSnapshot ?? claim.requestNo,
+            employeeId: claim.employeeId,
+            amount: mark?.amount ?? claim.totalAmount,
+            submittedAt: claim.submittedAt,
+            markStatus: mark ? 'MARKED' : 'UNMARKED',
+            mark: mark
+              ? {
+                  disbursementMarkId: mark.id,
+                  markedAt: mark.markedAt,
+                  markSource: mark.markSource,
+                  paymentMethod: mark.paymentMethod,
+                  actionId: mark.actionId,
+                  reasonNote: mark.reasonNote,
+                }
+              : null,
+          };
+        });
     }
     // GAP PROB-FRONTEND-016 (FSD §2.5): nol endpoint pencairan untuk ROLE_EMPLOYEE —
     // POST /disbursements/search hanya untuk Finance Officer/HR Manager.
@@ -528,3 +536,19 @@ export const benefitService = {
     return data.rows;
   },
 };
+
+/**
+ * Mock lintas modul — FT5 membaca `emp_benefit_claim` read-only (TSD §3.1):
+ * layak ditandai bila `status = APPROVED`, nominal `total_amount`.
+ */
+export function benefitPayableSources(): PayableSource[] {
+  return mockClaims.map((claim): PayableSource => ({
+    payableType: 'BENEFIT_CLAIM',
+    payableId: claim.id,
+    requestNo: claim.requestNo,
+    employeeId: claim.employeeId,
+    amount: claim.totalAmount,
+    submittedAt: claim.submittedAt,
+    eligible: claim.status === 'APPROVED',
+  }));
+}
