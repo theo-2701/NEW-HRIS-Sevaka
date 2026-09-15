@@ -15,6 +15,7 @@ Zustand).
 | Layar mana → route mana → prototype mana | `docs/PAGE-INVENTORY.md` |
 | Kelas prototype → komponen React | `docs/COMPONENT-MAP.md` |
 | Urutan pengerjaan modul | `docs/MODULE-TRACKER.md` |
+| Kesesuaian modul vs dokumen kontrak (FSD/UIC/TSD/ERD) | `docs/CONTRACT-AUDIT.md` |
 
 Workflow: `@[/feature]` (modul baru), `@[/fixing]` (bug), `@[/test]` (pengujian).
 Skill: `scaffold feature <nama>`, `caveman mode`.
@@ -42,8 +43,13 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
   On Call (Schedule + Activity). Modul Batch 2 adalah contoh terbaru untuk tab +
   sub-tab segmented, modal filter ≥3 filter, pemilih identitas, dan layar
   baca-saja tanpa endpoint tulis.
-- Backend belum ada: setiap service punya blok `MOCK` yang aktif selama
-  `VITE_API_BASE_URL` kosong.
+- Backend belum ada: **mode dummy tanpa API**. `src/services/mock.ts` = satu saklar
+  `MOCK = true`; interceptor axios menolak setiap request sebelum keluar. CRUD berjalan
+  di memori, dan koneksi antar modul (mis. cuti disetujui → ledger saldo, New Joiner →
+  Directory) memanggil fungsi service modul lain — bukan HTTP.
+- **Dokumen kontrak wajib dibaca sebelum membangun modul**, bukan hanya prototype:
+  `../HR Information System_v.21082026/uploads/` (FSD/UIC/TSD/ERD). Dokumen menang atas
+  prototype & Figma. Rekap audit: `docs/CONTRACT-AUDIT.md`.
 
 ## Aturan yang paling sering dilanggar
 

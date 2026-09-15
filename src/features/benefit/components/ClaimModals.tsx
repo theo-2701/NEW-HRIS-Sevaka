@@ -111,8 +111,7 @@ export function ClaimDetailModal({
               Reject
             </Button>
             <Button
-              disabled={Boolean(hold) || approve.isPending}
-              title={hold ? 'Diblokir penahanan sengketa yang masih aktif' : undefined}
+              disabled={approve.isPending}
               onClick={() => approve.mutate({ id: claim.id }, { onSuccess: onClose })}
             >
               Approve
@@ -141,9 +140,9 @@ export function ClaimDetailModal({
           )}
 
           {hold && (
-            <Note tone="danger" icon={<ShieldAlert />}>
-              Klaim ini sedang ditahan sengketa ({hold.targetRequestNo}). Persetujuan diblokir sampai penahanannya
-              dilepas.
+            <Note tone="warn" icon={<ShieldAlert />}>
+              Klaim ini sedang ditahan sengketa ({hold.targetRequestNo}). Penahanan menggerbang penandaan pencairan
+              (422 FIN_DISPUTE_HOLD_ACTIVE), bukan keputusan ini.
             </Note>
           )}
 

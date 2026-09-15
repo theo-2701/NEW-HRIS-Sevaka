@@ -27,8 +27,14 @@ npm run build
 npm run test
 ```
 
-Login: backend belum ada, jadi service memakai jalur **mock** selama
-`VITE_API_BASE_URL` kosong (lihat `.env.example`). Di layar masuk, isi email +
+Mode data: **dummy tanpa API**. `src/services/mock.ts` memegang satu saklar
+`MOCK = true`; seluruh service membaca/menulis data di memori dan interceptor axios
+menolak setiap request sebelum keluar, jadi tidak ada HTTP call walau
+`VITE_API_BASE_URL` terisi. Saat backend siap, ubah saklar itu ke `false`.
+
+Kesesuaian tiap modul dengan dokumen kontrak (FSD/UIC/TSD/ERD): `docs/CONTRACT-AUDIT.md`.
+
+Login: Di layar masuk, isi email +
 password apa saja, centang Turnstile, lalu tekan "Simulasikan klik tautan" pada
 layar berikutnya untuk masuk ke dashboard.
 

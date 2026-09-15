@@ -76,23 +76,36 @@ export const useCancelClaim = () =>
   );
 
 /** Keputusan approver kembali 202: statusnya ditulis saat workflow selesai. */
-export const useApproveClaim = () =>
-  useBenefitMutation<{ id: string }>(
-    ({ id }) => benefitService.approveClaim(id).then(() => undefined),
-    () => ({
-      text: '202 Accepted — keputusan diteruskan ke proses approval. Statusnya ditulis saat peristiwa selesainya workflow dikonsumsi.',
-      tone: 'info',
-    }),
-  );
+export function useApproveClaim() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) => benefitService.approveClaim(id),
+    onSuccess: async (_result, { id }) => {
+      toast('202 Accepted — keputusan diteruskan ke proses approval.', 'info');
+      const row = await benefitService.completeClaimWorkflow(id, 'APPROVED');
+      toast(
+        `workflow.process.completed — ${row.requestNo} APPROVED; ledger USAGE tercatat dan payable masuk daftar pencairan.`,
+        'ok',
+      );
+      void queryClient.invalidateQueries({ queryKey: benefitKeys.all });
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
-export const useRejectClaim = () =>
-  useBenefitMutation<RejectInput & { requestNo: string; reasonName: string }>(
-    (input) => benefitService.rejectClaim(input).then(() => undefined),
-    (_result, input) => ({
-      text: `202 Accepted — ${input.requestNo} ditolak karena "${input.reasonName}". Reservasinya dilepas saat prosesnya selesai.`,
-      tone: 'info',
-    }),
-  );
+export function useRejectClaim() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: RejectInput & { requestNo: string; reasonName: string }) => benefitService.rejectClaim(input),
+    onSuccess: async (_result, input) => {
+      toast(`202 Accepted — penolakan ${input.requestNo} karena "${input.reasonName}" diteruskan.`, 'info');
+      await benefitService.completeClaimWorkflow(input.id, 'REJECTED');
+      toast(`workflow.process.completed — ${input.requestNo} REJECTED; reservasinya dilepas (ledger RELEASE).`, 'warn');
+      void queryClient.invalidateQueries({ queryKey: benefitKeys.all });
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useSaveBenefitType = () =>
   useBenefitMutation<{ draft: BenefitTypeDraft; id?: string }, { name: string; healthChanged: boolean }>(

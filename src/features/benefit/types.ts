@@ -151,7 +151,7 @@ export interface Payable {
   mark: DisbursementMark | null;
 }
 
-/** Penahanan sengketa — memblokir persetujuan selama masih aktif. */
+/** Penahanan sengketa — menggerbang penandaan pencairan (FT5), bukan keputusan approver. */
 export interface DisputeHold {
   id: string;
   targetType: 'BENEFIT_CLAIM' | 'LOAN' | 'CASH_ADVANCE';

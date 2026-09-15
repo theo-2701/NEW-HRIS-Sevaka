@@ -1,14 +1,25 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { benefitService, resetBenefitMocks } from '@/features/benefit/services/benefit.service';
+import {
+  benefitService,
+  resetBenefitMocks,
+  setBenefitModuleEnabled,
+} from '@/features/benefit/services/benefit.service';
+import { toIsoDate } from '@/lib/format';
 import { activeHoldOn, draftTotal, remainingOf, withRunningBalance } from '@/features/benefit/rules';
 import { CLAIMS, HOLDS, LEDGER, PERIODS } from '@/features/benefit/mock-data';
 import type { ClaimDraft } from '@/features/benefit/types';
+
+const daysAgo = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return toIsoDate(date);
+};
 
 const draft: ClaimDraft = {
   benefitTypeId: 'bt-rawat-jalan',
   items: [
     {
-      expenseDate: '2026-08-01',
+      expenseDate: daysAgo(10),
       amount: '300000',
       beneficiaryKind: 'SELF',
       beneficiaryId: '',
@@ -93,7 +104,7 @@ describe('Pengajuan klaim', () => {
 
 describe('Pembatalan oleh pengaju', () => {
   it('hanya klaim yang menunggu keputusan yang bisa dibatalkan', async () => {
-    await expect(benefitService.cancelClaim('clm-45')).rejects.toThrow(/422/);
+    await expect(benefitService.cancelClaim('clm-45')).rejects.toThrow(/409 FIN_ALREADY_DECIDED/);
   });
 
   it('hanya pengaju sendiri yang bisa membatalkan', async () => {
@@ -110,13 +121,26 @@ describe('Pembatalan oleh pengaju', () => {
 });
 
 describe('Keputusan approver', () => {
-  it('penahanan sengketa aktif memblokir persetujuan', async () => {
+  it('penahanan sengketa tidak memblokir keputusan — ia menggerbang pencairan (FT5)', async () => {
     expect(activeHoldOn(HOLDS, 'clm-46')).toBeTruthy();
-    await expect(benefitService.approveClaim('clm-46')).rejects.toThrow(/409/);
+    await expect(benefitService.approveClaim('clm-46')).resolves.toEqual({ accepted: true });
   });
 
-  it('klaim yang sudah diputuskan tidak bisa diputuskan lagi', async () => {
-    await expect(benefitService.approveClaim('clm-45')).rejects.toThrow(/422/);
+  it('klaim yang sudah diputuskan tidak bisa diputuskan lagi (409 FIN_ALREADY_DECIDED)', async () => {
+    await expect(benefitService.approveClaim('clm-45')).rejects.toThrow(/409 FIN_ALREADY_DECIDED/);
+  });
+
+  it('penyelesaian workflow: USAGE di ledger, slot keluarga terkunci, payable lahir', async () => {
+    await benefitService.approveClaim('clm-46');
+    const before = await benefitService.disbursements();
+    expect(before.find((row) => row.payableId === 'clm-46')).toBeUndefined();
+
+    const row = await benefitService.completeClaimWorkflow('clm-46', 'APPROVED');
+    expect(row.status).toBe('APPROVED');
+    expect(row.reservationState).toBe('CONSUMED');
+    expect((await benefitService.ledger()).some((entry) => entry.sourceClaimId === 'clm-46' && entry.entryType === 'USAGE')).toBe(true);
+    expect((await benefitService.beneficiaries()).find((ben) => ben.id === 'ben-aditya')?.slotConsumed).toBe(true);
+    expect((await benefitService.disbursements()).find((payable) => payable.payableId === 'clm-46')).toBeTruthy();
   });
 
   it('menolak wajib beralasan, dan alasan bebas wajib bercatatan', async () => {
@@ -208,5 +232,42 @@ describe('Disbursement', () => {
     const rows = await benefitService.disbursements();
     expect(rows.map((row) => row.payableId)).toEqual(['clm-45', 'clm-41']);
     expect(rows.every((row) => row.payableType === 'BENEFIT_CLAIM')).toBe(true);
+  });
+});
+
+describe('Gerbang submit kontrak (UIC-FINANCE §3.4)', () => {
+  it('modul benefit mati ditolak 422 FIN_MODULE_DISABLED', async () => {
+    setBenefitModuleEnabled(false);
+    await expect(benefitService.submitClaim(draft)).rejects.toThrow(/FIN_MODULE_DISABLED/);
+  });
+
+  it('tanggal nota di masa depan atau lewat 90 hari ditolak FIN_CLAIM_WINDOW_EXPIRED', async () => {
+    await expect(
+      benefitService.submitClaim({ ...draft, items: [{ ...draft.items[0], expenseDate: daysAgo(-1) }] }),
+    ).rejects.toThrow(/FIN_CLAIM_WINDOW_EXPIRED/);
+    await expect(
+      benefitService.submitClaim({ ...draft, items: [{ ...draft.items[0], expenseDate: daysAgo(91) }] }),
+    ).rejects.toThrow(/FIN_CLAIM_WINDOW_EXPIRED/);
+  });
+
+  it('nomor nota yang sudah dipakai klaim hidup ditolak 409 FIN_DUPLICATE_RECEIPT', async () => {
+    await expect(
+      benefitService.submitClaim({ ...draft, items: [{ ...draft.items[0], receiptNo: 'RS-MELATI/2026/07/0231' }] }),
+    ).rejects.toThrow(/409 FIN_DUPLICATE_RECEIPT/);
+  });
+
+  it('penerima keluarga yang tidak aktif ditolak FIN_BENEFICIARY_NOT_LISTED', async () => {
+    await expect(
+      benefitService.submitClaim({
+        ...draft,
+        items: [{ ...draft.items[0], beneficiaryKind: 'FAMILY_MEMBER', beneficiaryId: 'ben-sri' }],
+      }),
+    ).rejects.toThrow(/FIN_BENEFICIARY_NOT_LISTED/);
+  });
+
+  it('membatalkan menulis RELEASE ke ledger', async () => {
+    await benefitService.cancelClaim('clm-46');
+    const ledger = await benefitService.ledger();
+    expect(ledger[ledger.length - 1]).toMatchObject({ sourceClaimId: 'clm-46', entryType: 'RELEASE' });
   });
 });
