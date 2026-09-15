@@ -16,11 +16,6 @@ export interface JobLevelSlice {
   color: string;
 }
 
-export interface LeaveBalance {
-  annualLeaveDays: number;
-  sickLeaveUsedDays: number;
-}
-
 export interface LockedAccount {
   id: string;
   name: string;
@@ -28,12 +23,6 @@ export interface LockedAccount {
   email: string;
   lockedAt: string;
   failedAttempts: number;
-}
-
-export interface WhosOffEntry {
-  id: string;
-  name: string;
-  reason: string;
 }
 
 export type ContractStatus = 'PROBATION' | 'CONTRACT' | 'PERMANENT';
@@ -53,8 +42,6 @@ export interface DashboardSummary {
   turnover: SeriesPoint[];
   jobLevels: JobLevelSlice[];
   totalEmployees: number;
-  leave: LeaveBalance;
-  whosOff: WhosOffEntry[];
   lockedAccounts: LockedAccount[];
   contracts: ContractRow[];
 }

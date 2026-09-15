@@ -3,29 +3,23 @@ import { DashboardHero } from '@/features/dashboard/components/DashboardHero';
 import { HomeStatCards } from '@/features/dashboard/components/HomeStatCards';
 import { StatCard } from '@/features/dashboard/components/StatCard';
 import { GenderDonut, JobLevelBar, StaffActiveChart, TurnoverChart } from '@/features/dashboard/components/StatCharts';
-import {
-  LeaveBalanceCard,
-  PromoBanner,
-  QuickLinksCard,
-  SecurityCard,
-  WhosOffCard,
-} from '@/features/dashboard/components/SidePanels';
+import { PromoBanner, QuickLinksCard, SecurityCard } from '@/features/dashboard/components/SidePanels';
 import { DashboardTabsCard } from '@/features/dashboard/components/DashboardTabsCard';
 import { UnlockAccountModal } from '@/features/dashboard/components/UnlockAccountModal';
-import { useDashboardSummary, useHomeStats } from '@/features/dashboard/hooks/useDashboard';
+import { useDashboardSummary } from '@/features/dashboard/hooks/useDashboard';
 
 /**
  * Dashboard — port `_prototype/index.html` + `js/dashboard.js`.
  * Susunan: hero · 4 kartu grafik · mid-row (Keamanan Akun + Quick Links |
- * banner + kartu bertab | Ringkasan dua lapis + saldo cuti + Who's Off).
+ * banner + kartu bertab | kartu Milik Saya + kartu Perusahaan).
  * Grafik dipertahankan atas permintaan user walau FSD-AUTH 0.7 §2.9 menggantinya
- * dengan lima kartu angka; kartu angka itu kini jadi panel Ringkasan di kolom kanan.
+ * dengan lima kartu angka; kartu angka itu kini dua kartu di kolom kanan, menggantikan
+ * kartu saldo cuti dan Who's Off prototype.
  * Kartu bertab sengaja berada di kolom yang sama dengan banner sehingga
  * lebarnya mengikuti banner dan duduk tepat di bawahnya.
  */
 export function DashboardPage() {
   const { data, isLoading } = useDashboardSummary();
-  const { data: stats } = useHomeStats();
   const [unlockOpen, setUnlockOpen] = useState(false);
 
   return (
@@ -65,12 +59,6 @@ export function DashboardPage() {
 
         <div className="flex flex-col gap-4">
           <HomeStatCards />
-          {data && (
-            <LeaveBalanceCard
-              leave={{ ...data.leave, annualLeaveDays: stats?.leaveBalanceDays ?? data.leave.annualLeaveDays }}
-            />
-          )}
-          <WhosOffCard entries={data?.whosOff ?? []} />
         </div>
       </section>
 
