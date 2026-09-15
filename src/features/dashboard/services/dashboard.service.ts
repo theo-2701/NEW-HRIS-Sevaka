@@ -15,6 +15,39 @@ import type { AuthMe, DashboardSummary, HomeStats, LockedAccount } from '@/featu
  */
 
 const MOCK_SUMMARY: DashboardSummary = {
+  gender: [
+    { label: 'Female', value: 52, color: 'var(--color-secondary-500)' },
+    { label: 'Male', value: 36, color: 'var(--color-primary-500)' },
+    { label: 'Not Filled', value: 12, color: 'var(--color-tertiary-500)' },
+  ],
+  staffActive: [
+    { label: 'Jun', value: 220 },
+    { label: 'Jul', value: 375 },
+    { label: 'Agu', value: 330 },
+    { label: 'Sep', value: 450 },
+    { label: 'Okt', value: 330 },
+    { label: 'Nov', value: 450 },
+  ],
+  /* Turnover dalam PERSEN — sumbu kartu berskala 0–10%. */
+  turnover: [
+    { label: 'Jun', value: 2.5 },
+    { label: 'Jul', value: 5 },
+    { label: 'Agu', value: 5 },
+    { label: 'Sep', value: 6.5 },
+    { label: 'Okt', value: 5 },
+    { label: 'Nov', value: 5 },
+  ],
+  jobLevels: [
+    { label: 'Staff', count: 400, percent: 40, color: '#bce0f3' },
+    { label: 'Operator', count: 250, percent: 25, color: '#0e4a73' },
+    { label: 'Manager', count: 150, percent: 15, color: '#fde68a' },
+    { label: 'Supervisor', count: 100, percent: 10, color: '#7eb9d4' },
+    { label: 'Intern', count: 60, percent: 6, color: '#0284c7' },
+    { label: 'Specialist', count: 30, percent: 3, color: '#cfe6f2' },
+    { label: 'VP', count: 9, percent: 0.9, color: '#0a3a5a' },
+    { label: 'CEO', count: 1, percent: 0.1, color: '#062234' },
+  ],
+  totalEmployees: 1000,
   leave: { annualLeaveDays: 10, sickLeaveUsedDays: 4 },
   whosOff: [
     { id: 'CP012', name: 'Mitsui Tiga', reason: 'Cuti Tahunan' },
