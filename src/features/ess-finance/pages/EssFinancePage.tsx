@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Info } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
@@ -11,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { usePagedRows } from '@/hooks/usePagedRows';
-import { Note } from '@/features/time-off/components/TimeOffBits';
 import { ClaimStatusBadge, Money } from '@/features/benefit/components/BenefitBits';
 import { ClaimDetailModal } from '@/features/benefit/components/ClaimModals';
 import { useBenefitDisbursements, useClaims } from '@/features/benefit/hooks/useBenefit';
@@ -138,11 +136,6 @@ export function EssFinancePage() {
           {tab === 'taken' && (
             <Card>
               <CardHead title="Reimbursement taken" sub="Klaim yang sudah disetujui dan status pembayarannya" />
-              <Note icon={<Info />}>
-                <strong>GAP PROB-FRONTEND-016.</strong> Kontrak FT5 belum memberi ROLE_EMPLOYEE endpoint baca pencairan
-                (FSD §7.2.1). Grid ini membaca penanda dummy yang sama dengan layar Pencairan &amp; Piutang, dipersempit
-                ke data Anda.
-              </Note>
               <div className="flex flex-col">
                 <DataTable<Payable>
                   rows={pagedPayables.rows}
