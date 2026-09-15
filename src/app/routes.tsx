@@ -24,6 +24,7 @@ import { CashAdvancePage } from '@/features/cash-advance/pages/CashAdvancePage';
 import { DisbursementPage } from '@/features/disbursement/pages/DisbursementPage';
 import { FinanceSettingsPage } from '@/features/finance-settings/pages/FinanceSettingsPage';
 import { FinanceSecurityPage } from '@/features/finance-security/pages/FinanceSecurityPage';
+import { EssFinancePage } from '@/features/ess-finance/pages/EssFinancePage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -83,6 +84,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'finance/disbursement', element: <DisbursementPage /> },
   { path: 'finance/settings', element: <FinanceSettingsPage /> },
   { path: 'finance/security', element: <FinanceSecurityPage /> },
+  { path: 'me/finance', element: <EssFinancePage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
