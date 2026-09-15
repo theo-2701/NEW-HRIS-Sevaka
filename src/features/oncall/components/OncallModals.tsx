@@ -23,7 +23,7 @@ import { formatNumber } from '@/lib/format';
 const STATUS_TONE: Record<OncallStatus, 'ok' | 'warn' | 'err' | 'mute' | 'info'> = {
   PENDING_APPROVAL: 'warn',
   SCHEDULED: 'info',
-  ACTIVE: 'ok',
+  ACTIVATED: 'ok',
   REJECTED: 'err',
   CANCELLED: 'mute',
 };

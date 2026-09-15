@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { maskEmail, maskPhone } from '@/lib/format';
 import type {
   ForgotPasswordPayload,
@@ -18,7 +19,6 @@ import type {
  * memakai jalur mock ketika `VITE_API_BASE_URL` belum diisi. Endpoint asli
  * sudah ditulis di sini — hapus blok `if (MOCK)` begitu backend siap.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 
 const delay = (ms = 600) => new Promise((resolve) => setTimeout(resolve, ms));
 

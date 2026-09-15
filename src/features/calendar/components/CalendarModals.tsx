@@ -316,7 +316,7 @@ export function HolidayDecisionModal({
               placeholder="Input text here"
               className="min-h-9 w-full rounded-md border border-silver bg-cloud px-3 py-[9px] font-body text-xs font-medium leading-[1.4] text-fg-2 outline-none transition-[border-color,box-shadow] duration-200 ease-standard focus:border-secondary-500 focus:shadow-[0_0_0_4px_rgba(2,132,199,.16)]"
             />
-            <span className="font-body text-xs font-normal text-fg-3">Wajib diisi bila menolak.</span>
+            <span className="font-body text-xs font-normal text-fg-3">Opsional di kedua cabang keputusan.</span>
           </div>
         </div>
       )}

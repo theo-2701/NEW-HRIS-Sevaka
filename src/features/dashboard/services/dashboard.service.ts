@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import type { DashboardSummary, LockedAccount } from '@/features/dashboard/types';
 
 /**
@@ -6,7 +7,6 @@ import type { DashboardSummary, LockedAccount } from '@/features/dashboard/types
  * `VITE_API_BASE_URL` belum diisi. Data contoh mengikuti aturan prototype —
  * nama Indonesia, ID `CP0xx`, tanggal `dd Mmm yyyy` — bukan `[...]`.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 
 const MOCK_SUMMARY: DashboardSummary = {
   gender: [

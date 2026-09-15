@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER } from '@/features/new-joiner/types';
 import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
@@ -22,7 +23,6 @@ import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
  *
  * KTP dikirim sebagai field transient; yang disimpan hanya 4 digit terakhir.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 

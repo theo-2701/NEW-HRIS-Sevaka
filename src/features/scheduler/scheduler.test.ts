@@ -26,16 +26,16 @@ describe('Katalog shift', () => {
 
   it('menolak jam terisi pada pola non-tetap', async () => {
     await expect(
-      schedulerService.saveShift({ ...shiftDraft, shiftType: 'FLEX', flexBand: '{}' }),
+      schedulerService.saveShift({ ...shiftDraft, shiftType: 'FLEXIBLE', flexBand: '{}' }),
     ).rejects.toThrow(/harus kosong/);
   });
 
   it('pola siklus wajib berjeda 0 dan punya definisi siklus', async () => {
     await expect(
-      schedulerService.saveShift({ ...shiftDraft, shiftType: 'CYCLE', startTime: '', endTime: '', cycleDef: '{}' }),
+      schedulerService.saveShift({ ...shiftDraft, shiftType: 'ROTATING', startTime: '', endTime: '', cycleDef: '{}' }),
     ).rejects.toThrow(/berjeda 0/);
     await expect(
-      schedulerService.saveShift({ ...shiftDraft, shiftType: 'CYCLE', startTime: '', endTime: '', breakMinutes: '0' }),
+      schedulerService.saveShift({ ...shiftDraft, shiftType: 'ROTATING', startTime: '', endTime: '', breakMinutes: '0' }),
     ).rejects.toThrow(/definisi siklus/);
   });
 
@@ -57,7 +57,7 @@ describe('Katalog shift', () => {
 
   it('tipe shift beku saat Ubah', async () => {
     const row = await schedulerService.saveShift(
-      { ...shiftDraft, shiftCode: 'PAGI', shiftType: 'FLEX', startTime: '', endTime: '', flexBand: '{}' },
+      { ...shiftDraft, shiftCode: 'PAGI', shiftType: 'FLEXIBLE', startTime: '', endTime: '', flexBand: '{}' },
       'sh-1',
     );
     expect(row.shiftType).toBe('FIXED');
@@ -104,7 +104,7 @@ describe('Roster', () => {
       { employeeId: 'emp-sari', workDate: '2026-07-28', shiftId: 'sh-1', isOffDay: false },
       'as-5',
     );
-    expect(row.assignmentSource).toBe('INDIVIDUAL');
+    expect(row.assignmentSource).toBe('INDIVIDUAL_OVERRIDE');
   });
 
   it('baris yang terikat tukar belum diputuskan tidak bisa dihapus', async () => {
@@ -165,7 +165,7 @@ describe('Tukar shift', () => {
     const swap = await schedulerService.createSwap('as-7', 'as-9');
     expect(swap.swapStatus).toBe('PENDING_APPROVAL');
     const rows = await schedulerService.assignments();
-    expect(rows.find((row) => row.id === 'as-7')!.assignmentSource).toBe('BULK');
+    expect(rows.find((row) => row.id === 'as-7')!.assignmentSource).toBe('BULK_UNIT');
   });
 
   it('pengaju tidak pernah memutuskan tukarnya sendiri', async () => {
@@ -181,6 +181,7 @@ describe('Tukar shift', () => {
     const other = before.find((row) => row.id === 'as-4')!;
 
     await schedulerService.decideSwap('sw-1', 'APPROVED');
+    await schedulerService.completeSwapWorkflow('sw-1', 'APPROVED');
 
     const after = await schedulerService.assignments();
     expect(after.find((row) => row.id === 'as-1')!.shiftId).toBe(other.shiftId);
@@ -192,6 +193,7 @@ describe('Tukar shift', () => {
   it('ditolak tidak menyentuh roster sama sekali', async () => {
     const before = await schedulerService.assignments();
     await schedulerService.decideSwap('sw-1', 'REJECTED');
+    await schedulerService.completeSwapWorkflow('sw-1', 'REJECTED');
     const after = await schedulerService.assignments();
     expect(after).toEqual(before);
   });

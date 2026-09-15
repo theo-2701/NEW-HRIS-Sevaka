@@ -26,7 +26,7 @@ export function weekDates(weekStart: string): string[] {
  * tidak punya jam miliknya sendiri.
  */
 export function pickableShifts(shifts: Shift[]): Shift[] {
-  return shifts.filter((row) => row.isActive && row.shiftType !== 'CYCLE');
+  return shifts.filter((row) => row.isActive && row.shiftType !== 'ROTATING');
 }
 
 /** Baris roster satu karyawan pada satu tanggal, bila ada. */

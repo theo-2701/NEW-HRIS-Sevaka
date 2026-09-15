@@ -82,18 +82,21 @@ describe('Holiday — maker–checker', () => {
     await expect(calendarService.decideHoliday('hol-7', 'APPROVED', '')).rejects.toThrow(/403/);
   });
 
-  it('penolakan butuh alasan', async () => {
-    await expect(calendarService.decideHoliday('hol-4', 'REJECTED', '   ')).rejects.toThrow(/alasan/);
+  it('catatan keputusan opsional, termasuk saat menolak (FSD §1.4)', async () => {
+    await expect(calendarService.decideHoliday('hol-4', 'REJECTED', '')).resolves.toEqual({ accepted: true });
   });
 
-  it('menyetujui membuat tanggal itu libur yang berlaku', async () => {
-    const row = await calendarService.decideHoliday('hol-4', 'APPROVED', '');
+  it('keputusan hanya diterima; status ditulis saat workflow selesai (K9)', async () => {
+    await calendarService.decideHoliday('hol-4', 'APPROVED', '');
+    expect((await calendarService.holidays({})).find((row) => row.id === 'hol-4')?.approvalStatus).toBe('PENDING_APPROVAL');
+    const row = await calendarService.completeHolidayWorkflow('hol-4', 'APPROVED');
     expect(row.approvalStatus).toBe('APPROVED');
     expect(row.approvedBy).toBe('emp-hendra');
   });
 
   it('baris yang sudah diputuskan tidak bisa diputuskan lagi', async () => {
     await calendarService.decideHoliday('hol-4', 'APPROVED', '');
+    await calendarService.completeHolidayWorkflow('hol-4', 'APPROVED');
     await expect(calendarService.decideHoliday('hol-4', 'REJECTED', 'Berubah pikiran.')).rejects.toThrow(/422/);
   });
 });

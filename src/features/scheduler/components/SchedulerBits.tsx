@@ -22,9 +22,10 @@ const SWAP_TONE: Record<SwapStatus, 'ok' | 'warn' | 'err' | 'mute'> = {
 };
 
 const SOURCE_TONE: Record<AssignmentSource, 'info' | 'mute' | 'ok'> = {
-  INDIVIDUAL: 'info',
-  BULK: 'mute',
+  BULK_UNIT: 'mute',
+  INDIVIDUAL_OVERRIDE: 'info',
   SWAP: 'ok',
+  SYSTEM_CYCLE: 'mute',
 };
 
 export function SwapStatusBadge({ status }: { status: SwapStatus }) {

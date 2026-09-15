@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { DAILY } from '@/features/attendance/mock-data';
 import { HOLIDAYS, ME, WORK_CALENDARS } from '@/features/calendar/mock-data';
 import { APPROVAL_STATUS_LABEL } from '@/features/calendar/types';
@@ -33,7 +34,6 @@ import type {
  *    ditulis ulang. Dua pola aktif pada scope sama tidak boleh bertindih (409),
  *    dan pola company aktif terakhir tidak boleh dihapus/diakhiri (422).
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const cloneHoliday = (row: CalendarHoliday): CalendarHoliday => ({ ...row });
@@ -93,8 +93,8 @@ export const calendarService = {
         .sort((a, b) => (a.holidayDate < b.holidayDate ? -1 : 1))
         .map(cloneHoliday);
     }
-    const { data } = await api.get<{ rows: CalendarHoliday[] }>('/holidays', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: CalendarHoliday[] }>('/holidays/search', { filters: filter });
+    return data.data;
   },
 
   /** Baru → DRAFT. Menyimpan DRAFT = sekaligus mengajukan untuk approval. */
@@ -157,12 +157,17 @@ export const calendarService = {
     }
 
     const { data } = id
-      ? await api.patch<CalendarHoliday>(`/holidays/${id}`, draft)
+      ? await api.put<CalendarHoliday>(`/holidays/${id}`, { holiday_name: draft.holidayName, source: draft.source })
       : await api.post<CalendarHoliday>('/holidays', draft);
     return data;
   },
 
-  async decideHoliday(id: string, kind: 'APPROVED' | 'REJECTED', note: string): Promise<CalendarHoliday> {
+  /**
+   * `POST /holidays/{id}/approval` (UIC-TIME §2.1.6). Pintu ini MENERIMA
+   * keputusan (200) — status baru tertulis saat `workflow.process.completed`
+   * dikonsumsi (K9). Catatan opsional di kedua cabang (FSD §1.4).
+   */
+  async decideHoliday(id: string, kind: 'APPROVED' | 'REJECTED', note: string): Promise<{ accepted: true }> {
     if (MOCK) {
       await delay(400);
       const row = findHoliday(id);
@@ -172,17 +177,21 @@ export const calendarService = {
       if (row.approvalStatus !== 'PENDING_APPROVAL') {
         throw new Error('422 — hanya baris yang menunggu keputusan yang bisa diputuskan.');
       }
-      if (kind === 'REJECTED' && !note.trim()) {
-        throw new Error('422 — penolakan butuh alasan.');
-      }
-      row.approvalStatus = kind;
-      row.approvedBy = ME;
-      row.approvedAt = new Date().toISOString();
-      return cloneHoliday(row);
+      void note;
+      return { accepted: true };
     }
-    const path = kind === 'APPROVED' ? 'approve' : 'reject';
-    const { data } = await api.patch<CalendarHoliday>(`/holidays/${id}/${path}`, { note });
-    return data;
+    await api.post(`/holidays/${id}/approval`, { decision: kind, note: note || undefined });
+    return { accepted: true };
+  },
+
+  /** Mock saja — pengganti konsumsi `workflow.process.completed` untuk libur. */
+  async completeHolidayWorkflow(id: string, kind: 'APPROVED' | 'REJECTED'): Promise<CalendarHoliday> {
+    await delay(150);
+    const row = findHoliday(id);
+    row.approvalStatus = kind;
+    row.approvedBy = ME;
+    row.approvedAt = new Date().toISOString();
+    return cloneHoliday(row);
   },
 
   async deleteHoliday(id: string): Promise<void> {
@@ -214,8 +223,8 @@ export const calendarService = {
         })
         .map(cloneCalendar);
     }
-    const { data } = await api.get<{ rows: WorkCalendar[] }>('/work-calendars', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: WorkCalendar[] }>('/work-calendars/search', { filters: filter });
+    return data.data;
   },
 
   async saveWorkCalendar(draft: WorkCalendarDraft, id?: string): Promise<WorkCalendar> {
@@ -250,9 +259,11 @@ export const calendarService = {
         throw new Error('422 — tanggal akhir tidak boleh mendahului tanggal mulai.');
       }
 
+      // Dua rentang [from, until] beririsan bila masing-masing mulai sebelum yang lain berakhir.
+      const OPEN_END = '9999-12-31';
       const overlap = mockCalendars.find((row) => {
         if (row.scopeLevel !== draft.scopeLevel || (row.scopeRef ?? null) !== scopeRef) return false;
-        return !(row.effectiveUntil && row.effectiveUntil < draft.effectiveFrom);
+        return row.effectiveFrom <= (until ?? OPEN_END) && draft.effectiveFrom <= (row.effectiveUntil ?? OPEN_END);
       });
       if (overlap) {
         throw new Error('409 — sudah ada pola aktif pada scope itu yang rentangnya bertindih.');
@@ -273,7 +284,7 @@ export const calendarService = {
     }
 
     const { data } = id
-      ? await api.patch<WorkCalendar>(`/work-calendars/${id}`, draft)
+      ? await api.put<WorkCalendar>(`/work-calendars/${id}`, { calendar_name: draft.calendarName, effective_until: draft.effectiveUntil || null })
       : await api.post<WorkCalendar>('/work-calendars', draft);
     return data;
   },

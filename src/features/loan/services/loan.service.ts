@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import {
   EXPOSURE,
   INSTALLMENTS,
@@ -56,7 +57,6 @@ import type {
  *  • ACK mengisi bunga, total kewajiban dan jadwal angsuran dari tawaran pihak
  *    pemberi dana — HRIS tidak pernah menghitungnya sendiri.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockLoans: Loan[] = LOANS.map((row) => ({ ...row }));

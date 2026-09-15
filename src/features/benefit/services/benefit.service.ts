@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import {
   BENEFICIARIES,
   BENEFIT_TYPES,
@@ -47,7 +48,6 @@ import type {
  *    karyawan.
  *  • Mengubah flag data kesehatan pada jenis manfaat wajib beralasan (422).
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const cloneClaim = (row: BenefitClaim): BenefitClaim => ({

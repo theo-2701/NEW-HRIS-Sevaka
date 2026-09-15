@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { LEAVE_BALANCES, LEDGER } from '@/features/time-off/mock-data';
 import type {
   AdjustmentDraft,
@@ -24,11 +25,21 @@ import type {
  *  • Delta wajib bertanda dan tidak boleh nol; alasan wajib.
  *  • Grid read-only dua arah — tidak ada update/delete baris ledger.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
 let mockLedger: LedgerEntry[] = LEDGER.map((row) => ({ ...row }));
+
+/**
+ * Jalur mesin ledger (UIC-TIME §4.1): cuti disetujui menulis `LEAVE_TAKEN`,
+ * penarikan/penolakan sakit menulis `LEAVE_REVERSED`. Dipanggil modul Time Off
+ * Request — append-only, tidak pernah mengubah baris lama.
+ */
+export function appendLedgerEntry(entry: Omit<LedgerEntry, 'id'>): LedgerEntry {
+  const row: LedgerEntry = { ...entry, id: `ledger-${newId().slice(0, 6)}` };
+  mockLedger = [row, ...mockLedger];
+  return row;
+}
 
 /**
  * Saldo = jumlah delta di ledger. Baris awal dari kontrak dipakai sebagai
@@ -77,8 +88,8 @@ export const balanceService = {
       await delay();
       return computeBalances().filter((row) => matches(row, filter));
     }
-    const { data } = await api.get<{ rows: LeaveBalance[] }>('/leave-balances', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: LeaveBalance[] }>('/leave-balances/search', { filters: filter });
+    return data.data;
   },
 
   async ledger(filter: LedgerFilter = {}): Promise<LedgerEntry[]> {
@@ -90,8 +101,8 @@ export const balanceService = {
         .sort((a, b) => (a.mutationDate < b.mutationDate ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: LedgerEntry[] }>('/leave-balance-ledger', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: LedgerEntry[] }>('/leave-balance-ledgers/search', { filters: filter });
+    return data.data;
   },
 
   /** Menulis SATU baris baru. Tidak pernah mengubah baris yang sudah ada. */
@@ -129,7 +140,7 @@ export const balanceService = {
       return entry;
     }
 
-    const { data } = await api.post<LedgerEntry>('/leave-balance-ledger', {
+    const { data } = await api.post<LedgerEntry>('/leave-balance-ledgers', {
       employeeId: draft.employeeId,
       leaveTypeId: draft.leaveTypeId,
       periodYear: draft.periodYear,

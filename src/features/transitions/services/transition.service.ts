@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import {
   DESTINATION_OPTIONS,
   EMPLOYEE_OPTIONS,
@@ -34,7 +35,6 @@ import type {
  * bawah sudah disiapkan lengkap dengan kelas kontrol + alasan audit, dan
  * ditandai GAP di UI sampai kontraknya ditegaskan.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 

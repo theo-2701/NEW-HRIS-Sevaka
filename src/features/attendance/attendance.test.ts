@@ -119,6 +119,8 @@ describe('Correction — keputusan', () => {
   it('setuju hanya menyalakan excused; menit terukur tidak berubah', async () => {
     const before = (await attendanceService.days(HENDRA)).find((row) => row.id === 'day-3')!;
     await attendanceService.decideCorrection(HENDRA, 'cor-2', 'APPROVED');
+    // K9: status & baris harian baru ditulis saat workflow selesai.
+    await attendanceService.completeCorrectionWorkflow(HENDRA, 'cor-2', 'APPROVED');
     const after = (await attendanceService.days(HENDRA)).find((row) => row.id === 'day-3')!;
 
     expect(after.isExcused).toBe(true);
@@ -132,12 +134,19 @@ describe('Correction — keputusan', () => {
   it('tolak tidak menyentuh hari sama sekali', async () => {
     const before = (await attendanceService.days(HENDRA)).find((row) => row.id === 'day-3')!;
     await attendanceService.decideCorrection(HENDRA, 'cor-2', 'REJECTED');
+    await attendanceService.completeCorrectionWorkflow(HENDRA, 'cor-2', 'REJECTED');
     const after = (await attendanceService.days(HENDRA)).find((row) => row.id === 'day-3')!;
     expect(after).toEqual(before);
   });
 
   it('koreksi yang sudah diputuskan tidak bisa diputuskan lagi', async () => {
-    await expect(attendanceService.decideCorrection(HENDRA, 'cor-3', 'APPROVED')).rejects.toThrow(/409/);
+    await expect(attendanceService.decideCorrection(HENDRA, 'cor-3', 'APPROVED')).rejects.toThrow(/422/);
+  });
+
+  it('keputusan hanya diterima — status koreksi belum berubah sebelum workflow selesai (K9)', async () => {
+    await attendanceService.decideCorrection(HENDRA, 'cor-2', 'APPROVED');
+    const rows = await attendanceService.corrections(HENDRA);
+    expect(rows.find((row) => row.id === 'cor-2')!.correctionStatus).toBe('PENDING_APPROVAL');
   });
 });
 

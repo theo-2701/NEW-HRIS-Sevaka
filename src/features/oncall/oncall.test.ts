@@ -94,22 +94,25 @@ describe('Jendela siaga — pembuatan', () => {
 describe('Jendela siaga — keputusan & pembatalan', () => {
   it('pembuat tidak pernah memutuskan jendelanya sendiri', async () => {
     // Seluruh baris seed dibuat emp-hendra, jadi sesi itulah yang ditolak.
-    await expect(oncallService.decide(HENDRA, 'oncall-2', 'APPROVED')).rejects.toThrow(/403/);
+    await expect(oncallService.decide(HENDRA, 'oncall-2', 'APPROVED')).rejects.toThrow(/422/);
   });
 
   it('menyetujui memindahkan status ke Scheduled', async () => {
-    const row = await oncallService.decide(SARI, 'oncall-2', 'APPROVED');
+    await oncallService.decide(SARI, 'oncall-2', 'APPROVED');
+    const row = await oncallService.completeOncallWorkflow(SARI, 'oncall-2', 'APPROVED');
     expect(row.oncallStatus).toBe('SCHEDULED');
     expect(row.approvedBy).toBe('emp-sari');
   });
 
   it('menolak memindahkan status ke Rejected', async () => {
-    const row = await oncallService.decide(SARI, 'oncall-3', 'REJECTED');
+    await oncallService.decide(SARI, 'oncall-3', 'REJECTED');
+    const row = await oncallService.completeOncallWorkflow(SARI, 'oncall-3', 'REJECTED');
     expect(row.oncallStatus).toBe('REJECTED');
   });
 
   it('jendela yang sudah diputuskan tidak bisa diputuskan lagi', async () => {
     await oncallService.decide(SARI, 'oncall-2', 'APPROVED');
+    await oncallService.completeOncallWorkflow(SARI, 'oncall-2', 'APPROVED');
     await expect(oncallService.decide(SARI, 'oncall-2', 'REJECTED')).rejects.toThrow(/422/);
   });
 

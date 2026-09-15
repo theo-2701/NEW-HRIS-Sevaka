@@ -7,7 +7,7 @@
  * Layar Activity hanya membaca baris lembur itu — nol jalur tulis.
  */
 
-export type OncallStatus = 'PENDING_APPROVAL' | 'SCHEDULED' | 'ACTIVE' | 'REJECTED' | 'CANCELLED';
+export type OncallStatus = 'PENDING_APPROVAL' | 'SCHEDULED' | 'ACTIVATED' | 'REJECTED' | 'CANCELLED';
 
 export interface OncallAssignment {
   id: string;
@@ -38,10 +38,10 @@ export interface OncallDraft {
 export const ONCALL_STATUS_LABEL: Record<OncallStatus, string> = {
   PENDING_APPROVAL: 'Pending approval',
   SCHEDULED: 'Scheduled',
-  ACTIVE: 'Active',
+  ACTIVATED: 'Activated',
   REJECTED: 'Rejected',
   CANCELLED: 'Cancelled',
 };
 
 /** Status yang masih memegang tempat di kalender siaga karyawan. */
-export const LIVE_ONCALL_STATUSES: OncallStatus[] = ['PENDING_APPROVAL', 'SCHEDULED', 'ACTIVE'];
+export const LIVE_ONCALL_STATUSES: OncallStatus[] = ['PENDING_APPROVAL', 'SCHEDULED', 'ACTIVATED'];

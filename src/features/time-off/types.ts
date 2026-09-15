@@ -26,7 +26,7 @@ export type ExtraApprovalReason = 'NEGATIVE_BALANCE' | 'SOFT_BLACKOUT' | 'UNPAID
 export type DelegationStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 /** UIC §3.1.8 — `DSR` lama diganti `DATA_SUBJECT_REQUEST`. */
-export type AccessPurpose = 'VERIFICATION' | 'AUDIT' | 'DATA_SUBJECT_REQUEST';
+export type AccessPurpose = 'VERIFICATION' | 'AUDIT' | 'DISPUTE' | 'DATA_SUBJECT_REQUEST';
 
 export type Role = 'ROLE_EMPLOYEE' | 'ROLE_DEPT_MANAGER' | 'ROLE_HR_MANAGER';
 
@@ -166,6 +166,7 @@ export const EXTRA_REASON_LABEL: Record<ExtraApprovalReason, string> = {
 export const ACCESS_PURPOSE_LABEL: Record<AccessPurpose, string> = {
   VERIFICATION: 'Verification',
   AUDIT: 'Audit',
+  DISPUTE: 'Dispute',
   DATA_SUBJECT_REQUEST: 'Data subject request',
 };
 

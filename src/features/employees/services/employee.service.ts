@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { BRANCHES } from '@/features/employees/types';
 import type {
   EmployeeDetail,
@@ -16,7 +17,6 @@ import type {
  * Selama `VITE_API_BASE_URL` kosong, jalur MOCK dipakai: dataset contoh di
  * bawah memuat keenam `employment_status` dan keempat `work_arrangement`.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 
 /** Aktor yang sedang masuk — dipakai untuk membedakan data diri vs subjek lain. */
 export const CURRENT_EMPLOYEE_ID = 'emp-tony';

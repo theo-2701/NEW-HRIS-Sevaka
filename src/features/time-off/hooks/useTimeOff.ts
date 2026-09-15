@@ -64,18 +64,32 @@ export const useSubmitRequest = (session: Session) =>
     }),
   );
 
-export const useDecideRequest = (session: Session) =>
-  useTimeOffMutation<{ id: string; decision: 'APPROVED' | 'REJECTED'; note: string }>(
-    ({ id, decision, note }) => timeOffService.decide(session, id, decision, note, DEMO_NOW),
-    (_result, { decision }) => ({
-      // Kontraknya asinkron: 200 diterima dulu, status final menyusul.
-      text:
+/**
+ * Keputusan approver (K9): pintu keputusan menjawab 200 "diterima", lalu status
+ * final + mutasi ledger saldo ditulis saat workflow selesai. Seluruh query
+ * di-invalidate karena saldo (modul Balance) ikut berubah.
+ */
+export function useDecideRequest(session: Session) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, decision, note }: { id: string; decision: 'APPROVED' | 'REJECTED'; note: string }) => {
+      await timeOffService.decide(session, id, decision, note, DEMO_NOW);
+      return decision;
+    },
+    onSuccess: async (decision, { id, note }) => {
+      toast('200 diterima — keputusan diteruskan ke proses persetujuan.', 'info');
+      await timeOffService.completeDecision(session, id, decision, note, DEMO_NOW);
+      toast(
         decision === 'APPROVED'
-          ? '200 diterima — proses selesai: hari ditutup sebagai cuti dan saldo dipotong.'
-          : '200 diterima — proses selesai: pengajuan ditolak, hari itu tetap terhitung absen.',
-      tone: decision === 'APPROVED' ? 'ok' : 'warn',
-    }),
-  );
+          ? 'workflow.process.completed — cuti disetujui; saldo dipotong lewat entri ledger LEAVE_TAKEN.'
+          : 'workflow.process.completed — pengajuan ditolak, hari itu tetap terhitung absen.',
+        decision === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useRejectSick = (session: Session) =>
   useTimeOffMutation<{ id: string; reason: string }>(

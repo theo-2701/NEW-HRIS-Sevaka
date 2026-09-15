@@ -11,8 +11,9 @@
  * pertanyaan "hari ini hari kerja bukan?".
  */
 
-export type ShiftType = 'FIXED' | 'CYCLE' | 'FLEX';
-export type AssignmentSource = 'INDIVIDUAL' | 'BULK' | 'SWAP';
+export type ShiftType = 'FIXED' | 'ROTATING' | 'FLEXIBLE';
+/** UIC-TIME §10.2 — presedensi FC-04: override & swap tidak ditimpa bulk. */
+export type AssignmentSource = 'BULK_UNIT' | 'INDIVIDUAL_OVERRIDE' | 'SWAP' | 'SYSTEM_CYCLE';
 
 export interface Shift {
   id: string;
@@ -39,8 +40,8 @@ export interface ShiftAssignment {
 
 export const SHIFT_TYPE_LABEL: Record<ShiftType, string> = {
   FIXED: 'Fixed',
-  CYCLE: 'Cycle',
-  FLEX: 'Flexible',
+  ROTATING: 'Rotating',
+  FLEXIBLE: 'Flexible',
 };
 
 export type SwapStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
@@ -90,9 +91,10 @@ export interface BulkPreview {
 }
 
 export const ASSIGNMENT_SOURCE_LABEL: Record<AssignmentSource, string> = {
-  INDIVIDUAL: 'Individual adjustment',
-  BULK: 'Bulk assignment',
+  BULK_UNIT: 'Bulk (unit)',
+  INDIVIDUAL_OVERRIDE: 'Individual override',
   SWAP: 'Approved swap',
+  SYSTEM_CYCLE: 'System cycle',
 };
 
 export const SWAP_STATUS_LABEL: Record<SwapStatus, string> = {

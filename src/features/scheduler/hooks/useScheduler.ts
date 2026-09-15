@@ -100,17 +100,28 @@ export const useCreateSwap = () =>
     () => ({ text: '201 — tukar diajukan; tidak ada roster yang berubah sampai supervisor menyetujuinya.' }),
   );
 
-export const useDecideSwap = () =>
-  useSchedulerMutation<{ id: string; kind: 'APPROVED' | 'REJECTED' }>(
-    ({ id, kind }) => schedulerService.decideSwap(id, kind).then(() => undefined),
-    (_result, { kind }) => ({
-      text:
+/** Keputusan tukar (K9): 200 diterima, roster bertukar saat workflow selesai. */
+export function useDecideSwap() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, kind }: { id: string; kind: 'APPROVED' | 'REJECTED' }) => {
+      await schedulerService.decideSwap(id, kind);
+      return kind;
+    },
+    onSuccess: async (kind, { id }) => {
+      toast('200 — keputusan tukar diterima dan diteruskan ke proses persetujuan.', 'info');
+      await schedulerService.completeSwapWorkflow(id, kind);
+      toast(
         kind === 'APPROVED'
-          ? '200 — tukar disetujui; kedua baris roster bertukar pola sebagai satu paket.'
-          : '200 — tukar ditolak; tidak ada roster yang berubah.',
-      tone: kind === 'APPROVED' ? 'ok' : 'warn',
-    }),
-  );
+          ? 'workflow.process.completed — tukar disetujui; kedua baris roster bertukar pola sebagai satu paket.'
+          : 'workflow.process.completed — tukar ditolak; tidak ada roster yang berubah.',
+        kind === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useWithdrawSwap = () =>
   useSchedulerMutation<{ id: string }>(

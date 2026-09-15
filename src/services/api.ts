@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { useAuthStore } from '@/store/auth.store';
+import { MOCK } from '@/services/mock';
 
 /**
  * API service layer — SATU axios instance untuk seluruh aplikasi.
@@ -13,6 +14,10 @@ export const api: AxiosInstance = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  // Mode dummy: tidak ada HTTP call yang boleh keluar (lihat `services/mock.ts`).
+  if (MOCK) {
+    return Promise.reject(new ApiError(`Mode dummy aktif — panggilan ${config.method?.toUpperCase()} ${config.url} diblokir.`, 0));
+  }
   const { token, companyId } = useAuthStore.getState();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   // Multi-tenant: satu akun bisa memegang beberapa perusahaan.

@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import {
   ADVANCES,
   CASH_ADVANCE_CFG,
@@ -63,7 +64,6 @@ import type {
  * menyediakan `completeWorkflow*` sebagai pengganti konsumsi
  * `workflow.process.completed` supaya rantainya bisa didemonstrasikan.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 const today = () => new Date().toISOString().slice(0, 10);
 

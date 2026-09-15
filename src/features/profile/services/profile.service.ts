@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import type {
   EmployeeProfileData,
   PersonalProfile,
@@ -21,7 +22,6 @@ import type {
  * positive-flow "Budi Santoso" dari prototype. Perubahan disimpan di memori
  * modul supaya alur tambah/ubah/hapus bisa dicoba utuh.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 

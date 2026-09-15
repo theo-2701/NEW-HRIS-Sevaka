@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER, LOCKED_TAX_YEAR_UNTIL } from '@/features/ptkp/types';
 import type { PtkpAdjustmentDraft, PtkpCode, PtkpPeriod, PtkpSubject } from '@/features/ptkp/types';
@@ -17,7 +18,6 @@ import type { PtkpAdjustmentDraft, PtkpCode, PtkpPeriod, PtkpSubject } from '@/f
  *  • Riwayat append-only: baris lama hanya ditutup (diberi `effectiveUntil` dan
  *    status CLOSED), tidak pernah diubah isinya atau dihapus.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 

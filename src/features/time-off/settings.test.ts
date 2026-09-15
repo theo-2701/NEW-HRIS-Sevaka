@@ -62,7 +62,7 @@ describe('Leave type — perlindungan statutory', () => {
     const statutory = types.find((row) => row.isStatutory)!;
     await expect(
       settingsService.saveLeaveType({ ...baseType, code: 'BARU-SAJA' }, statutory.id),
-    ).rejects.toThrow(/statutory tidak bisa diubah/);
+    ).rejects.toThrow(/tidak bisa diubah/);
   });
 
   it('menolak penghapusan jenis statutory', async () => {
@@ -167,8 +167,8 @@ describe('Blackout period', () => {
     ).rejects.toThrow(/mendahului/);
   });
 
-  it('menolak alasan lebih pendek dari 5 karakter', async () => {
-    await expect(settingsService.saveBlackout({ ...baseBlackout, reason: 'abc' })).rejects.toThrow(/5–300/);
+  it('menolak alasan lebih dari 300 karakter', async () => {
+    await expect(settingsService.saveBlackout({ ...baseBlackout, reason: 'x'.repeat(301) })).rejects.toThrow(/300/);
   });
 
   it('menyimpan periode yang sah', async () => {

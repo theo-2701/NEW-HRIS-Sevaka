@@ -82,17 +82,28 @@ export const useCreateCorrection = (session: AttendanceSession) =>
     () => ({ text: '201 — koreksi diajukan. Hari itu tetap membawa putusannya sampai keputusan turun.' }),
   );
 
-export const useDecideCorrection = (session: AttendanceSession) =>
-  useAttendanceMutation<{ id: string; kind: 'APPROVED' | 'REJECTED' }>(
-    ({ id, kind }) => attendanceService.decideCorrection(session, id, kind).then(() => undefined),
-    (_result, { kind }) => ({
-      text:
+/** Keputusan checker (K9): 200 diterima, lalu status + baris harian ditulis saat workflow selesai. */
+export function useDecideCorrection(session: AttendanceSession) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, kind }: { id: string; kind: 'APPROVED' | 'REJECTED' }) => {
+      await attendanceService.decideCorrection(session, id, kind);
+      return kind;
+    },
+    onSuccess: async (kind, { id }) => {
+      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      await attendanceService.completeCorrectionWorkflow(session, id, kind);
+      toast(
         kind === 'APPROVED'
-          ? '200 — hari itu kini excused; menit terukurnya tidak berubah sedikit pun.'
-          : '200 — koreksi ditolak dan hari itu tetap membawa putusan aslinya.',
-      tone: kind === 'APPROVED' ? ('ok' as const) : ('warn' as const),
-    }),
-  );
+          ? 'workflow.process.completed — hari itu kini excused; menit terukurnya tidak berubah sedikit pun.'
+          : 'workflow.process.completed — koreksi ditolak dan hari itu tetap membawa putusan aslinya.',
+        kind === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useWithdrawCorrection = (session: AttendanceSession) =>
   useAttendanceMutation<{ id: string }>(

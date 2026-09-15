@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { ASSIGNMENTS, ME, SHIFTS, SWAPS } from '@/features/scheduler/mock-data';
 import { datesBetween } from '@/features/scheduler/rules';
 import type {
@@ -36,7 +37,6 @@ import type {
  *    pernah memutuskan swap-nya sendiri (403); penarikan menyisakan jejak
  *    `CANCELLED`.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockShifts: Shift[] = SHIFTS.map((row) => ({ ...row }));
@@ -93,8 +93,8 @@ export const schedulerService = {
       await delay();
       return mockShifts.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Shift[] }>('/shifts');
-    return data.rows;
+    const { data } = await api.post<{ data: Shift[] }>('/shifts/search', { filters: {} });
+    return data.data;
   },
 
   async saveShift(draft: ShiftDraft, id?: string): Promise<Shift> {
@@ -116,13 +116,13 @@ export const schedulerService = {
       if (!Number.isInteger(breakMinutes) || breakMinutes < 0) {
         throw new Error('422 — jeda harus bilangan bulat menit, 0 atau lebih.');
       }
-      if (draft.shiftType === 'CYCLE' && breakMinutes !== 0) {
+      if (draft.shiftType === 'ROTATING' && breakMinutes !== 0) {
         throw new Error('422 — pola siklus harus berjeda 0.');
       }
-      if (draft.shiftType === 'CYCLE' && !draft.cycleDef.trim()) {
+      if (draft.shiftType === 'ROTATING' && !draft.cycleDef.trim()) {
         throw new Error('422 — pola siklus butuh definisi siklusnya.');
       }
-      if (draft.shiftType === 'FLEX' && !draft.flexBand.trim()) {
+      if (draft.shiftType === 'FLEXIBLE' && !draft.flexBand.trim()) {
         throw new Error('422 — pola fleksibel butuh definisi band-nya.');
       }
 
@@ -153,7 +153,7 @@ export const schedulerService = {
     }
 
     const { data } = id
-      ? await api.patch<Shift>(`/shifts/${id}`, draft)
+      ? await api.put<Shift>(`/shifts/${id}`, draft)
       : await api.post<Shift>('/shifts', draft);
     return data;
   },
@@ -198,8 +198,8 @@ export const schedulerService = {
         .sort((a, b) => (a.workDate < b.workDate ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: ShiftAssignment[] }>('/shift-assignments', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: ShiftAssignment[] }>('/shift-assignments/search', { filters: filter });
+    return data.data;
   },
 
   async saveAssignment(draft: AssignmentDraft, id?: string): Promise<ShiftAssignment> {
@@ -211,6 +211,9 @@ export const schedulerService = {
       if (!draft.isOffDay && !draft.shiftId) {
         throw new Error('422 — pilih pola shift, atau tandai tanggal itu sebagai hari libur terjadwal.');
       }
+      if (!draft.isOffDay && !findShift(draft.shiftId).isActive) {
+        throw new Error('422 — pola shift itu sudah tidak aktif; pilih pola yang aktif.');
+      }
       const clash = mockAssignments.some(
         (row) => row.employeeId === draft.employeeId && row.workDate === draft.workDate && row.id !== id,
       );
@@ -221,7 +224,7 @@ export const schedulerService = {
         isOffDay: draft.isOffDay,
         shiftId: draft.isOffDay ? null : draft.shiftId,
         // Sentuhan tangan selalu dicap individual — bulk berikutnya melangkahinya.
-        assignmentSource: 'INDIVIDUAL' as const,
+        assignmentSource: 'INDIVIDUAL_OVERRIDE' as const,
       };
 
       if (id) {
@@ -240,7 +243,7 @@ export const schedulerService = {
     }
 
     const { data } = id
-      ? await api.patch<ShiftAssignment>(`/shift-assignments/${id}`, draft)
+      ? await api.put<ShiftAssignment>(`/shift-assignments/${id}`, draft)
       : await api.post<ShiftAssignment>('/shift-assignments', draft);
     return data;
   },
@@ -270,7 +273,7 @@ export const schedulerService = {
       dates.forEach((iso) => {
         const existing = mockAssignments.find((row) => row.employeeId === employeeId && row.workDate === iso);
         if (!existing) created += 1;
-        else if (existing.assignmentSource === 'INDIVIDUAL') skippedIndividual += 1;
+        else if (existing.assignmentSource === 'INDIVIDUAL_OVERRIDE') skippedIndividual += 1;
         else if (existing.assignmentSource === 'SWAP' || swapBusy(existing.id)) skippedSwap += 1;
         else overwritten += 1;
       });
@@ -295,7 +298,7 @@ export const schedulerService = {
           if (existing) {
             // Dikunci tangan manusia atau swap → dilangkahi apa adanya.
             if (
-              existing.assignmentSource === 'INDIVIDUAL' ||
+              existing.assignmentSource === 'INDIVIDUAL_OVERRIDE' ||
               existing.assignmentSource === 'SWAP' ||
               swapBusy(existing.id)
             ) {
@@ -303,7 +306,7 @@ export const schedulerService = {
             }
             existing.shiftId = draft.shiftId;
             existing.isOffDay = false;
-            existing.assignmentSource = 'BULK';
+            existing.assignmentSource = 'BULK_UNIT';
             return;
           }
           mockAssignments = [
@@ -314,7 +317,7 @@ export const schedulerService = {
               workDate: iso,
               shiftId: draft.shiftId,
               isOffDay: false,
-              assignmentSource: 'BULK',
+              assignmentSource: 'BULK_UNIT',
             },
           ];
         });
@@ -332,8 +335,8 @@ export const schedulerService = {
       await delay();
       return mockSwaps.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: ShiftSwap[] }>('/shift-swaps');
-    return data.rows;
+    const { data } = await api.post<{ data: ShiftSwap[] }>('/shift-swap-requests/search', { filters: {} });
+    return data.data;
   },
 
   async createSwap(requesterAssignmentId: string, counterpartAssignmentId: string): Promise<ShiftSwap> {
@@ -365,7 +368,7 @@ export const schedulerService = {
       mockSwaps = [...mockSwaps, row];
       return { ...row };
     }
-    const { data } = await api.post<ShiftSwap>('/shift-swaps', {
+    const { data } = await api.post<ShiftSwap>('/shift-swap-requests', {
       requesterAssignmentId,
       counterpartAssignmentId,
     });
@@ -383,7 +386,20 @@ export const schedulerService = {
       if (requester.employeeId === ME) {
         throw new Error('403 — pemisahan tugas: pengaju tidak pernah memutuskan tukarnya sendiri.');
       }
+      // K9 (UIC-TIME §10.3.4): keputusan diterima; roster bergerak saat workflow selesai.
+      void kind;
+      return { ...row };
+    }
+    const { data } = await api.post<ShiftSwap>(`/shift-swap-requests/${id}/approval`, { decision: kind });
+    return data;
+  },
 
+  /** Mock saja — pengganti konsumsi `workflow.process.completed` tukar shift. */
+  async completeSwapWorkflow(id: string, kind: 'APPROVED' | 'REJECTED'): Promise<ShiftSwap> {
+    await delay(150);
+    {
+      const row = findSwap(id);
+      const requester = findAssignment(row.requesterAssignmentId);
       if (kind === 'APPROVED') {
         const counterpart = findAssignment(row.counterpartAssignmentId);
         // Satu paket: pola kedua baris bertukar sekaligus, lalu dicap SWAP.
@@ -400,9 +416,6 @@ export const schedulerService = {
       row.approvedBy = ME;
       return { ...row };
     }
-    const path = kind === 'APPROVED' ? 'approve' : 'reject';
-    const { data } = await api.patch<ShiftSwap>(`/shift-swaps/${id}/${path}`);
-    return data;
   },
 
   /** Penarikan menyisakan jejak; tidak ada roster yang tersentuh. */
@@ -420,7 +433,7 @@ export const schedulerService = {
       row.swapStatus = 'CANCELLED';
       return { ...row };
     }
-    const { data } = await api.patch<ShiftSwap>(`/shift-swaps/${id}/withdraw`);
+    const { data } = await api.delete<ShiftSwap>(`/shift-swap-requests/${id}`);
     return data;
   },
 };

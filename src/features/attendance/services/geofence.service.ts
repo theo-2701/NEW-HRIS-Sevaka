@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { GEOFENCES } from '@/features/attendance/mock-data';
 import type { Geofence, GeofenceDraft } from '@/features/attendance/types';
 
@@ -25,7 +26,6 @@ import type { Geofence, GeofenceDraft } from '@/features/attendance/types';
  *    atas List, bukan dialog (§6.5).
  *  • Mengubah radius atau matriks tidak menyentuh tap yang sudah dinilai.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Di bawah ini akurasi GPS ponsel pada umumnya — memicu peringatan, bukan tolakan. */
@@ -54,8 +54,8 @@ export interface SaveGeofenceResult {
 
 function validate(draft: GeofenceDraft) {
   const name = draft.geofenceName.trim();
-  if (name.length < 3 || name.length > 150) {
-    throw new Error('422 — nama titik harus 3–150 karakter.');
+  if (!name || name.length > 150) {
+    throw new Error('422 — nama titik wajib diisi, maksimal 150 karakter.');
   }
   if (!draft.scopeRef) throw new Error('422 — pilih cabang pemilik titik ini.');
   if (
@@ -86,8 +86,8 @@ export const geofenceService = {
         })
         .map(clone);
     }
-    const { data } = await api.get<{ rows: Geofence[] }>('/attendance/geofences', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: Geofence[] }>('/attendance-geofences/search', { filters: filter });
+    return data.data;
   },
 
   async save(draft: GeofenceDraft, id?: string): Promise<SaveGeofenceResult> {
@@ -144,8 +144,8 @@ export const geofenceService = {
     }
 
     const { data } = id
-      ? await api.patch<Geofence>(`/attendance/geofences/${id}`, draft)
-      : await api.post<Geofence>('/attendance/geofences', draft);
+      ? await api.put<Geofence>(`/attendance-geofences/${id}`, draft)
+      : await api.post<Geofence>('/attendance-geofences', draft);
     return { row: data, created: !id, warning: null };
   },
 
@@ -158,7 +158,7 @@ export const geofenceService = {
       row.isActive = !row.isActive;
       return clone(row);
     }
-    const { data } = await api.patch<Geofence>(`/attendance/geofences/${id}/toggle-active`);
+    const { data } = await api.patch<Geofence>(`/attendance-geofences/${id}/toggle-active`);
     return data;
   },
 
@@ -180,6 +180,6 @@ export const geofenceService = {
       mockGeofences = mockGeofences.filter((item) => item.id !== id);
       return;
     }
-    await api.delete(`/attendance/geofences/${id}`);
+    await api.delete(`/attendance-geofences/${id}`);
   },
 };

@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { OT_DAILY, OT_REQUESTS, OVERTIME_TODAY, RETRO_WINDOW_DAYS, employeeName } from '@/features/overtime/mock-data';
 import { approvedHoursOn, derive, payableHours, retroWindowStart } from '@/features/overtime/rules';
 import { canFileOvertime, canSearchAllOvertime, isOvertimeApprover } from '@/features/overtime/types';
@@ -30,7 +31,6 @@ import type {
  *  • Recompute harian jalan **setelah** keputusan dan hanya bila fakta punch
  *    tanggal itu memang ada — persetujuan saja tidak melahirkan baris proyeksi.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockRequests: OvertimeRequest[] = OT_REQUESTS.map((row) => ({ ...row }));
@@ -105,8 +105,8 @@ export const overtimeService = {
         .sort((a, b) => (a.overtimeDate < b.overtimeDate ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: OvertimeRequest[] }>('/overtime-requests', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: OvertimeRequest[] }>('/overtime-requests/search', { filters: filter });
+    return data.data;
   },
 
   async daily(session: OvertimeSession, filter: DailyFilter = {}): Promise<OvertimeDaily[]> {
@@ -123,8 +123,8 @@ export const overtimeService = {
         .sort((a, b) => (a.overtimeDate < b.overtimeDate ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: OvertimeDaily[] }>('/overtime-daily', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: OvertimeDaily[] }>('/overtime-summaries/search', { filters: filter });
+    return data.data;
   },
 
   async save(session: OvertimeSession, draft: OvertimeDraft, editingId?: string): Promise<OvertimeRequest> {
@@ -200,7 +200,7 @@ export const overtimeService = {
     }
 
     const { data } = editingId
-      ? await api.patch<OvertimeRequest>(`/overtime-requests/${editingId}`, draft)
+      ? await api.put<OvertimeRequest>(`/overtime-requests/${editingId}`, draft)
       : await api.post<OvertimeRequest>('/overtime-requests', draft);
     return data;
   },
@@ -241,8 +241,10 @@ export const overtimeService = {
       return { row: { ...row }, recomputed };
     }
 
-    const path = kind === 'APPROVED' ? 'approve' : 'reject';
-    const { data } = await api.patch<OvertimeRequest>(`/overtime-requests/${id}/${path}`, { approvedHours });
+    const { data } = await api.post<OvertimeRequest>(`/overtime-requests/${id}/approval`, {
+      decision: kind,
+      approved_hours: approvedHours,
+    });
     return { row: data, recomputed: false };
   },
 
@@ -260,7 +262,7 @@ export const overtimeService = {
       row.overtimeStatus = 'CANCELLED';
       return { ...row };
     }
-    const { data } = await api.patch<OvertimeRequest>(`/overtime-requests/${id}/withdraw`);
+    const { data } = await api.delete<OvertimeRequest>(`/overtime-requests/${id}`);
     return data;
   },
 };

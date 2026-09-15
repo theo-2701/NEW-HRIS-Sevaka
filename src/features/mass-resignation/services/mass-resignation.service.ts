@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { BLAST_THRESHOLD, CURRENT_USER } from '@/features/mass-resignation/types';
 import type { BatchDraft, MassBatch, PoolEmployee } from '@/features/mass-resignation/types';
 
@@ -23,7 +24,6 @@ import type { BatchDraft, MassBatch, PoolEmployee } from '@/features/mass-resign
  *    dibekukan saat approve; kalau tidak, 409 dan batch tetap APPROVED.
  *  • Larangan self-resign — baris diri sendiri dikunci di kolam seleksi.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Interval spawn offboarding yang di-throttle (mock). */

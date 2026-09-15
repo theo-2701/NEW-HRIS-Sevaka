@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { CURRENT_USER } from '@/features/manpower/types';
 import type {
   ManpowerPlan,
@@ -24,7 +25,6 @@ import type {
  * menyimpan kolom kapasitas. Kontrak read agregatnya belum ditegaskan, jadi
  * angka aktual di jalur MOCK berasal dari data contoh dan ditandai di UI.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockRequisitions: Requisition[] = [

@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { ONCALL, employeeName } from '@/features/oncall/mock-data';
 import type { OncallSession } from '@/features/oncall/mock-data';
 import { deriveOncall, overlapping } from '@/features/oncall/rules';
@@ -24,7 +25,6 @@ import type { OncallAssignment, OncallDraft } from '@/features/oncall/types';
  *    jendela itu tidak akan pernah menerbitkan call-out.
  *  • Membatalkan menyisakan barisnya di catatan, bukan menghilangkannya.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockRows: OncallAssignment[] = ONCALL.map((row) => ({ ...row }));
@@ -66,8 +66,8 @@ export const oncallService = {
         .sort((a, b) => (a.standbyStartAt < b.standbyStartAt ? -1 : 1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: OncallAssignment[] }>('/oncall-assignments', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: OncallAssignment[] }>('/on-call-assignments/search', { filters: filter });
+    return data.data;
   },
 
   async save(session: OncallSession, draft: OncallDraft, id?: string): Promise<OncallAssignment> {
@@ -126,8 +126,8 @@ export const oncallService = {
     }
 
     const { data } = id
-      ? await api.patch<OncallAssignment>(`/oncall-assignments/${id}`, draft)
-      : await api.post<OncallAssignment>('/oncall-assignments', draft);
+      ? await api.put<OncallAssignment>(`/on-call-assignments/${id}`, draft)
+      : await api.post<OncallAssignment>('/on-call-assignments', draft);
     return data;
   },
 
@@ -135,19 +135,33 @@ export const oncallService = {
     if (MOCK) {
       await delay(400);
       const row = findRow(id);
+      // UIC-TIME §11.6: SoD (penyusun = pemutus) dijawab 422, bukan 403.
       if (row.createdBy === session.employeeId) {
-        throw new Error('403 — pemisahan tugas: pembuat tidak pernah memutuskan jendelanya sendiri.');
+        throw new Error('422 — pemisahan tugas: pembuat tidak pernah memutuskan jendelanya sendiri.');
       }
       if (row.oncallStatus !== 'PENDING_APPROVAL') {
         throw new Error('422 — hanya jendela yang masih menunggu keputusan yang bisa diputuskan.');
       }
-      row.oncallStatus = kind === 'APPROVED' ? 'SCHEDULED' : 'REJECTED';
-      row.approvedBy = session.employeeId;
+      // K9: keputusan diterima; status ditulis saat workflow selesai.
       return { ...row };
     }
-    const path = kind === 'APPROVED' ? 'approve' : 'reject';
-    const { data } = await api.patch<OncallAssignment>(`/oncall-assignments/${id}/${path}`);
+    const { data } = await api.post<OncallAssignment>(`/on-call-assignments/${id}/approval`, {
+      decision: kind === 'APPROVED' ? 'SCHEDULED' : 'REJECTED',
+    });
     return data;
+  },
+
+  /** Mock saja — pengganti konsumsi `workflow.process.completed` roster siaga. */
+  async completeOncallWorkflow(
+    session: OncallSession,
+    id: string,
+    kind: 'APPROVED' | 'REJECTED',
+  ): Promise<OncallAssignment> {
+    await delay(150);
+    const row = findRow(id);
+    row.oncallStatus = kind === 'APPROVED' ? 'SCHEDULED' : 'REJECTED';
+    row.approvedBy = session.employeeId;
+    return { ...row };
   },
 
   /** Barisnya tetap tinggal di catatan, bukan menghilang. */
@@ -161,7 +175,7 @@ export const oncallService = {
       row.oncallStatus = 'CANCELLED';
       return { ...row };
     }
-    const { data } = await api.patch<OncallAssignment>(`/oncall-assignments/${id}/cancel`);
+    const { data } = await api.delete<OncallAssignment>(`/on-call-assignments/${id}`);
     return data;
   },
 };

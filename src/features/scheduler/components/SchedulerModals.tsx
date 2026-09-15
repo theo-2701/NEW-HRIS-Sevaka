@@ -70,7 +70,7 @@ function ShiftDerived() {
         ['Crosses midnight', fixed ? (crosses ? 'Yes' : 'No') : 'Not applicable'],
         [
           'Selectable in the roster picker',
-          values.shiftType === 'CYCLE' ? 'No — a cycle has no hours of its own' : 'Yes',
+          values.shiftType === 'ROTATING' ? 'No — a cycle has no hours of its own' : 'Yes',
         ],
       ]}
     />
@@ -82,7 +82,7 @@ function ShiftTypeFields() {
   const { values, setFieldValue } = useFormikContext<ShiftDraft>();
 
   useEffect(() => {
-    if (values.shiftType === 'CYCLE' && values.breakMinutes !== '0') void setFieldValue('breakMinutes', '0');
+    if (values.shiftType === 'ROTATING' && values.breakMinutes !== '0') void setFieldValue('breakMinutes', '0');
   }, [values.shiftType, values.breakMinutes, setFieldValue]);
 
   return (
@@ -93,7 +93,7 @@ function ShiftTypeFields() {
           <TextField name="endTime" type="time" label="End time" required hint="Selesai lebih awal dari mulai berarti pola ini melewati tengah malam." />
         </div>
       )}
-      {values.shiftType === 'CYCLE' && (
+      {values.shiftType === 'ROTATING' && (
         <TextAreaField
           name="cycleDef"
           label="Cycle definition"
@@ -103,7 +103,7 @@ function ShiftTypeFields() {
           hint="Definisi siklus dalam JSON. Belum tergambar di frame mana pun — bentuk akhirnya menyusul."
         />
       )}
-      {values.shiftType === 'FLEX' && (
+      {values.shiftType === 'FLEXIBLE' && (
         <TextAreaField
           name="flexBand"
           label="Flex band definition"
@@ -219,8 +219,8 @@ export function ShiftFormModal({
                   step="1"
                   label="Break (minutes)"
                   required
-                  disabled={values.shiftType === 'CYCLE'}
-                  hint={values.shiftType === 'CYCLE' ? 'Pola siklus selalu berjeda 0.' : undefined}
+                  disabled={values.shiftType === 'ROTATING'}
+                  hint={values.shiftType === 'ROTATING' ? 'Pola siklus selalu berjeda 0.' : undefined}
                 />
               </div>
 

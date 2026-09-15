@@ -69,11 +69,11 @@ export function evaluateGates(input: {
 
   const type = leaveTypeOf(leaveTypeId);
   if (!type || !startDate || !endDate) {
-    result.errors.push('Jenis cuti, tanggal mulai, dan tanggal selesai wajib diisi.');
+    result.errors.push('422 — jenis cuti, tanggal mulai, dan tanggal selesai wajib diisi.');
     return result;
   }
   if (endDate < startDate) {
-    result.errors.push('Tanggal selesai tidak boleh mendahului tanggal mulai.');
+    result.errors.push('422 — tanggal selesai tidak boleh mendahului tanggal mulai.');
     return result;
   }
   if (daySession !== 'FULL' && startDate !== endDate) {

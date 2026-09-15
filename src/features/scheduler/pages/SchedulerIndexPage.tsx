@@ -182,7 +182,7 @@ export function SchedulerIndexPage() {
                     workDate: '',
                     shiftId: shift.id,
                     isOffDay: false,
-                    assignmentSource: 'BULK',
+                    assignmentSource: 'BULK_UNIT',
                   }}
                   shifts={shifts}
                 />

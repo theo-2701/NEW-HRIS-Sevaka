@@ -51,17 +51,28 @@ export const useSaveOncall = (session: OncallSession) =>
     }),
   );
 
-export const useDecideOncall = (session: OncallSession) =>
-  useOncallMutation<{ id: string; kind: 'APPROVED' | 'REJECTED' }>(
-    ({ id, kind }) => oncallService.decide(session, id, kind).then(() => undefined),
-    (_result, { kind }) => ({
-      text:
+/** Keputusan roster siaga (K9): 200 diterima, status ditulis saat workflow selesai. */
+export function useDecideOncall(session: OncallSession) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, kind }: { id: string; kind: 'APPROVED' | 'REJECTED' }) => {
+      await oncallService.decide(session, id, kind);
+      return kind;
+    },
+    onSuccess: async (kind, { id }) => {
+      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      await oncallService.completeOncallWorkflow(session, id, kind);
+      toast(
         kind === 'APPROVED'
-          ? '200 — jendela kini Scheduled dan mengotorisasi call-out sampai setinggi pagunya.'
-          : '200 — jendela Ditolak dan tidak akan pernah menerbitkan call-out.',
-      tone: kind === 'APPROVED' ? 'ok' : 'warn',
-    }),
-  );
+          ? 'workflow.process.completed — jendela kini Scheduled dan mengotorisasi call-out sampai setinggi pagunya.'
+          : 'workflow.process.completed — jendela Ditolak dan tidak akan pernah menerbitkan call-out.',
+        kind === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useCancelOncall = () =>
   useOncallMutation<{ id: string }>(

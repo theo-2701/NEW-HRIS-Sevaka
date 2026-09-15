@@ -47,17 +47,31 @@ export const useSaveHoliday = () =>
     }),
   );
 
-export const useDecideHoliday = () =>
-  useCalendarMutation<{ id: string; kind: 'APPROVED' | 'REJECTED'; note: string }>(
-    ({ id, kind, note }) => calendarService.decideHoliday(id, kind, note).then(() => undefined),
-    (_result, { kind }) => ({
-      text:
+/**
+ * Keputusan checker (K9): pintu keputusan kembali 200 "diterima", lalu status
+ * ditulis saat penyelesaian workflow dikonsumsi — dua peristiwa berurutan.
+ */
+export function useDecideHoliday() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, kind, note }: { id: string; kind: 'APPROVED' | 'REJECTED'; note: string }) => {
+      await calendarService.decideHoliday(id, kind, note);
+      return kind;
+    },
+    onSuccess: async (kind, { id }) => {
+      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      await calendarService.completeHolidayWorkflow(id, kind);
+      toast(
         kind === 'APPROVED'
-          ? '200 — approval selesai; tanggal itu kini libur yang berlaku.'
-          : '200 — approval selesai; barisnya Ditolak dan tetap memegang slotnya.',
-      tone: kind === 'APPROVED' ? 'ok' : 'warn',
-    }),
-  );
+          ? 'workflow.process.completed — Disetujui; tanggal itu kini libur yang berlaku.'
+          : 'workflow.process.completed — Ditolak; barisnya tetap memegang slotnya sampai dihapus.',
+        kind === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries({ queryKey: calendarKeys.all });
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useDeleteHoliday = () =>
   useCalendarMutation<{ id: string }>(

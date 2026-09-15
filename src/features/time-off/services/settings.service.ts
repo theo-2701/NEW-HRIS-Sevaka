@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { ACCRUAL_POLICIES, BLACKOUTS, LEAVE_REQUESTS, LEAVE_TYPES, LEDGER } from '@/features/time-off/mock-data';
 import type {
   AccrualPolicy,
@@ -28,7 +29,6 @@ import type {
  *    mengubah rate/cap baris yang sedang berjalan.
  *  • Blackout wajib bertanggal awal DAN akhir; tanpa akhir itu larangan permanen.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
@@ -49,7 +49,8 @@ function validateType(draft: LeaveTypeDraft, selfId?: string) {
   if (!CODE_PATTERN.test(draft.code)) {
     throw new Error('422 — kode harus 2–30 karakter huruf kapital, angka, dan tanda hubung.');
   }
-  if (draft.name.trim().length < 3) throw new Error('422 — nama jenis cuti minimal 3 karakter.');
+  const name = draft.name.trim();
+  if (!name || name.length > 150) throw new Error('422 — nama jenis cuti wajib diisi, maksimal 150 karakter.');
   if (!draft.isPaid && draft.affectsBalance) {
     throw new Error('422 — tidak dibayar dan memotong saldo tidak boleh menyala bersamaan; hari yang sama akan tercharge dua kali.');
   }
@@ -73,8 +74,8 @@ export const settingsService = {
       await delay();
       return mockTypes.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: LeaveType[] }>('/leave-types');
-    return data.rows;
+    const { data } = await api.post<{ data: LeaveType[] }>('/leave-types/search', { filters: {} });
+    return data.data;
   },
 
   async saveLeaveType(draft: LeaveTypeDraft, id?: string): Promise<LeaveType> {
@@ -82,13 +83,13 @@ export const settingsService = {
       await delay(350);
       if (id) {
         const existing = findType(id);
-        // Statutory: kode terkunci, sisanya masih boleh diubah.
-        if (existing.isStatutory && draft.code !== existing.code) {
-          throw new Error('422 — kode jenis cuti statutory tidak bisa diubah.');
+        // leave_code immutable pasca-insert untuk SEMUA jenis (UIC-TIME §5.1.3).
+        if (draft.code !== existing.code) {
+          throw new Error('422 — kode jenis cuti tidak bisa diubah setelah dibuat.');
         }
         validateType(draft, id);
         Object.assign(existing, {
-          code: existing.isStatutory ? existing.code : draft.code,
+          code: existing.code,
           name: draft.name.trim(),
           isPaid: draft.isPaid,
           affectsBalance: draft.affectsBalance,
@@ -121,7 +122,7 @@ export const settingsService = {
     }
 
     const { data } = id
-      ? await api.patch<LeaveType>(`/leave-types/${id}`, draft)
+      ? await api.put<LeaveType>(`/leave-types/${id}`, draft)
       : await api.post<LeaveType>('/leave-types', draft);
     return data;
   },
@@ -152,8 +153,8 @@ export const settingsService = {
       await delay();
       return mockPolicies.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: AccrualPolicy[] }>('/leave-accrual-policies');
-    return data.rows;
+    const { data } = await api.post<{ data: AccrualPolicy[] }>('/leave-accrual-policies/search', { filters: {} });
+    return data.data;
   },
 
   async createAccrualPolicy(draft: AccrualPolicyDraft): Promise<AccrualPolicy> {
@@ -217,7 +218,7 @@ export const settingsService = {
       row.effectiveUntil = effectiveUntil;
       return;
     }
-    await api.patch(`/leave-accrual-policies/${id}/end`, { effectiveUntil });
+    await api.put(`/leave-accrual-policies/${id}`, { effective_until: effectiveUntil });
   },
 
   async blackouts(): Promise<Blackout[]> {
@@ -225,18 +226,19 @@ export const settingsService = {
       await delay();
       return mockBlackouts.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Blackout[] }>('/leave-blackout-periods');
-    return data.rows;
+    const { data } = await api.post<{ data: Blackout[] }>('/leave-blackout-periods/search', { filters: {} });
+    return data.data;
   },
 
   async saveBlackout(draft: BlackoutDraft, id?: string): Promise<Blackout> {
     if (MOCK) {
       await delay(350);
-      if (draft.name.trim().length < 3) throw new Error('422 — nama periode minimal 3 karakter.');
-      const reason = draft.reason.trim();
-      if (reason && (reason.length < 5 || reason.length > 300)) {
-        throw new Error('422 — alasan harus 5–300 karakter bila diisi.');
+      const blackoutName = draft.name.trim();
+      if (!blackoutName || blackoutName.length > 150) {
+        throw new Error('422 — nama periode wajib diisi, maksimal 150 karakter.');
       }
+      const reason = draft.reason.trim();
+      if (reason.length > 300) throw new Error('422 — alasan maksimal 300 karakter.');
       if (!draft.startDate || !draft.endDate) {
         throw new Error('422 — tanggal mulai dan tanggal akhir dua-duanya wajib diisi.');
       }
@@ -270,7 +272,7 @@ export const settingsService = {
     }
 
     const { data } = id
-      ? await api.patch<Blackout>(`/leave-blackout-periods/${id}`, draft)
+      ? await api.put<Blackout>(`/leave-blackout-periods/${id}`, draft)
       : await api.post<Blackout>('/leave-blackout-periods', draft);
     return data;
   },

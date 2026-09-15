@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER, EMPLOYEE_OPTIONS, deriveLevel, isEffective, labelOf } from '@/features/reprimand/types';
 import type {
@@ -24,7 +25,6 @@ import type {
  * TSD §7.7 — jalur di bawah mengikuti model yang terdokumentasi dan ditandai
  * GAP di UI sampai kontraknya ada.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 

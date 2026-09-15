@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { balanceService } from '@/features/time-off/services/balance.service';
 import { evaluateGates, workingDays } from '@/features/time-off/gates';
 import { timeOffService, sickWindowOpen } from '@/features/time-off/services/time-off.service';
 import { LEAVE_REQUESTS, VIEWERS } from '@/features/time-off/mock-data';
@@ -183,5 +184,51 @@ describe('Akses surat dokter', () => {
     const after = await timeOffService.medicalAccess();
     expect(after).toHaveLength(before.length + 1);
     expect(log.accessedBy).toBe(HR.employeeId);
+  });
+});
+
+describe('Keputusan (K9) & ledger saldo — koneksi Time Off → Balance', () => {
+  const plan = (startDate: string, endDate: string) => ({
+    leaveTypeId: 'lt-annual',
+    daySession: 'FULL' as const,
+    startDate,
+    endDate,
+    reason: 'Urusan keluarga.',
+    hasDoctorNote: false,
+  });
+
+  it('keputusan hanya diterima; status & LEAVE_TAKEN ditulis saat workflow selesai', async () => {
+    const row = await timeOffService.create(ESS, plan('2026-11-16', '2026-11-17'), DEMO_NOW);
+    const before = (await balanceService.ledger({})).length;
+
+    await timeOffService.decide(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    expect((await timeOffService.requests(HR)).find((item) => item.id === row.id)!.status).toBe('PENDING_APPROVAL');
+    expect(await balanceService.ledger({})).toHaveLength(before);
+
+    await timeOffService.completeDecision(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    expect((await timeOffService.requests(HR)).find((item) => item.id === row.id)!.status).toBe('APPROVED');
+    const ledger = await balanceService.ledger({});
+    const taken = ledger.find((entry) => entry.refId === row.id)!;
+    expect(ledger).toHaveLength(before + 1);
+    expect(taken.source).toBe('LEAVE_TAKEN');
+    expect(taken.deltaDays).toBe(-row.totalDays);
+  });
+
+  it('keputusan atas baris yang sudah diputus ditolak 422', async () => {
+    const row = await timeOffService.create(ESS, plan('2026-11-23', '2026-11-24'), DEMO_NOW);
+    await timeOffService.decide(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await timeOffService.completeDecision(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await expect(timeOffService.decide(HR, row.id, 'REJECTED', 'Berubah.', DEMO_NOW)).rejects.toThrow(/422/);
+  });
+
+  it('menarik cuti disetujui sebelum mulai mengembalikan saldo lewat LEAVE_REVERSED', async () => {
+    const row = await timeOffService.create(ESS, plan('2026-11-30', '2026-12-01'), DEMO_NOW);
+    await timeOffService.decide(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await timeOffService.completeDecision(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await timeOffService.withdraw(ESS, row.id, DEMO_NOW);
+
+    const entries = (await balanceService.ledger({})).filter((entry) => entry.refId === row.id);
+    expect(entries.map((entry) => entry.source).sort()).toEqual(['LEAVE_REVERSED', 'LEAVE_TAKEN']);
+    expect(entries.reduce((sum, entry) => sum + entry.deltaDays, 0)).toBe(0);
   });
 });

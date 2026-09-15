@@ -1,5 +1,7 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { evaluateGates, primaryExtraReason } from '@/features/time-off/gates';
+import { appendLedgerEntry } from '@/features/time-off/services/balance.service';
 import {
   DELEGATIONS,
   LEAVE_REQUESTS,
@@ -22,19 +24,21 @@ import type {
  * API service Time Off Request.
  *
  * Endpoint kontrak (FSD-001-TIME §2 · UIC-001-TIME §3):
- *   GET    /leave-requests                       — A2 (approver) / D2 (ESS)
+ *   POST   /leave-requests/search                — A2 (approver) / D2 (ESS)
  *   POST   /leave-requests                       — empat gerbang submit
- *   PATCH  /leave-requests/{id}                  — hanya selagi PENDING_APPROVAL
- *   POST   /leave-requests/{id}/decision         — 200 diterima (asinkron)
- *   POST   /leave-requests/{id}/reject-sick      — hanya di dalam jendela tolak
- *   POST   /leave-requests/{id}/withdraw         — status → CANCELLED
- *   GET/POST/PATCH/DELETE /leave-delegations     — §3.2
- *   POST   /leave-requests/{id}/medical-access   — jejak dulu, isi menyusul
+ *   PUT    /leave-requests/{id}                  — hanya selagi PENDING_APPROVAL (422)
+ *   POST   /leave-requests/{id}/approval         — 200 diterima (K9, status menyusul)
+ *   POST   /leave-requests/{id}/sick-rejection   — hanya di dalam jendela tolak
+ *   DELETE /leave-requests/{id}                  — status → CANCELLED
+ *   POST/PUT/DELETE /leave-delegations (+ /search) — §3.2
+ *   GET    /medical-documents/{id}?access_purpose — jejak dulu, isi menyusul
+ *
+ * Cuti yang disetujui/ditarik menulis mutasi ke ledger Time Off Balance
+ * (`appendLedgerEntry`) — satu-satunya jalur saldo berubah (L-2b).
  *
  * Baris disaring dari klaim identitas: **layar dan endpoint yang sama**, bukan
  * layar terpisah untuk ESS.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
@@ -51,6 +55,24 @@ function findRequest(id: string): LeaveRequest {
 /** Jendela tolak cuti sakit masih terbuka? */
 export function sickWindowOpen(row: LeaveRequest, now: Date): boolean {
   return row.status === 'AUTO_APPROVED' && Boolean(row.rejectDeadlineAt) && new Date(row.rejectDeadlineAt!) > now;
+}
+
+/** Mutasi ledger jalur mesin — hanya untuk jenis cuti yang memotong saldo. */
+function writeLedger(row: LeaveRequest, source: 'LEAVE_TAKEN' | 'LEAVE_REVERSED', actor: string, now: Date) {
+  const type = leaveTypeOf(row.leaveTypeId);
+  if (!type?.affectsBalance || !row.totalDays) return;
+  appendLedgerEntry({
+    employeeId: row.employeeId,
+    leaveTypeId: row.leaveTypeId,
+    periodYear: Number(row.startDate.slice(0, 4)),
+    mutationDate: row.startDate,
+    deltaDays: source === 'LEAVE_TAKEN' ? -row.totalDays : row.totalDays,
+    source,
+    refId: row.id,
+    reason: source === 'LEAVE_TAKEN' ? row.reason || 'Cuti disetujui' : 'Pengembalian saldo atas pengajuan yang dibatalkan',
+    createdAt: now.toISOString(),
+    createdBy: actor,
+  });
 }
 
 export const timeOffService = {
@@ -72,8 +94,8 @@ export const timeOffService = {
         : mockRequests.filter((row) => row.employeeId === session.employeeId);
       return rows.map((row) => ({ ...row })).sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
     }
-    const { data } = await api.get<{ rows: LeaveRequest[] }>('/leave-requests');
-    return data.rows;
+    const { data } = await api.post<{ data: LeaveRequest[] }>('/leave-requests/search', { filters: {} });
+    return data.data;
   },
 
   async delegations(): Promise<Delegation[]> {
@@ -81,8 +103,8 @@ export const timeOffService = {
       await delay(150);
       return mockDelegations.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Delegation[] }>('/leave-delegations');
-    return data.rows;
+    const { data } = await api.post<{ data: Delegation[] }>('/leave-delegations/search', { filters: {} });
+    return data.data;
   },
 
   async medicalAccess(): Promise<MedicalAccessLog[]> {
@@ -90,8 +112,8 @@ export const timeOffService = {
       await delay(150);
       return mockAccess.map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: MedicalAccessLog[] }>('/medical-document-access');
-    return data.rows;
+    const { data } = await api.post<{ data: MedicalAccessLog[] }>('/medical-document-access-logs/search', { filters: {} });
+    return data.data;
   },
 
   /**
@@ -138,6 +160,8 @@ export const timeOffService = {
         approvedAt: autoApproved ? now.toISOString() : null,
       };
       mockRequests = [row, ...mockRequests];
+      // Sakit AUTO_APPROVED langsung berlaku — saldo terpotong bila jenisnya memotong.
+      if (autoApproved) writeLedger(row, 'LEAVE_TAKEN', session.employeeId, now);
       return row;
     }
     const { data } = await api.post<LeaveRequest>('/leave-requests', draft);
@@ -151,7 +175,7 @@ export const timeOffService = {
       const row = findRequest(id);
       if (row.employeeId !== session.employeeId) throw new Error('403 — pengajuan ini bukan milik Anda.');
       if (row.status !== 'PENDING_APPROVAL') {
-        throw new Error('409 — pengajuan hanya bisa diubah selagi menunggu persetujuan.');
+        throw new Error('422 — pengajuan hanya bisa diubah selagi menunggu persetujuan.');
       }
       const gate = evaluateGates({
         employeeId: session.employeeId,
@@ -177,7 +201,7 @@ export const timeOffService = {
       });
       return;
     }
-    await api.patch(`/leave-requests/${id}`, draft);
+    await api.put(`/leave-requests/${id}`, draft);
   },
 
   /**
@@ -198,23 +222,42 @@ export const timeOffService = {
         throw new Error('403 — pemisahan tugas: Anda tidak bisa memutuskan pengajuan sendiri.');
       }
       if (!isApprover(session)) throw new Error('403 — Anda tidak memegang peran approver.');
-      if (row.status !== 'PENDING_APPROVAL') throw new Error('409 — pengajuan ini sudah tidak menunggu keputusan.');
+      if (row.status !== 'PENDING_APPROVAL') throw new Error('422 — pengajuan ini sudah tidak menunggu keputusan.');
       if (decision === 'REJECTED' && !note.trim()) throw new Error('422 — alasan penolakan wajib diisi.');
-
-      row.status = decision;
-      row.approvedBy = session.employeeId;
-      row.approvedAt = now.toISOString();
-      if (decision === 'REJECTED') row.rejectReason = note.trim();
-
-      // Delegasi yang menempel ikut mengikuti keputusan induknya.
-      mockDelegations.forEach((deleg) => {
-        if (deleg.leaveRequestId === row.id && deleg.status === 'PENDING_APPROVAL') {
-          deleg.status = decision === 'APPROVED' ? 'APPROVED' : 'REJECTED';
-        }
-      });
+      void now;
       return;
     }
-    await api.post(`/leave-requests/${id}/decision`, { decision, note });
+    await api.post(`/leave-requests/${id}/approval`, {
+      decision,
+      reject_reason: decision === 'REJECTED' ? note : undefined,
+    });
+  },
+
+  /**
+   * Mock saja — pengganti konsumsi `workflow.process.completed` (K9): status
+   * final ditulis, delegasi mengikuti induknya, dan cuti yang disetujui menulis
+   * `LEAVE_TAKEN` ke ledger saldo.
+   */
+  async completeDecision(
+    session: Session,
+    id: string,
+    decision: 'APPROVED' | 'REJECTED',
+    note: string,
+    now: Date,
+  ): Promise<void> {
+    await delay(150);
+    const row = findRequest(id);
+    row.status = decision;
+    row.approvedBy = session.employeeId;
+    row.approvedAt = now.toISOString();
+    if (decision === 'REJECTED') row.rejectReason = note.trim();
+
+    mockDelegations.forEach((deleg) => {
+      if (deleg.leaveRequestId === row.id && deleg.status === 'PENDING_APPROVAL') {
+        deleg.status = decision === 'APPROVED' ? 'APPROVED' : 'REJECTED';
+      }
+    });
+    if (decision === 'APPROVED') writeLedger(row, 'LEAVE_TAKEN', session.employeeId, now);
   },
 
   /** Tolak cuti sakit — hanya di dalam jendela beku; di luar itu 422. */
@@ -235,9 +278,11 @@ export const timeOffService = {
       row.rejectReason = reason.trim();
       row.approvedBy = session.employeeId;
       row.approvedAt = now.toISOString();
+      // Saldo yang sempat terpotong dikembalikan lewat entri koreksi, bukan dihapus.
+      writeLedger(row, 'LEAVE_REVERSED', session.employeeId, now);
       return;
     }
-    await api.post(`/leave-requests/${id}/reject-sick`, { reason });
+    await api.post(`/leave-requests/${id}/sick-rejection`, { reject_reason: reason });
   },
 
   /** Penarikan = transisi status ke CANCELLED, bukan penghapusan baris. */
@@ -252,15 +297,20 @@ export const timeOffService = {
         row.status === 'PENDING_APPROVAL' ||
         row.status === 'AUTO_APPROVED' ||
         (row.status === 'APPROVED' && row.startDate > todayIso);
-      if (!withdrawable) throw new Error('409 — pengajuan ini sudah tidak bisa ditarik.');
+      if (!withdrawable) throw new Error('422 — pengajuan ini sudah tidak bisa ditarik.');
 
+      const wasEffective = row.status === 'APPROVED' || row.status === 'AUTO_APPROVED';
       row.status = 'CANCELLED';
+      // Delegasi yang tertaut ikut batal (UIC-TIME §3.1.5 / FSD §2.4).
       mockDelegations.forEach((deleg) => {
-        if (deleg.leaveRequestId === row.id && deleg.status === 'PENDING_APPROVAL') deleg.status = 'CANCELLED';
+        if (deleg.leaveRequestId === row.id && (deleg.status === 'PENDING_APPROVAL' || deleg.status === 'APPROVED')) {
+          deleg.status = 'CANCELLED';
+        }
       });
+      if (wasEffective) writeLedger(row, 'LEAVE_REVERSED', session.employeeId, now);
       return;
     }
-    await api.post(`/leave-requests/${id}/withdraw`);
+    await api.delete(`/leave-requests/${id}`);
   },
 
   /**
@@ -293,7 +343,7 @@ export const timeOffService = {
       mockAccess = [log, ...mockAccess];
       return log;
     }
-    const { data } = await api.post<MedicalAccessLog>(`/leave-requests/${id}/medical-access`, { purpose });
+    const { data } = await api.get<MedicalAccessLog>(`/medical-documents/${id}`, { params: { access_purpose: purpose } });
     return data;
   },
 
@@ -319,7 +369,7 @@ export const timeOffService = {
         const row = mockDelegations.find((item) => item.id === payload.id);
         if (!row) throw new Error('Delegasi tidak ditemukan.');
         if (row.status !== 'PENDING_APPROVAL') {
-          throw new Error('409 — pengganti hanya bisa diganti selagi delegasi masih menunggu persetujuan.');
+          throw new Error('422 — pengganti hanya bisa diganti selagi delegasi masih menunggu persetujuan.');
         }
         row.substituteId = payload.substituteId;
         return;
@@ -350,7 +400,7 @@ export const timeOffService = {
       return;
     }
     if (payload.id) {
-      await api.patch(`/leave-delegations/${payload.id}`, { substituteId: payload.substituteId });
+      await api.put(`/leave-delegations/${payload.id}`, { substitute_id: payload.substituteId });
       return;
     }
     await api.post('/leave-delegations', payload);
@@ -362,7 +412,7 @@ export const timeOffService = {
       const row = mockDelegations.find((item) => item.id === id);
       if (!row) throw new Error('Delegasi tidak ditemukan.');
       if (row.status !== 'PENDING_APPROVAL') {
-        throw new Error('409 — delegasi hanya bisa dibatalkan selagi masih menunggu persetujuan.');
+        throw new Error('422 — delegasi hanya bisa dibatalkan selagi masih menunggu persetujuan.');
       }
       row.status = 'CANCELLED';
       return;

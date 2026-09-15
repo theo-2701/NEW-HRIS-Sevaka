@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { MOCK } from '@/services/mock';
 import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
 import { captureChannel, nextPunchType, punchesToday } from '@/features/attendance/rules';
 import {
@@ -35,7 +36,6 @@ import type {
  *  • Pengaju koreksi tidak pernah boleh jadi penyetujunya — `403`.
  *  • Satu koreksi hidup per hari — `409`.
  */
-const MOCK = !import.meta.env.VITE_API_BASE_URL;
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockPunches: Punch[] = PUNCHES.map((row) => ({ ...row }));
@@ -93,10 +93,10 @@ export const attendanceService = {
       await delay(150);
       return punchesToday(session.employeeId, mockPunches).map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Punch[] }>('/attendance/punches', {
-      params: { employeeId: session.employeeId, workDate: ATTENDANCE_TODAY },
+    const { data } = await api.post<{ data: Punch[] }>('/attendance-punches/search', {
+      filters: { employee_id: session.employeeId, start_date: ATTENDANCE_TODAY, end_date: ATTENDANCE_TODAY },
     });
-    return data.rows;
+    return data.data;
   },
 
   /**
@@ -123,8 +123,8 @@ export const attendanceService = {
         .sort((a, b) => (a.punchAt < b.punchAt ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Punch[] }>('/attendance/punches', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: Punch[] }>('/attendance-punches/search', { filters: filter });
+    return data.data;
   },
 
   /**
@@ -147,8 +147,8 @@ export const attendanceService = {
         .sort((a, b) => (a.workDate < b.workDate ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: AttendanceDay[] }>('/attendance/daily', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: AttendanceDay[] }>('/attendance-summaries/search', { filters: filter });
+    return data.data;
   },
 
   async corrections(session: AttendanceSession, filter: CorrectionFilter = {}): Promise<Correction[]> {
@@ -165,8 +165,8 @@ export const attendanceService = {
         .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.get<{ rows: Correction[] }>('/attendance/corrections', { params: filter });
-    return data.rows;
+    const { data } = await api.post<{ data: Correction[] }>('/attendance-corrections/search', { filters: filter });
+    return data.data;
   },
 
   /**
@@ -187,8 +187,10 @@ export const attendanceService = {
         return { punch: { ...existing }, idempotencyKey: input.idempotencyKey, replayed: true, selfieRequired: channel.selfie };
       }
 
-      const type = nextPunchType(session.employeeId, mockPunches);
-      if (!type) throw new Error('409 — hari ini sudah punya tap masuk dan tap keluar.');
+      // Punch append-only (UIC-TIME §6.1): tap berikutnya selalu direkam — yang
+      // menilai sah-tidaknya adalah recompute, bukan penolakan di pintu tap.
+      const todays = [...punchesToday(session.employeeId, mockPunches)].sort((a, b) => (a.punchAt < b.punchAt ? -1 : 1));
+      const type = nextPunchType(session.employeeId, mockPunches) ?? (todays.at(-1)?.punchType === 'IN' ? 'OUT' : 'IN');
 
       const channel = captureChannel(session, mockDays);
       if (channel.selfie && !input.selfieCaptured) {
@@ -217,7 +219,7 @@ export const attendanceService = {
     }
 
     const { data } = await api.post<Punch>(
-      '/attendance/punches',
+      '/attendance-punches',
       { selfieCaptured: input.selfieCaptured },
       { headers: { 'Idempotency-Key': input.idempotencyKey } },
     );
@@ -262,7 +264,7 @@ export const attendanceService = {
       mockCorrections = [...mockCorrections, row];
       return row;
     }
-    const { data } = await api.post<Correction>('/attendance/corrections', draft);
+    const { data } = await api.post<Correction>('/attendance-corrections', draft);
     return data;
   },
 
@@ -286,23 +288,33 @@ export const attendanceService = {
         throw new Error('403 — pengaju koreksi tidak pernah bisa jadi penyetujunya.');
       }
       if (row.correctionStatus !== 'PENDING_APPROVAL') {
-        throw new Error('409 — koreksi ini sudah diputuskan.');
+        throw new Error('422 — koreksi ini sudah diputuskan.');
       }
-
-      row.correctionStatus = kind;
-      row.decidedBy = session.employeeId;
-      if (kind === 'APPROVED') {
-        const day = mockDays.find((item) => item.id === row.attendanceDailyId);
-        if (day) {
-          day.isExcused = true;
-          day.excusedReason = EXCUSED_FROM_REASON[row.correctionReasonType];
-        }
-      }
+      // K9: keputusan diterima (200); status & baris harian ditulis saat workflow selesai.
       return { ...row };
     }
-    const path = kind === 'APPROVED' ? 'approve' : 'reject';
-    const { data } = await api.patch<Correction>(`/attendance/corrections/${id}/${path}`);
+    const { data } = await api.post<Correction>(`/attendance-corrections/${id}/approval`, { decision: kind });
     return data;
+  },
+
+  /** Mock saja — pengganti konsumsi `workflow.process.completed` koreksi (K9). */
+  async completeCorrectionWorkflow(
+    session: AttendanceSession,
+    id: string,
+    kind: 'APPROVED' | 'REJECTED',
+  ): Promise<Correction> {
+    await delay(150);
+    const row = findCorrection(id);
+    row.correctionStatus = kind;
+    row.decidedBy = session.employeeId;
+    if (kind === 'APPROVED') {
+      const day = mockDays.find((item) => item.id === row.attendanceDailyId);
+      if (day) {
+        day.isExcused = true;
+        day.excusedReason = EXCUSED_FROM_REASON[row.correctionReasonType];
+      }
+    }
+    return { ...row };
   },
 
   /** Penarikan bukan penghapusan: barisnya tinggal sebagai Cancelled. */
@@ -314,12 +326,12 @@ export const attendanceService = {
         throw new Error('403 — hanya pengaju yang bisa menarik koreksinya sendiri.');
       }
       if (row.correctionStatus !== 'PENDING_APPROVAL') {
-        throw new Error('409 — hanya koreksi yang masih menunggu keputusan yang bisa ditarik.');
+        throw new Error('422 — hanya koreksi yang masih menunggu keputusan yang bisa ditarik.');
       }
       row.correctionStatus = 'CANCELLED';
       return { ...row };
     }
-    const { data } = await api.patch<Correction>(`/attendance/corrections/${id}/withdraw`);
+    const { data } = await api.delete<Correction>(`/attendance-corrections/${id}`);
     return data;
   },
 };

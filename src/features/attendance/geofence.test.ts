@@ -23,8 +23,8 @@ beforeEach(() => {
 });
 
 describe('Work point — validasi form', () => {
-  it('menolak nama lebih pendek dari 3 karakter', async () => {
-    await expect(geofenceService.save({ ...draft, geofenceName: 'AB' })).rejects.toThrow(/422/);
+  it('menolak nama kosong (wajib, ≤150 — tanpa batas minimum karangan)', async () => {
+    await expect(geofenceService.save({ ...draft, geofenceName: '  ' })).rejects.toThrow(/422/);
   });
 
   it('menolak koordinat di luar ±90/±180', async () => {
