@@ -49,7 +49,7 @@ describe('Transfer masuk antrean persetujuan', () => {
   it('transfer lahir IN_APPROVAL tanpa task, onboarding langsung IN_PROGRESS', async () => {
     const transfer = await transitionService.create({
       type: 'TRANSFER',
-      employeeId: 'emp-dimas',
+      employeeId: 'emp-nadia',
       subtype: 'PROMOTION',
       destinationPositionId: 'pos-senior-fin',
       targetJobGradeId: 'gr-4a',
@@ -70,6 +70,44 @@ describe('Transfer masuk antrean persetujuan', () => {
     });
     expect(onboarding.status).toBe('IN_PROGRESS');
     expect(onboarding.tasks.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Exclusion & guard server (UIC-EMPLOYEE §5)', () => {
+  it('karyawan dengan transisi struktural terbuka ditolak 409', async () => {
+    // Dimas sudah punya TRANSFER IN_APPROVAL di seed.
+    await expect(
+      transitionService.create({
+        type: 'OFFBOARDING',
+        employeeId: 'emp-dimas',
+        subtype: '',
+        destinationPositionId: '',
+        targetJobGradeId: '',
+        reason: 'RESIGN',
+        effectiveDate: '2027-03-01',
+      }),
+    ).rejects.toThrow(/409/);
+  });
+
+  it('promosi tanpa golongan tujuan ditolak 422 oleh server', async () => {
+    await expect(
+      transitionService.create({
+        type: 'TRANSFER',
+        employeeId: 'emp-nadia',
+        subtype: 'DEMOTION',
+        destinationPositionId: '',
+        targetJobGradeId: '',
+        reason: '',
+        effectiveDate: '2027-03-01',
+      }),
+    ).rejects.toThrow(/422/);
+  });
+
+  it('konfirmasi hanya dari AWAITING_CONFIRM', async () => {
+    const rows = await transitionService.list();
+    const onboarding = rows.find((row) => row.type === 'ONBOARDING' && row.status === 'IN_PROGRESS')!;
+    const released = onboarding.tasks.find((task) => task.status === 'RELEASED')!;
+    await expect(transitionService.confirmTask(onboarding.id, released.id)).rejects.toThrow(/409/);
   });
 });
 

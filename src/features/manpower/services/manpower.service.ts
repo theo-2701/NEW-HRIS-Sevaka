@@ -18,7 +18,8 @@ import type {
  *   POST /requisitions                         — REQ-CREATE (draft / submit)
  *   POST /requisitions/{id}/submit
  *   POST /requisitions/{id}/approve            — REQ-APPROVE (SoD)
- *   POST /requisitions/{id}/reject
+ *   POST /requisitions/{id}/reject            — GAP: UIC §3.2 hanya memuat approve;
+ *                                                status REJECTED ada di enum §6.7
  *
  * `PROB-FRONTEND-005`: kolom **Actual** dan **Gap** adalah hasil hitung
  * terhadap jumlah posisi hidup di company-service — employee-service tidak
@@ -164,6 +165,13 @@ function assertChecker(row: Requisition) {
   }
 }
 
+/** Guard state (UIC-EMPLOYEE §1.6): aksi di luar status yang sah = konflik state 409. */
+function assertStatus(row: Requisition, allowed: Requisition['status'][], action: string) {
+  if (!allowed.includes(row.status)) {
+    throw new Error(`409 — requisition ${row.id} berstatus ${row.status}; ${action} hanya sah dari ${allowed.join('/')}.`);
+  }
+}
+
 export const manpowerService = {
   async requisitions(): Promise<Requisition[]> {
     if (MOCK) {
@@ -187,6 +195,14 @@ export const manpowerService = {
   async createRequisition(draft: RequisitionDraft, submitNow: boolean): Promise<Requisition> {
     if (MOCK) {
       await delay();
+      // Server menegakkan field wajib UIC-EMPLOYEE §3.2 walau form sudah memvalidasi.
+      const title = draft.title.trim();
+      if (!title || title.length > 150) throw new Error('422 — position_title wajib, maksimal 150 karakter.');
+      if (!Number.isInteger(Number(draft.headcount)) || Number(draft.headcount) < 1) {
+        throw new Error('422 — headcount minimal 1.');
+      }
+      if (!draft.justification.trim()) throw new Error('422 — justification wajib diisi.');
+      if (!draft.unitId || !draft.parentPositionId) throw new Error('422 — unit dan atasan posisi wajib dipilih.');
       const row: Requisition = {
         id: nextRequisitionId(),
         title: draft.title.trim(),
@@ -208,7 +224,9 @@ export const manpowerService = {
   async submitRequisition(id: string): Promise<void> {
     if (MOCK) {
       await delay(200);
-      find(id).status = 'IN_APPROVAL';
+      const row = find(id);
+      assertStatus(row, ['DRAFT'], 'submit');
+      row.status = 'IN_APPROVAL';
       return;
     }
     await api.post(`/requisitions/${id}/submit`);
@@ -219,6 +237,7 @@ export const manpowerService = {
       await delay();
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['IN_APPROVAL'], 'approve');
       row.status = 'APPROVED';
       row.checkerNote = note;
       return;
@@ -231,6 +250,7 @@ export const manpowerService = {
       await delay();
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['IN_APPROVAL'], 'reject');
       row.status = 'REJECTED';
       row.checkerNote = note;
       return;
@@ -242,6 +262,11 @@ export const manpowerService = {
   async createPlan(draft: PlanDraft): Promise<ManpowerPlan> {
     if (MOCK) {
       await delay();
+      if (!draft.title.trim()) throw new Error('422 — plan_title wajib diisi.');
+      if (!draft.periodStart || !draft.periodEnd) throw new Error('422 — period_start dan period_end wajib diisi.');
+      if (draft.periodEnd < draft.periodStart) throw new Error('422 — period_end tidak boleh sebelum period_start.');
+      if (!draft.lines.length) throw new Error('422 — rencana wajib punya minimal satu baris target.');
+      if (draft.lines.some((line) => Number(line.target) < 0)) throw new Error('422 — target_headcount minimal 0.');
       const row: ManpowerPlan = {
         id: `plan-${Date.now()}`,
         title: draft.title.trim(),

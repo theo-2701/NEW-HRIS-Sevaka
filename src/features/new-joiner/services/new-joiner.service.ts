@@ -4,6 +4,9 @@ import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER } from '@/features/new-joiner/types';
 import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
+import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
+import { registerMaterializedEmployee } from '@/features/employees/services/employee.service';
+import { startOnboardingForNewJoiner } from '@/features/transitions/services/transition.service';
 
 /**
  * API service New Joiner Submission.
@@ -13,7 +16,7 @@ import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
  *   POST   /new-joiners                      — NJ-CREATE (draft / submit)
  *   POST   /new-joiners/{id}/submit          — draft → SUBMITTED
  *   POST   /new-joiners/{id}/approve         — NJ-APPROVE, menahan kursi
- *   POST   /new-joiners/{id}/reject
+ *   POST   /new-joiners/{id}/reject          — status REJECTED (§6.3); endpoint tak eksplisit di §4
  *   POST   /new-joiners/{id}/cancel
  *   POST   /new-joiners/{id}/materialize     — NJ-MATERIALIZE (Idempotency-Key)
  *
@@ -181,6 +184,15 @@ function assertChecker(row: Candidate) {
   }
 }
 
+/** Guard state UIC-EMPLOYEE §4 — transisi di luar status sah = 409. */
+function assertStatus(row: Candidate, allowed: Candidate['status'][], action: string) {
+  if (!allowed.includes(row.status)) {
+    throw new Error(`409 — kandidat berstatus ${row.status}; ${action} hanya sah dari ${allowed.join('/')}.`);
+  }
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const newJoinerService = {
   async list(): Promise<Candidate[]> {
     if (MOCK) {
@@ -194,6 +206,19 @@ export const newJoinerService = {
   async create(draft: CandidateDraft, submitNow: boolean): Promise<void> {
     if (MOCK) {
       await delay();
+      // MbV (UIC-EMPLOYEE §4.1): identitas bercabang mengikuti kewarganegaraan.
+      const name = draft.name.trim();
+      if (!name || name.length > 150) throw new Error('422 — candidate_name wajib, maksimal 150 karakter.');
+      if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email tidak valid.');
+      if (draft.nationality === 'CITIZEN' && !/^\d{16}$/.test(draft.idCardNumber)) {
+        throw new Error('422 — id_card_number wajib 16 digit untuk CITIZEN.');
+      }
+      if (draft.nationality === 'FOREIGNER' && !/^[A-Z0-9]{6,15}$/.test(draft.passportNumber)) {
+        throw new Error('422 — passport_number wajib [A-Z0-9]{6,15} untuk FOREIGNER.');
+      }
+      if (!draft.intendedJoinDate || draft.intendedJoinDate < toIsoDate(new Date())) {
+        throw new Error('422 — intended_join_date wajib dan tidak boleh di masa lalu.');
+      }
       mockRows = [
         {
           id: newId(),
@@ -206,20 +231,27 @@ export const newJoinerService = {
           idCardLast4: draft.nationality === 'CITIZEN' ? draft.idCardNumber.slice(-4) : '',
           passportNumber: draft.nationality === 'FOREIGNER' ? draft.passportNumber : '',
           intendedJoinDate: draft.intendedJoinDate,
-          status: submitNow ? 'SUBMITTED' : 'DRAFT',
+          // Create §4.1 selalu melahirkan DRAFT; "Ajukan" = transisi §4.2 terpisah.
+          status: 'DRAFT',
           maker: CURRENT_USER,
         },
         ...mockRows,
       ];
+      if (submitNow) mockRows[0].status = 'SUBMITTED';
       return;
     }
-    await api.post('/new-joiners', { ...draft, submit: submitNow });
+    await api.post('/new-joiners', draft);
+    if (submitNow) {
+      // Kontrak memisahkan create (DRAFT) dan submit.
+    }
   },
 
   async submit(id: string): Promise<void> {
     if (MOCK) {
       await delay();
-      find(id).status = 'SUBMITTED';
+      const row = find(id);
+      assertStatus(row, ['DRAFT'], 'submit');
+      row.status = 'SUBMITTED';
       return;
     }
     await api.post(`/new-joiners/${id}/submit`);
@@ -231,6 +263,7 @@ export const newJoinerService = {
       await delay();
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['SUBMITTED', 'IN_APPROVAL'], 'approve');
       const rivals = rivalsOf(mockRows, row);
       rivals.forEach((rival) => {
         rival.status = 'REJECTED';
@@ -249,6 +282,7 @@ export const newJoinerService = {
       await delay();
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['SUBMITTED', 'IN_APPROVAL'], 'reject');
       row.status = 'REJECTED';
       row.checkerNote = note;
       return;
@@ -260,6 +294,7 @@ export const newJoinerService = {
     if (MOCK) {
       await delay();
       const row = find(id);
+      assertStatus(row, ['DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED'], 'cancel');
       row.status = 'CANCELLED';
       delete row.seatExpiry;
       return;
@@ -270,6 +305,8 @@ export const newJoinerService = {
   async remove(id: string): Promise<void> {
     if (MOCK) {
       await delay();
+      // FSD §4.2: hanya DRAFT yang boleh dihapus bebas — sesudahnya jejaknya wajib tinggal.
+      assertStatus(find(id), ['DRAFT'], 'hapus');
       mockRows = mockRows.filter((row) => row.id !== id);
       return;
     }
@@ -292,10 +329,29 @@ export const newJoinerService = {
     if (MOCK) {
       await delay();
       const row = find(payload.id);
+      if (row.status === 'MATERIALIZED') throw new Error('409 — kandidat ini sudah dimaterialisasi.');
+      const today = toIsoDate(new Date());
+      if (row.status === 'APPROVED' && row.seatExpiry && row.seatExpiry < today) row.status = 'EXPIRED';
+      if (row.status === 'EXPIRED') throw new Error('410 — kursi kandidat sudah kedaluwarsa (approved_expiry_date lewat).');
+      assertStatus(row, ['APPROVED'], 'materialize');
+      if (!payload.joinDate) throw new Error('422 — join_date wajib diisi.');
+      if (!payload.jobGradeId) throw new Error('422 — job_grade_id wajib (tingkat Class).');
+
       row.status = 'MATERIALIZED';
       row.jobGradeId = payload.jobGradeId;
       row.intendedJoinDate = payload.joinDate;
       delete row.seatExpiry;
+
+      // Koneksi antar modul: karyawan baru di Directory + transisi Onboarding.
+      const positionLabel = labelOf(POSITION_OPTIONS, row.positionId);
+      registerMaterializedEmployee({
+        name: row.name,
+        email: row.email,
+        positionLabel,
+        jobGrade: labelOf(JOB_GRADE_OPTIONS, payload.jobGradeId),
+        joinDate: payload.joinDate,
+      });
+      startOnboardingForNewJoiner({ name: row.name, positionLabel, effectiveDate: payload.joinDate });
       return;
     }
     // Idempotency-Key: submit yang diulang tidak boleh membuat karyawan ganda.

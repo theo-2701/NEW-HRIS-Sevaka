@@ -70,6 +70,15 @@ describe('MR-PROCESS — anti-TOCTOU', () => {
   });
 });
 
+describe('MR — guard state (UIC-EMPLOYEE §6.4–§6.5)', () => {
+  it('halt hanya saat PROCESSING dan resume hanya saat HALTED (409)', async () => {
+    const rows = await massResignationService.list();
+    const done = rows.find((row) => row.status === 'PROCESSED' && row.maker !== CURRENT_USER)!;
+    await expect(massResignationService.halt(done.id, 'Coba')).rejects.toThrow(/409/);
+    await expect(massResignationService.resume(done.id, 'Coba')).rejects.toThrow(/409/);
+  });
+});
+
 describe('MR-HALT / MR-RESUME — circuit-breaker', () => {
   it('halt menghentikan batch dan cancel-remaining menyudahi sebagai PARTIAL', async () => {
     const rows = await massResignationService.list();

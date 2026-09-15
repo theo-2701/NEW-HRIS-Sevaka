@@ -3,6 +3,8 @@ import { candidateSchema, materializeSchema } from '@/features/new-joiner/valida
 import { newJoinerService, rivalsOf } from '@/features/new-joiner/services/new-joiner.service';
 import { STEP_SCHEMAS } from '@/features/new-joiner/addEmployee';
 import type { Candidate } from '@/features/new-joiner/types';
+import { employeeService } from '@/features/employees/services/employee.service';
+import { transitionService } from '@/features/transitions/services/transition.service';
 
 const base = {
   positionId: 'pos-be',
@@ -120,5 +122,64 @@ describe('NJ-MATERIALIZE & Add Employee', () => {
     await expect(STEP_SCHEMAS[2].validateAt('basicSalary', { basicSalary: '8.000.000' })).rejects.toThrow(
       /tanpa titik/,
     );
+  });
+});
+
+describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)', () => {
+  it('submit hanya dari DRAFT dan hapus hanya DRAFT (409)', async () => {
+    const rows = await newJoinerService.list();
+    const submitted = rows.find((row) => row.status === 'SUBMITTED')!;
+    await expect(newJoinerService.submit(submitted.id)).rejects.toThrow(/409/);
+    await expect(newJoinerService.remove(submitted.id)).rejects.toThrow(/409/);
+  });
+
+  it('server menolak KTP yang bukan 16 digit (422)', async () => {
+    await expect(
+      newJoinerService.create(
+        { ...base, nationality: 'CITIZEN', idCardNumber: '123', passportNumber: '' },
+        false,
+      ),
+    ).rejects.toThrow(/422/);
+  });
+
+  it('materialize melahirkan karyawan di Directory + transisi Onboarding, lalu tidak bisa diulang', async () => {
+    const rows = await newJoinerService.list();
+    const approved = rows.find((row) => row.status === 'APPROVED')!;
+    const directoryBefore = (await employeeService.search({
+      keyword: approved.name,
+      branchId: '',
+      createdFrom: '',
+      createdTo: '',
+      employmentStatus: [],
+      page: 1,
+      size: 10,
+      sortBy: 'createdAt',
+      sortDir: 'DESC',
+    })).total;
+
+    await newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' });
+
+    const directoryAfter = await employeeService.search({
+      keyword: approved.name,
+      branchId: '',
+      createdFrom: '',
+      createdTo: '',
+      employmentStatus: [],
+      page: 1,
+      size: 10,
+      sortBy: 'createdAt',
+      sortDir: 'DESC',
+    });
+    expect(directoryAfter.total).toBe(directoryBefore + 1);
+    expect(directoryAfter.rows[0].employmentStatus).toBe('WAITING');
+
+    const onboarding = (await transitionService.list()).find(
+      (row) => row.type === 'ONBOARDING' && row.employee === approved.name,
+    );
+    expect(onboarding?.status).toBe('IN_PROGRESS');
+
+    await expect(
+      newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' }),
+    ).rejects.toThrow(/409/);
   });
 });

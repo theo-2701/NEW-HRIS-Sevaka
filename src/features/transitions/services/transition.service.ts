@@ -179,6 +179,36 @@ function maybeComplete(row: Transition) {
   if (allDone && row.type !== 'OFFBOARDING') row.status = 'COMPLETED';
 }
 
+const OPEN_STATUSES = ['IN_APPROVAL', 'IN_PROGRESS'];
+/** Transisi struktural = pindah/keluar. Onboarding adalah awal kerja, bukan perpindahan. */
+const STRUCTURAL: TransitionType[] = ['TRANSFER', 'OFFBOARDING'];
+
+/**
+ * Koneksi antar modul (tanpa API): materialisasi New Joiner memulai transisi
+ * ONBOARDING (UIC-EMPLOYEE §4.4 "onboarding dimulai"). Task lahir segar —
+ * yang punya dependensi PENDING, sisanya RELEASED.
+ */
+export function startOnboardingForNewJoiner(input: { name: string; positionLabel: string; effectiveDate: string }): Transition {
+  const today = new Date().toISOString().slice(0, 10);
+  const row: Transition = {
+    id: `TR-2026-0${600 + mockRows.length}`,
+    employee: input.name,
+    type: 'ONBOARDING',
+    from: '—',
+    to: input.positionLabel,
+    detail: 'New joiner onboarding',
+    effectiveDate: input.effectiveDate,
+    status: 'IN_PROGRESS',
+    tasks: spawnTasks('ONBOARDING').map((item) => ({
+      ...item,
+      status: item.dependsOn ? 'PENDING' : 'RELEASED',
+      releasedAt: item.dependsOn ? '' : today,
+    })),
+  };
+  mockRows = [row, ...mockRows];
+  return row;
+}
+
 export const transitionService = {
   async list(): Promise<Transition[]> {
     if (MOCK) {
@@ -203,6 +233,23 @@ export const transitionService = {
     if (MOCK) {
       await delay();
       const employee = labelOf(EMPLOYEE_OPTIONS, draft.employeeId).split(' — ')[0];
+
+      // Guard server UIC-EMPLOYEE §5.1 — form sudah memvalidasi, server tetap menegakkan.
+      if (draft.type === 'TRANSFER' && !draft.subtype) throw new Error('422 — transition_subtype wajib untuk TRANSFER.');
+      if (
+        draft.type === 'TRANSFER' &&
+        (draft.subtype === 'PROMOTION' || draft.subtype === 'DEMOTION') &&
+        !draft.targetJobGradeId
+      ) {
+        throw new Error('422 — target_job_grade_id wajib untuk PROMOTION/DEMOTION.');
+      }
+      if (draft.type === 'OFFBOARDING' && !draft.reason) throw new Error('422 — reason_category wajib untuk OFFBOARDING.');
+      if (
+        STRUCTURAL.includes(draft.type) &&
+        mockRows.some((row) => row.employee === employee && STRUCTURAL.includes(row.type) && OPEN_STATUSES.includes(row.status))
+      ) {
+        throw new Error(`409 — ${employee} masih punya transisi struktural terbuka; hanya satu per karyawan (VAL-HRIS-109).`);
+      }
       const destination = labelOf(DESTINATION_OPTIONS, draft.destinationPositionId);
       const subtypeLabel = labelOf(SUBTYPE_OPTIONS, draft.subtype);
       const reasonLabel = labelOf(REASON_OPTIONS, draft.reason);
@@ -241,6 +288,9 @@ export const transitionService = {
     if (MOCK) {
       await delay(200);
       const row = findTask(transitionId, taskId);
+      if (row.status !== 'RELEASED' && row.status !== 'IN_PROGRESS') {
+        throw new Error(`409 — task berstatus ${row.status}; hanya task RELEASED/IN_PROGRESS yang bisa diselesaikan.`);
+      }
       row.status = TWO_PARTY.test(row.name) ? 'AWAITING_CONFIRM' : 'COMPLETED';
       maybeComplete(find(transitionId));
       return row.status;
@@ -254,7 +304,11 @@ export const transitionService = {
   async confirmTask(transitionId: string, taskId: string): Promise<void> {
     if (MOCK) {
       await delay(200);
-      findTask(transitionId, taskId).status = 'COMPLETED';
+      const row = findTask(transitionId, taskId);
+      if (row.status !== 'AWAITING_CONFIRM') {
+        throw new Error(`409 — task berstatus ${row.status}; konfirmasi hanya dari AWAITING_CONFIRM.`);
+      }
+      row.status = 'COMPLETED';
       maybeComplete(find(transitionId));
       return;
     }

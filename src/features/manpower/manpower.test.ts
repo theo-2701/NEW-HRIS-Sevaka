@@ -63,6 +63,22 @@ describe('REQ-APPROVE — SoD', () => {
   });
 });
 
+describe('REQ — guard state (UIC-EMPLOYEE §1.6)', () => {
+  it('requisition yang sudah diputus tidak bisa diputus lagi (409)', async () => {
+    const rows = await manpowerService.requisitions();
+    const other = rows.find((row) => row.status === 'IN_APPROVAL' && row.maker !== CURRENT_USER);
+    if (!other) return;
+    await manpowerService.approveRequisition(other.id, 'Disetujui');
+    await expect(manpowerService.approveRequisition(other.id, 'Lagi')).rejects.toThrow(/409/);
+  });
+
+  it('server menolak requisition tanpa justifikasi (422)', async () => {
+    await expect(
+      manpowerService.createRequisition({ ...validRequisition, justification: '  ' }, false),
+    ).rejects.toThrow(/422/);
+  });
+});
+
 describe('MP-CREATE — rencana headcount', () => {
   it('menolak akhir periode sebelum awal periode', async () => {
     await expect(

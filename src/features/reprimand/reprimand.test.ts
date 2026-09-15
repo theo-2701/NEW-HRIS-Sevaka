@@ -43,8 +43,14 @@ describe('RP-CREATE — snapshot & SoD', () => {
     expect(row.maker).toBe(CURRENT_USER.name);
   });
 
-  it('menolak 403 saat menerbitkan untuk diri sendiri', async () => {
-    await expect(reprimandService.create({ ...valid, employeeId: CURRENT_USER.id })).rejects.toThrow(/403/);
+  it('menolak 409 saat menerbitkan untuk diri sendiri (maker = subjek, UIC §7.1)', async () => {
+    await expect(reprimandService.create({ ...valid, employeeId: CURRENT_USER.id })).rejects.toThrow(/409/);
+  });
+
+  it('revoke hanya dari ACTIVE — REVOKED tidak bisa dicabut ulang (VAL-HRIS-116)', async () => {
+    const rows = await reprimandService.list();
+    const revoked = rows.find((row) => row.status === 'REVOKED' && row.employeeId !== CURRENT_USER.id)!;
+    await expect(reprimandService.revoke(revoked.id, 'Lagi')).rejects.toThrow(/409/);
   });
 
   it('menolak 409 saat maker menyetujui reprimand-nya sendiri', async () => {

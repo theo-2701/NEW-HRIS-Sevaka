@@ -159,8 +159,11 @@ export const reprimandService = {
     if (MOCK) {
       await delay();
       if (draft.employeeId === CURRENT_USER.id) {
-        throw new Error('403 — Anda tidak bisa menerbitkan reprimand untuk diri sendiri.');
+        // UIC-EMPLOYEE §7.1: maker = subjek adalah konflik SoD → 409, bukan 403.
+        throw new Error('409 — Anda tidak bisa menerbitkan reprimand untuk diri sendiri.');
       }
+      if (!draft.reason.trim()) throw new Error('422 — reason wajib diisi.');
+      if (!draft.issuedDate) throw new Error('422 — issued_date wajib diisi.');
 
       const [name, rest] = labelOf(EMPLOYEE_OPTIONS, draft.employeeId).split(' — ');
       const snapshot = freezeSnapshot(draft.categoryCode);
@@ -203,6 +206,7 @@ export const reprimandService = {
       if (row.employeeId === CURRENT_USER.id) {
         throw new Error('409 — Anda subjek reprimand ini dan tidak boleh memutuskannya.');
       }
+      if (row.status !== 'IN_APPROVAL') throw new Error(`409 — reprimand berstatus ${row.status}; approve hanya dari IN_APPROVAL.`);
       row.status = 'ACTIVE';
       row.checkerNote = note;
       return;
@@ -218,6 +222,8 @@ export const reprimandService = {
       if (row.employeeId === CURRENT_USER.id) {
         throw new Error('409 — Anda subjek reprimand ini dan tidak boleh memutuskannya.');
       }
+      // Tanpa re-aktivasi (VAL-HRIS-116): hanya ACTIVE yang bisa dicabut.
+      if (row.status !== 'ACTIVE') throw new Error(`409 — reprimand berstatus ${row.status}; revoke hanya dari ACTIVE.`);
       row.status = 'REVOKED';
       row.checkerNote = note;
       return;

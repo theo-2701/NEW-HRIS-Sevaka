@@ -318,6 +318,48 @@ function applyCriteria(request: EmployeeSearchRequest): EmployeeSearchResponse {
   return { rows: sorted.slice(start, start + request.size), total: sorted.length };
 }
 
+/**
+ * Koneksi antar modul (tanpa API): materialisasi New Joiner melahirkan baris
+ * karyawan baru di Directory — sama seperti saga auth + employee + company di
+ * UIC-EMPLOYEE §4.4. `WAITING` bila tanggal join belum tiba.
+ */
+export function registerMaterializedEmployee(input: {
+  name: string;
+  email: string;
+  positionLabel: string;
+  jobGrade: string;
+  joinDate: string;
+}): EmployeeDetail {
+  const [position, unit = ''] = input.positionLabel.split(' — ');
+  const branch = BRANCHES.find((item) => unit.includes(item.name)) ?? BRANCHES[1];
+  const today = new Date().toISOString().slice(0, 10);
+  const sequence = MOCK_EMPLOYEES.length + 1;
+  const row: EmployeeDetail = {
+    id: `emp-nj-${sequence}`,
+    nik: `NIK-${String(100 + sequence).padStart(4, '0')}`,
+    name: input.name,
+    employmentStatus: input.joinDate > today ? 'WAITING' : 'ACTIVE',
+    workArrangement: 'WFO',
+    branchId: branch.id,
+    branchName: branch.name,
+    position,
+    createdAt: today,
+    contractEndDate: null,
+    costCenter: '—',
+    sbu: '—',
+    supervisor: null,
+    jobGrade: input.jobGrade,
+    formalPosition: position,
+    joinDate: input.joinDate,
+    leaveDate: null,
+    bank: { bankCode: '—', accountNumber: '0000000000', accountHolderName: input.name },
+    email: input.email,
+    phone: '—',
+  };
+  MOCK_EMPLOYEES.unshift(row);
+  return row;
+}
+
 export const employeeService = {
   /** `POST /employees/search` — kriteria dikirim di body. */
   async search(request: EmployeeSearchRequest): Promise<EmployeeSearchResponse> {

@@ -25,7 +25,7 @@ export type TaskStatus =
 /** Sisi task: unit asal melepas, unit tujuan menyiapkan. */
 export type TaskSide = 'RELINQUISH' | 'PROVISION' | 'NONE';
 
-export type TransferSubtype = 'LATERAL' | 'PROMOTION' | 'DEMOTION' | 'RELOCATION' | 'MUTUAL';
+export type TransferSubtype = 'LATERAL' | 'PROMOTION' | 'DEMOTION' | 'RELOCATION' | 'MUTUAL_TRANSFER';
 
 export type OffboardingReason = 'RESIGN' | 'CONTRACT_END' | 'TERMINATION' | 'LAYOFF' | 'RETIREMENT';
 
@@ -121,7 +121,7 @@ export const SUBTYPE_OPTIONS: SelectOption[] = [
   { value: 'PROMOTION', label: 'Promotion' },
   { value: 'DEMOTION', label: 'Demotion' },
   { value: 'RELOCATION', label: 'Relocation' },
-  { value: 'MUTUAL', label: 'Mutual transfer' },
+  { value: 'MUTUAL_TRANSFER', label: 'Mutual transfer' },
 ];
 
 export const DESTINATION_OPTIONS: SelectOption[] = [

@@ -107,6 +107,13 @@ function stopThrottle(id: string) {
 // Batch yang sudah berjalan sejak awal tetap bergerak, seperti di prototype.
 if (MOCK) mockRows.filter((row) => row.status === 'PROCESSING').forEach(startThrottle);
 
+/** Guard state UIC-EMPLOYEE §6 — halt hanya PROCESSING, resume hanya HALTED, dst. (409). */
+function assertStatus(row: MassBatch, allowed: MassBatch['status'][], action: string) {
+  if (!allowed.includes(row.status)) {
+    throw new Error(`409 — batch ${row.id} berstatus ${row.status}; ${action} hanya sah dari ${allowed.join('/')}.`);
+  }
+}
+
 export const massResignationService = {
   async list(): Promise<MassBatch[]> {
     if (MOCK) {
@@ -146,6 +153,9 @@ export const massResignationService = {
   async createDraft(draft: BatchDraft): Promise<MassBatch> {
     if (MOCK) {
       await delay();
+      const eligible = draft.employeeIds.filter((id) => !pool.find((item) => item.id === id)?.self);
+      if (!eligible.length) throw new Error('422 — pilih minimal satu karyawan (tanpa diri sendiri).');
+      if (!draft.reason || !draft.leaveDate) throw new Error('422 — reason_category dan effective_leave_date wajib diisi.');
       const row: MassBatch = {
         id: `MR-00${43 + mockRows.length}`,
         reason: draft.reason,
@@ -166,7 +176,9 @@ export const massResignationService = {
   async submit(id: string): Promise<void> {
     if (MOCK) {
       await delay(200);
-      find(id).status = 'IN_APPROVAL';
+      const row = find(id);
+      assertStatus(row, ['DRAFT'], 'submit');
+      row.status = 'IN_APPROVAL';
       return;
     }
     await api.post(`/mass-resignations/${id}/submit`);
@@ -178,6 +190,7 @@ export const massResignationService = {
       await delay();
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['IN_APPROVAL'], 'approve');
       row.status = 'APPROVED';
       row.selectionHash = fakeHash();
       row.approverNote = note;
@@ -192,6 +205,7 @@ export const massResignationService = {
       await delay();
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['IN_APPROVAL'], 'reject');
       row.status = 'CANCELLED';
       row.approverNote = note;
       return;
@@ -207,6 +221,7 @@ export const massResignationService = {
     if (MOCK) {
       await delay();
       const row = find(id);
+      assertStatus(row, ['APPROVED'], 'process');
       if (!row.selectionHash || row.selectionHash !== selectionHash) {
         throw new Error('409 Conflict — selection hash tidak cocok. Batch tetap APPROVED, tidak ada yang diproses.');
       }
@@ -228,6 +243,7 @@ export const massResignationService = {
       await delay(200);
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['PROCESSING'], 'halt');
       row.status = 'HALTED';
       row.haltReason = reason;
       stopThrottle(id);
@@ -241,6 +257,7 @@ export const massResignationService = {
       await delay(200);
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['HALTED'], 'resume');
       row.status = 'PROCESSING';
       row.approverNote = note;
       startThrottle(row);
@@ -255,6 +272,7 @@ export const massResignationService = {
       await delay(200);
       const row = find(id);
       assertChecker(row);
+      assertStatus(row, ['HALTED'], 'cancel-remaining');
       row.status = 'PARTIAL';
       row.approverNote = note;
       stopThrottle(id);
