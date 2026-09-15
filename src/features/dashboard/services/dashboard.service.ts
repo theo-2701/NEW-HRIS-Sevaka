@@ -127,8 +127,12 @@ export const dashboardService = {
   async unlockAccount(employeeId: string): Promise<void> {
     if (MOCK) {
       await delay(500);
+      // Data dummy ikut berubah: akun yang dibuka keluar dari daftar terkunci.
+      const index = MOCK_SUMMARY.lockedAccounts.findIndex((row) => row.id === employeeId);
+      if (index >= 0) MOCK_SUMMARY.lockedAccounts.splice(index, 1);
       return;
     }
-    await api.post(`/security/locked-accounts/${employeeId}/unlock`);
+    // UIC-AUTH §5.3 — aktor admin identitas (employee:update).
+    await api.post('/auth/unlock-account', { employee_id: employeeId });
   },
 };

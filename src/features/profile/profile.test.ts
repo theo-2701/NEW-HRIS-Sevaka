@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { profileService } from '@/features/profile/services/profile.service';
 import {
   basicInfoSchema,
   relativeSchema,
@@ -88,5 +89,50 @@ describe('training & pengalaman kerja — urutan periode', () => {
         leaveDate: '2019-01',
       }),
     ).rejects.toThrow(/mendahului/);
+  });
+});
+
+describe('server profile — gerbang UIC-PROFILE-0.2', () => {
+  it('ESS mengubah field HR-restricted ditolak 403, HR boleh', async () => {
+    const { profile } = await profileService.get();
+    const other = profile.maritalStatus === 'MARRIED' ? 'SINGLE' : 'MARRIED';
+    await expect(profileService.updateProfile({ maritalStatus: other }, 'ESS')).rejects.toThrow(/403/);
+    await expect(profileService.updateProfile({ maritalStatus: other }, 'HR')).resolves.toBeUndefined();
+  });
+
+  it('FOREIGNER tanpa paspor ditolak 422 (MbV)', async () => {
+    await expect(
+      profileService.updateProfile({ nationality: 'FOREIGNER', passportNumber: '' }, 'HR'),
+    ).rejects.toThrow(/422/);
+  });
+
+  it('pengalaman kerja wajib presisi bulan-tahun dan leave ≥ join', async () => {
+    const work = {
+      id: '',
+      companyName: 'PT Uji',
+      position: 'Staff',
+      joinDate: '2020-05-15',
+      leaveDate: '2021-01-01',
+      jobDescription: '',
+      employmentCertificate: '',
+    };
+    await expect(profileService.saveWork(work)).rejects.toThrow(/hari = 01/);
+    await expect(profileService.saveWork({ ...work, joinDate: '2022-01-01' })).rejects.toThrow(/mendahului/);
+  });
+
+  it('relative tanpa nomor telepon valid ditolak 422', async () => {
+    await expect(
+      profileService.saveRelative({
+        id: '',
+        name: 'Ani',
+        relationshipType: 'SPOUSE',
+        phoneNumber: '12',
+        email: '',
+        dateOfBirth: '',
+        jobId: '',
+        address: '',
+        isEmergencyContact: false,
+      }),
+    ).rejects.toThrow(/422/);
   });
 });

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { profileService } from '@/features/profile/services/profile.service';
 import { toast } from '@/store/ui.store';
-import type { PersonalProfile, Relative, Training, WorkExperience } from '@/features/profile/types';
+import type { PersonalProfile, ProfileActor, Relative, Training, WorkExperience } from '@/features/profile/types';
 
 export const profileKeys = {
   me: ['profile', 'me'] as const,
@@ -27,9 +27,10 @@ function useProfileMutation<TVars>(
   });
 }
 
-export const useUpdateProfile = () =>
+/** Aktor ikut dikirim: field HR-restricted yang diubah ESS ditolak 403 oleh server. */
+export const useUpdateProfile = (actor: ProfileActor = 'ESS') =>
   useProfileMutation<Partial<PersonalProfile>>(
-    (patch) => profileService.updateProfile(patch),
+    (patch) => profileService.updateProfile(patch, actor),
     'Perubahan biodata tersimpan.',
   );
 

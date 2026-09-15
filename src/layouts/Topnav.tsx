@@ -27,6 +27,7 @@ import {
 import { Avatar } from '@/components/Avatar';
 import { SevakaLogo } from '@/components/brand/SevakaLogo';
 import { useAuthStore } from '@/store/auth.store';
+import { authService } from '@/features/auth/services/auth.service';
 import { cn } from '@/lib/utils';
 
 interface ProductEntry {
@@ -177,6 +178,9 @@ export function Topnav() {
             <DropdownMenuItem
               danger
               onSelect={() => {
+                // Force logout SELF_LOGOUT mencabut sesi di server; store dibersihkan apa pun hasilnya.
+                const employeeId = useAuthStore.getState().user?.id;
+                if (employeeId) void authService.logout(employeeId).catch(() => undefined);
                 clear();
                 navigate('/auth/login');
               }}

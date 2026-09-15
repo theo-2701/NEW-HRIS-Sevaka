@@ -72,7 +72,7 @@ function DomicileMirror() {
 export function BasicInfoSection({ profile, actor }: { profile: PersonalProfile; actor: ProfileActor }) {
   const [editing, setEditing] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const update = useUpdateProfile();
+  const update = useUpdateProfile(actor);
   const hrLocked = actor === 'ESS';
 
   return (
