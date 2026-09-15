@@ -226,7 +226,7 @@ export const NAV: NavSection[] = [
         source: 'finance-settings.html',
         status: 'done',
       },
-      { label: 'Finance Security', icon: 'shield-alert', path: '/finance/security', source: 'finance-security.html', status: 'todo' },
+      { label: 'Finance Security', icon: 'shield-alert', path: '/finance/security', source: 'finance-security.html', status: 'done' },
     ],
   },
 

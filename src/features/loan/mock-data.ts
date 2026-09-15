@@ -1,5 +1,4 @@
 import type {
-  DisputeHold,
   Installment,
   Loan,
   LoanConfig,
@@ -186,11 +185,6 @@ export const LOAN_STATES: LoanStateRef[] = [
     meaning: 'Sisa kewajiban nol — lunas normal / pelunasan dipercepat / percepatan keluar.',
     appearsIn: 'Dinarasikan (POST .../early-settlement)',
   },
-];
-
-export const HOLDS: DisputeHold[] = [
-  { id: 'hold-46', targetType: 'BENEFIT_CLAIM', targetId: 'clm-46', targetRequestNo: 'CLM-2026-000046', isActive: true },
-  { id: 'hold-21', targetType: 'LOAN', targetId: 'loan-21', targetRequestNo: 'LON-2026-000021', isActive: true },
 ];
 
 export const REJECTION_REASONS: RejectionReason[] = [

@@ -23,6 +23,7 @@ import { LoanDetailPage } from '@/features/loan/pages/LoanDetailPage';
 import { CashAdvancePage } from '@/features/cash-advance/pages/CashAdvancePage';
 import { DisbursementPage } from '@/features/disbursement/pages/DisbursementPage';
 import { FinanceSettingsPage } from '@/features/finance-settings/pages/FinanceSettingsPage';
+import { FinanceSecurityPage } from '@/features/finance-security/pages/FinanceSecurityPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -81,6 +82,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'finance/cash-advance', element: <CashAdvancePage /> },
   { path: 'finance/disbursement', element: <DisbursementPage /> },
   { path: 'finance/settings', element: <FinanceSettingsPage /> },
+  { path: 'finance/security', element: <FinanceSecurityPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -121,6 +123,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/finance/cash-advance',
   '/finance/disbursement',
   '/finance/settings',
+  '/finance/security',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

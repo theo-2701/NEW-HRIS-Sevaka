@@ -41,7 +41,6 @@ import {
 import {
   ENTITLEMENTS,
   FAMILY_RELATIONSHIP_RULES,
-  HOLDS,
   ME,
   PERIODS,
   benefitTypeName,
@@ -50,6 +49,7 @@ import {
   gradeName,
 } from '@/features/benefit/mock-data';
 import { activeHoldOn, withRunningBalance } from '@/features/benefit/rules';
+import { listHolds } from '@/features/finance-security/holds-store';
 import {
   CLAIM_STATUS_LABEL,
   MARK_SOURCE_LABEL,
@@ -258,7 +258,7 @@ export function BenefitReimbursementPage() {
                       render: (row) => (
                         <span className="inline-flex flex-wrap items-center gap-1.5">
                           <ClaimStatusBadge status={row.status} />
-                          {activeHoldOn(HOLDS, row.id) && <TmFlag>Dispute hold</TmFlag>}
+                          {activeHoldOn(listHolds(), row.id) && <TmFlag>Dispute hold</TmFlag>}
                         </span>
                       ),
                     },

@@ -11,7 +11,8 @@ import {
   roomOf,
   tenorOptions,
 } from '@/features/loan/rules';
-import { EXPOSURE, HOLDS, LOANS, LOAN_CFG, MAX_ACTIVE, MGR } from '@/features/loan/mock-data';
+import { EXPOSURE, LOANS, LOAN_CFG, MAX_ACTIVE, MGR } from '@/features/loan/mock-data';
+import { listHolds } from '@/features/finance-security/holds-store';
 import type { LoanDraft } from '@/features/loan/types';
 
 const draft: LoanDraft = { amount: '5.000.000', tenorMonths: 6 };
@@ -141,7 +142,7 @@ describe('Pintu keluar milik pengaju', () => {
 
 describe('Keputusan atasan', () => {
   it('dispute hold tidak menggerbang keputusan — yang menolak loan-21 adalah statusnya', async () => {
-    expect(activeHoldOn(HOLDS, 'loan-21')).toBeTruthy();
+    expect(activeHoldOn(listHolds(), 'loan-21')).toBeTruthy();
     await expect(loanService.approveLoan('loan-21')).rejects.toThrow(/409 FIN_ALREADY_DECIDED/);
   });
 

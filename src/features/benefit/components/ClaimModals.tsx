@@ -17,7 +17,7 @@ import {
 } from '@/features/benefit/mock-data';
 import { activeHoldOn, balanceOf, remainingOf } from '@/features/benefit/rules';
 import { useApproveClaim, useCancelClaim, useRejectClaim } from '@/features/benefit/hooks/useBenefit';
-import { HOLDS } from '@/features/benefit/mock-data';
+import { listHolds } from '@/features/finance-security/holds-store';
 import { RELATIONSHIP_LABEL } from '@/features/benefit/types';
 import type { BenefitClaim, ClaimItem } from '@/features/benefit/types';
 import { formatCurrency, formatDate } from '@/lib/format';
@@ -87,7 +87,7 @@ export function ClaimDetailModal({
   onReject: (claim: BenefitClaim) => void;
 }) {
   const approve = useApproveClaim();
-  const hold = claim ? activeHoldOn(HOLDS, claim.id) : undefined;
+  const hold = claim ? activeHoldOn(listHolds(), claim.id) : undefined;
   const employee = claim ? employeeOf(claim.employeeId) : undefined;
   const balance = claim ? balanceOf(claim.periodId, claim.benefitTypeId) : undefined;
   // Peringatan kemiripan adalah isyarat untuk approver — pengaju tidak melihatnya.

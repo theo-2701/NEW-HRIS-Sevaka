@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { HOLDS } from '@/features/benefit/mock-data';
+import { listHolds } from '@/features/finance-security/holds-store';
 import { benefitPayableSources } from '@/features/benefit/services/benefit.service';
 import { loanPayableSources, loanPayrollConfirmed } from '@/features/loan/services/loan.service';
 import {
@@ -105,7 +105,7 @@ function requireMark(actor: Actor) {
 
 /** `map_finance_dispute_hold` dibaca read-only (tabel milik FT8). */
 function holdActive(key: PayableKey) {
-  return HOLDS.some((hold) => hold.isActive && hold.targetType === key.payableType && hold.targetId === key.payableId);
+  return listHolds().some((hold) => hold.isActive && hold.targetType === key.payableType && hold.targetId === key.payableId);
 }
 
 function nextActionId(actor: Actor) {

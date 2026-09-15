@@ -552,3 +552,20 @@ export function benefitPayableSources(): PayableSource[] {
     eligible: claim.status === 'APPROVED',
   }));
 }
+
+/**
+ * Mock lintas modul — FT8 membaca nota klaim (jejak & pembuka lampiran medis, TSD §18.3):
+ * pemilik klaim, penanda data kesehatan beku, dan `document_id` nota.
+ */
+export function claimItemContext(claimItemId: string) {
+  const claim = mockClaims.find((row) => row.items.some((item) => item.id === claimItemId));
+  const item = claim?.items.find((row) => row.id === claimItemId);
+  if (!claim || !item) return null;
+  return {
+    claimId: claim.id,
+    requestNo: claim.requestNo,
+    employeeId: claim.employeeId,
+    containsHealthData: claim.containsHealthDataSnapshot,
+    documentId: item.documentId,
+  };
+}

@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
 import { LoanStatusBadge, ReservationBadge } from '@/features/loan/components/LoanBits';
-import { HOLDS, REJECTION_REASONS, employeeOf, gradeName } from '@/features/loan/mock-data';
+import { REJECTION_REASONS, employeeOf, gradeName } from '@/features/loan/mock-data';
+import { listHolds } from '@/features/finance-security/holds-store';
 import { activeHoldOn, reservationStateOf } from '@/features/loan/rules';
 import {
   useApproveLoan,
@@ -70,7 +71,7 @@ export function LoanDecisionModal({
   onReject: (loan: Loan) => void;
 }) {
   const approve = useApproveLoan();
-  const hold = loan ? activeHoldOn(HOLDS, loan.id) : undefined;
+  const hold = loan ? activeHoldOn(listHolds(), loan.id) : undefined;
 
   return (
     <Modal

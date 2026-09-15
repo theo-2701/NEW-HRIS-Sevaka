@@ -22,7 +22,7 @@ dengan versi tanpa sufiks — diabaikan.
 | Employee | 0.2 | 0.9 | 0.13 | 0.9 | `employees`, `manpower`, `new-joiner`, `transitions`, `mass-resignation`, `reprimand`, `ptkp` |
 | Employee Profile | 0.2 | 0.2 | — | 0.2 | `profile` |
 | Time | 0.1 | 0.1 | 0.6 | 0.4 | `calendar`, `time-off`, `attendance`, `overtime`, `scheduler`, `oncall` |
-| Finance | 0.2 | 0.2 | 0.3 | 0.2 | `benefit`, `loan`, `cash-advance`, `disbursement`, `finance-settings` |
+| Finance | 0.2 | 0.2 | 0.3 | 0.2 | `benefit`, `loan`, `cash-advance`, `disbursement`, `finance-settings`, `finance-security` |
 
 Dashboard tidak punya dokumen kontrak tersendiri (shell aplikasi bersama).
 
@@ -85,6 +85,7 @@ Dashboard tidak punya dokumen kontrak tersendiri (shell aplikasi bersama).
 | Cash Advance (`3dfa87e`) | Dibangun langsung dari kontrak | Enum selisih `OUTSTANDING` → `OPEN`; lapis tambahan = uang muka + kekurangan > batas jenis |
 | Benefit | Dispute hold memblokir approve; putus/cancel 422; tanpa gerbang window/duplikat/penerima/slot | Hold tidak memblokir; 409 `FIN_ALREADY_DECIDED`; 422 `FIN_CLAIM_WINDOW_EXPIRED` (90 hari), 409 `FIN_DUPLICATE_RECEIPT`, 422 `FIN_BENEFICIARY_NOT_LISTED`, 422 `FIN_FAMILY_BENEFICIARY_SLOT_FULL` (maks 5); K9 menulis USAGE/RELEASE |
 | Finance Settings | Prototype menandai lima sebab penolakan sebagai bawaan; nominal plafon 0 ditolak; unik golongan hanya antar baris aktif | Tepat satu bawaan ("Other", ERD `uq_mst_rejection_reason_system_default`); `limit_amount ≥ 0` sesuai TSD; unik antar baris belum dihapus (ERD `WHERE deleted_by IS NULL`, termasuk nonaktif); CRUD jenis keperluan & sebab penolakan tersedia di service walau layar baca |
+| Finance Security | Seed hold terduplikasi di Benefit & Loan (statis, tak bisa dipasang/dicabut); jumlah baris ekspor acak; cabut lewat `…/release` di jangkar Figma | Satu `holds-store` dibaca Benefit, Loan, Pencairan; baris ekspor dihitung dari data modul; `PATCH /dispute-holds/{id}` (PROB-FRONTEND-017); pemasangan ulang = baris baru |
 | Disbursement & Receivables | Dibangun langsung dari kontrak | Daftar diturunkan hidup dari tabel sumber (prototype memakai seed payable terpisah); mark-paid atomik (prototype menandai sebagian); `WITH_PAYROLL` ditolak juga untuk non-LOAN (TSD §3.3 poin 2); Super Admin tidak boleh declare-settled (FD-112); kolom `exit_date` prototype dibuang (bukan kolom ERD) |
 
 ## 5. Koneksi antar modul (tanpa API)
@@ -97,6 +98,8 @@ Dashboard tidak punya dokumen kontrak tersendiri (shell aplikasi bersama).
 | Benefit / Loan / Cash Advance | Pencairan & Piutang | Status `APPROVED` di modul sumber → baris `UNMARKED`; hold sengketa (dataset FT8) menggerbang penandaan |
 | Finance Settings | Loan | Plafon aktif golongan dibaca saat pengajuan (`exposure.limitAmount`); nonaktif/hapus ⇒ ruang pinjam 0 untuk pengajuan baru |
 | Finance Settings | Cash Advance | Daftar & gerbang jenis keperluan dibaca dari store Settings — jenis nonaktif ditolak 422 saat pengajuan |
+| Finance Security | Benefit, Loan, Pencairan & Piutang | Hold dipasang/dicabut di layar ini → penanda di grid & modal Benefit, modal keputusan Loan, gerbang 422 `FIN_DISPUTE_HOLD_ACTIVE` mark-paid |
+| Benefit, Loan, Cash Advance, Pencairan | Finance Security (ekspor) | Isi & `row_count` berkas dibaca dari data modul sumber / penanda pencairan |
 | Pencairan & Piutang | Benefit (Disbursement History) | Tab riwayat membaca penanda yang sama (`marks-store`) — tidak ada seed payable kedua |
 | Pencairan & Piutang | Cash Advance | Tanda `CASH_ADVANCE` → `disbursementMarked` (bantahan tertutup; dibalik → terbuka lagi); tanda `CASH_ADVANCE_SHORTFALL` → selisih `APPROVED` → `SETTLED` |
 
@@ -118,6 +121,10 @@ tujuan ikut memuat ulang.
 | `PROB-FRONTEND-018` | Finance Settings | Akses baca `ROLE_EMPLOYEE` atas `/loan-limits` kontradiktif (§6.1.5 tabel vs narasi & §14.1.9) — mock mengikuti tabel ringkasan |
 | TSD §14.1.7 / §14.1.8 | Finance Settings | Seed-sample jenis keperluan tanpa daftar contoh baku dan seeding lima sebab bawaan belum dispesifikasi — tidak dibangun |
 | Rejection reasons lintas modul | Benefit, Loan, Cash Advance | Modal tolak masih membaca seed sebab milik modul masing-masing; store Settings belum disambungkan karena layar Settings baca saja |
+| `PROB-FRONTEND-014` | Finance Security | Menu belum ditempatkan di peta navigasi SAD §4.6 — posisi sidebar sementara |
+| ERD §6.9 `log_export_download` | Finance Security | ERD tanpa kolom `scope`, padahal FSD KM-S1 menampilkan badge Scope — mock menyimpannya sebagai medan terpisah |
+| TSD §18.5.4 poin 2 | Pencairan & Piutang | declare-settled wajib cek hold pada target yang sama, tetapi status tanggungan menunjuk karyawan, bukan pengajuan — pemetaan target belum dispesifikasi |
+| TSD §18.3.1 | Benefit | Endpoint pembuka lampiran medis tersedia di service FT8 tetapi belum ada tombol di modal klaim Benefit |
 | FSD §5.5 | Disbursement | Reverse tanpa frame FSD — dibangun dari UIC §6.2 op 5 sebagai aksi baris; efek balik atas selisih SHORTFALL yang sudah `SETTLED` tidak dispesifikasi (tidak dikembalikan) |
 | TSD §6.5.5 `OUTSTANDING` | Disbursement | Peristiwa keluar karyawan (OF5) belum berkontrak — baris status tanggungan hanya dari dataset |
 | Dataset FT5 vs FT4 | Cash Advance, Disbursement | `dif-78` diluruskan ke `APPROVED` (FT5 masih memuatnya sebagai payable); `adv-78` `disbursementMarked=true` tanpa baris tanda di dataset FT5 |

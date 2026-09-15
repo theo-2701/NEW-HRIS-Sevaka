@@ -69,7 +69,7 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/finance/cash-advance` | Cash Advance | `finance-cash-advance.html` | done |
 | `/finance/disbursement` | Disbursement & Receivables | `finance-disbursement.html` | done |
 | `/finance/loan` | Loan | `finance-loan.html` | done |
-| `/finance/security` | Finance Security | `finance-security.html` | todo |
+| `/finance/security` | Finance Security | `finance-security.html` | done |
 | `/finance/settings` | Finance Settings | `finance-settings.html` | done |
 
 ## Payroll

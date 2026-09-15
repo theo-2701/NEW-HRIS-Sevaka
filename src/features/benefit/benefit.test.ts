@@ -6,7 +6,8 @@ import {
 } from '@/features/benefit/services/benefit.service';
 import { toIsoDate } from '@/lib/format';
 import { activeHoldOn, draftTotal, remainingOf, withRunningBalance } from '@/features/benefit/rules';
-import { CLAIMS, HOLDS, LEDGER, PERIODS } from '@/features/benefit/mock-data';
+import { CLAIMS, LEDGER, PERIODS } from '@/features/benefit/mock-data';
+import { listHolds } from '@/features/finance-security/holds-store';
 import type { ClaimDraft } from '@/features/benefit/types';
 
 const daysAgo = (days: number) => {
@@ -122,7 +123,7 @@ describe('Pembatalan oleh pengaju', () => {
 
 describe('Keputusan approver', () => {
   it('penahanan sengketa tidak memblokir keputusan — ia menggerbang pencairan (FT5)', async () => {
-    expect(activeHoldOn(HOLDS, 'clm-46')).toBeTruthy();
+    expect(activeHoldOn(listHolds(), 'clm-46')).toBeTruthy();
     await expect(benefitService.approveClaim('clm-46')).resolves.toEqual({ accepted: true });
   });
 

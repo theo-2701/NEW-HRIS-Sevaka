@@ -3,7 +3,6 @@ import type {
   BenefitPeriod,
   BenefitType,
   Beneficiary,
-  DisputeHold,
   Entitlement,
   FamilyRelationshipRule,
   LedgerEntry,
@@ -172,11 +171,6 @@ export const LEDGER: LedgerEntry[] = [
   { id: 'lg-5', createdAt: '2026-07-10', entryType: 'RESERVATION', amount: 850_000, benefitTypeName: 'Pengobatan Rawat Jalan', sourceClaimId: 'clm-45', requestNo: 'CLM-2026-000045' },
   { id: 'lg-6', createdAt: '2026-07-12', entryType: 'USAGE', amount: 850_000, benefitTypeName: 'Pengobatan Rawat Jalan', sourceClaimId: 'clm-45', requestNo: 'CLM-2026-000045' },
   { id: 'lg-7', createdAt: '2026-07-22', entryType: 'RESERVATION', amount: 1_250_000, benefitTypeName: 'Pengobatan Rawat Jalan', sourceClaimId: 'clm-46', requestNo: 'CLM-2026-000046' },
-];
-
-export const HOLDS: DisputeHold[] = [
-  { id: 'hold-46', targetType: 'BENEFIT_CLAIM', targetId: 'clm-46', targetRequestNo: 'CLM-2026-000046', isActive: true },
-  { id: 'hold-21', targetType: 'LOAN', targetId: 'loan-21', targetRequestNo: 'LON-2026-000021', isActive: true },
 ];
 
 export const REJECTION_REASONS: RejectionReason[] = [
