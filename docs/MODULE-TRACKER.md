@@ -67,7 +67,8 @@ Baca dulu: `_prototype/FINANCE-GAP-NOTES.md`.
 
 Paling berat: stepper multi-tahap + tabel lebar + banyak modal.
 
-- [ ] Salary Processing (`payroll-doc-processing.html`) + Payroll Run (`payroll-processing.html`)
+- [x] **Salary Processing** — `payroll-doc-processing.html` (FSD §1 · UIC §2 · TSD-0.25 §15.2/§15.7: run satu form dua cabang — 201 Insert / 200 Recalculate hanya selagi CALCULATED, lewat itu 422, Idempotency-Key per pembukaan modal; review CALCULATED→REVIEWED menulis riwayat status; detail gerbang 1·2·3 + sepuluh parameter beku + ringkasan temuan + riwayat; temuan dengan filter `OPEN`, resolve Diterima wajib beralasan 422, 409 sudah tertutup, PERIOD_NOT_PICKED_UP tidak bisa Diperbaiki manual, bulk hanya Diterima satu periode dengan `skipped[]`, `repeat_count` dihitung saat baca; impor riwayat sebelum periode gaji pertama 422, koreksi maker berbeda 403 dan menonaktifkan baris lama, verifikasi HR Manager ≠ pengimpor 403 / 409 sekali. HR Manager baca saja di menu ini)
+- [ ] Payroll Run (`payroll-processing.html`) — prototype lama tanpa baris menu; ditinjau ulang terhadap FSD sebelum dikonversi
 - [ ] Payroll Components, Tax Simulation, Compliance
 - [ ] Authorization & Handover, Salary Settings
 - [ ] ESS: `/me/payroll`, `/me/payslip`

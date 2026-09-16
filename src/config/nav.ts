@@ -238,7 +238,7 @@ export const NAV: NavSection[] = [
         icon: 'wallet',
         path: '/payroll/salary-processing',
         source: 'payroll-doc-processing.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Authorization & Handover',
