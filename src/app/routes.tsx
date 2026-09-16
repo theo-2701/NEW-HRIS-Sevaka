@@ -29,6 +29,8 @@ import { SalaryProcessingPage } from '@/features/salary-processing/pages/SalaryP
 import { PayrollAuthorizationPage } from '@/features/payroll-authorization/pages/PayrollAuthorizationPage';
 import { SalarySettingsPage } from '@/features/salary-settings/pages/SalarySettingsPage';
 import { PeriodDetailPage } from '@/features/salary-processing/pages/PeriodDetailPage';
+import { PayrollInfoPage } from '@/features/ess-payroll/pages/PayrollInfoPage';
+import { PayslipPage } from '@/features/ess-payroll/pages/PayslipPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -94,6 +96,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'payroll/salary-settings', element: <SalarySettingsPage /> },
   /* Detail periode tidak punya baris menu — dibuka dari baris tabel periode. */
   { path: 'payroll/salary-processing/period', element: <PeriodDetailPage /> },
+  { path: 'me/payroll', element: <PayrollInfoPage /> },
+  { path: 'me/payslip', element: <PayslipPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -140,6 +144,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/payroll/authorization',
   '/payroll/salary-settings',
   '/payroll/salary-processing/period',
+  '/me/payroll',
+  '/me/payslip',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',
