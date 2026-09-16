@@ -114,12 +114,12 @@ Prototype: 88 file HTML · Route bernav: 88
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/company/branch` | Branch | `company-branch.html` | todo |
-| `/company/cost-center` | Cost Center | `company-cost-center.html` | todo |
-| `/company/grade-class` | Grade & Class | `company-grade-class.html` | todo |
-| `/company/group-structure` | Group Structure | `company-group-structure.html` | todo |
-| `/company/sbu` | SBU | `company-sbu.html` | todo |
-| `/company/vendor` | Vendor | `company-vendor.html` | todo |
+| `/company/branch` | Branch | `company-branch.html` | done |
+| `/company/cost-center` | Cost Center | `company-cost-center.html` | done |
+| `/company/grade-class` | Grade & Class | `company-grade-class.html` | done |
+| `/company/group-structure` | Group Structure | `company-group-structure.html` | done |
+| `/company/sbu` | SBU | `company-sbu.html` | done |
+| `/company/vendor` | Vendor | `company-vendor.html` | done |
 
 ## Document
 

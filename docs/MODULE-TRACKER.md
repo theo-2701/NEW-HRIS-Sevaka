@@ -79,7 +79,8 @@ Baca dulu: `PAYROLL-GAP-NOTES.md`, `PAYROLL-AUTH-GAP-NOTES.md`,
 
 ## Batch 5 — Company & Company Management
 
-- [ ] Branch, Group Structure, Grade & Class, Cost Center, SBU, Vendor, Integration Contact
+- [x] **Branch, Group Structure, Grade & Class, Cost Center, SBU, Vendor** — `company-branch.html`, `company-group-structure.html`, `company-grade-class.html`, `company-cost-center.html`, `company-sbu.html`, `company-vendor.html` (FSD-001-COMPANY-0.9 §1 · UIC-001-COMPANY-0.9 §2.1–§2.7: satu fitur `company` untuk enam menu. Branch — kode unik antar cabang aktif 409 dan terkunci saat diubah, provinsi/kota/zona waktu diturunkan dari snapshot kode pos (kode pos asing 422), kategori cabang lengkap dengan urutan level unik dan izin melihat data turunan, tab kategori serta pilihan cabang induk hanya muncul saat `BRANCH_HIERARCHY_MODE` menyala (403 di service). Group Structure — `parent_id` menunjuk posisi bukan karyawan, level induk tidak boleh lebih dalam dari anaknya, penjagaan siklus, posisi lowong tetap sah, mengosongkan pengisi melepas snapshot atasan pada anaknya, dan setiap I/U/D menulis `log_group_struct_pos` otomatis. Grade & Class — self-ref dua tingkat, rentang gaji wajib untuk Class dan dilarang untuk Grade, `to ≥ from`, Grade yang masih memayungi Class tidak bisa dihapus. Cost Center & SBU — `code` unik antar baris aktif dan (cost center) tidak bisa diubah, hierarki bebas siklus, dan menu tertutup 403 saat `COST_CENTER_ASSIGNMENT_MODE` / `SBU_ASSIGNMENT_MODE` dimatikan. Vendor — `vendor_type` dan `pic_position` dua daftar tertutup; kontrak tidak punya kolom surel, jadi kontak hanya telepon dan alamat)
+- [ ] Integration Contact, Notice, Announcement (COMPANY 0.9 menambah dua menu terakhir)
 - [ ] Assets (list, detail `:id`, disposal)
 - [ ] Notification inbox + rich inbox
 - [ ] Files: company / employee / other / templates
