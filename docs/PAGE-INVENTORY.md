@@ -176,6 +176,7 @@ layar di sini tanpa keputusan kontrak.
 | `company-asset-detail.html` | Halaman detail aset; bentuk `:id` saat modul Assets dikonversi. |
 | `company-integration-contact.html` | Belum punya baris menu di kontrak. |
 | `finance-loan-detail.html` | Sudah dikonversi ke `/finance/loan/detail?id=…`; dibuka dari baris tabel Loan, bukan dari menu. |
+| — (layar baru) | Detail periode gaji `/payroll/salary-processing/period?id=…`; dibuka dari baris tabel periode di Salary Processing maupun Authorization & Handover. |
 | `index.html` | Dashboard — tile tersendiri di sidebar, bukan baris NAV. |
 | `payroll-compliance.html` | Belum punya baris menu di kontrak. |
 | `payroll-components.html` | Belum punya baris menu di kontrak. |

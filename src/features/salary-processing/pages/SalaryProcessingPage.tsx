@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Segmented } from '@/components/Segmented';
@@ -27,10 +28,8 @@ import {
   ImportDetailModal,
   ImportFormModal,
   ResolveFindingModal,
-  ReviewPeriodModal,
   RunPeriodModal,
 } from '@/features/salary-processing/components/ProcessingModals';
-import { PeriodDetailCard } from '@/features/salary-processing/components/PeriodDetailCard';
 import { useFindings, useImports, usePeriods } from '@/features/salary-processing/hooks/useSalaryProcessing';
 import { EMPLOYEES, FINDING_TYPE_INFO, VIEWERS, employeeName } from '@/features/salary-processing/mock-data';
 import { firstPeriodMonth, isPayrollOfficer, periodLabel, periodName } from '@/features/salary-processing/rules';
@@ -83,18 +82,17 @@ const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter(
  * Mengunci, membuka kembali, dan mengotorisasi penyerahan milik menu Authorization & Handover.
  */
 export function SalaryProcessingPage() {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [actor, setActor] = useState<Actor>(VIEWERS[0]);
   const officer = isPayrollOfficer(actor);
-  const [tab, setTab] = useState<Tab>('periods');
+  const [tab, setTab] = useState<Tab>(() => (params.get('tab') === 'findings' ? 'findings' : 'periods'));
 
   const [statusFilter, setStatusFilter] = useState<PeriodStatus | 'ALL'>('ALL');
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
   const [runOpen, setRunOpen] = useState(false);
-  const [recalculating, setRecalculating] = useState<PayrollPeriod | null>(null);
-  const [reviewing, setReviewing] = useState<PayrollPeriod | null>(null);
 
   const [findingView, setFindingView] = useState<FindingView>('list');
-  const [findingPeriodId, setFindingPeriodId] = useState<string | null>(null);
+  const [findingPeriodId, setFindingPeriodId] = useState<string | null>(params.get('period'));
   const [findingFilter, setFindingFilter] = useState<FindingFilterState>(EMPTY_FINDING_FILTER);
   const [findingFilterOpen, setFindingFilterOpen] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
@@ -113,7 +111,8 @@ export function SalaryProcessingPage() {
   const periods = usePeriods(periodFilter);
 
   const periodList = useMemo(() => allPeriods.data ?? [], [allPeriods.data]);
-  const selectedPeriod = periodList.find((row) => row.id === selectedPeriodId) ?? null;
+  const openPeriod = (periodId: string) =>
+    navigate(`/payroll/salary-processing/period?id=${periodId}&as=${actor.employeeId}`);
   const activeFindingPeriod = findingPeriodId ?? periodList[0]?.id ?? null;
 
   const findingQuery = useMemo(
@@ -303,7 +302,7 @@ export function SalaryProcessingPage() {
                         render: (row) => (row.handedOver ? formatDate(row.handedOver.at) : '—'),
                       },
                     ]}
-                    actions={(row) => <RowButton onClick={() => setSelectedPeriodId(row.id)}>View Detail</RowButton>}
+                    actions={(row) => <RowButton onClick={() => openPeriod(row.id)}>View Detail</RowButton>}
                   />
                   <Pagination
                     page={pagedPeriods.page}
@@ -316,19 +315,6 @@ export function SalaryProcessingPage() {
                 </div>
               </Card>
 
-              {selectedPeriod && (
-                <PeriodDetailCard
-                  actor={actor}
-                  period={selectedPeriod}
-                  onRecalculate={() => setRecalculating(selectedPeriod)}
-                  onReview={() => setReviewing(selectedPeriod)}
-                  onOpenFindings={() => {
-                    setFindingPeriodId(selectedPeriod.id);
-                    setFindingView('list');
-                    setTab('findings');
-                  }}
-                />
-              )}
             </>
           )}
 
@@ -584,16 +570,12 @@ export function SalaryProcessingPage() {
 
       <RunPeriodModal
         actor={actor}
-        open={runOpen || Boolean(recalculating)}
-        initial={recalculating ? { year: recalculating.periodYear, month: recalculating.periodMonth } : null}
+        open={runOpen}
+        initial={null}
         periods={periodList}
-        onClose={() => {
-          setRunOpen(false);
-          setRecalculating(null);
-        }}
-        onDone={(period) => setSelectedPeriodId(period.id)}
+        onClose={() => setRunOpen(false)}
+        onDone={(period) => openPeriod(period.id)}
       />
-      <ReviewPeriodModal actor={actor} period={reviewing} onClose={() => setReviewing(null)} />
 
       <FindingDetailModal
         finding={findingDetail}
