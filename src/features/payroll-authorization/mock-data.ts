@@ -32,7 +32,7 @@ const component = (
   isFixed: traits.fixed,
   isOvertimeBasis: traits.overtime,
   isTaxable: traits.taxable,
-  isBpjsBase: traits.bpjs,
+  isBpjsDeductible: traits.bpjs,
   proposalState: 'AKTIF',
   proposedIsOvertimeBasis: null,
   proposedEffectiveFrom: null,

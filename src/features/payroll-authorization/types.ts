@@ -28,7 +28,7 @@ export interface SalaryComponent {
   isFixed: boolean;
   isOvertimeBasis: boolean;
   isTaxable: boolean;
-  isBpjsBase: boolean;
+  isBpjsDeductible: boolean;
   proposalState: ProposalState;
   proposedIsOvertimeBasis: boolean | null;
   proposedEffectiveFrom: string | null;
