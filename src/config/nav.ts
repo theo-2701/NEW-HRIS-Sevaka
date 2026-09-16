@@ -245,7 +245,7 @@ export const NAV: NavSection[] = [
         icon: 'shield-check',
         path: '/payroll/authorization',
         source: 'payroll-doc-authorization.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Salary Settings',

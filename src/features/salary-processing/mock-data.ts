@@ -29,6 +29,9 @@ export const EMPLOYEES: Record<string, PayrollEmployee> = {
   'pay-indah': { name: 'Indah Permatasari', nik: '3174050512930004', position: 'Supervisor Keuangan', branch: 'Jakarta Pusat' },
   'pay-bayu': { name: 'Bayu Setiawan', nik: '3374011807940009', position: 'Staff Penjualan', branch: 'Semarang' },
   'pay-cahyo': { name: 'Cahyo Prasetyo', nik: '3174052209890015', position: 'Analis Data', branch: 'Jakarta Pusat' },
+  'pay-fajar': { name: 'Fajar Nugroho', nik: '3174050904920021', position: 'Staff Logistik', branch: 'Jakarta Pusat' },
+  'pay-yusuf': { name: 'Yusuf Maulana', nik: '3273011511960013', position: 'Teknisi Lapangan', branch: 'Bandung' },
+  'pay-rina': { name: 'Rina Wijayanti', nik: '3374012703950018', position: 'Staff Administrasi', branch: 'Semarang' },
 };
 
 export const PEOPLE: Record<string, string> = {
