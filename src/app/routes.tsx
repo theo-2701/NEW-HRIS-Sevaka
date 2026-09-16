@@ -27,6 +27,7 @@ import { FinanceSecurityPage } from '@/features/finance-security/pages/FinanceSe
 import { EssFinancePage } from '@/features/ess-finance/pages/EssFinancePage';
 import { SalaryProcessingPage } from '@/features/salary-processing/pages/SalaryProcessingPage';
 import { PayrollAuthorizationPage } from '@/features/payroll-authorization/pages/PayrollAuthorizationPage';
+import { SalarySettingsPage } from '@/features/salary-settings/pages/SalarySettingsPage';
 import { TimeOffBalancePage } from '@/features/time-off/pages/TimeOffBalancePage';
 import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage';
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
@@ -89,6 +90,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'me/finance', element: <EssFinancePage /> },
   { path: 'payroll/salary-processing', element: <SalaryProcessingPage /> },
   { path: 'payroll/authorization', element: <PayrollAuthorizationPage /> },
+  { path: 'payroll/salary-settings', element: <SalarySettingsPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -133,6 +135,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/me/finance',
   '/payroll/salary-processing',
   '/payroll/authorization',
+  '/payroll/salary-settings',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',

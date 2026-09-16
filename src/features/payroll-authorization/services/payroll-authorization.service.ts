@@ -10,7 +10,7 @@ import {
   pendingOf,
   resetHandoverStore,
 } from '@/features/payroll-authorization/handover-store';
-import { BATCH_SEED, COMPONENT_SEED, PROPOSAL_SEED } from '@/features/payroll-authorization/mock-data';
+import { resetSalaryStore, salaryStore } from '@/features/salary-settings/salary-store';
 import { canApproveBatch, isChecker, traitQueueOf } from '@/features/payroll-authorization/rules';
 import type {
   Actor,
@@ -33,14 +33,8 @@ import type {
 const delay = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms));
 const now = () => new Date().toISOString();
 
-let components: SalaryComponent[] = [];
-let proposals: IndividualProposal[] = [];
-let batches: ChangeBatch[] = [];
-
 export function resetPayrollAuthorizationMocks() {
-  components = COMPONENT_SEED.map((row) => ({ ...row }));
-  proposals = PROPOSAL_SEED.map((row) => ({ ...row }));
-  batches = BATCH_SEED.map((row) => ({ ...row, items: row.items.map((item) => ({ ...item })) }));
+  resetSalaryStore();
   resetHandoverStore();
 }
 resetPayrollAuthorizationMocks();
@@ -50,19 +44,19 @@ function requireChecker(actor: Actor, action: string) {
 }
 
 function findComponent(id: string): SalaryComponent {
-  const row = components.find((item) => item.id === id);
+  const row = salaryStore.components.find((item) => item.id === id);
   if (!row) throw new Error('404 NOT_FOUND — komponen gaji tidak ditemukan.');
   return row;
 }
 
 function findProposal(id: string): IndividualProposal {
-  const row = proposals.find((item) => item.id === id);
+  const row = salaryStore.proposals.find((item) => item.id === id);
   if (!row) throw new Error('404 NOT_FOUND — usulan tidak ditemukan.');
   return row;
 }
 
 function findBatch(id: string): ChangeBatch {
-  const row = batches.find((item) => item.id === id);
+  const row = salaryStore.batches.find((item) => item.id === id);
   if (!row) throw new Error('404 NOT_FOUND — kumpulan perubahan tidak ditemukan.');
   return row;
 }
@@ -72,7 +66,7 @@ export const payrollAuthorizationService = {
   async traitQueue(): Promise<SalaryComponent[]> {
     if (MOCK) {
       await delay();
-      return traitQueueOf(components).map((row) => ({ ...row }));
+      return traitQueueOf(salaryStore.components).map((row) => ({ ...row }));
     }
     const { data } = await api.post<{ data: SalaryComponent[] }>('/payroll/salary-components/search', {
       proposal_state: 'MENUNGGU_PERSETUJUAN',
@@ -133,7 +127,7 @@ export const payrollAuthorizationService = {
   async proposalQueue(): Promise<IndividualProposal[]> {
     if (MOCK) {
       await delay();
-      return proposals
+      return salaryStore.proposals
         .filter((row) => row.approvalState === 'MENUNGGU_PERSETUJUAN')
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .map((row) => ({ ...row }));
@@ -149,7 +143,7 @@ export const payrollAuthorizationService = {
   async decidedProposals(): Promise<IndividualProposal[]> {
     if (MOCK) {
       await delay();
-      return proposals
+      return salaryStore.proposals
         .filter((row) => row.approvalState !== 'MENUNGGU_PERSETUJUAN')
         .sort((a, b) => (b.approvedAt ?? '').localeCompare(a.approvedAt ?? ''))
         .map((row) => ({ ...row }));
@@ -203,7 +197,7 @@ export const payrollAuthorizationService = {
   async batches(): Promise<ChangeBatch[]> {
     if (MOCK) {
       await delay();
-      return batches
+      return salaryStore.batches
         .filter((row) => row.status !== 'DRAFT')
         .map((row) => ({ ...row, items: row.items.map((item) => ({ ...item })) }));
     }

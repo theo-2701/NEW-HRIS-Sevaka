@@ -252,7 +252,7 @@ export const NAV: NavSection[] = [
         icon: 'sliders-horizontal',
         path: '/payroll/salary-settings',
         source: 'payroll-doc-settings.html',
-        status: 'todo',
+        status: 'done',
       },
       { label: 'Payroll Allocation', icon: 'split' },
       { label: 'Reports', icon: 'bar-chart-3' },
