@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { addPending } from '@/features/payroll-authorization/handover-store';
 import {
   FINDING_SEED,
   IMPORT_SEED,
@@ -55,6 +56,15 @@ let findings: Finding[] = [];
 let imports: HistoryImport[] = [];
 let runReplays = new Map<string, RunResult>();
 let sequence = 0;
+let lockGateFailure: 'time' | 'finance' | 'param' | null = null;
+
+/** Regex kontrak `reason` buka-kembali (10–2000 karakter). */
+const REOPEN_REASON = /^[\s\S]{10,2000}$/;
+
+/** Hanya untuk pengujian gerbang kunci: memaksa satu gerbang gagal. */
+export function setLockGateFailure(gate: 'time' | 'finance' | 'param' | null) {
+  lockGateFailure = gate;
+}
 
 export function resetSalaryProcessingMocks() {
   periods = PERIOD_SEED.map((row) => ({ ...row }));
@@ -64,6 +74,7 @@ export function resetSalaryProcessingMocks() {
   imports = IMPORT_SEED.map((row) => ({ ...row }));
   runReplays = new Map();
   sequence = 0;
+  lockGateFailure = null;
 }
 resetSalaryProcessingMocks();
 
@@ -225,6 +236,146 @@ export const salaryProcessingService = {
       return { ...row };
     }
     const { data } = await api.post<PayrollPeriod>(`/payroll/periods/${id}/review`, {});
+    return data;
+  },
+
+  /**
+   * `#27` — kunci periode (dipakai menu Otorisasi & Penyerahan). Gerbang berurutan: status wajib
+   * REVIEWED, pengunci bukan penghitung, lalu gerbang 1/2/3. Gerbang 1 dan 2 adalah tarikan
+   * rekonsiliasi kehadiran dan potongan finance yang dipicu tepat saat penguncian, jadi di mode
+   * dummy keduanya diselesaikan lebih dulu kecuali sengaja digagalkan lewat `setLockGateFailure`.
+   */
+  async lockPeriod(actor: { employeeId: string; role: string }, id: string): Promise<PayrollPeriod> {
+    if (MOCK) {
+      await delay(320);
+      if (actor.role !== 'ROLE_HR_MANAGER') throw new Error('403 — mengunci periode hanya untuk HR Manager (Pemeriksa).');
+      const row = findPeriod(id);
+      if (row.status !== 'REVIEWED') {
+        throw new Error(`422 — ${periodLabel(row)} berstatus ${row.status}; kunci hanya sah dari REVIEWED.`);
+      }
+      if (row.calculated.employeeId === actor.employeeId) {
+        throw new Error('403 PAY_MAKER_CHECKER_VIOLATION — pengunci tidak boleh orang yang menjalankan perhitungan.');
+      }
+      if (lockGateFailure !== 'time' && !row.gate1TimeReconciliationCompletedAt) {
+        row.gate1TimeReconciliationCompletedAt = now();
+      }
+      if (lockGateFailure !== 'finance' && !row.gate2FinanceDeductionPullCompletedAt) {
+        row.gate2FinanceDeductionPullCompletedAt = now();
+      }
+      if (lockGateFailure === 'param') row.gate3ParamSnapshotComplete = false;
+      if (!row.gate1TimeReconciliationCompletedAt) {
+        throw new Error('422 PAY_LOCK_BLOCKED_TIME_MISMATCH — rekonsiliasi kehadiran belum selesai.');
+      }
+      if (!row.gate2FinanceDeductionPullCompletedAt) {
+        throw new Error('422 PAY_LOCK_BLOCKED_FINANCE_INCOMPLETE — tarikan potongan finance belum utuh.');
+      }
+      if (!row.gate3ParamSnapshotComplete) {
+        throw new Error('422 PAY_LOCK_BLOCKED_NO_PARAM_SNAPSHOT — sepuluh parameter periode belum lengkap.');
+      }
+      const stamp = { employeeId: actor.employeeId, at: now() };
+      row.status = 'LOCKED';
+      row.locked = stamp;
+      history.push({
+        id: nextId('sc'),
+        periodId: row.id,
+        fromStatus: 'REVIEWED',
+        toStatus: 'LOCKED',
+        reason: null,
+        createdBy: actor.employeeId,
+        createdAt: stamp.at,
+      });
+      return { ...row };
+    }
+    const { data } = await api.post<PayrollPeriod>(`/payroll/periods/${id}/lock`, {});
+    return data;
+  },
+
+  /** `#28` — buka kembali; hanya pemegang kunci baris ini, alasan wajib 10–2000 karakter. */
+  async reopenPeriod(
+    actor: { employeeId: string; role: string },
+    id: string,
+    input: { targetStatus: 'REVIEWED' | 'CALCULATED' | ''; reason: string },
+  ): Promise<PayrollPeriod> {
+    if (MOCK) {
+      await delay(300);
+      if (actor.role !== 'ROLE_HR_MANAGER') {
+        throw new Error('403 — membuka kembali periode hanya untuk HR Manager (Pemeriksa).');
+      }
+      const row = findPeriod(id);
+      if (row.status === 'HANDED_OVER') {
+        throw new Error(`422 — ${periodLabel(row)} sudah diserahkan; status itu permanen.`);
+      }
+      if (row.status !== 'LOCKED') {
+        throw new Error(`422 — ${periodLabel(row)} berstatus ${row.status}; buka kembali hanya sah dari LOCKED.`);
+      }
+      if (row.locked?.employeeId !== actor.employeeId) {
+        throw new Error('403 PAY_MAKER_CHECKER_VIOLATION — hanya pemegang kunci baris ini yang boleh membukanya kembali.');
+      }
+      if (!input.targetStatus) throw new Error('422 VALIDATION_ERROR — status tujuan wajib dipilih.');
+      if (!REOPEN_REASON.test(input.reason.trim())) {
+        throw new Error('422 VALIDATION_ERROR — alasan wajib 10 sampai 2000 karakter.');
+      }
+      const stamp = now();
+      row.status = input.targetStatus;
+      row.locked = null;
+      if (input.targetStatus === 'CALCULATED') row.reviewed = null;
+      history.push({
+        id: nextId('sc'),
+        periodId: row.id,
+        fromStatus: 'LOCKED',
+        toStatus: input.targetStatus,
+        reason: input.reason.trim(),
+        createdBy: actor.employeeId,
+        createdAt: stamp,
+      });
+      return { ...row };
+    }
+    const { data } = await api.post<PayrollPeriod>(`/payroll/periods/${id}/reopen`, {
+      target_status: input.targetStatus,
+      reason: input.reason,
+    });
+    return data;
+  },
+
+  /**
+   * `#29` — otorisasi penyerahan. Temuan terbuka bersubjek karyawan menahan penyerahan;
+   * `PERIOD_NOT_PICKED_UP` bersubjek periode sehingga tidak ikut dihitung. Sukses menulis baris
+   * jembatan yang menunggu diambil sistem klien.
+   */
+  async authorizeHandover(actor: { employeeId: string; role: string }, id: string): Promise<PayrollPeriod> {
+    if (MOCK) {
+      await delay(320);
+      if (actor.role !== 'ROLE_HR_MANAGER') {
+        throw new Error('403 — otorisasi penyerahan hanya untuk HR Manager (Pemeriksa).');
+      }
+      const row = findPeriod(id);
+      if (row.status !== 'LOCKED') {
+        throw new Error(`422 — ${periodLabel(row)} berstatus ${row.status}; otorisasi hanya sah dari LOCKED.`);
+      }
+      const blocking = findings.filter(
+        (item) => item.periodId === id && item.finalState === null && item.employeeId !== null,
+      );
+      if (blocking.length) {
+        throw new Error(
+          `422 PAY_OPEN_FINDING_BLOCKS_HANDOVER — masih ada ${blocking.length} temuan terbuka bersubjek karyawan.`,
+        );
+      }
+      const stamp = { employeeId: actor.employeeId, at: now() };
+      row.status = 'HANDED_OVER';
+      row.handedOver = stamp;
+      history.push({
+        id: nextId('sc'),
+        periodId: row.id,
+        fromStatus: 'LOCKED',
+        toStatus: 'HANDED_OVER',
+        reason: null,
+        createdBy: actor.employeeId,
+        createdAt: stamp.at,
+      });
+      addPending(row.id, 10, stamp.at);
+      return { ...row };
+    }
+    const { data } = await api.post<PayrollPeriod>(`/payroll/periods/${id}/authorize-handover`, {});
     return data;
   },
 
