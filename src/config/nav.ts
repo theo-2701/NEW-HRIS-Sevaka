@@ -311,18 +311,18 @@ export const NAV: NavSection[] = [
   {
     section: 'Company',
     children: [
-      { label: 'Branch', icon: 'git-fork', path: '/company/branch', source: 'company-branch.html', status: 'todo' },
+      { label: 'Branch', icon: 'git-fork', path: '/company/branch', source: 'company-branch.html', status: 'done' },
       {
         label: 'Group Structure',
         icon: 'network',
         path: '/company/group-structure',
         source: 'company-group-structure.html',
-        status: 'todo',
+        status: 'done',
       },
-      { label: 'Grade & Class', icon: 'layers', path: '/company/grade-class', source: 'company-grade-class.html', status: 'todo' },
-      { label: 'Cost Center', icon: 'wallet-cards', path: '/company/cost-center', source: 'company-cost-center.html', status: 'todo' },
-      { label: 'SBU', icon: 'building-2', path: '/company/sbu', source: 'company-sbu.html', status: 'todo' },
-      { label: 'Vendor', icon: 'truck', path: '/company/vendor', source: 'company-vendor.html', status: 'todo' },
+      { label: 'Grade & Class', icon: 'layers', path: '/company/grade-class', source: 'company-grade-class.html', status: 'done' },
+      { label: 'Cost Center', icon: 'wallet-cards', path: '/company/cost-center', source: 'company-cost-center.html', status: 'done' },
+      { label: 'SBU', icon: 'building-2', path: '/company/sbu', source: 'company-sbu.html', status: 'done' },
+      { label: 'Vendor', icon: 'truck', path: '/company/vendor', source: 'company-vendor.html', status: 'done' },
     ],
   },
 

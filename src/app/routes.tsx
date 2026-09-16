@@ -28,6 +28,12 @@ import { EssFinancePage } from '@/features/ess-finance/pages/EssFinancePage';
 import { SalaryProcessingPage } from '@/features/salary-processing/pages/SalaryProcessingPage';
 import { PayrollAuthorizationPage } from '@/features/payroll-authorization/pages/PayrollAuthorizationPage';
 import { SalarySettingsPage } from '@/features/salary-settings/pages/SalarySettingsPage';
+import { BranchPage } from '@/features/company/pages/BranchPage';
+import { GroupStructurePage } from '@/features/company/pages/GroupStructurePage';
+import { GradeClassPage } from '@/features/company/pages/GradeClassPage';
+import { CostCenterPage } from '@/features/company/pages/CostCenterPage';
+import { SbuPage } from '@/features/company/pages/SbuPage';
+import { VendorPage } from '@/features/company/pages/VendorPage';
 import { PeriodDetailPage } from '@/features/salary-processing/pages/PeriodDetailPage';
 import { PayrollInfoPage } from '@/features/ess-payroll/pages/PayrollInfoPage';
 import { PayslipPage } from '@/features/ess-payroll/pages/PayslipPage';
@@ -98,6 +104,12 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'payroll/salary-processing/period', element: <PeriodDetailPage /> },
   { path: 'me/payroll', element: <PayrollInfoPage /> },
   { path: 'me/payslip', element: <PayslipPage /> },
+  { path: 'company/branch', element: <BranchPage /> },
+  { path: 'company/group-structure', element: <GroupStructurePage /> },
+  { path: 'company/grade-class', element: <GradeClassPage /> },
+  { path: 'company/cost-center', element: <CostCenterPage /> },
+  { path: 'company/sbu', element: <SbuPage /> },
+  { path: 'company/vendor', element: <VendorPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -146,6 +158,12 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/payroll/salary-processing/period',
   '/me/payroll',
   '/me/payslip',
+  '/company/branch',
+  '/company/group-structure',
+  '/company/grade-class',
+  '/company/cost-center',
+  '/company/sbu',
+  '/company/vendor',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',
