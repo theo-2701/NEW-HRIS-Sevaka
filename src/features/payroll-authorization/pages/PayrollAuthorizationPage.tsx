@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Segmented } from '@/components/Segmented';
@@ -12,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
 import { GateDots, PeriodStatusBadge } from '@/features/salary-processing/components/ProcessingBits';
-import { PeriodDetailCard } from '@/features/salary-processing/components/PeriodDetailCard';
 import { usePeriods } from '@/features/salary-processing/hooks/useSalaryProcessing';
 import { employeeName } from '@/features/salary-processing/mock-data';
 import { periodLabel, periodName } from '@/features/salary-processing/rules';
@@ -77,12 +77,12 @@ const LIFECYCLE = [
  * memutuskan tiga jenis usulan gaji, dan memantau tabel jembatan penyerahan.
  */
 export function PayrollAuthorizationPage() {
+  const navigate = useNavigate();
   const [actor, setActor] = useState<Actor>(VIEWERS[0]);
   const checker = isChecker(actor);
   const [tab, setTab] = useState<Tab>('periods');
   const [proposalView, setProposalView] = useState<ProposalView>('traits');
 
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
   const [locking, setLocking] = useState<PayrollPeriod | null>(null);
   const [reopening, setReopening] = useState<PayrollPeriod | null>(null);
   const [authorizing, setAuthorizing] = useState<PayrollPeriod | null>(null);
@@ -102,7 +102,8 @@ export function PayrollAuthorizationPage() {
   const reexports = useReexportLog();
 
   const periodList = useMemo(() => periods.data ?? [], [periods.data]);
-  const selectedPeriod = periodList.find((row) => row.id === selectedPeriodId) ?? null;
+  const openPeriod = (periodId: string) =>
+    navigate(`/payroll/salary-processing/period?id=${periodId}&as=${actor.employeeId}&from=authorization`);
   const pendingIds = (pending.data ?? []).map((row) => row.periodId);
 
   const pagedPeriods = usePagedRows(periodList);
@@ -110,14 +111,14 @@ export function PayrollAuthorizationPage() {
   const pagedDecided = usePagedRows(decided.data ?? []);
 
   const periodActions = (row: PayrollPeriod) => {
-    const actions = [{ label: 'View Detail', onSelect: () => setSelectedPeriodId(row.id) }];
+    const actions = [{ label: 'View Detail', onSelect: () => openPeriod(row.id) }];
     if (canLock(row, actor)) actions.unshift({ label: 'Lock', onSelect: () => setLocking(row) });
     if (canAuthorize(row, actor)) actions.unshift({ label: 'Authorize handover', onSelect: () => setAuthorizing(row) });
     if (canReopen(row, actor)) actions.push({ label: 'Reopen', onSelect: () => setReopening(row) });
     return actions.length > 1 ? (
       <RowActions actions={actions} />
     ) : (
-      <RowButton onClick={() => setSelectedPeriodId(row.id)}>View Detail</RowButton>
+      <RowButton onClick={() => openPeriod(row.id)}>View Detail</RowButton>
     );
   };
 
@@ -261,15 +262,6 @@ export function PayrollAuthorizationPage() {
                 </div>
               </Card>
 
-              {selectedPeriod && (
-                <PeriodDetailCard
-                  actor={{ employeeId: actor.employeeId, role: 'ROLE_HR_MANAGER' }}
-                  period={selectedPeriod}
-                  onRecalculate={() => undefined}
-                  onReview={() => undefined}
-                  onOpenFindings={() => undefined}
-                />
-              )}
             </>
           )}
 

@@ -12,7 +12,7 @@ import {
 } from '@/features/salary-processing/components/ProcessingBits';
 import { useFindings, useParamSnapshot, useStateHistory } from '@/features/salary-processing/hooks/useSalaryProcessing';
 import { employeeName } from '@/features/salary-processing/mock-data';
-import { canActOnCalculated, gateStates, periodLabel, periodName } from '@/features/salary-processing/rules';
+import { canActOnCalculated, gateStates } from '@/features/salary-processing/rules';
 import type { Actor, Finding, ParamSnapshot, PayrollPeriod, Stamp } from '@/features/salary-processing/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -52,8 +52,8 @@ export function PeriodDetailCard({
   return (
     <Card>
       <CardHead
-        title={`${periodLabel(period)} · ${periodName(period)}`}
-        sub="Detail periode yang dipilih"
+        title="Period summary"
+        sub="Gerbang, parameter yang dibekukan, ringkasan temuan, dan riwayat status"
         action={
           actionable ? (
             <div className="flex flex-wrap items-center gap-2.5">
