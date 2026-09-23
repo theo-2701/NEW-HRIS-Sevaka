@@ -50,6 +50,11 @@ import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
 import { AddEmployeePage } from '@/features/new-joiner/pages/AddEmployeePage';
 import { EmployeeDirectoryPage } from '@/features/employees/pages/EmployeeDirectoryPage';
 import { EmployeeDetailPage } from '@/features/employees/pages/EmployeeDetailPage';
+import { EssAttendancePage } from '@/features/ess-time/pages/EssAttendancePage';
+import { EssTimeOffPage } from '@/features/ess-time/pages/EssTimeOffPage';
+import { EssDelegationPage } from '@/features/ess-time/pages/EssDelegationPage';
+import { EssTimeOffTakenPage } from '@/features/ess-time/pages/EssTimeOffTakenPage';
+import { EssOvertimePage } from '@/features/ess-time/pages/EssOvertimePage';
 import { EmployeeProfilePage } from '@/features/profile/pages/EmployeeProfilePage';
 import { LoginEmailPage } from '@/features/auth/pages/LoginEmailPage';
 import { LoginUsernamePage } from '@/features/auth/pages/LoginUsernamePage';
@@ -105,6 +110,11 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'payroll/salary-settings', element: <SalarySettingsPage /> },
   /* Detail periode tidak punya baris menu — dibuka dari baris tabel periode. */
   { path: 'payroll/salary-processing/period', element: <PeriodDetailPage /> },
+  { path: 'me/time/attendance', element: <EssAttendancePage /> },
+  { path: 'me/time/time-off', element: <EssTimeOffPage /> },
+  { path: 'me/time/time-off/delegation', element: <EssDelegationPage /> },
+  { path: 'me/time/time-off/taken', element: <EssTimeOffTakenPage /> },
+  { path: 'me/time/overtime', element: <EssOvertimePage /> },
   { path: 'me/payroll', element: <PayrollInfoPage /> },
   { path: 'me/payslip', element: <PayslipPage /> },
   { path: 'company/branch', element: <BranchPage /> },
@@ -160,6 +170,11 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/payroll/authorization',
   '/payroll/salary-settings',
   '/payroll/salary-processing/period',
+  '/me/time/attendance',
+  '/me/time/time-off',
+  '/me/time/time-off/delegation',
+  '/me/time/time-off/taken',
+  '/me/time/overtime',
   '/me/payroll',
   '/me/payslip',
   '/company/branch',

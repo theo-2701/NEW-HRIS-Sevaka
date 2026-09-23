@@ -38,6 +38,8 @@ Baca dulu: `_prototype/EMPLOYEE-GAP-NOTES.md`.
 
 ## Batch 2 — Time Management
 
+- [x] **ESS Time Management** (5 layar: Attendance · Time Off · Delegation · Time Off Taken · Overtime) — baris menunya sudah berdiri di sidebar ESS sejak awal tetapi kosong tanpa `path`; kini terisi. Nol resource baru: fitur `ess-time` membungkus service Time yang sama dengan peran `ROLE_EMPLOYEE`/`EMPLOYEE` saja, sehingga penyaringan milik-sendiri ditegakkan service — bukan disaring belakangan di komponen (UIC-TIME §3.1/§3.2/§4.1.3; riwayat mutasi saldo memakai pola `me-search` yang kriterianya nol memuat `employee_id`). Delegasi dipisah dua arah: dititipkan-ke-saya vs saya-titipkan, dan statusnya dibaca sebagai status **persetujuan penunjukan** (bukan aktif-tidaknya), sesuai §3.2.
+
 - [x] Time Off **Request** — `time-off-request.html` (empat gerbang submit, cuti sakit AUTO_APPROVED + jendela tolak beku, SoD 403, penarikan → CANCELLED, delegasi §3.2, jejak akses surat dokter 403/410)
 - [x] Time Off **Balance** — `time-off-balance.html` (saldo dijumlahkan dari ledger, ledger append-only, HR adjustment create-only dengan sumber terkunci + refId kosong, delta bertanda ≠ 0, proyeksi bukan gerbang)
 - [x] Time Off **Settings** — `time-off-settings.html` (katalog jenis cuti + statutory terkunci, unpaid×deducts ditolak, kode unik 409, satu kebijakan akrual hidup per jenis × jenis kepegawaian, berhenti hanya lewat tanggal akhir, blackout wajib bertanggal akhir)
