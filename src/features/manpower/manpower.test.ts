@@ -10,7 +10,7 @@ const validRequisition = {
   parentPositionId: 'pos-fin-mgr',
   title: 'Staff Finance',
   headcount: 2,
-  justification: 'Cabang baru butuh dua staf finance.',
+  reason: 'Cabang baru butuh dua staf finance.',
 };
 
 describe('REQ-CREATE — validasi', () => {
@@ -22,7 +22,7 @@ describe('REQ-CREATE — validasi', () => {
 
   it('menolak justifikasi kosong dan judul lebih dari 150 karakter', async () => {
     await expect(
-      requisitionSchema.validateAt('justification', { ...validRequisition, justification: '  ' }),
+      requisitionSchema.validateAt('reason', { ...validRequisition, reason: '  ' }),
     ).rejects.toThrow(/Justifikasi wajib/);
     await expect(
       requisitionSchema.validateAt('title', { ...validRequisition, title: 'x'.repeat(151) }),
@@ -74,7 +74,7 @@ describe('REQ — guard state (UIC-EMPLOYEE §1.6)', () => {
 
   it('server menolak requisition tanpa justifikasi (422)', async () => {
     await expect(
-      manpowerService.createRequisition({ ...validRequisition, justification: '  ' }, false),
+      manpowerService.createRequisition({ ...validRequisition, reason: '  ' }, false),
     ).rejects.toThrow(/422/);
   });
 });

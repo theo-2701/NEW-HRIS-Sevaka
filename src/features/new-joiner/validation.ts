@@ -11,8 +11,19 @@ import * as Yup from 'yup';
  */
 const today = () => new Date().toISOString().slice(0, 10);
 
-/** Regex `candidate_phone` (UIC-EMPLOYEE §9, TSD §8.3). */
-export const CANDIDATE_PHONE = /^[0-9+][0-9]{6,19}$/;
+/**
+ * Regex `candidate_phone` — diketatkan ke pola persis `phoneNumber` auth-service
+ * (`TSD-EMPLOYEE 0.26` §8.3, `PROB-SERVICE-998`, audit 23 September 2026): `+62`/`0` diikuti
+ * `8` lalu 7–12 digit. Diuji setelah `normalizePhone` menyeragamkan ke bentuk `+62…`.
+ */
+export const CANDIDATE_PHONE = /^(\+62|0)8[0-9]{7,12}$/;
+
+/**
+ * Regex `candidate_name` — subset pola `full_name` auth-service (`TSD-EMPLOYEE 0.26` §8.9,
+ * dipisah dari §8.6 yang tetap untuk teks bebas lain seperti `position_title`). Huruf, spasi,
+ * dan `'.,-` saja; diawali huruf, dan diakhiri huruf atau titik.
+ */
+export const CANDIDATE_NAME = /^[A-Za-z][A-Za-z\s'.,-]{1,148}[A-Za-z.]$/;
 
 /** Seragamkan nomor calon ke `+62…` sebelum dikirim ke auth-service saat materialize (UIC §4.1). */
 export function normalizePhone(value: string): string {
@@ -26,7 +37,11 @@ export function normalizePhone(value: string): string {
 export const candidateSchema = Yup.object({
   positionId: Yup.string().required('Posisi wajib dipilih.'),
   requisitionId: Yup.string(),
-  name: Yup.string().trim().required('Nama kandidat wajib diisi.').max(150, 'Maksimal 150 karakter.'),
+  name: Yup.string()
+    .trim()
+    .required('Nama kandidat wajib diisi.')
+    .max(150, 'Maksimal 150 karakter.')
+    .matches(CANDIDATE_NAME, 'Hanya huruf, spasi, dan tanda \'.,- ; wajib diawali huruf.'),
   nationality: Yup.string().oneOf(['CITIZEN', 'FOREIGNER']).required(),
   idCardNumber: Yup.string().when('nationality', {
     is: 'CITIZEN',

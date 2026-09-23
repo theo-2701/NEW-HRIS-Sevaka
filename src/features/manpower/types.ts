@@ -22,7 +22,8 @@ export interface Requisition {
   headcount: number;
   status: RequisitionStatus;
   maker: string;
-  justification: string;
+  /** `emp_requisition.reason` — DTO `justification`→`reason` sejak TSD-EMPLOYEE 0.17 (audit 23 September 2026). */
+  reason: string;
   planId?: string;
   checkerNote?: string;
 }
@@ -53,7 +54,7 @@ export interface RequisitionDraft {
   parentPositionId: string;
   title: string;
   headcount: number;
-  justification: string;
+  reason: string;
 }
 
 export interface PlanDraft {

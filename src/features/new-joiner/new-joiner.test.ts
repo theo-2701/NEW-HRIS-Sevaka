@@ -197,4 +197,18 @@ describe('NJ-CREATE — candidate_phone (UIC-EMPLOYEE §4.1)', () => {
     const saved = (await newJoinerService.list()).find((row) => row.name === 'Phone Test');
     expect(saved?.phone).toBe('+6281234567890');
   });
+
+  it('menolak nomor yang tidak berpola +62/0-8xxxxxxxxxx (TSD-EMPLOYEE 0.26 §8.3)', async () => {
+    await expect(
+      newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505907777', passportNumber: '', phone: '021-5551234' }, false),
+    ).rejects.toThrow(/candidate_phone/);
+  });
+});
+
+describe('NJ-CREATE — candidate_name (TSD-EMPLOYEE 0.26 §8.9)', () => {
+  it('menolak nama yang memuat angka atau simbol di luar pola', async () => {
+    await expect(
+      newJoinerService.create({ ...base, name: 'Budi123', nationality: 'CITIZEN', idCardNumber: '3171021505906666', passportNumber: '' }, false),
+    ).rejects.toThrow(/candidate_name/);
+  });
 });

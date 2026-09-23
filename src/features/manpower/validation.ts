@@ -11,7 +11,7 @@ export const requisitionSchema = Yup.object({
     .required('Headcount wajib diisi.')
     .integer('Headcount harus bilangan bulat.')
     .min(1, 'Headcount minimal 1.'),
-  justification: Yup.string()
+  reason: Yup.string()
     .trim()
     .required('Justifikasi wajib diisi.')
     .max(150, 'Maksimal 150 karakter.'),

@@ -231,3 +231,58 @@ dibangun") tidak diperbarui langsung supaya tetap terbaca sebagai catatan sejara
 konvensi §1A yang sudah dipakai di audit-audit sebelumnya. Versi yang berlaku sekarang: **FSD
 0.32 · UIC 0.22 · TSD 0.39 · ERD 0.21** (rilis 22 September 2026, `September Handoff
 (Delivery)/FE-220926/` + `BE/BE/`).
+
+---
+
+## 9. Audit Employee 23 September 2026 — repo 0.12/0.27/0.13/0.9 vs arsip terbaru 0.14/0.32/0.69/0.32
+
+Sama seperti Company (§8): repo Employee dibangun memakai kontrak terlama yang tersedia saat itu.
+Rilis `FE-Fixing-5-Service` (17 September, FSD 0.14/UIC 0.32) dan `BE-Fixing-Diagram-4th`
+(10 September, TSD 0.69/ERD 0.32) belum pernah dibaca. Metode sama: changelog dari versi repo
+sampai terbaru, verifikasi hanya untuk baris yang menjanjikan dampak kode nyata.
+
+**Hasil FSD 0.12→0.14:** dua bump murni Figma/path (menu Bulk Import disusulkan ke Main-Frame,
+tiga path gambar dibetulkan) — nol dampak layar yang sudah dibangun.
+
+**Hasil UIC 0.27→0.32:** 0.28–0.31 murni koreksi status dokumentasi (klaim "belum ada route" yang
+sebenarnya sudah live — `/me`, `reprimand-categories/policies`, `mass-resignations/search`,
+Idempotency-Key); nol dampak kode FE. 0.32 menambah **4 section baru** (`menu-tree` §8B — sidebar
+dari server, `roles` §8C, `work-statuses/lookup` §8D, `active-count` §8E) — endpoint tambahan
+untuk layar yang belum ada/dropdown yang saat ini masih enum lokal; sudah dicatat sebagai D11/D12
+di §8.3 lama, tetap sebagai keputusan arsitektur terpisah, bukan dikerjakan giliran ini.
+
+**Hasil TSD 0.13→0.69 (56 versi) + ERD 0.9→0.32 (22 versi):** disaring dengan grep changelog,
+diverifikasi hanya kandidat yang menjanjikan drift nyata pada tujuh fitur yang sudah dibangun
+(`employees`, `manpower`, `new-joiner`, `transitions`, `mass-resignation`, `reprimand`, `ptkp`).
+Mayoritas kandidat **sudah benar** di kode — dicek langsung, bukan diasumsikan:
+
+| Kandidat | Kontrak | Keadaan repo (diverifikasi) |
+| :--- | :--- | :--- |
+| Mass Resignation `batch_title` | UIC §6.1 (`0.27`) | ✅ Sudah ada — `batchTitle` di `types.ts`/`service`/form/test |
+| Transition `waive_control_class` (STANDARD/ELEVATED) | TSD §6.8 (`0.44`) | ✅ Sudah ada — `waiveControl` di `types.ts` + `WaiveTaskModal` |
+| Employee Directory `keyword` = `nik` ATAU `name` (replika lokal, boleh basi/`null`) | TSD §7.2.1 (`0.36`) | ✅ Sudah benar — `search()` mencocokkan `name` maupun `nik` |
+| PTKP `is_primary_employer` + `dependent_claims` (maks 3) | TSD §7.8.1 (`0.21`) | ✅ Sudah ada — `DependentClaimsField.tsx` |
+| Employee Transition `PROMOTION` dicabut dari `transition_type` | TSD §6.5 (`0.5`/ERD `0.5`) | ✅ Tidak pernah dibangun — repo memang tidak punya opsi ini |
+
+**Satu delta nyata ditemukan dan diperbaiki** — Manpower Requisition memakai field `justification`
+padahal kontrak mengganti namanya jadi `reason` sejak **TSD `0.17`** (`PROB-SERVICE-778`, keputusan
+USER 17 Agustus 2026) dan **ERD `0.10`** menyusul: identifier `justification` diganti `reason` di
+seluruh `src/features/manpower/` (`types.ts`, `validation.ts`, `manpower.service.ts`,
+`RequisitionModals.tsx`, test) — label UI "Justifikasi" tidak diubah, murni nama field.
+
+**Dua penguatan validasi New Joiner** dari `TSD-EMPLOYEE 0.26` (`PROB-SERVICE-998`, tiga
+kontradiksi validasi New Joiner↔auth, satu bump): `candidate_phone` diketatkan dari regex longgar
+`/^[0-9+][0-9]{6,19}$/` ke pola persis kontrak `/^(\+62|0)8[0-9]{7,12}$/` (field itu sendiri
+sudah wajib sebelumnya — cuma polanya kurang ketat); `candidate_name` yang sebelumnya hanya
+dicek panjang, sekarang juga ditegakkan pola subset `full_name` auth
+(`/^[A-Za-z][A-Za-z\s'.,-]{1,148}[A-Za-z.]$/`, huruf/spasi/`'.,-` saja). Butir ketiga di bump yang
+sama (algoritma `username` turunan `candidate_name`) murni pekerjaan `auth-service` saat
+materialize — nol dampak form New Joiner, sengaja tidak dikerjakan.
+
+4 pengujian baru (2 Manpower lulus dari sebelumnya, 2 New Joiner) — total repo tetap hijau.
+
+**Belum diperiksa** (di luar cakupan giliran ini, volume terlalu besar untuk satu sesi): sisa
+ERD-EMPLOYEE 0.32 selain yang disebut di atas (mayoritas tabel backend-internal —
+`map_notified_menu`, `log_pii_access`, `outbox_event`, keputusan `nik` sequence — nol tampak di
+FE); audit setara untuk **Auth** dan **Finance** (TSD/ERD keduanya juga jauh tertinggal, lihat §1A
+lama) masih menunggu giliran.

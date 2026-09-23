@@ -29,7 +29,7 @@ const EMPTY: RequisitionDraft = {
   parentPositionId: '',
   title: '',
   headcount: 1,
-  justification: '',
+  reason: '',
 };
 
 /**
@@ -135,7 +135,7 @@ export function CreateRequisitionModal({
               </div>
 
               <TextAreaField
-                name="justification"
+                name="reason"
                 label="Justifikasi"
                 required
                 rows={3}
@@ -233,7 +233,7 @@ export function ReviewRequisitionModal({
               <RequisitionStatusBadge status={requisition.status} />
             </KeyValueRow>
             <KeyValueRow label="Maker">{requisition.maker}</KeyValueRow>
-            <KeyValueRow label="Justifikasi">{requisition.justification}</KeyValueRow>
+            <KeyValueRow label="Justifikasi">{requisition.reason}</KeyValueRow>
           </KeyValueList>
 
           {canDecide && (

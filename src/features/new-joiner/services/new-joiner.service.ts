@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
+import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER } from '@/features/new-joiner/types';
 import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
@@ -220,6 +220,7 @@ export const newJoinerService = {
       // MbV (UIC-EMPLOYEE §4.1): identitas bercabang mengikuti kewarganegaraan.
       const name = draft.name.trim();
       if (!name || name.length > 150) throw new Error('422 — candidate_name wajib, maksimal 150 karakter.');
+      if (!CANDIDATE_NAME.test(name)) throw new Error('422 — candidate_name format §8.9 (subset full_name auth).');
       if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email tidak valid.');
       const phone = normalizePhone(draft.phone ?? '');
       if (!CANDIDATE_PHONE.test(phone)) {

@@ -37,7 +37,7 @@ let mockRequisitions: Requisition[] = [
     headcount: 2,
     status: 'IN_APPROVAL',
     maker: 'Rina Hartono',
-    justification: 'Ekspansi wilayah Papua; dua staf finance untuk menutup ledger cabang baru.',
+    reason: 'Ekspansi wilayah Papua; dua staf finance untuk menutup ledger cabang baru.',
     planId: 'plan-2026',
   },
   {
@@ -48,7 +48,7 @@ let mockRequisitions: Requisition[] = [
     headcount: 1,
     status: 'APPROVED',
     maker: 'Dewi Anggraini',
-    justification: 'Backfill backend engineer yang mengundurkan diri.',
+    reason: 'Backfill backend engineer yang mengundurkan diri.',
     planId: 'plan-2026',
   },
   {
@@ -59,7 +59,7 @@ let mockRequisitions: Requisition[] = [
     headcount: 1,
     status: 'APPROVED',
     maker: 'Rina Hartono',
-    justification: 'HRBP untuk headcount Jakarta yang bertambah.',
+    reason: 'HRBP untuk headcount Jakarta yang bertambah.',
   },
   {
     id: 'REQ-0228',
@@ -69,7 +69,7 @@ let mockRequisitions: Requisition[] = [
     headcount: 3,
     status: 'FULFILLED',
     maker: 'Bagus Pratama',
-    justification: 'Ramp-up penjualan Q1 — ketiga kursi sudah terisi.',
+    reason: 'Ramp-up penjualan Q1 — ketiga kursi sudah terisi.',
   },
   {
     id: 'REQ-0227',
@@ -79,7 +79,7 @@ let mockRequisitions: Requisition[] = [
     headcount: 1,
     status: 'DRAFT',
     maker: CURRENT_USER,
-    justification: 'Koordinator gudang — justifikasi masih menunggu tanda tangan.',
+    reason: 'Koordinator gudang — justifikasi masih menunggu tanda tangan.',
   },
   {
     id: 'REQ-0226',
@@ -89,7 +89,7 @@ let mockRequisitions: Requisition[] = [
     headcount: 1,
     status: 'REJECTED',
     maker: 'Bagus Pratama',
-    justification: 'Duplikat REQ-0231 — ditolak checker.',
+    reason: 'Duplikat REQ-0231 — ditolak checker.',
   },
 ];
 
@@ -201,7 +201,7 @@ export const manpowerService = {
       if (!Number.isInteger(Number(draft.headcount)) || Number(draft.headcount) < 1) {
         throw new Error('422 — headcount minimal 1.');
       }
-      if (!draft.justification.trim()) throw new Error('422 — justification wajib diisi.');
+      if (!draft.reason.trim()) throw new Error('422 — reason wajib diisi.');
       if (!draft.unitId || !draft.parentPositionId) throw new Error('422 — unit dan atasan posisi wajib dipilih.');
       const row: Requisition = {
         id: nextRequisitionId(),
@@ -211,7 +211,7 @@ export const manpowerService = {
         headcount: Number(draft.headcount),
         status: submitNow ? 'IN_APPROVAL' : 'DRAFT',
         maker: CURRENT_USER,
-        justification: draft.justification.trim(),
+        reason: draft.reason.trim(),
         planId: draft.planId || undefined,
       };
       mockRequisitions = [row, ...mockRequisitions];
