@@ -23,26 +23,27 @@ export function PlanCard({ plan }: { plan: ManpowerPlan }) {
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        className="flex flex-wrap items-center gap-3 px-5 py-4 text-left"
+        className="grid items-center gap-x-6 gap-y-3 px-5 py-4 text-left md:grid-cols-[minmax(0,1fr)_240px_96px]"
       >
-        <ChevronRight
-          className={cn('size-4 shrink-0 text-fg-3 transition-transform duration-200 ease-standard', open && 'rotate-90')}
-        />
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="font-body text-sm font-bold text-fg-1">{plan.title}</span>
-          <span className="font-body text-xs font-medium text-fg-3">
-            {formatDate(plan.periodStart)} – {formatDate(plan.periodEnd)} · {plan.lines.length} unit · dibuat{' '}
-            {plan.createdBy}
+        <span className="flex min-w-0 items-start gap-3">
+          <ChevronRight
+            className={cn(
+              'mt-0.5 size-4 shrink-0 text-fg-3 transition-transform duration-200 ease-standard',
+              open && 'rotate-90',
+            )}
+          />
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="font-body text-sm font-bold text-fg-1">{plan.title}</span>
+            <span className="font-body text-xs font-medium text-fg-3">
+              {formatDate(plan.periodStart)} – {formatDate(plan.periodEnd)} · {plan.lines.length} unit · dibuat{' '}
+              {plan.createdBy}
+            </span>
           </span>
         </span>
 
-        <span className="ml-auto flex flex-wrap items-center gap-5">
-          <Metric label="Target" value={totals.target} />
-          <Metric label="Actual" value={totals.actual ?? '—'} />
-          <span className="flex flex-col items-end gap-0.5">
-            <span className="font-body text-[10.5px] font-bold uppercase tracking-[0.05em] text-fg-3">Gap</span>
-            <GapValue gap={totals.gap} />
-          </span>
+        <FillProgress target={totals.target} actual={totals.actual} />
+
+        <span className="flex md:justify-end">
           <PlanStatusBadge status={plan.status} />
         </span>
       </button>
@@ -77,11 +78,39 @@ export function PlanCard({ plan }: { plan: ManpowerPlan }) {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number | string }) {
+function FillProgress({ target, actual }: { target: number; actual: number | null }) {
+  const gap = actual === null ? null : target - actual;
+  const percent = actual === null || target === 0 ? 0 : Math.min(actual / target, 1) * 100;
+
+  const status =
+    gap === null
+      ? { text: 'Belum berjalan', className: 'text-fg-4' }
+      : gap > 0
+        ? { text: `${gap} kursi kosong`, className: 'text-warning-800' }
+        : gap === 0
+          ? { text: 'Terpenuhi', className: 'text-success-800' }
+          : { text: `Lebih ${-gap}`, className: 'text-fg-3' };
+
   return (
-    <span className="flex flex-col items-end gap-0.5">
-      <span className="font-body text-[10.5px] font-bold uppercase tracking-[0.05em] text-fg-3">{label}</span>
-      <span className="font-body text-sm font-bold text-fg-1">{value}</span>
+    <span className="flex flex-col gap-1.5">
+      <span className="flex items-baseline justify-between gap-3 font-body text-xs font-medium tabular-nums">
+        {actual === null ? (
+          <span className="text-fg-3">
+            Target <b className="font-bold text-fg-1">{target}</b>
+          </span>
+        ) : (
+          <span className="text-fg-3">
+            <b className="text-sm font-bold text-fg-1">{actual}</b> / {target} terisi
+          </span>
+        )}
+        <span className={cn('font-semibold', status.className)}>{status.text}</span>
+      </span>
+      <span aria-hidden className="h-1.5 overflow-hidden rounded-pill bg-vapor">
+        <span
+          className="block h-full rounded-pill bg-secondary-500 transition-[width] duration-300 ease-standard"
+          style={{ width: `${percent}%` }}
+        />
+      </span>
     </span>
   );
 }
