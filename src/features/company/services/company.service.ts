@@ -41,8 +41,10 @@ import type {
   CostCenterCategory,
   CostCenterDraft,
   GroupLevel,
+  GroupLevelDraft,
   GroupPosition,
   GroupStruct,
+  GroupStructDraft,
   JobGrade,
   JobGradeDraft,
   ModuleCode,
@@ -361,6 +363,44 @@ export const companyService = {
     return data.data;
   },
 
+  /**
+   * Di luar dokumen kontrak (UIC §2.3 hanya mengontrakkan `POST`, bukan CRUD penuh) — diminta
+   * pengguna 23 September 2026 untuk melengkapi UI Group. `isDefault` maksimal satu per tenant;
+   * menyalakannya mematikan yang lama.
+   */
+  async saveGroupStruct(draft: GroupStructDraft, id?: string): Promise<GroupStruct> {
+    if (MOCK) {
+      await delay(240);
+      const name = draft.name.trim();
+      if (!name) throw new Error('422 VALIDATION_ERROR — nama group wajib diisi.');
+      if (groupStructs.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase())) {
+        throw new Error(`409 — group bernama ${name} sudah ada.`);
+      }
+      if (draft.isDefault) {
+        groupStructs.filter((row) => row.id !== id).forEach((row) => (row.isDefault = false));
+      }
+      const finalApproverInfo = snapshotOf(draft.finalApproverEmployeeId || null);
+      if (id) {
+        const row = groupStructs.find((item) => item.id === id);
+        if (!row) throw new Error('404 NOT_FOUND — group tidak ditemukan.');
+        Object.assign(row, { name, isDefault: draft.isDefault, finalApproverInfo });
+        return { ...row };
+      }
+      const row: GroupStruct = {
+        id: nextId('gs'),
+        name,
+        isDefault: draft.isDefault,
+        finalApproverInfo,
+        isActive: true,
+        createdAt: now(),
+      };
+      groupStructs.push(row);
+      return { ...row };
+    }
+    const { data } = await api.post<GroupStruct>('/group-structs', draft);
+    return data;
+  },
+
   async groupLevels(groupStructId?: string): Promise<GroupLevel[]> {
     if (MOCK) {
       await delay();
@@ -371,6 +411,52 @@ export const companyService = {
     }
     const { data } = await api.post<{ data: GroupLevel[] }>('/group-struct-levels/search', { group_struct_id: groupStructId });
     return data.data;
+  },
+
+  /** Di luar dokumen kontrak — diminta pengguna 23 September 2026. */
+  async saveGroupLevel(draft: GroupLevelDraft, id?: string): Promise<GroupLevel> {
+    if (MOCK) {
+      await delay(220);
+      const name = draft.levelName.trim();
+      const order = parseInteger(draft.levelOrder);
+      if (!draft.groupStructId) throw new Error('422 VALIDATION_ERROR — group wajib dipilih.');
+      if (!name) throw new Error('422 VALIDATION_ERROR — nama level wajib diisi.');
+      if (order === null || order < 1) throw new Error('422 VALIDATION_ERROR — urutan wajib angka mulai 1.');
+      if (groupLevels.some((row) => row.id !== id && row.groupStructId === draft.groupStructId && row.levelOrder === order)) {
+        throw new Error(`409 — urutan ${order} sudah dipakai level lain pada group ini.`);
+      }
+      if (id) {
+        const row = groupLevels.find((item) => item.id === id);
+        if (!row) throw new Error('404 NOT_FOUND — level tidak ditemukan.');
+        Object.assign(row, { groupStructId: draft.groupStructId, levelName: name, levelOrder: order });
+        return { ...row };
+      }
+      const row: GroupLevel = {
+        id: nextId('lvl'),
+        groupStructId: draft.groupStructId,
+        levelName: name,
+        levelOrder: order,
+        isActive: true,
+        createdAt: now(),
+      };
+      groupLevels.push(row);
+      return { ...row };
+    }
+    const { data } = await api.post<GroupLevel>('/group-struct-levels', draft);
+    return data;
+  },
+
+  async deleteGroupLevel(id: string): Promise<{ id: string }> {
+    if (MOCK) {
+      await delay(200);
+      if (positions.some((row) => row.groupStructLevelId === id)) {
+        throw new Error('409 — level ini masih dipakai posisi aktif.');
+      }
+      groupLevels = groupLevels.filter((row) => row.id !== id);
+      return { id };
+    }
+    const { data } = await api.delete<{ id: string }>(`/group-struct-levels/${id}`);
+    return data;
   },
 
   async positions(groupStructId?: string): Promise<GroupPosition[]> {

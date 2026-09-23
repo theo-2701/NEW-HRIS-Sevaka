@@ -13,6 +13,8 @@ import {
   useSaveBranchGroup,
   useSaveCostCenter,
   useSaveCostCenterCategory,
+  useSaveGroupLevel,
+  useSaveGroupStruct,
   useSaveJobGrade,
   useSavePosition,
   useSaveSbu,
@@ -37,7 +39,10 @@ import type {
   CostCenterCategory,
   CostCenterDraft,
   GroupLevel,
+  GroupLevelDraft,
   GroupPosition,
+  GroupStruct,
+  GroupStructDraft,
   JobGrade,
   JobGradeDraft,
   PicPosition,
@@ -329,6 +334,131 @@ export function BranchFormModal({
       <p className="font-body text-xs font-medium text-fg-4">
         FAX cabang belum punya kolom penyimpan di kontrak (GAP) — sengaja tidak ditampilkan di form ini.
       </p>
+    </Modal>
+  );
+}
+
+// ---------- Group Structure — Group & Level (di luar dokumen, diminta pengguna) ----------
+
+const EMPTY_GROUP_STRUCT: GroupStructDraft = { name: '', isDefault: false, finalApproverEmployeeId: '' };
+
+export function GroupStructFormModal({
+  open,
+  editing,
+  onClose,
+}: {
+  open: boolean;
+  editing: GroupStruct | null;
+  onClose: () => void;
+}) {
+  const save = useSaveGroupStruct();
+  const [draft, setDraft] = useState<GroupStructDraft>(EMPTY_GROUP_STRUCT);
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(
+      editing
+        ? { name: editing.name, isDefault: editing.isDefault, finalApproverEmployeeId: editing.finalApproverInfo?.employeeId ?? '' }
+        : EMPTY_GROUP_STRUCT,
+    );
+  }, [open, editing]);
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      title={editing ? `Ubah ${editing.name}` : 'Group baru'}
+      description="Hanya boleh ada satu group utama per perusahaan; menyalakannya di sini mematikan group utama yang lama."
+      footer={
+        <FooterButtons
+          onClose={onClose}
+          saving={save.isPending}
+          onSave={() => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose })}
+        />
+      }
+    >
+      <TextRow label="Nama group" required value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
+      <SelectRow
+        label="Persetujuan akhir"
+        allowEmpty
+        emptyLabel="Belum ditunjuk"
+        value={draft.finalApproverEmployeeId}
+        onChange={(finalApproverEmployeeId) => setDraft({ ...draft, finalApproverEmployeeId })}
+        options={PEOPLE_OPTIONS}
+      />
+      <label className="flex cursor-pointer items-start gap-2.5">
+        <Checkbox
+          className="mt-0.5"
+          checked={draft.isDefault}
+          onCheckedChange={(value) => setDraft({ ...draft, isDefault: value === true })}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-body text-[13px] font-semibold text-fg-1">Jadikan group utama</span>
+          <span className="font-body text-xs font-medium text-fg-3">
+            Group utama menampung posisi yang belum ditempatkan ke group lain.
+          </span>
+        </span>
+      </label>
+    </Modal>
+  );
+}
+
+const EMPTY_GROUP_LEVEL: GroupLevelDraft = { groupStructId: '', levelName: '', levelOrder: '1' };
+
+export function GroupLevelFormModal({
+  open,
+  editing,
+  structs,
+  defaultStructId,
+  onClose,
+}: {
+  open: boolean;
+  editing: GroupLevel | null;
+  structs: GroupStruct[];
+  defaultStructId: string;
+  onClose: () => void;
+}) {
+  const save = useSaveGroupLevel();
+  const [draft, setDraft] = useState<GroupLevelDraft>(EMPTY_GROUP_LEVEL);
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(
+      editing
+        ? { groupStructId: editing.groupStructId, levelName: editing.levelName, levelOrder: String(editing.levelOrder) }
+        : { ...EMPTY_GROUP_LEVEL, groupStructId: defaultStructId },
+    );
+  }, [open, editing, defaultStructId]);
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      title={editing ? `Ubah ${editing.levelName}` : 'Level baru'}
+      description="Urutan 1 = jenjang tertinggi pada group ini."
+      footer={
+        <FooterButtons
+          onClose={onClose}
+          saving={save.isPending}
+          onSave={() => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose })}
+        />
+      }
+    >
+      <SelectRow
+        label="Group"
+        required
+        value={draft.groupStructId}
+        onChange={(groupStructId) => setDraft({ ...draft, groupStructId })}
+        options={structs.map((row) => ({ value: row.id, label: row.name }))}
+      />
+      <TextRow label="Nama level" required value={draft.levelName} onChange={(levelName) => setDraft({ ...draft, levelName })} />
+      <TextRow
+        label="Urutan"
+        required
+        hint="Harus unik antar level pada group yang sama."
+        value={draft.levelOrder}
+        onChange={(levelOrder) => setDraft({ ...draft, levelOrder })}
+      />
     </Modal>
   );
 }

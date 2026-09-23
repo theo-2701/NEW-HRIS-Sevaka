@@ -113,6 +113,27 @@ const SUPER_ADMIN: CompanyActor = { employeeId: 'emp-hesti', label: 'Super Admin
 const HR_MANAGER: CompanyActor = { employeeId: 'emp-maya', label: 'HR Manager', role: 'ROLE_HR_MANAGER' };
 const POSITION_BASE = { canSignLetter: false, secondApproverEmployeeId: '' };
 
+describe('group & level — di luar dokumen kontrak', () => {
+  it('menyalakan group utama baru mematikan yang lama', async () => {
+    const created = await companyService.saveGroupStruct({ name: 'Struktur Baru', isDefault: true, finalApproverEmployeeId: '' });
+    expect(created.isDefault).toBe(true);
+    const structs = await companyService.groupStructs();
+    expect(structs.find((row) => row.id === 'gs-main')?.isDefault).toBe(false);
+  });
+
+  it('menolak urutan level kembar dalam satu group dan menghapus level yang masih dipakai posisi', async () => {
+    await expect(
+      companyService.saveGroupLevel({ groupStructId: 'gs-main', levelName: 'Duplikat', levelOrder: '1' }),
+    ).rejects.toThrow(/409/);
+
+    const level = await companyService.saveGroupLevel({ groupStructId: 'gs-main', levelName: 'Cabang', levelOrder: '9' });
+    const cleared = await companyService.deleteGroupLevel(level.id);
+    expect(cleared.id).toBe(level.id);
+
+    await expect(companyService.deleteGroupLevel('lvl-direksi')).rejects.toThrow(/dipakai posisi/);
+  });
+});
+
 describe('group structure', () => {
   it('menulis riwayat setiap posisi dibuat dan diubah', async () => {
     const row = await companyService.savePosition(SUPER_ADMIN, {

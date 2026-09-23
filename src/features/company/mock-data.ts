@@ -122,6 +122,7 @@ export const GROUP_STRUCT_SEED: GroupStruct[] = [
     name: 'Struktur Utama',
     isDefault: true,
     finalApproverInfo: { employeeId: 'emp-hesti', nama: 'Hesti Wulandari', nik: 'PTDIKA-0003' },
+    isActive: true,
     createdAt: at('2026-01-10'),
   },
   {
@@ -129,15 +130,16 @@ export const GROUP_STRUCT_SEED: GroupStruct[] = [
     name: 'Struktur Proyek',
     isDefault: false,
     finalApproverInfo: null,
+    isActive: true,
     createdAt: at('2026-03-01'),
   },
 ];
 
 export const GROUP_LEVEL_SEED: GroupLevel[] = [
-  { id: 'lvl-direksi', groupStructId: 'gs-main', levelName: 'Direksi', levelOrder: 1, createdAt: at('2026-01-10') },
-  { id: 'lvl-divisi', groupStructId: 'gs-main', levelName: 'Divisi', levelOrder: 2, createdAt: at('2026-01-10') },
-  { id: 'lvl-unit', groupStructId: 'gs-main', levelName: 'Unit', levelOrder: 3, createdAt: at('2026-01-10') },
-  { id: 'lvl-proyek', groupStructId: 'gs-proyek', levelName: 'Tim Proyek', levelOrder: 1, createdAt: at('2026-03-01') },
+  { id: 'lvl-direksi', groupStructId: 'gs-main', levelName: 'Direksi', levelOrder: 1, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'lvl-divisi', groupStructId: 'gs-main', levelName: 'Divisi', levelOrder: 2, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'lvl-unit', groupStructId: 'gs-main', levelName: 'Unit', levelOrder: 3, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'lvl-proyek', groupStructId: 'gs-proyek', levelName: 'Tim Proyek', levelOrder: 1, isActive: true, createdAt: at('2026-03-01') },
 ];
 
 export const GROUP_POSITION_SEED: GroupPosition[] = [
