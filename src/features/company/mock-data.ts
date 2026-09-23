@@ -1,6 +1,7 @@
 import type {
   Branch,
   BranchGroup,
+  CompanyActor,
   CompanySetup,
   CostCenter,
   CostCenterCategory,
@@ -8,6 +9,7 @@ import type {
   GroupPosition,
   GroupStruct,
   JobGrade,
+  ModuleGroupStructMap,
   PositionLog,
   Sbu,
   SbuGroup,
@@ -147,6 +149,7 @@ export const GROUP_POSITION_SEED: GroupPosition[] = [
     employeeInfo: { employeeId: 'emp-hesti', nama: 'Hesti Wulandari', nik: 'PTDIKA-0003' },
     parentId: null,
     supervisorInfo: null,
+    canSignLetter: true,
     createdAt: at('2026-01-10'),
   },
   {
@@ -157,6 +160,7 @@ export const GROUP_POSITION_SEED: GroupPosition[] = [
     employeeInfo: { employeeId: 'emp-maya', nama: 'Maya Anggraini', nik: 'PTDIKA-0002' },
     parentId: 'pos-dirut',
     supervisorInfo: { employeeId: 'emp-hesti', nama: 'Hesti Wulandari', nik: 'PTDIKA-0003' },
+    canSignLetter: false,
     createdAt: at('2026-01-10'),
   },
   {
@@ -167,6 +171,7 @@ export const GROUP_POSITION_SEED: GroupPosition[] = [
     employeeInfo: { employeeId: 'emp-rudi', nama: 'Rudi Hartono', nik: 'PTDIKA-0001' },
     parentId: 'pos-hr',
     supervisorInfo: { employeeId: 'emp-maya', nama: 'Maya Anggraini', nik: 'PTDIKA-0002' },
+    canSignLetter: false,
     createdAt: at('2026-01-11'),
   },
   {
@@ -177,8 +182,35 @@ export const GROUP_POSITION_SEED: GroupPosition[] = [
     employeeInfo: null,
     parentId: 'pos-hr',
     supervisorInfo: { employeeId: 'emp-maya', nama: 'Maya Anggraini', nik: 'PTDIKA-0002' },
+    canSignLetter: false,
     createdAt: at('2026-04-01'),
   },
+];
+
+/**
+ * Aktor Group Structure — hanya `ROLE_SUPER_ADMIN`/`ROLE_SYSTEM_ADMIN` boleh menulis GS-11 dan
+ * `can_sign_letter` (UIC §2.3.1/§2.3.2); dua lainnya baca-saja untuk mencoba gerbang perannya.
+ */
+export const COMPANY_VIEWERS: CompanyActor[] = [
+  { employeeId: 'emp-hesti', label: 'Hesti Wulandari — Super Admin', role: 'ROLE_SUPER_ADMIN' },
+  { employeeId: 'emp-rudi', label: 'Rudi Hartono — System Admin', role: 'ROLE_SYSTEM_ADMIN' },
+  { employeeId: 'emp-maya', label: 'Maya Anggraini — HR Manager', role: 'ROLE_HR_MANAGER' },
+  { employeeId: 'emp-dimas', label: 'Dimas Pratama — Department Manager', role: 'ROLE_DEPARTMENT_MANAGER' },
+];
+
+/** Employee yang bisa jadi Approver Kedua — harus berperan admin (UIC §2.3.2). */
+export const COMPANY_ADMIN_EMPLOYEE_IDS = COMPANY_VIEWERS.filter((row) => row.role === 'ROLE_SUPER_ADMIN' || row.role === 'ROLE_SYSTEM_ADMIN').map(
+  (row) => row.employeeId,
+);
+
+/**
+ * GS-11 — `EMPLOYEE`/`TIME`/`FINANCE` sudah dipetakan ke Struktur Utama; sisanya sengaja
+ * dikosongkan supaya baris "belum dipetakan" (dropdown kosong) juga terlihat di dummy.
+ */
+export const MODULE_GROUP_STRUCT_MAP_SEED: ModuleGroupStructMap[] = [
+  { id: 'mgs-time', moduleCode: 'TIME', groupStructId: 'gs-main', createdAt: at('2026-09-17') },
+  { id: 'mgs-finance', moduleCode: 'FINANCE', groupStructId: 'gs-main', createdAt: at('2026-09-17') },
+  { id: 'mgs-employee', moduleCode: 'EMPLOYEE', groupStructId: 'gs-main', createdAt: at('2026-09-17') },
 ];
 
 export const POSITION_LOG_SEED: PositionLog[] = [

@@ -4,8 +4,10 @@ import { toast } from '@/store/ui.store';
 import type {
   BranchDraft,
   BranchGroupDraft,
+  CompanyActor,
   CostCenterDraft,
   JobGradeDraft,
+  ModuleCode,
   SbuDraft,
   VendorDraft,
 } from '@/features/company/types';
@@ -115,17 +117,46 @@ export const useDeleteBranch = () =>
 export const useSavePosition = () =>
   useCompanyMutation(
     ({
+      actor,
       draft,
       id,
     }: {
-      draft: { positionName: string; groupStructLevelId: string; employeeId: string; parentId: string };
+      actor: CompanyActor;
+      draft: {
+        positionName: string;
+        groupStructLevelId: string;
+        employeeId: string;
+        parentId: string;
+        canSignLetter: boolean;
+        secondApproverEmployeeId: string;
+      };
       id?: string;
-    }) => companyService.savePosition(draft, id),
+    }) => companyService.savePosition(actor, draft, id),
     (row) => `Posisi ${row.positionName} tersimpan dan tercatat di riwayat.`,
   );
 
 export const useDeletePosition = () =>
   useCompanyMutation((id: string) => companyService.deletePosition(id), () => 'Posisi dihapus.');
+
+export const useModuleGroupStructMaps = (actor: CompanyActor) =>
+  useQuery({
+    queryKey: ['company', 'module-maps', actor.employeeId],
+    queryFn: () => companyService.moduleGroupStructMaps(actor),
+  });
+
+export const useSaveModuleGroupStructMap = () =>
+  useCompanyMutation(
+    ({ actor, moduleCode, groupStructId }: { actor: CompanyActor; moduleCode: ModuleCode; groupStructId: string }) =>
+      companyService.saveModuleGroupStructMap(actor, moduleCode, groupStructId),
+    (row) => `Modul ${row.moduleCode} dipetakan.`,
+  );
+
+export const useClearModuleGroupStructMap = () =>
+  useCompanyMutation(
+    ({ actor, moduleCode }: { actor: CompanyActor; moduleCode: ModuleCode }) =>
+      companyService.clearModuleGroupStructMap(actor, moduleCode),
+    (row) => `Pemetaan modul ${row.moduleCode} dikosongkan.`,
+  );
 
 export const useSaveJobGrade = () =>
   useCompanyMutation(

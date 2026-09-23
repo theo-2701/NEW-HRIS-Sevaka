@@ -3,12 +3,14 @@ import { MOCK } from '@/services/mock';
 import {
   BRANCH_GROUP_SEED,
   BRANCH_SEED,
+  COMPANY_ADMIN_EMPLOYEE_IDS,
   COST_CENTER_CATEGORY_SEED,
   COST_CENTER_SEED,
   GROUP_LEVEL_SEED,
   GROUP_POSITION_SEED,
   GROUP_STRUCT_SEED,
   JOB_GRADE_SEED,
+  MODULE_GROUP_STRUCT_MAP_SEED,
   PEOPLE,
   POSITION_LOG_SEED,
   SBU_GROUP_SEED,
@@ -17,8 +19,10 @@ import {
   VENDOR_SEED,
 } from '@/features/company/mock-data';
 import {
+  canReadModuleMap,
   computeGradeCode,
   deriveZip,
+  isCompanyAdmin,
   isDescendantNode,
   isDescendantPosition,
   parentLevelError,
@@ -31,6 +35,7 @@ import type {
   BranchDraft,
   BranchGroup,
   BranchGroupDraft,
+  CompanyActor,
   CompanySetup,
   CostCenter,
   CostCenterCategory,
@@ -40,6 +45,8 @@ import type {
   GroupStruct,
   JobGrade,
   JobGradeDraft,
+  ModuleCode,
+  ModuleGroupStructMap,
   PersonSnapshot,
   PositionActivity,
   PositionLog,
@@ -74,6 +81,7 @@ let costCenters: CostCenter[] = [];
 let sbuGroups: SbuGroup[] = [];
 let sbus: Sbu[] = [];
 let vendors: Vendor[] = [];
+let moduleMaps: ModuleGroupStructMap[] = [];
 let sequence = 0;
 
 export function resetCompanyMocks() {
@@ -90,6 +98,7 @@ export function resetCompanyMocks() {
   sbuGroups = SBU_GROUP_SEED.map((row) => ({ ...row }));
   sbus = SBU_SEED.map((row) => ({ ...row }));
   vendors = VENDOR_SEED.map((row) => ({ ...row }));
+  moduleMaps = MODULE_GROUP_STRUCT_MAP_SEED.map((row) => ({ ...row }));
   sequence = 0;
 }
 resetCompanyMocks();
@@ -393,9 +402,22 @@ export const companyService = {
   /**
    * Menyimpan posisi sekaligus menuliskan jejaknya dalam satu transaksi: snapshot pengisi,
    * snapshot atasan dari posisi induk, dan satu baris log.
+   *
+   * `canSignLetter` mengikuti UIC §2.3.2: MENYALAKAN (`false→true`) wajib dua tangan —
+   * `secondApproverEmployeeId` diisi, ≠ pemanggil, dan pemegangnya berperan admin. MEMATIKAN
+   * (`true→false`) cukup satu tangan. Kedua arah hanya boleh dilakukan `ROLE_SUPER_ADMIN`/
+   * `ROLE_SYSTEM_ADMIN`. `secondApproverEmployeeId` tidak pernah dipersistenkan.
    */
   async savePosition(
-    draft: { positionName: string; groupStructLevelId: string; employeeId: string; parentId: string },
+    actor: CompanyActor,
+    draft: {
+      positionName: string;
+      groupStructLevelId: string;
+      employeeId: string;
+      parentId: string;
+      canSignLetter: boolean;
+      secondApproverEmployeeId: string;
+    },
     id?: string,
   ): Promise<GroupPosition> {
     if (MOCK) {
@@ -412,10 +434,30 @@ export const companyService = {
       const levelError = parentLevelError(groupLevels, parent, draft.groupStructLevelId);
       if (levelError) throw new Error(`422 VALIDATION_ERROR — ${levelError}`);
 
+      const existing = id ? positions.find((item) => item.id === id) : undefined;
+      if (id && !existing) throw new Error('404 NOT_FOUND — posisi tidak ditemukan.');
+      const previousCanSignLetter = existing?.canSignLetter ?? false;
+      const nextCanSignLetter = draft.canSignLetter;
+
+      if (nextCanSignLetter !== previousCanSignLetter) {
+        if (!isCompanyAdmin(actor.role)) {
+          throw new Error('403 — hanya Super Admin/System Admin yang boleh menyalakan atau mematikan can_sign_letter.');
+        }
+        if (!previousCanSignLetter && nextCanSignLetter) {
+          const second = draft.secondApproverEmployeeId;
+          if (!second) throw new Error('422 VALIDATION_ERROR — second_approver_employee_id wajib diisi saat menyalakan can_sign_letter.');
+          if (second === actor.employeeId) {
+            throw new Error('422 VALIDATION_ERROR — second_approver_employee_id tidak boleh sama dengan pemanggil.');
+          }
+          if (!COMPANY_ADMIN_EMPLOYEE_IDS.includes(second)) {
+            throw new Error('422 VALIDATION_ERROR — approver kedua harus berperan admin.');
+          }
+        }
+      }
+
       const employeeId = draft.employeeId || null;
-      if (id) {
-        const row = positions.find((item) => item.id === id);
-        if (!row) throw new Error('404 NOT_FOUND — posisi tidak ditemukan.');
+      if (existing) {
+        const row = existing;
         const wasFilled = row.employeeId;
         Object.assign(row, {
           positionName: name,
@@ -424,6 +466,7 @@ export const companyService = {
           employeeInfo: snapshotOf(employeeId),
           parentId: parent?.id ?? null,
           supervisorInfo: parent?.employeeInfo ? { ...parent.employeeInfo } : null,
+          canSignLetter: nextCanSignLetter,
         });
         // Posisi yang ditinggalkan pengisinya kehilangan snapshot atasan pada anak-anaknya.
         if (wasFilled && !employeeId) {
@@ -451,6 +494,7 @@ export const companyService = {
         employeeInfo: snapshotOf(employeeId),
         parentId: parent?.id ?? null,
         supervisorInfo: parent?.employeeInfo ? { ...parent.employeeInfo } : null,
+        canSignLetter: nextCanSignLetter,
         createdAt: now(),
       };
       positions.push(row);
@@ -851,6 +895,54 @@ export const companyService = {
       return { id };
     }
     const { data } = await api.delete<{ id: string }>(`/vendors/${id}`);
+    return data;
+  },
+
+  // ---------- Group Structure — GS-11 Pemetaan Modul → Struktur ----------
+
+  /**
+   * Balasan ARRAY FLAT (maks enam baris) — penyimpangan resmi dari amplop grid (UIC §2.3.1).
+   * Baca dibolehkan Super Admin/System Admin/HR Manager/Department Manager.
+   */
+  async moduleGroupStructMaps(actor: CompanyActor): Promise<ModuleGroupStructMap[]> {
+    if (MOCK) {
+      await delay(150);
+      if (!canReadModuleMap(actor.role)) throw new Error('403 — peran ini tidak boleh membaca Pemetaan Modul.');
+      return moduleMaps.map((row) => ({ ...row }));
+    }
+    const { data } = await api.get<ModuleGroupStructMap[]>('/module-group-struct-maps');
+    return data;
+  },
+
+  /** Upsert satu pemetaan — `module_code` di path, bukan `id`. Tulis hanya Super Admin/System Admin. */
+  async saveModuleGroupStructMap(actor: CompanyActor, moduleCode: ModuleCode, groupStructId: string): Promise<ModuleGroupStructMap> {
+    if (MOCK) {
+      await delay(220);
+      if (!isCompanyAdmin(actor.role)) throw new Error('403 — hanya Super Admin/System Admin yang boleh menulis Pemetaan Modul.');
+      const struct = groupStructs.find((row) => row.id === groupStructId);
+      if (!struct) throw new Error('404 NOT_FOUND — group_struct_id tidak menunjuk struktur aktif.');
+      const existing = moduleMaps.find((row) => row.moduleCode === moduleCode);
+      if (existing) {
+        existing.groupStructId = groupStructId;
+        return { ...existing };
+      }
+      const row: ModuleGroupStructMap = { id: nextId('mgs'), moduleCode, groupStructId, createdAt: now() };
+      moduleMaps.push(row);
+      return { ...row };
+    }
+    const { data } = await api.put<ModuleGroupStructMap>(`/module-group-struct-maps/${moduleCode}`, { group_struct_id: groupStructId });
+    return data;
+  },
+
+  /** Kosongkan satu pemetaan (soft-delete barisnya) — tulis hanya Super Admin/System Admin. */
+  async clearModuleGroupStructMap(actor: CompanyActor, moduleCode: ModuleCode): Promise<{ moduleCode: ModuleCode }> {
+    if (MOCK) {
+      await delay(200);
+      if (!isCompanyAdmin(actor.role)) throw new Error('403 — hanya Super Admin/System Admin yang boleh menulis Pemetaan Modul.');
+      moduleMaps = moduleMaps.filter((row) => row.moduleCode !== moduleCode);
+      return { moduleCode };
+    }
+    const { data } = await api.delete<{ moduleCode: ModuleCode }>(`/module-group-struct-maps/${moduleCode}`);
     return data;
   },
 };
