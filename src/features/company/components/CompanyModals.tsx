@@ -665,15 +665,22 @@ export function PositionHistoryModal({
 
 const EMPTY_JOB_GRADE: JobGradeDraft = { name: '', parentId: '', sortOrder: '1', salaryRangeFrom: '', salaryRangeTo: '' };
 
+/**
+ * `mode` memisahkan form Grade (tanpa induk, tanpa rentang gaji) dari form Class (induk wajib,
+ * rentang gaji wajib) — dipakai dua tab terpisah di `GradeClassPage` (permintaan pengguna
+ * 23 September 2026, supaya dua konsep ini tidak lagi bercampur dalam satu form).
+ */
 export function JobGradeFormModal({
   open,
   editing,
   grades,
+  mode,
   onClose,
 }: {
   open: boolean;
   editing: JobGrade | null;
   grades: JobGrade[];
+  mode: 'grade' | 'class';
   onClose: () => void;
 }) {
   const save = useSaveJobGrade();
@@ -694,23 +701,28 @@ export function JobGradeFormModal({
     );
   }, [open, editing]);
 
-  const isClassRow = Boolean(draft.parentId);
-
   return (
     <Modal
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title={editing ? `Ubah ${editing.name}` : 'Grade atau Class baru'}
+      title={editing ? `Ubah ${editing.name}` : mode === 'grade' ? 'Grade baru' : 'Class baru'}
       description={
         editing
           ? `Kode saat ini ${editing.gradeCode} — dibuat otomatis oleh sistem dari kedalaman dan urutan, tidak bisa diketik langsung.`
-          : 'Baris tanpa induk adalah Grade; baris dengan induk adalah Class dan wajib membawa rentang gaji. Kode dibuat otomatis oleh sistem.'
+          : mode === 'grade'
+            ? 'Grade adalah jenjang puncak, tanpa induk dan tanpa rentang gaji. Kode dibuat otomatis oleh sistem.'
+            : 'Class selalu berada di bawah sebuah Grade dan wajib membawa rentang gaji. Kode dibuat otomatis oleh sistem.'
       }
       footer={
         <FooterButtons
           onClose={onClose}
           saving={save.isPending}
-          onSave={() => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose })}
+          onSave={() =>
+            save.mutate(
+              { draft: mode === 'grade' ? { ...draft, parentId: '' } : draft, id: editing?.id },
+              { onSuccess: onClose },
+            )
+          }
         />
       }
     >
@@ -724,32 +736,33 @@ export function JobGradeFormModal({
           onChange={(sortOrder) => setDraft({ ...draft, sortOrder })}
         />
       </FieldGrid>
-      <SelectRow
-        label="Induk (Grade)"
-        allowEmpty
-        emptyLabel="Tanpa induk — baris ini sebuah Grade"
-        value={draft.parentId}
-        onChange={(parentId) => setDraft({ ...draft, parentId })}
-        options={grades
-          .filter((row) => row.parentId === null && row.id !== editing?.id)
-          .map((row) => ({ value: row.id, label: `${row.name} (${row.gradeCode})` }))}
-      />
-      {isClassRow && (
-        <FieldGrid>
-          <TextRow
-            label="Rentang gaji dari"
+      {mode === 'class' && (
+        <>
+          <SelectRow
+            label="Induk (Grade)"
             required
-            value={draft.salaryRangeFrom}
-            onChange={(salaryRangeFrom) => setDraft({ ...draft, salaryRangeFrom })}
+            value={draft.parentId}
+            onChange={(parentId) => setDraft({ ...draft, parentId })}
+            options={grades
+              .filter((row) => row.parentId === null)
+              .map((row) => ({ value: row.id, label: `${row.name} (${row.gradeCode})` }))}
           />
-          <TextRow
-            label="Rentang gaji sampai"
-            required
-            hint="Batas atas tidak boleh lebih kecil dari batas bawah."
-            value={draft.salaryRangeTo}
-            onChange={(salaryRangeTo) => setDraft({ ...draft, salaryRangeTo })}
-          />
-        </FieldGrid>
+          <FieldGrid>
+            <TextRow
+              label="Rentang gaji dari"
+              required
+              value={draft.salaryRangeFrom}
+              onChange={(salaryRangeFrom) => setDraft({ ...draft, salaryRangeFrom })}
+            />
+            <TextRow
+              label="Rentang gaji sampai"
+              required
+              hint="Batas atas tidak boleh lebih kecil dari batas bawah."
+              value={draft.salaryRangeTo}
+              onChange={(salaryRangeTo) => setDraft({ ...draft, salaryRangeTo })}
+            />
+          </FieldGrid>
+        </>
       )}
     </Modal>
   );
