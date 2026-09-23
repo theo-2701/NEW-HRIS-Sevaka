@@ -215,7 +215,7 @@ export function GeofenceFormModal({
                   required
                   placeholder="Select branch"
                   options={BRANCH_OPTIONS}
-                  hint="Read from the company service, not stored here."
+                  hint="Taken from the branch list in Company settings."
                 />
               </div>
 

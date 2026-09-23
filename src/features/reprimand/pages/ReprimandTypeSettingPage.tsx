@@ -103,7 +103,7 @@ function CategoryEditor({
                 step="0.01"
                 label="Bobot kinerja"
                 required
-                hint="performance_weight — kontribusi ke skor kinerja."
+                hint="Kontribusi ke skor kinerja."
               />
               <ToggleField
                 name="terminal"

@@ -150,7 +150,7 @@ export function TimeOffRequestPage() {
       >
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="font-body text-xs font-medium text-fg-3">Dev only — signed in as</span>
+            <span className="font-body text-xs font-medium text-fg-3">Viewing as</span>
             <Select
               value={session.employeeId}
               onValueChange={(value) => {

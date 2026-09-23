@@ -198,7 +198,7 @@ export function FinanceSettingsPage() {
             <Card>
               <CardHead
                 title="Advance purpose type"
-                sub="Papan baca — CRUD penuh (create / update / delete / history) tetap di kontrak API F1.36–F1.42"
+                sub="Jenis keperluan yang bisa dipilih saat mengajukan uang muka"
               />
 
               <DataTable<PurposeTypeRow>
@@ -234,7 +234,7 @@ export function FinanceSettingsPage() {
 
           {tab === 'rejection' && (
             <Card>
-              <CardHead title="Rejection reasons" sub="Dipakai bersama penolakan Benefit Reimbursement, Loan, dan Cash Advance — papan baca F1.43–F1.47" />
+              <CardHead title="Rejection reasons" sub="Dipakai bersama penolakan Benefit Reimbursement, Loan, dan Cash Advance" />
 
               <DataTable<RejectionReason>
                 rows={reasons.data ?? []}

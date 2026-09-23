@@ -40,10 +40,6 @@ export function ScopeBar({ value, onChange }: { value: ActorScope; onChange: (sc
           </button>
         );
       })}
-
-      <span className="ml-auto font-body text-[11.5px] font-medium text-fg-3">
-        Granular scope <code className="font-mono">employee:directory:read</code>
-      </span>
     </div>
   );
 }

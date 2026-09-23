@@ -1,5 +1,5 @@
 import { Form, Formik, useField } from 'formik';
-import { ArrowUpRight, Search, Shield } from 'lucide-react';
+import { Search, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/form/FormField';
 import { DateField } from '@/components/form/DateField';
@@ -80,7 +80,6 @@ function CreatedRange() {
         <span className="pb-2.5 font-body text-[11px] font-medium text-fg-4">to</span>
         <DateField name="createdTo" placeholder="Tanggal akhir" min={from.value || undefined} containerClassName="flex-1" />
       </div>
-      <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">created_at</span>
     </div>
   );
 }
@@ -118,17 +117,13 @@ export function EmployeeCriteriaForm({
           <header className="flex items-center gap-2.5 border-b border-border-1 px-[18px] py-3.5">
             <Search className="size-4 text-secondary-500" />
             <h2 className="m-0 font-display text-sm font-bold leading-tight text-fg-1">Criteria Search</h2>
-            <span className="ml-auto inline-flex h-[26px] items-center gap-1.5 rounded-pill bg-secondary-950 px-3 font-mono text-[11px] font-semibold text-[#cfe8f6]">
-              <ArrowUpRight className="size-3 text-[#7cc2e6]" />
-              <b className="text-white">POST</b> /employees/search
-            </span>
           </header>
 
           <div className="grid gap-4 p-[18px] xl:grid-cols-3">
             <TextField
               name="keyword"
               label="Keyword"
-              hint="keyword — LIKE nama / NIK"
+              hint="Cari berdasarkan nama atau NIK."
               placeholder="mis. Eka, atau NIK-0005"
               maxLength={150}
               autoComplete="off"
@@ -138,7 +133,6 @@ export function EmployeeCriteriaForm({
             <SelectField
               name="branchId"
               label="Unit / Branch"
-              hint="branch_id"
               placeholder="Semua unit"
               options={[
                 { value: '', label: 'Semua unit' },
@@ -153,7 +147,7 @@ export function EmployeeCriteriaForm({
             <FormField
               name="employmentStatus"
               label="Employment status"
-              hint="employment_status[] — operator IN (multi pilih)"
+              hint="Bisa memilih lebih dari satu status."
               className="xl:col-span-3"
             >
               <StatusChips />
@@ -163,8 +157,7 @@ export function EmployeeCriteriaForm({
           <footer className="flex flex-wrap items-center gap-2.5 border-t border-border-1 bg-mist px-[18px] py-3">
             <span className="inline-flex items-center gap-1.5 font-body text-[11.5px] font-medium text-fg-3">
               <Shield className="size-3.5 text-secondary-500" />
-              Setiap field divalidasi (menolak <code className="font-mono">&lt; &gt;</code> / skrip) sebelum
-              dirangkai menjadi query.
+              Isian yang memuat karakter <code className="font-mono">&lt; &gt;</code> atau skrip akan ditolak.
             </span>
             <span className="flex-1" />
             <Button

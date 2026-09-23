@@ -350,7 +350,7 @@ export function CalendarPage() {
 
               {subTab === 'effective' && (
                 <Card>
-                  <CardHead title="Effective calendar" sub="FC-01 — lapis mana yang memenangkan tiap hari" />
+                  <CardHead title="Effective calendar" sub="Lapis mana yang berlaku di tiap hari" />
                   <EffectiveCalendar holidays={allHolidays} calendars={allPatterns} />
                 </Card>
               )}
@@ -362,7 +362,7 @@ export function CalendarPage() {
       <FilterModal
         open={holidayFilterOpen}
         title="Filter holidays"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setHolidayFilterOpen}
         onReset={() => {
           setHolidayFilter(EMPTY_HOLIDAY_FILTER);

@@ -126,7 +126,7 @@ export function LoanLimitFormModal({
             value={amount}
             onChange={(event) => setAmount(thousands(event.target.value))}
           />
-          <Hint>{delta ? `Delta ${delta} dibanding nominal saat ini.` : 'Rupiah, numeric(18,2), minimal 0.'}</Hint>
+          <Hint>{delta ? `Delta ${delta} dibanding nominal saat ini.` : 'Dalam rupiah, minimal 0.'}</Hint>
         </div>
 
         {limit && (
@@ -134,7 +134,7 @@ export function LoanLimitFormModal({
             <Checkbox checked={active} onCheckedChange={(checked) => setActive(checked === true)} />
             <span className="flex flex-col gap-0.5">
               <span className="font-body text-[13px] font-bold text-fg-1">Active</span>
-              <Hint>Bagian payload PUT (F1.27). Golongan nonaktif tidak memberi ruang pinjam untuk pengajuan baru.</Hint>
+              <Hint>Golongan nonaktif tidak memberi ruang pinjam untuk pengajuan baru.</Hint>
             </span>
           </label>
         )}

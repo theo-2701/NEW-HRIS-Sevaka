@@ -171,7 +171,7 @@ export function OvertimePage() {
       >
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="font-body text-xs font-medium text-fg-3">Dev only — signed in as</span>
+            <span className="font-body text-xs font-medium text-fg-3">Viewing as</span>
             <Select
               value={session.employeeId}
               onValueChange={(value) => {
@@ -394,7 +394,7 @@ export function OvertimePage() {
       <FilterModal
         open={requestFilterOpen}
         title="Filter requests"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setRequestFilterOpen}
         onReset={() => {
           setRequestFilter(EMPTY_REQUEST_FILTER);
@@ -413,7 +413,7 @@ export function OvertimePage() {
       <FilterModal
         open={dailyFilterOpen}
         title="Filter daily summary"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setDailyFilterOpen}
         onReset={() => {
           setDailyFilter(EMPTY_DAILY_FILTER);

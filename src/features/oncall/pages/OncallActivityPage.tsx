@@ -186,7 +186,7 @@ export function OncallActivityPage() {
       <FilterModal
         open={filterOpen}
         title="Filter call-outs"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setFilterOpen}
         onReset={() => {
           setFilter(EMPTY_ACTIVITY_FILTER);

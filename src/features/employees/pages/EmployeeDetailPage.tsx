@@ -60,7 +60,7 @@ export function EmployeeDetailPage() {
         { label: data?.name ?? 'Detail' },
       ]}
       title={data?.name ?? 'Employee Detail'}
-      description="Profil gabungan read-only — work data, rekening, dan proyeksi identitas/posisi."
+      description="Profil gabungan read-only — work data, rekening, serta identitas dan posisi."
       actions={
         <div className="flex flex-wrap items-center gap-2.5">
           <Button

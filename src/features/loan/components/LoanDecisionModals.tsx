@@ -37,9 +37,7 @@ function LoanSummary({ loan, full }: { loan: Loan; full?: boolean }) {
               : 'Interest-free'}
           </KeyValueRow>
           <KeyValueRow label="Cost center">
-            {loan.costCenterIdSnapshot ?? (
-              <span className="font-normal text-fg-3">null — snapshot diambil saat pengajuan (GAP-2)</span>
-            )}
+            {loan.costCenterIdSnapshot ?? '—'}
           </KeyValueRow>
           <KeyValueRow label="Reservation">
             <span className="inline-flex flex-wrap items-center gap-1.5">

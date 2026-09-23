@@ -598,12 +598,6 @@ export function BenefitReimbursementPage() {
                           </StatusBadge>
                         ),
                       },
-                      {
-                        key: 'source',
-                        header: 'Source',
-                        muted: true,
-                        render: () => 'employee-profile · mst_relative.relationship_type',
-                      },
                     ]}
                   />
                 </Card>

@@ -61,7 +61,7 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title="New cash advance"
-      description="Batas nominal jenis keperluan dibekukan ke baris saat dikirim sebagai max_amount_snapshot."
+      description="Batas nominal mengikuti jenis keperluan yang berlaku saat pengajuan dikirim."
       size="wide"
       footer={
         <>
@@ -262,7 +262,7 @@ export function AdvanceDetailModal({
             {advance.bankAccountSnapshot.accountHolderName}
           </KeyValueRow>
           <KeyValueRow label="Cost center">
-            {advance.costCenterIdSnapshot ?? <span className="font-normal text-fg-3">null (GAP-2)</span>}
+            {advance.costCenterIdSnapshot ?? '—'}
           </KeyValueRow>
           <KeyValueRow label="Created">{formatDate(advance.createdAt)}</KeyValueRow>
           <KeyValueRow label="Settlement stages">

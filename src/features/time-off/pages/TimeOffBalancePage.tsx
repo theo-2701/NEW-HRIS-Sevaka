@@ -253,7 +253,7 @@ export function TimeOffBalancePage() {
       <FilterModal
         open={balanceFilterOpen}
         title="Filter balances"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setBalanceFilterOpen}
         onReset={() => {
           setBalanceFilter(EMPTY_BALANCE_FILTER);
@@ -273,7 +273,7 @@ export function TimeOffBalancePage() {
       <FilterModal
         open={ledgerFilterOpen}
         title="Filter ledger"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setLedgerFilterOpen}
         onReset={() => {
           setLedgerFilter(EMPTY_LEDGER_FILTER);

@@ -405,7 +405,7 @@ export function OvertimeDetailModal({ row, onClose }: { row: OvertimeRequest | n
             {hours(row.approvedHours)}
             {row.isAuto && (
               <span className="ml-1.5 font-normal text-fg-3">
-                — salinan beku <code>max_callout_hours</code> jendela siaga, tidak pernah dibaca ulang saat recompute
+                — mengikuti batas jam jendela siaga yang berlaku saat itu
               </span>
             )}
           </KeyValueRow>

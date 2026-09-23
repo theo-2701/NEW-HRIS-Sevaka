@@ -44,7 +44,7 @@ export function LoanDetailPage() {
       >
         <EmptyState
           title="Request not found"
-          description="Permintaan yang dibuat selama sesi ini hanya hidup di memori halaman Loan."
+          description="Buka kembali permintaan ini dari daftar di halaman Loan."
         />
       </PageShell>
     );
@@ -116,9 +116,7 @@ export function LoanDetailPage() {
                 {loan.bankAccountSnapshot.accountHolderName}
               </KeyValueRow>
               <KeyValueRow label="Cost center">
-                {loan.costCenterIdSnapshot ?? (
-                  <span className="font-normal text-fg-3">null — snapshot diambil saat pengajuan (GAP-2)</span>
-                )}
+                {loan.costCenterIdSnapshot ?? '—'}
               </KeyValueRow>
               <KeyValueRow label="Reservation">
                 {formatCurrency(loan.principalAmount)} · {RESERVATION_LABEL[reservationStateOf(loan.status)]}

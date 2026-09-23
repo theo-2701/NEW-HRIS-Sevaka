@@ -163,9 +163,7 @@ export function ClaimDetailModal({
               {claim.bankAccountSnapshot.accountHolderName}
             </KeyValueRow>
             <KeyValueRow label="Cost center">
-              {claim.costCenterIdSnapshot ?? (
-                <span className="font-normal text-fg-3">null — cost center bawaan belum diseed (GAP-2, diwarisi)</span>
-              )}
+              {claim.costCenterIdSnapshot ?? '—'}
             </KeyValueRow>
             <KeyValueRow label="Submitted">{formatDate(claim.submittedAt)}</KeyValueRow>
             {asApprover && balance && (

@@ -52,7 +52,7 @@ export function PeriodDetailPage() {
       <PageShell crumbs={crumbs} title="Period detail" description="Layar ini dibuka dari sebuah baris periode gaji.">
         <EmptyState
           title="Periode tidak ditemukan"
-          description="Periode yang dijalankan selama sesi ini hanya hidup di memori aplikasi."
+          description="Buka kembali periode ini dari daftar periode gaji."
           action={
             <button
               type="button"

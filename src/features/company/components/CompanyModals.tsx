@@ -331,9 +331,6 @@ export function BranchFormModal({
           </span>
         </span>
       </label>
-      <p className="font-body text-xs font-medium text-fg-4">
-        FAX cabang belum punya kolom penyimpan di kontrak (GAP) — sengaja tidak ditampilkan di form ini.
-      </p>
     </Modal>
   );
 }

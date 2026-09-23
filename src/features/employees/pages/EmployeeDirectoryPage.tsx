@@ -100,7 +100,7 @@ export function EmployeeDirectoryPage() {
           {tab === 'organization' ? (
             <EmptyState
               title="Tampilan Organization belum tersedia"
-              description="Prototype dan kontrak saat ini hanya memuat DIR-GRID + DIR-DETAIL. Struktur pohon organisasi menunggu kontrak read dari company-service."
+              description="Struktur pohon organisasi belum bisa ditampilkan saat ini. Gunakan tab Directory untuk mencari karyawan."
             />
           ) : (
             <>
