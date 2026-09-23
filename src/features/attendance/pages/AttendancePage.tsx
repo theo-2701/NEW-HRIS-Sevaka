@@ -139,7 +139,6 @@ export function AttendancePage() {
   const { data: allDays = [] } = useAttendanceDays(session, {});
   const { data: allCorrections = [] } = useCorrections(session, {});
 
-  const pagedToday = usePagedRows(today);
   const pagedDays = usePagedRows(days);
   const pagedTaps = usePagedRows(taps);
   const pagedCorrections = usePagedRows(corrections);
@@ -206,7 +205,7 @@ export function AttendancePage() {
       >
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="font-body text-xs font-medium text-fg-3">Dev only — signed in as</span>
+            <span className="font-body text-xs font-medium text-fg-3">Viewing as</span>
             <Select
               value={session.employeeId}
               onValueChange={(value) => {
@@ -255,34 +254,27 @@ export function AttendancePage() {
               busy={punch.isPending}
             >
               <Card>
-                <CardHead title="Today's taps" sub="Append-only — tidak ada ubah dan tidak ada hapus" />
-                <div className="flex flex-col">
-                  <DataTable<Punch>
-                    rows={pagedToday.rows}
-                    rowKey={(row) => row.id}
-                    empty="Nothing tapped yet today."
-                    columns={[
-                      {
-                        key: 'type',
-                        header: 'Type',
-                        strong: true,
-                        render: (row) => (row.punchType === 'IN' ? 'Tap in' : 'Tap out'),
-                      },
-                      { key: 'time', header: 'Tap Time', nowrap: true, render: (row) => hhmm(row.punchAt) },
-                      { key: 'date', header: 'Work Date', muted: true, render: (row) => formatDate(row.workDate) },
-                      { key: 'radius', header: 'Radius', render: (row) => <RadiusCell punch={row} /> },
-                      { key: 'flags', header: 'Flags', render: (row) => <FlagsCell punch={row} /> },
-                    ]}
-                  />
-                  <Pagination
-                    page={pagedToday.page}
-                    pageSize={pagedToday.pageSize}
-                    total={pagedToday.total}
-                    noun="taps"
-                    onPageChange={pagedToday.setPage}
-                    onPageSizeChange={pagedToday.setPageSize}
-                  />
-                </div>
+                <CardHead
+                  title="Today's taps"
+                  sub="Recorded taps can't be edited or deleted. To fix a day, file a correction."
+                />
+                <DataTable<Punch>
+                  rows={today}
+                  rowKey={(row) => row.id}
+                  empty="Nothing tapped yet today."
+                  columns={[
+                    {
+                      key: 'type',
+                      header: 'Type',
+                      strong: true,
+                      render: (row) => (row.punchType === 'IN' ? 'Tap in' : 'Tap out'),
+                    },
+                    { key: 'time', header: 'Tap Time', nowrap: true, render: (row) => hhmm(row.punchAt) },
+                    { key: 'date', header: 'Work Date', muted: true, render: (row) => formatDate(row.workDate) },
+                    { key: 'radius', header: 'Radius', render: (row) => <RadiusCell punch={row} /> },
+                    { key: 'flags', header: 'Flags', render: (row) => <FlagsCell punch={row} /> },
+                  ]}
+                />
               </Card>
             </PunchConsole>
           )}
@@ -517,7 +509,7 @@ export function AttendancePage() {
       <FilterModal
         open={dayFilterOpen}
         title="Filter daily summary"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setDayFilterOpen}
         onReset={() => {
           setDayFilter(EMPTY_DAY_FILTER);
@@ -536,7 +528,7 @@ export function AttendancePage() {
       <FilterModal
         open={tapFilterOpen}
         title="Filter tap history"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setTapFilterOpen}
         onReset={() => {
           setTapFilter(EMPTY_TAP_FILTER);
@@ -555,7 +547,7 @@ export function AttendancePage() {
       <FilterModal
         open={correctionFilterOpen}
         title="Filter corrections"
-        description="Hanya field yang diterima kontrak pencarian."
+        description="Saring daftar berdasarkan kriteria di bawah."
         onOpenChange={setCorrectionFilterOpen}
         onReset={() => {
           setCorrectionFilter(EMPTY_CORRECTION_FILTER);

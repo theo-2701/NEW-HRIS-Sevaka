@@ -20,7 +20,7 @@ function LocationInfo({ channel }: { channel: CaptureChannel }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="mb-3.5 flex min-w-0 items-center gap-1.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
+    <div className="flex min-w-0 items-center gap-1.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
       <MapPin className="size-3.5 shrink-0" />
       <span className="truncate">{channel.geofence.geofenceName}</span>
       <Popover open={open} onOpenChange={setOpen}>
@@ -69,7 +69,7 @@ function LocationInfo({ channel }: { channel: CaptureChannel }) {
  *
  * Tombolnya tidak pernah dipilih: keadaan hari yang menentukan mana yang
  * muncul. Waktu, koordinat, akurasi, dan detail perangkat diambil di latar.
- * Kartu jam di kiri, isi `children` (tabel tap hari ini) di kanan.
+ * Bar jam selebar halaman; `children` (tabel tap hari ini) di bawahnya dengan lebar yang sama.
  */
 export function PunchConsole({
   workDate,
@@ -110,49 +110,50 @@ export function PunchConsole({
       ? `Tapped in at ${tappedInAt} — the day is still open.`
       : 'Both taps recorded for today.';
 
+  const selfieHint = !channel.selfie
+    ? null
+    : selfieCaptured
+      ? 'Selfie ready — it uploads with your tap.'
+      : 'Selfie required at this location. Live camera only.';
+
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(280px,340px)_1fr]">
-      <div className="flex flex-col gap-1.5 rounded-2xl bg-[linear-gradient(180deg,rgb(122,185,212),rgb(2,99,149))] p-6 text-white shadow-card">
-        <span className="font-body text-[11px] font-semibold uppercase leading-none tracking-[0.08em] opacity-85">
-          Device clock
-        </span>
-        <span className="font-display text-5xl font-bold leading-none tabular-nums tracking-[-0.03em]">{hhmmss}</span>
-        <span className="font-body text-[13px] font-medium leading-[1.4] opacity-90">
-          {formatDate(workDate)} · Asia/Jakarta (WIB)
-        </span>
-        <LocationInfo channel={channel} />
+    <div className="flex flex-col gap-5">
+      <div className="grid items-center gap-x-8 gap-y-5 rounded-2xl bg-linear-to-br from-secondary-600 to-secondary-850 px-6 py-5 text-white shadow-card md:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="font-body text-[11px] font-semibold uppercase leading-none tracking-[0.08em] opacity-85">
+            Device clock
+          </span>
+          <span className="font-display text-5xl font-bold leading-none tabular-nums tracking-[-0.03em]">{hhmmss}</span>
+          <span className="mt-1 font-body text-[13px] font-medium leading-[1.4] opacity-90">
+            {formatDate(workDate)} · Asia/Jakarta (WIB)
+          </span>
+          <LocationInfo channel={channel} />
+        </div>
 
-        <button
-          type="button"
-          disabled={!nextType || busy}
-          onClick={onPunch}
-          className="h-12 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {nextType === 'IN' ? 'TAP IN' : nextType === 'OUT' ? 'TAP OUT' : 'DAY COMPLETE'}
-        </button>
-
-        <span className="mt-3 font-body text-xs font-medium leading-[1.5] opacity-90">{state}</span>
-
-        {channel.selfie && (
-          <div className="mt-4 flex w-full flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button variant="light" className="w-full" onClick={onTakeSelfie}>
-                {selfieCaptured ? 'Retake' : 'Take selfie'}
+        <div className="flex flex-col gap-2.5">
+          <span className="font-body text-[13px] font-semibold leading-[1.4]">{state}</span>
+          <div className="flex gap-2.5">
+            {channel.selfie && nextType && (
+              <Button variant="light" className="h-12 flex-1" onClick={onTakeSelfie}>
+                {selfieCaptured ? 'Retake selfie' : 'Take selfie'}
               </Button>
-              {selfieCaptured && (
-                <span className="font-body text-xs font-medium leading-[1.4] text-white/90">
-                  Frame ready — camera source
-                </span>
-              )}
-            </div>
-            <span className="font-body text-[11px] font-medium leading-[1.45] text-white/80">
-              Required for this location. Live camera only — photos from the gallery are not accepted.
-            </span>
+            )}
+            <button
+              type="button"
+              disabled={!nextType || busy}
+              onClick={onPunch}
+              className="h-12 flex-1 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {nextType === 'IN' ? 'TAP IN' : nextType === 'OUT' ? 'TAP OUT' : 'DAY COMPLETE'}
+            </button>
           </div>
-        )}
+          {selfieHint && nextType && (
+            <span className="font-body text-[11.5px] font-medium leading-[1.45] text-white/80">{selfieHint}</span>
+          )}
+        </div>
       </div>
 
-      <div className="min-w-0">{children}</div>
+      {children}
     </div>
   );
 }
