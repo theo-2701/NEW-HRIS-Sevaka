@@ -52,6 +52,9 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
   Profile, Time, dan Company versi terbaru ada di
   `../../HRIS-docs/New Source of Truth Docs - New Version/Dokumen HRIS/09_September/(150926)-FE-terusan/`.
   Dokumen menang atas prototype & Figma. Rekap audit: `docs/CONTRACT-AUDIT.md`.
+  Salinan di laptop Theo (relatif ke repo): `../FE-220926/` (rilis FSD/UIC terbaru 22 Sep 2026),
+  `../FE-Profile/` (FSD/UIC/TSD/ERD Profile 18 Sep), `../(150926)-FE-terusan/` (versi lama 15 Sep,
+  pembanding changelog).
 
 ## Aturan yang paling sering dilanggar
 

@@ -286,3 +286,32 @@ ERD-EMPLOYEE 0.32 selain yang disebut di atas (mayoritas tabel backend-internal 
 `map_notified_menu`, `log_pii_access`, `outbox_event`, keputusan `nik` sequence — nol tampak di
 FE); audit setara untuk **Auth** dan **Finance** (TSD/ERD keduanya juga jauh tertinggal, lihat §1A
 lama) masih menunggu giliran.
+
+---
+
+## 10. Audit Auth 24 September 2026 — repo FSD 0.7 / UIC 0.14 vs FE-220926 FSD 0.10 / UIC 0.17
+
+Sumber: `FE-220926/` (rilis 22 September 2026, FSD/UIC saja — TSD/ERD Auth tidak ikut rilis ini,
+jadi TSD/ERD tetap versi §1). Metode sama dengan §8/§9: changelog dari versi repo sampai terbaru,
+lalu verifikasi ke kode.
+
+| Versi | Isi changelog | Dampak ke repo |
+| :--- | :--- | :--- |
+| FSD `0.8` | §5 BARU — layar **Activity Log** (Company Management ▸ Activity Log): satu filter panel (Dari/Sampai Tanggal + Jenis, 4 opsi tertutup) + satu tabel yang kolomnya berganti per famili (`AL-1`..`AL-4`), state Loading/Empty (`AL-5`/`AL-6`) | **Dibangun** — fitur `src/features/activity-log/`, route `/company-management/activity-log` mengisi baris menu yang sudah ada (pohon menu tidak diubah) |
+| FSD `0.9` | `POST /auth/refresh` berjalan otomatis di latar, tanpa layar | Nol dampak selama `MOCK = true` (tidak ada sesi server) |
+| FSD `0.10` | Perpanjangan sesi GAGAL → toast generik *"Sesi berakhir, silakan masuk lagi"* lalu dialihkan ke login setelah ±2 detik (dulu senyap) | **Diterapkan** di `services/api.ts` — `expireSession()` dipanggil pada respons `401`: toast sekali (anti-dobel), sesi dibuang setelah `SESSION_EXPIRED_REDIRECT_DELAY_MS = 2000` |
+| UIC `0.15` | Blockquote cakupan §6 (endpoint global auth-service ditunda) | Nol dampak — repo memang tidak memanggilnya |
+| UIC `0.16` | §8.1 Matriks G7 layar Activity Log: FE hanya mengirim `{family}`/`start_date`/`end_date`/`page`/`size`; 13 filter kriteria lain sengaja tidak diexpose UI | Diikuti persis di `activity-log.service.ts` |
+| UIC `0.17` | §7.2 `POST /master-info/jkk` (token platform-level) | Nol dampak — bukan layar tenant |
+
+Catatan implementasi Activity Log:
+
+- Famili `access-menu-history` **sengaja tidak** dijangkau (FSD §5: pembacanya `ROLE_SUPER_ADMIN`
+  saja, datanya di DB tenant).
+- Halaman direset ke 1 setiap Jenis/rentang tanggal berubah; ukuran default 10 (FSD §5.1).
+- `AL-5` memakai state loading bawaan `DataTable` ("Memuat data…"), bukan skeleton lima baris —
+  komponen rumah dipertahankan supaya seragam dengan tabel lain.
+- Otoritas SUPER_ADMIN/HR_MANAGER ditegakkan backend/gateway (FSD §5); layar tidak menyaring peran.
+
+5 pengujian baru (`activity-log.test.ts`: paginasi, urutan terbaru, rentang inklusif, empty,
+toast sesi berakhir + jeda).

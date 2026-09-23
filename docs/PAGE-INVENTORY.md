@@ -3,7 +3,7 @@
 Dibuat dari `src/config/nav.ts`. Kolom **Status** mengikuti field `status` di file itu:
 `done` = sudah jadi komponen React, `todo` = masih `PlaceholderPage`.
 
-Prototype: 88 file HTML · Route bernav: 88
+Prototype: 88 file HTML · Route bernav: 93
 
 > Saat sebuah layar selesai dikonversi: daftarkan route-nya di `src/app/routes.tsx`,
 > ubah `status` leaf-nya jadi `'done'` di `src/config/nav.ts`, lalu regenerasi dokumen ini.
@@ -20,9 +20,9 @@ Prototype: 88 file HTML · Route bernav: 88
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
 | `/me/files` | Files | `document-ess-files.html` | todo |
-| `/me/finance` | Finance | `finance-ess.html` | todo |
-| `/me/payroll` | Payroll Info | `payroll-doc-ess.html` | todo |
-| `/me/payslip` | Payslip | `payroll-doc-payslip.html` | todo |
+| `/me/finance` | Finance | `finance-ess.html` | done |
+| `/me/payroll` | Payroll Info | `payroll-doc-ess.html` | done |
+| `/me/payslip` | Payslip | `payroll-doc-payslip.html` | done |
 | `/me/profile` | Basic Info | `employee-profile.html` | done |
 | `/me/profile/additional-info` | Additional Info | `employee-profile.html` | done |
 | `/me/profile/emergency-contact` | Emergency Contact | `employee-profile.html` | done |
@@ -30,6 +30,11 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/me/profile/formal-education` | Formal Education | `employee-profile.html` | done |
 | `/me/profile/informal-education` | Informal Education | `employee-profile.html` | done |
 | `/me/profile/working-experience` | Working Experience | `employee-profile.html` | done |
+| `/me/time/attendance` | Attendance | `time-attendance.html` | done |
+| `/me/time/overtime` | Overtime | `time-overtime.html` | done |
+| `/me/time/time-off` | Time Off | `time-off-request.html` | done |
+| `/me/time/time-off/delegation` | Delegation | `time-off-request.html` | done |
+| `/me/time/time-off/taken` | Time Off Taken | `time-off-balance.html` | done |
 
 ## Employee Management
 
@@ -76,9 +81,9 @@ Prototype: 88 file HTML · Route bernav: 88
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/payroll/authorization` | Authorization & Handover | `payroll-doc-authorization.html` | todo |
-| `/payroll/salary-processing` | Salary Processing | `payroll-doc-processing.html` | todo |
-| `/payroll/salary-settings` | Salary Settings | `payroll-doc-settings.html` | todo |
+| `/payroll/authorization` | Authorization & Handover | `payroll-doc-authorization.html` | done |
+| `/payroll/salary-processing` | Salary Processing | `payroll-doc-processing.html` | done |
+| `/payroll/salary-settings` | Salary Settings | `payroll-doc-settings.html` | done |
 
 ## Productivity
 
@@ -172,12 +177,10 @@ layar di sini tanpa keputusan kontrak.
 | Prototype | Catatan |
 |---|---|
 | `add-employee.html` | Dibuka dari tombol di halaman New Joiner, bukan dari menu. |
-| `employee-directory.html` › detail (`/employees/directory/detail`) | Dibuka dari baris Directory. Dulu overlay; dijadikan halaman tersendiri 23 September 2026 atas permintaan pengguna supaya muat tombol PTKP Adjustment, Reprimand, dan buka/ubah profil. |
 | `auth.html` | Layar login; di luar shell bernavigasi. |
 | `company-asset-detail.html` | Halaman detail aset; bentuk `:id` saat modul Assets dikonversi. |
 | `company-integration-contact.html` | Belum punya baris menu di kontrak. |
 | `finance-loan-detail.html` | Sudah dikonversi ke `/finance/loan/detail?id=…`; dibuka dari baris tabel Loan, bukan dari menu. |
-| — (layar baru) | Detail periode gaji `/payroll/salary-processing/period?id=…`; dibuka dari baris tabel periode di Salary Processing maupun Authorization & Handover. |
 | `index.html` | Dashboard — tile tersendiri di sidebar, bukan baris NAV. |
 | `payroll-compliance.html` | Belum punya baris menu di kontrak. |
 | `payroll-components.html` | Belum punya baris menu di kontrak. |
@@ -189,3 +192,6 @@ layar di sini tanpa keputusan kontrak.
 | `recruitment-import-logs.html` | Belum punya baris menu di kontrak. |
 | `recruitment-job-listing-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
 | `transition-dashboard.html` | Detail transisi — dibuka lewat "View Detail" di daftar Employee Transfer. |
+| `employee-directory.html` › detail (`/employees/directory/detail`) | Dibuka dari baris Directory. Dulu overlay; dijadikan halaman tersendiri 23 September 2026 atas permintaan pengguna supaya muat tombol PTKP Adjustment, Reprimand, dan buka/ubah profil. |
+| — (layar baru) | Detail periode gaji `/payroll/salary-processing/period?id=…`; dibuka dari baris tabel periode di Salary Processing maupun Authorization & Handover. |
+| — (layar baru) | Activity Log `/company-management/activity-log` — mengisi baris menu Company Management › Activity Log yang sudah ada; tanpa prototype, dibangun langsung dari FSD-001-AUTH §5 · UIC-001-AUTH §8. |

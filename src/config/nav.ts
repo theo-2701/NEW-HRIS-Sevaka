@@ -344,7 +344,7 @@ export const NAV: NavSection[] = [
         ],
       },
       { label: 'Announcement', icon: 'megaphone' },
-      { label: 'Activity Log', icon: 'activity' },
+      { label: 'Activity Log', icon: 'activity', path: '/company-management/activity-log', status: 'done' },
       {
         label: 'Notification',
         icon: 'bell',

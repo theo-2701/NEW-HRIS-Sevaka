@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { useAuthStore } from '@/store/auth.store';
 import { MOCK } from '@/services/mock';
+import { toast } from '@/store/ui.store';
 
 /**
  * API service layer — SATU axios instance untuk seluruh aplikasi.
@@ -25,12 +26,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/** Jeda sebelum dialihkan ke login supaya toast sesi berakhir sempat terbaca (FSD-001-AUTH §1). */
+export const SESSION_EXPIRED_REDIRECT_DELAY_MS = 2_000;
+let sessionExpiring = false;
+
+/** Pesan sengaja generik — tidak menyebut sebab (dicabut/kedaluwarsa/batas sesi). */
+export function expireSession() {
+  if (sessionExpiring) return;
+  sessionExpiring = true;
+  toast('Sesi berakhir, silakan masuk lagi', 'danger');
+  setTimeout(() => {
+    useAuthStore.getState().clear();
+    sessionExpiring = false;
+  }, SESSION_EXPIRED_REDIRECT_DELAY_MS);
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorBody>) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().clear();
-    }
+    if (error.response?.status === 401) expireSession();
     return Promise.reject(toApiError(error));
   },
 );

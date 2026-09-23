@@ -79,5 +79,25 @@ for (const file of unmapped) {
   out += `| \`${file}\` | ${UNMAPPED_NOTES[file] ?? 'Belum punya baris menu di kontrak.'} |\n`;
 }
 
+// Layar hasil konversi yang tidak punya berkas prototype sendiri — tidak bisa
+// dihitung dari `js/shell.js`, jadi dicatat di sini agar tidak hilang saat regenerasi.
+const EXTRA_ROWS = [
+  [
+    '`employee-directory.html` › detail (`/employees/directory/detail`)',
+    'Dibuka dari baris Directory. Dulu overlay; dijadikan halaman tersendiri 23 September 2026 atas permintaan pengguna supaya muat tombol PTKP Adjustment, Reprimand, dan buka/ubah profil.',
+  ],
+  [
+    '— (layar baru)',
+    'Detail periode gaji `/payroll/salary-processing/period?id=…`; dibuka dari baris tabel periode di Salary Processing maupun Authorization & Handover.',
+  ],
+  [
+    '— (layar baru)',
+    'Activity Log `/company-management/activity-log` — mengisi baris menu Company Management › Activity Log yang sudah ada; tanpa prototype, dibangun langsung dari FSD-001-AUTH §5 · UIC-001-AUTH §8.',
+  ],
+];
+for (const [screen, note] of EXTRA_ROWS) {
+  out += `| ${screen} | ${note} |\n`;
+}
+
 fs.writeFileSync('docs/PAGE-INVENTORY.md', out);
 console.log('written', out.length, 'chars');

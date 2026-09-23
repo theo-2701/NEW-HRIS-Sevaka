@@ -34,6 +34,7 @@ import { GradeClassPage } from '@/features/company/pages/GradeClassPage';
 import { CostCenterPage } from '@/features/company/pages/CostCenterPage';
 import { SbuPage } from '@/features/company/pages/SbuPage';
 import { VendorPage } from '@/features/company/pages/VendorPage';
+import { ActivityLogPage } from '@/features/activity-log/pages/ActivityLogPage';
 import { PeriodDetailPage } from '@/features/salary-processing/pages/PeriodDetailPage';
 import { PayrollInfoPage } from '@/features/ess-payroll/pages/PayrollInfoPage';
 import { PayslipPage } from '@/features/ess-payroll/pages/PayslipPage';
@@ -123,6 +124,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'company/cost-center', element: <CostCenterPage /> },
   { path: 'company/sbu', element: <SbuPage /> },
   { path: 'company/vendor', element: <VendorPage /> },
+  { path: 'company-management/activity-log', element: <ActivityLogPage /> },
   { path: 'me/profile', element: <EmployeeProfilePage /> },
   { path: 'me/profile/family', element: <EmployeeProfilePage /> },
   { path: 'me/profile/emergency-contact', element: <EmployeeProfilePage /> },
@@ -183,6 +185,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company/cost-center',
   '/company/sbu',
   '/company/vendor',
+  '/company-management/activity-log',
   '/me/profile',
   '/me/profile/family',
   '/me/profile/emergency-contact',
