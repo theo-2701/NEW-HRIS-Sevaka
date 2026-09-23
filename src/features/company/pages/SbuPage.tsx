@@ -17,7 +17,7 @@ type Tab = 'sbu' | 'groups';
 
 /**
  * Settings › Company › SBU — port `_prototype/company-sbu.html`
- * (UIC-001-COMPANY-0.9 §2.6).
+ * (UIC-001-COMPANY-0.22 §2.6).
  *
  * Unit bisnis strategis dipakai untuk membaca kinerja per lini usaha. Menu ini hanya terbuka
  * bila penetapan SBU dinyalakan di Company Setup.

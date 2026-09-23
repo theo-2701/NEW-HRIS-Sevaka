@@ -17,6 +17,7 @@ import {
   VENDOR_SEED,
 } from '@/features/company/mock-data';
 import {
+  computeGradeCode,
   deriveZip,
   isDescendantNode,
   isDescendantPosition,
@@ -101,8 +102,28 @@ const snapshotOf = (employeeId: string | null): PersonSnapshot | null => {
   return person ? { employeeId, nama: person.nama, nik: person.nik } : null;
 };
 
+/**
+ * Cost Center dan SBU menolak `422` saat modenya `DISABLED` (`VAL-HRIS-069`/`070`,
+ * UIC-COMPANY 0.10, dibuktikan live lewat `guardCostCenterModule()`/`guardSbuModule()`).
+ * **Branch Group TIDAK memakai gerbang ini** — UIC-COMPANY 0.16 mencabut janji error mode untuk
+ * Branch Group: API-nya tetap hidup berapa pun `BRANCH_HIERARCHY_MODE`-nya (`branch_group_id`
+ * tetap wajib dirujuk tiap cabang), hanya visibilitas menu yang diatur mode itu di UI.
+ */
 function requireMode(mode: SetupMode, menu: string) {
-  if (mode !== 'ENABLED') throw new Error(`403 — menu ${menu} dimatikan pada Company Setup perusahaan ini.`);
+  if (mode !== 'ENABLED') throw new Error(`422 — menu ${menu} dimatikan pada Company Setup perusahaan ini.`);
+}
+
+/**
+ * `grade_code` server-generated (`T49`, `ERD-001-COMPANY` §7.7.1) — dihitung ulang untuk
+ * SELURUH baris aktif sesama `parentId` (level = kedalaman, root = 1) tiap kali ada baris
+ * dibuat/dipindah induk/diurutkan ulang/dihapus. Duplikat kode lintas subtree memang disengaja.
+ */
+function recomputeGradeCodes(parentId: string | null) {
+  const level = parentId === null ? 1 : 2;
+  const siblings = jobGrades.filter((row) => row.parentId === parentId).sort((a, b) => a.sortOrder - b.sortOrder);
+  siblings.forEach((row, index) => {
+    row.gradeCode = computeGradeCode(level, index + 1);
+  });
 }
 
 function writePositionLog(position: GroupPosition, activity: PositionActivity, note: string) {
@@ -139,7 +160,6 @@ export const companyService = {
   async branchGroups(): Promise<BranchGroup[]> {
     if (MOCK) {
       await delay();
-      requireMode(setup.branchHierarchyMode, 'Branch Group');
       return branchGroups.map((row) => ({ ...row })).sort((a, b) => a.levelOrder - b.levelOrder);
     }
     const { data } = await api.post<{ data: BranchGroup[] }>('/branch-groups/search', {});
@@ -149,7 +169,6 @@ export const companyService = {
   async saveBranchGroup(draft: BranchGroupDraft, id?: string): Promise<BranchGroup> {
     if (MOCK) {
       await delay(240);
-      requireMode(setup.branchHierarchyMode, 'Branch Group');
       const name = draft.name.trim();
       const levelOrder = parseInteger(draft.levelOrder);
       if (!name) throw new Error('422 VALIDATION_ERROR — nama kategori wajib diisi.');
@@ -184,7 +203,6 @@ export const companyService = {
   async deleteBranchGroup(id: string): Promise<{ id: string }> {
     if (MOCK) {
       await delay(200);
-      requireMode(setup.branchHierarchyMode, 'Branch Group');
       if (branches.some((row) => row.branchGroupId === id)) {
         throw new Error('409 — kategori ini masih dipakai cabang yang aktif.');
       }
@@ -247,6 +265,10 @@ export const companyService = {
 
       const latitude = draft.latitude.trim() ? parseNumber(draft.latitude) : null;
       const longitude = draft.longitude.trim() ? parseNumber(draft.longitude) : null;
+      const attendanceRadius = draft.attendanceRadius.trim() ? parseNumber(draft.attendanceRadius) : null;
+      if (draft.attendanceRadius.trim() && (attendanceRadius === null || attendanceRadius < 0)) {
+        throw new Error('422 VALIDATION_ERROR — radius absensi wajib angka tidak negatif.');
+      }
 
       if (id) {
         const row = branches.find((item) => item.id === id);
@@ -259,13 +281,18 @@ export const companyService = {
           parentInfo: parent ? { branchId: parent.id, branchName: parent.branchName } : null,
           address: draft.address.trim(),
           phone: draft.phone.trim(),
-          zip: { zip: draft.zip.trim(), timezone: derived.timezone },
+          zip: { zip: draft.zip.trim(), timezone: derived.timezone, province: derived.province, city: derived.city },
           regionalWage: wage,
           workDaysPerWeek: days,
           workHoursPerDay: hours,
           lateToleranceMinutes: tolerance,
           latitude,
           longitude,
+          taxNpwp: draft.taxNpwp.trim() || null,
+          taxNitku: draft.taxNitku.trim() || null,
+          taxKlu: draft.taxKlu.trim() || null,
+          attendanceRadius,
+          attendanceOnMobile: draft.attendanceOnMobile,
         });
         return { ...row };
       }
@@ -279,13 +306,18 @@ export const companyService = {
         parentInfo: parent ? { branchId: parent.id, branchName: parent.branchName } : null,
         address: draft.address.trim(),
         phone: draft.phone.trim(),
-        zip: { zip: draft.zip.trim(), timezone: derived.timezone },
+        zip: { zip: draft.zip.trim(), timezone: derived.timezone, province: derived.province, city: derived.city },
         regionalWage: wage,
         workDaysPerWeek: days,
         workHoursPerDay: hours,
         lateToleranceMinutes: tolerance,
         latitude,
         longitude,
+        taxNpwp: draft.taxNpwp.trim() || null,
+        taxNitku: draft.taxNitku.trim() || null,
+        taxKlu: draft.taxKlu.trim() || null,
+        attendanceRadius,
+        attendanceOnMobile: draft.attendanceOnMobile,
         employeeCount: 0,
         createdAt: now(),
       };
@@ -456,51 +488,63 @@ export const companyService = {
     return data.data;
   },
 
-  /** Class wajib membawa rentang gaji; Grade justru tidak boleh punya rentang. */
+  /**
+   * Class wajib membawa rentang gaji; Grade justru tidak boleh punya rentang. `gradeCode`
+   * BUKAN input klien sejak `T49` — dihitung ulang di sini untuk seluruh saudara sekandung
+   * lewat `recomputeGradeCodes`, bukan disimpan langsung dari draft.
+   */
   async saveJobGrade(draft: JobGradeDraft, id?: string): Promise<JobGrade> {
     if (MOCK) {
       await delay(260);
       const name = draft.name.trim();
-      const code = draft.gradeCode.trim();
+      const parentId = draft.parentId || null;
+      const sortOrder = parseInteger(draft.sortOrder);
       if (!name) throw new Error('422 VALIDATION_ERROR — nama wajib diisi.');
-      if (!code) throw new Error('422 VALIDATION_ERROR — kode wajib diisi.');
+      if (sortOrder === null || sortOrder < 1) throw new Error('422 VALIDATION_ERROR — urutan wajib angka mulai 1.');
       if (jobGrades.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase())) {
         throw new Error(`409 — nama ${name} sudah dipakai baris aktif lain.`);
       }
-      if (jobGrades.some((row) => row.id !== id && row.gradeCode.toLowerCase() === code.toLowerCase())) {
-        throw new Error(`409 — kode ${code} sudah dipakai baris aktif lain.`);
+      if (jobGrades.some((row) => row.id !== id && row.parentId === parentId && row.sortOrder === sortOrder)) {
+        throw new Error(`409 — urutan ${sortOrder} sudah dipakai baris saudara lain.`);
       }
       const from = draft.salaryRangeFrom.trim() ? parseNumber(draft.salaryRangeFrom) : null;
       const to = draft.salaryRangeTo.trim() ? parseNumber(draft.salaryRangeTo) : null;
-      const rangeError = salaryRangeError(draft.parentId, from, to);
+      const rangeError = salaryRangeError(parentId ?? '', from, to);
       if (rangeError) throw new Error(`422 VALIDATION_ERROR — ${rangeError}`);
-      if (!draft.parentId && (from !== null || to !== null)) {
+      if (!parentId && (from !== null || to !== null)) {
         throw new Error('422 VALIDATION_ERROR — Grade tidak memakai rentang gaji; rentang hanya milik Class.');
       }
+
+      const previousParentId = id ? (jobGrades.find((item) => item.id === id)?.parentId ?? null) : null;
 
       if (id) {
         const row = jobGrades.find((item) => item.id === id);
         if (!row) throw new Error('404 NOT_FOUND — baris tidak ditemukan.');
         Object.assign(row, {
           name,
-          gradeCode: code,
-          parentId: draft.parentId || null,
-          salaryRangeFrom: draft.parentId ? from : null,
-          salaryRangeTo: draft.parentId ? to : null,
+          parentId,
+          sortOrder,
+          salaryRangeFrom: parentId ? from : null,
+          salaryRangeTo: parentId ? to : null,
         });
-        return { ...row };
+      } else {
+        const row: JobGrade = {
+          id: nextId('jg'),
+          name,
+          gradeCode: '',
+          parentId,
+          sortOrder,
+          salaryRangeFrom: parentId ? from : null,
+          salaryRangeTo: parentId ? to : null,
+          createdAt: now(),
+        };
+        jobGrades.push(row);
       }
-      const row: JobGrade = {
-        id: nextId('jg'),
-        name,
-        gradeCode: code,
-        parentId: draft.parentId || null,
-        salaryRangeFrom: draft.parentId ? from : null,
-        salaryRangeTo: draft.parentId ? to : null,
-        createdAt: now(),
-      };
-      jobGrades.push(row);
-      return { ...row };
+
+      recomputeGradeCodes(parentId);
+      if (previousParentId !== null && previousParentId !== parentId) recomputeGradeCodes(previousParentId);
+      const saved = jobGrades.find((item) => item.id === id) ?? jobGrades[jobGrades.length - 1];
+      return { ...saved };
     }
     const { data } = await api.post<JobGrade>('/job-grades', draft);
     return data;
@@ -509,10 +553,13 @@ export const companyService = {
   async deleteJobGrade(id: string): Promise<{ id: string }> {
     if (MOCK) {
       await delay(200);
-      if (jobGrades.some((row) => row.parentId === id)) {
+      const row = jobGrades.find((item) => item.id === id);
+      if (!row) throw new Error('404 NOT_FOUND — baris tidak ditemukan.');
+      if (jobGrades.some((item) => item.parentId === id)) {
         throw new Error('409 — Grade ini masih memayungi Class di bawahnya.');
       }
-      jobGrades = jobGrades.filter((row) => row.id !== id);
+      jobGrades = jobGrades.filter((item) => item.id !== id);
+      recomputeGradeCodes(row.parentId);
       return { id };
     }
     const { data } = await api.delete<{ id: string }>(`/job-grades/${id}`);
@@ -755,6 +802,10 @@ export const companyService = {
       if (!name) throw new Error('422 VALIDATION_ERROR — nama vendor wajib diisi.');
       if (!draft.address.trim()) throw new Error('422 VALIDATION_ERROR — alamat wajib diisi.');
       if (!draft.phone.trim()) throw new Error('422 VALIDATION_ERROR — telepon wajib diisi.');
+      const email = draft.email.trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('422 VALIDATION_ERROR — format surel tidak sah.');
+      }
       if (vendors.some((row) => row.id !== id && row.vendorName.toLowerCase() === name.toLowerCase())) {
         throw new Error(`409 — vendor bernama ${name} sudah terdaftar.`);
       }
@@ -766,6 +817,7 @@ export const companyService = {
           address: draft.address.trim(),
           phone: draft.phone.trim(),
           telephone: draft.telephone.trim() || null,
+          email: email || null,
           vendorType: draft.vendorType,
           picName: draft.picName.trim() || null,
           picPosition: draft.picPosition || null,
@@ -778,6 +830,7 @@ export const companyService = {
         address: draft.address.trim(),
         phone: draft.phone.trim(),
         telephone: draft.telephone.trim() || null,
+        email: email || null,
         vendorType: draft.vendorType,
         picName: draft.picName.trim() || null,
         picPosition: draft.picPosition || null,

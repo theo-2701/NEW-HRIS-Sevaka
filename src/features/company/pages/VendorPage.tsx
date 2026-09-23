@@ -16,10 +16,11 @@ import type { Vendor, VendorType } from '@/features/company/types';
 
 /**
  * Settings › Company › Vendor — port `_prototype/company-vendor.html`
- * (UIC-001-COMPANY-0.9 §2.7).
+ * (UIC-001-COMPANY-0.22 §2.7).
  *
  * Mitra yang dipakai perusahaan, mis. penyedia seragam atau jasa pelatihan. Jenis vendor dan
- * jabatan PIC adalah dua daftar tertutup; kontrak belum menyediakan kolom surel.
+ * jabatan PIC adalah dua daftar tertutup. `email` opsional — `RESOLVED PROB-FRONTEND-001`
+ * (audit 23 September 2026); versi 0.9 sebelumnya menandainya GAP, sudah tidak berlaku.
  */
 export function VendorPage() {
   const [search, setSearch] = useState('');
@@ -49,7 +50,7 @@ export function VendorPage() {
       description="Mitra penyedia barang dan jasa perusahaan beserta kontak penanggung jawabnya."
     >
       <Card>
-        <CardHead title="Daftar vendor" sub="Kontak vendor disimpan sebagai telepon dan alamat" />
+        <CardHead title="Daftar vendor" sub="Kontak vendor: telepon, alamat, dan surel (opsional)" />
         <div>
           <TableToolbar
             filters={
@@ -85,6 +86,7 @@ export function VendorPage() {
               { key: 'address', header: 'Alamat', muted: true, render: (row) => row.address },
               { key: 'phone', header: 'Telepon seluler', nowrap: true, render: (row) => row.phone },
               { key: 'tel', header: 'Telepon kantor', nowrap: true, muted: true, render: (row) => row.telephone ?? '—' },
+              { key: 'email', header: 'Surel', muted: true, render: (row) => row.email ?? '—' },
               {
                 key: 'pic',
                 header: 'PIC',

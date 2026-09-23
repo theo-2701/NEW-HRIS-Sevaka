@@ -162,3 +162,57 @@ tujuan ikut memuat ulang.
 | `finance.loan.max_active_count` | 1 | 2 | Seed memegang dua pinjaman aktif untuk Budi |
 | `finance.cash_advance.max_outstanding_count` | 1 | 3 | Seed memegang dua uang muka terbuka untuk Budi |
 | `finance.cash_advance.enabled` | false | true | Dataset menyalakan modul |
+
+---
+
+## 8. Audit Company 23 September 2026 — repo 0.9/0.9 vs arsip terbaru 0.32/0.22/0.39/0.21
+
+Company dibangun (Batch 5) memakai `FSD/UIC-001-COMPANY-0.9` — versi itu satu-satunya yang
+ada saat modul dikerjakan. Belakangan ditemukan `HRIS-docs/.../September Handoff (Delivery)/`
+menyimpan rilis jauh lebih baru yang belum pernah dibaca: `FE-220926` (22 September, FSD 0.32/
+UIC 0.22) dan `BE/BE`+`BE-Fixing-Diagram-4th` (TSD 0.39/ERD 0.21). Metode: baca tabel
+**Changelog** tiap dokumen dari versi yang dipakai repo sampai versi terbaru (dokumennya
+sendiri terlalu besar dibaca utuh — FSD 271 KB, TSD 373 KB); setiap temuan diverifikasi ke ERD
+untuk memastikan bukan sekadar rumusan dokumen yang berubah tanpa dampak kode.
+
+**Enam delta ditemukan, keenamnya sudah diperbaiki di kode yang sama sesi ini:**
+
+| # | Temuan | Sumber | Perbaikan |
+| :--- | :--- | :--- | :--- |
+| C1 | Cost Center & SBU menolak mode `DISABLED` dengan `403`, kontrak `422` (`VAL-HRIS-069`/`070`) | UIC 0.10 | `requireMode` di `company.service.ts` diganti jadi `422` |
+| C2 | Branch Group menolak `403` saat `BRANCH_HIERARCHY_MODE=DISABLED` — janji itu **dicabut**; API tetap hidup berapa pun modenya, hanya visibilitas menu yang diatur mode | UIC 0.16 | Tiga panggilan `requireMode` di `branchGroups`/`saveBranchGroup`/`deleteBranchGroup` dihapus total |
+| C3 | `BRANCH_GAP_FIELDS` mencantumkan Tax (NPWP/NITKU/KLU) dan Attendance Radius/Mobile sebagai GAP — keduanya `RESOLVED` sejak ERD 0.3 (04 Agustus 2026), kolom asli di `mst_branch` | ERD 0.21 §7.6 | `Branch`/`BranchDraft` dapat lima field baru; `BRANCH_GAP_FIELDS` menyusut jadi `['FAX']` saja (Signature/Logo bukan lagi konsep Branch — logo kini satu per perusahaan di Auth, tanda tangan surat diresolusi dari pemegang posisi ber-`can_sign_letter`, lihat §9 di bawah) |
+| C4 | `zip.province`/`zip.city` dihitung ulang di FE tiap render (`deriveZip` dipanggil dari komponen tampilan) — kontrak menjadikannya kunci snapshot sendiri yang dibekukan saat baris dibuat | UIC 0.11, `PROB-SERVICE-787` | `ZipSnapshot` dapat field `province`/`city`; `deriveZip` hanya dipakai saat *menyusun* snapshot di `saveBranch`, `branchProvince`/`branchCity` membaca langsung dari snapshot |
+| C5 | `mst_vendor.email` `RESOLVED` sejak ERD 0.3 — dokumentasi lama "kontrak tidak punya kolom surel" sudah usang | ERD 0.21 §7.13 | `Vendor`/`VendorDraft` dapat `email` (opsional, divalidasi format), kolom baru di `VendorPage` |
+| C6 | `grade_code` dibangun sebagai field input klien wajib unik — sejak `T49` field itu **server-generated** `<level>.<huruf>` (level = kedalaman, huruf = peringkat `sort_order` ASC basis-26), dihitung ulang untuk seluruh saudara sekandung tiap create/reparent/reorder/soft-delete; duplikat lintas subtree disengaja | TSD 0.27 §7.3/§7.4, ERD §7.7.1 | `gradeCode` dikeluarkan dari `JobGradeDraft`, diganti `sortOrder`; `company.service.ts` menambah `recomputeGradeCodes()` yang dipanggil di `saveJobGrade`/`deleteJobGrade`; `rules.ts` menambah `letterFromRank`/`computeGradeCode` |
+
+19 pengujian baru/diperbarui di `company.test.ts` (total 22, semuanya lulus).
+
+### 8.1 Sudah dilihat, belum dikerjakan (giliran berikutnya)
+
+- **GS-11 "Pemetaan Modul → Struktur"** — tab keempat baru di Group Structure (FSD §2.1.1, UIC
+  §2.3.1, sejak `0.13`/`0.13`).
+- **`can_sign_letter` + Approver Kedua** — toggle dua-tangan MENYALAKAN/satu-tangan MEMATIKAN
+  di posisi Group Structure (FSD §2.1.2, UIC §2.3.2, sejak `0.15`/`0.14`); field ini juga yang
+  meresolusi tanda tangan surat menggantikan gambar per-cabang lama (lihat C3 di atas).
+- **Impor Excel + Bulk Edit** untuk Branch & Job Grade/Class, dan **impor JSON all-or-nothing**
+  untuk Cost Center/SBU (FSD §1.4–§1.8/§3.4–§3.8/§4.4–§4.5/§5.4–§5.5, UIC sudah mengontrakkan
+  delapan endpoint sejak `0.14`, FSD baru menyusul `0.20`, keputusan USER 21 September 2026:
+  impor/bulk **mengikat**, bukan dicabut) — layar baru per menu, di luar cakupan enam menu yang
+  sudah ada; belum digambar di Figma juga (dinyatakan eksplisit di kontrak).
+- **Assets, Notice, Announcement, Integration Contact** — empat menu Company lain di luar
+  Batch 5 giliran ini (lihat `docs/MODULE-TRACKER.md`).
+
+Sebuah worktree terpisah (`… - clean`, dipakai tool Kiro, belum di-commit per 23 September
+2026) sudah membangun GS-11 dan `can_sign_letter` berdasar rilis yang lebih lama
+(`FE-Fixing-5-Service`, FSD 0.18/UIC 0.14) — satu versi di bawah 0.32/0.22 di atas. Kerjaan itu
+sengaja tidak disentuh/digabung dari sesi ini; siapa pun yang melanjutkan GS-11/`can_sign_letter`
+di repo utama sebaiknya membangun ulang terhadap 0.32/0.22, bukan menyalin dari worktree itu.
+
+### 8.2 Update tabel §1 (Company baris terakhir sudah usang, dibaca ulang di sini)
+
+Baris Company pada tabel §1 di atas ("FSD/UIC 0.9 ikut rilis 15 September tetapi modulnya belum
+dibangun") tidak diperbarui langsung supaya tetap terbaca sebagai catatan sejarah persis seperti
+konvensi §1A yang sudah dipakai di audit-audit sebelumnya. Versi yang berlaku sekarang: **FSD
+0.32 · UIC 0.22 · TSD 0.39 · ERD 0.21** (rilis 22 September 2026, `September Handoff
+(Delivery)/FE-220926/` + `BE/BE/`).

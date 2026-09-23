@@ -20,7 +20,7 @@ import type { GroupLevel, GroupPosition } from '@/features/company/types';
 
 /**
  * Settings › Company › Group Structure — port `_prototype/company-group-structure.html`
- * (UIC-001-COMPANY-0.9 §2.3).
+ * (UIC-001-COMPANY-0.22 §2.3).
  *
  * Rantai persetujuan disusun antar **posisi**, bukan antar orang: karyawan hanya pengisi, dan
  * posisi yang ditinggalkan pengisinya tetap berdiri dalam keadaan lowong. Setiap perubahan

@@ -145,6 +145,11 @@ const EMPTY_BRANCH: BranchDraft = {
   lateToleranceMinutes: '15',
   latitude: '',
   longitude: '',
+  taxNpwp: '',
+  taxNitku: '',
+  taxKlu: '',
+  attendanceRadius: '',
+  attendanceOnMobile: false,
 };
 
 export function BranchFormModal({
@@ -183,6 +188,11 @@ export function BranchFormModal({
             lateToleranceMinutes: String(editing.lateToleranceMinutes),
             latitude: editing.latitude === null ? '' : String(editing.latitude),
             longitude: editing.longitude === null ? '' : String(editing.longitude),
+            taxNpwp: editing.taxNpwp ?? '',
+            taxNitku: editing.taxNitku ?? '',
+            taxKlu: editing.taxKlu ?? '',
+            attendanceRadius: editing.attendanceRadius === null ? '' : String(editing.attendanceRadius),
+            attendanceOnMobile: editing.attendanceOnMobile,
           }
         : EMPTY_BRANCH,
     );
@@ -290,6 +300,34 @@ export function BranchFormModal({
         />
         <TextRow label="Bujur" value={draft.longitude} onChange={(longitude) => setDraft({ ...draft, longitude })} />
       </FieldGrid>
+
+      <FieldGrid>
+        <TextRow label="NPWP cabang" value={draft.taxNpwp} onChange={(taxNpwp) => setDraft({ ...draft, taxNpwp })} />
+        <TextRow label="NITKU cabang" value={draft.taxNitku} onChange={(taxNitku) => setDraft({ ...draft, taxNitku })} />
+        <TextRow label="Kode KLU" value={draft.taxKlu} onChange={(taxKlu) => setDraft({ ...draft, taxKlu })} />
+        <TextRow
+          label="Radius absensi (meter)"
+          hint="Kosongkan bila tidak dibatasi radius."
+          value={draft.attendanceRadius}
+          onChange={(attendanceRadius) => setDraft({ ...draft, attendanceRadius })}
+        />
+      </FieldGrid>
+      <label className="flex cursor-pointer items-start gap-2.5">
+        <Checkbox
+          className="mt-0.5"
+          checked={draft.attendanceOnMobile}
+          onCheckedChange={(value) => setDraft({ ...draft, attendanceOnMobile: value === true })}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-body text-[13px] font-semibold text-fg-1">Boleh absen lewat aplikasi mobile</span>
+          <span className="font-body text-xs font-medium text-fg-3">
+            Selain titik absen tetap, karyawan cabang ini juga boleh absen dari aplikasi mobile.
+          </span>
+        </span>
+      </label>
+      <p className="font-body text-xs font-medium text-fg-4">
+        FAX cabang belum punya kolom penyimpan di kontrak (GAP) — sengaja tidak ditampilkan di form ini.
+      </p>
     </Modal>
   );
 }
@@ -436,7 +474,7 @@ export function PositionHistoryModal({
 
 // ---------- Grade & Class ----------
 
-const EMPTY_JOB_GRADE: JobGradeDraft = { name: '', gradeCode: '', parentId: '', salaryRangeFrom: '', salaryRangeTo: '' };
+const EMPTY_JOB_GRADE: JobGradeDraft = { name: '', parentId: '', sortOrder: '1', salaryRangeFrom: '', salaryRangeTo: '' };
 
 export function JobGradeFormModal({
   open,
@@ -458,8 +496,8 @@ export function JobGradeFormModal({
       editing
         ? {
             name: editing.name,
-            gradeCode: editing.gradeCode,
             parentId: editing.parentId ?? '',
+            sortOrder: String(editing.sortOrder),
             salaryRangeFrom: editing.salaryRangeFrom === null ? '' : String(editing.salaryRangeFrom),
             salaryRangeTo: editing.salaryRangeTo === null ? '' : String(editing.salaryRangeTo),
           }
@@ -474,7 +512,11 @@ export function JobGradeFormModal({
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title={editing ? `Ubah ${editing.name}` : 'Grade atau Class baru'}
-      description="Baris tanpa induk adalah Grade; baris dengan induk adalah Class dan wajib membawa rentang gaji."
+      description={
+        editing
+          ? `Kode saat ini ${editing.gradeCode} — dibuat otomatis oleh sistem dari kedalaman dan urutan, tidak bisa diketik langsung.`
+          : 'Baris tanpa induk adalah Grade; baris dengan induk adalah Class dan wajib membawa rentang gaji. Kode dibuat otomatis oleh sistem.'
+      }
       footer={
         <FooterButtons
           onClose={onClose}
@@ -485,7 +527,13 @@ export function JobGradeFormModal({
     >
       <FieldGrid>
         <TextRow label="Nama" required value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
-        <TextRow label="Kode" required value={draft.gradeCode} onChange={(gradeCode) => setDraft({ ...draft, gradeCode })} />
+        <TextRow
+          label="Urutan"
+          required
+          hint="Peringkat di antara saudara sekandung; menentukan huruf pada kode otomatis."
+          value={draft.sortOrder}
+          onChange={(sortOrder) => setDraft({ ...draft, sortOrder })}
+        />
       </FieldGrid>
       <SelectRow
         label="Induk (Grade)"
@@ -784,6 +832,7 @@ const EMPTY_VENDOR: VendorDraft = {
   address: '',
   phone: '',
   telephone: '',
+  email: '',
   vendorType: 'COMPANY',
   picName: '',
   picPosition: '',
@@ -810,6 +859,7 @@ export function VendorFormModal({
             address: editing.address,
             phone: editing.phone,
             telephone: editing.telephone ?? '',
+            email: editing.email ?? '',
             vendorType: editing.vendorType,
             picName: editing.picName ?? '',
             picPosition: editing.picPosition ?? '',
@@ -823,7 +873,7 @@ export function VendorFormModal({
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title={editing ? `Ubah ${editing.vendorName}` : 'Vendor baru'}
-      description="Kontak vendor disimpan sebagai telepon dan alamat; kontrak belum menyediakan kolom surel."
+      description="Kontak vendor: telepon, alamat, dan surel (opsional)."
       size="wide"
       footer={
         <FooterButtons
@@ -853,6 +903,7 @@ export function VendorFormModal({
           value={draft.telephone}
           onChange={(telephone) => setDraft({ ...draft, telephone })}
         />
+        <TextRow label="Surel" value={draft.email} onChange={(email) => setDraft({ ...draft, email })} />
         <TextRow label="Nama PIC" value={draft.picName} onChange={(picName) => setDraft({ ...draft, picName })} />
         <SelectRow
           label="Jabatan PIC"

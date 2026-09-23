@@ -1,6 +1,8 @@
 /**
- * Settings › Company — kontrak FSD-001-COMPANY-0.9 §1–§6 · UIC-001-COMPANY-0.9 §2 ·
- * TSD-001-COMPANY-0.10 · ERD-001-COMPANY-0.5.
+ * Settings › Company — kontrak FSD-001-COMPANY-0.32 §1–§6 · UIC-001-COMPANY-0.22 §2 ·
+ * TSD-001-COMPANY-0.39 · ERD-001-COMPANY-0.21 (audit 23 September 2026 — repo sebelumnya
+ * memakai 0.9/0.9; lihat `docs/CONTRACT-AUDIT.md` §8/§9 untuk delta yang belum dikerjakan,
+ * mis. GS-11 Pemetaan Modul→Struktur dan `can_sign_letter` di Group Structure).
  *
  * Enam menu master data: Branch (+ Branch Group), Group Structure (Group/Level/Position),
  * Grade & Class, Cost Center (+ Category), SBU (+ Group), dan Vendor.
@@ -15,10 +17,16 @@ export interface CompanySetup {
   sbuAssignmentMode: SetupMode;
 }
 
-/** Snapshot `{zip, timezone}`; provinsi dan kota diturunkan darinya, bukan kolom sendiri. */
+/**
+ * Snapshot `{zip, timezone, province, city}` — sejak `PROB-SERVICE-787` (ERD 0.47/UIC 0.11),
+ * `province`/`city` adalah kunci snapshot sendiri yang dibekukan saat baris dibuat, BUKAN lagi
+ * diturunkan dari `zip` setiap kali dibaca.
+ */
 export interface ZipSnapshot {
   zip: string;
   timezone: string;
+  province: string;
+  city: string;
 }
 
 /** Snapshot identitas lintas service — disimpan apa adanya saat baris dibuat. */
@@ -57,6 +65,13 @@ export interface Branch {
   lateToleranceMinutes: number;
   latitude: number | null;
   longitude: number | null;
+  /** `RESOLVED PROB-FRONTEND-001` (ERD 0.3/0.8) — dipakai payroll/pajak, bukan lagi GAP. */
+  taxNpwp: string | null;
+  taxNitku: string | null;
+  taxKlu: string | null;
+  /** `RESOLVED PROB-FRONTEND-001` — radius (meter) toleransi lokasi absen; null = tak dibatasi. */
+  attendanceRadius: number | null;
+  attendanceOnMobile: boolean;
   employeeCount: number;
   createdAt: string;
 }
@@ -68,6 +83,11 @@ export interface BranchDraft {
   parentId: string;
   address: string;
   phone: string;
+  taxNpwp: string;
+  taxNitku: string;
+  taxKlu: string;
+  attendanceRadius: string;
+  attendanceOnMobile: boolean;
   zip: string;
   regionalWage: string;
   workDaysPerWeek: string;
@@ -131,12 +151,22 @@ export interface PositionLog {
   createdAt: string;
 }
 
-/** `mst_job_grade` — self-ref dua tingkat: Grade di atas, Class di bawahnya. */
+/**
+ * `mst_job_grade` — self-ref dua tingkat: Grade di atas, Class di bawahnya.
+ *
+ * `gradeCode` **bukan input klien sejak `T49`** (TSD-COMPANY §7.3/§7.4, ERD §7.7.1) — server
+ * men-generate `<level>.<huruf>` (level = kedalaman, root = 1; huruf = peringkat `sortOrder`
+ * ASC basis-26 A…Z, AA…) dan menghitungnya ulang untuk SELURUH baris sesama induk tiap kali ada
+ * baris dibuat/dipindah induk/diurutkan ulang/dihapus. Duplikat lintas subtree (mis. dua baris
+ * `2.A` pada dua Grade berbeda) memang disengaja, bukan bug.
+ */
 export interface JobGrade {
   id: string;
   name: string;
   gradeCode: string;
   parentId: string | null;
+  /** Peringkat di antara saudara sekandung (sesama `parentId`); unik per grup itu. */
+  sortOrder: number;
   salaryRangeFrom: number | null;
   salaryRangeTo: number | null;
   createdAt: string;
@@ -144,8 +174,8 @@ export interface JobGrade {
 
 export interface JobGradeDraft {
   name: string;
-  gradeCode: string;
   parentId: string;
+  sortOrder: string;
   salaryRangeFrom: string;
   salaryRangeTo: string;
 }
@@ -206,13 +236,14 @@ export interface SbuDraft {
 export type VendorType = 'COMPANY' | 'INDIVIDUAL' | 'GOVERNMENT' | 'FOUNDATION';
 export type PicPosition = 'SALES' | 'OWNER' | 'MANAGER' | 'STAFF' | 'OTHER';
 
-/** `mst_vendor` — kontak vendor hanya telepon dan alamat; kontrak tidak punya kolom surel. */
+/** `mst_vendor` — `email` `RESOLVED PROB-FRONTEND-001` (ERD 0.3/0.8), opsional, varchar(254). */
 export interface Vendor {
   id: string;
   vendorName: string;
   address: string;
   phone: string;
   telephone: string | null;
+  email: string | null;
   vendorType: VendorType;
   picName: string | null;
   picPosition: PicPosition | null;
@@ -225,6 +256,7 @@ export interface VendorDraft {
   address: string;
   phone: string;
   telephone: string;
+  email: string;
   vendorType: VendorType;
   picName: string;
   picPosition: PicPosition | '';
@@ -254,5 +286,11 @@ export const ACTIVITY_LABEL: Record<PositionActivity, string> = {
   D: 'Dihapus',
 };
 
-/** Field yang muncul di rancangan layar tetapi belum punya kolom penyimpan (GAP). */
-export const BRANCH_GAP_FIELDS = ['FAX', 'Tanda tangan / logo', 'Pajak (NPWP, NITKU, KLU)', 'Radius absensi mobile'];
+/**
+ * Field Branch yang tetap tanpa kolom penyimpan (GAP) — audit 23 September 2026 (ERD 0.21 §5.6).
+ * Tax (NPWP/NITKU/KLU) dan Attendance Radius/Mobile sudah RESOLVED sejak `0.3`, jadi tidak lagi
+ * GAP. Tanda tangan/logo bukan lagi konsep milik Branch sama sekali — logo kini satu per
+ * perusahaan (Auth/Company Setup) dan tanda tangan surat diresolusi dari pemegang posisi
+ * ber-`can_sign_letter` di Group Structure (§7.3 ERD), bukan gambar milik cabang.
+ */
+export const BRANCH_GAP_FIELDS = ['FAX'];
