@@ -74,13 +74,6 @@ export function EmployeeProfilePage() {
     <ProfileFrame>
       <Breadcrumbs items={crumbs} />
 
-      {employeeId && (
-        <p className="m-0 rounded-md border border-primary-200 bg-primary-50 px-3.5 py-2.5 font-body text-[12px] font-medium text-secondary-900">
-          Dibuka dari Employee Detail untuk karyawan {employeeId} — dataset dummy hanya memuat satu profil, jadi isinya
-          masih profil contoh yang sama; pembedanya berlaku begitu backend tersambung.
-        </p>
-      )}
-
       {isLoading || !data ? (
         <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat profil…</p>
       ) : (

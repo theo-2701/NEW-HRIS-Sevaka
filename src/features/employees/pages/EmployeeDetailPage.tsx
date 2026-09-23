@@ -37,13 +37,10 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 const mono = 'font-mono tracking-[0.03em]';
 
 /**
- * DIR-DETAIL — halaman tersendiri (permintaan pengguna 23 September 2026; sebelumnya overlay
- * `EmployeeDetailModal`, sekarang satu halaman penuh supaya muat aksi lanjutan).
- *
- * Isi profil gabungan tetap **read-only** (`GET /employees/{id}`): PII disamarkan pada data
- * subjek lain (UIC-EMPLOYEE §1.8) dan membuka record ini menulis satu baris read-audit
- * append-only (§12.2). Tiga tombol aksi membawa ke layar yang berwenang mengubah data —
- * PTKP Adjustment, Reprimand, dan profil karyawan (ubah hanya untuk HR).
+/**
+ * Halaman detail karyawan — profil gabungan read-only: work data, rekening, dan identitas.
+ * Tiga tombol aksi membawa ke layar yang berwenang mengubah data: PTKP Adjustment, Reprimand,
+ * dan profil karyawan (ubah hanya untuk HR).
  */
 export function EmployeeDetailPage() {
   const navigate = useNavigate();
@@ -109,11 +106,11 @@ export function EmployeeDetailPage() {
 
             <p className="m-0 flex items-start gap-2.5 rounded-md border border-primary-200 bg-primary-50 px-3.5 py-2.5 font-body text-[12px] font-medium leading-normal text-secondary-900">
               <Lock className="mt-0.5 size-3.5 shrink-0 text-secondary-700" />
-              Halaman ini read-only. Rekening &amp; PII disamarkan pada data subjek lain; membuka record ini menulis
-              satu baris read-audit append-only (§12.2). Perubahan data dilakukan lewat tombol aksi di atas.
+              Halaman ini read-only. Rekening &amp; data pribadi disamarkan untuk karyawan lain; setiap pembukaan data
+              ini tercatat. Perubahan data dilakukan lewat tombol aksi di atas.
             </p>
 
-            <Group icon={<Briefcase className="size-[15px]" />} title="Work data" note="emp_work_detail.*">
+            <Group icon={<Briefcase className="size-[15px]" />} title="Work data">
               <Row label="NIK">
                 <span className={mono}>{maskNik(data.nik, scope, Boolean(isSelf))}</span>
               </Row>
@@ -149,7 +146,6 @@ export function EmployeeDetailPage() {
             <Group
               icon={<Landmark className="size-[15px]" />}
               title="Bank account"
-              note="disamarkan — 4 digit terakhir (§1.8)"
             >
               <Row label="Bank">{data.bank.bankCode}</Row>
               <Row label="Account number">
@@ -161,7 +157,6 @@ export function EmployeeDetailPage() {
             <Group
               icon={<IdCard className="size-[15px]" />}
               title="Position & identity"
-              note="proyeksi via auth / company — GAP PROB-FRONTEND-002"
             >
               <Row label="Name">{data.name}</Row>
               <Row label="Email">{data.email}</Row>
