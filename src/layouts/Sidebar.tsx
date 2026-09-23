@@ -49,8 +49,10 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         <div className={cn('relative min-w-0', expanded && 'flex-1')}>
           <button
             type="button"
-            title="Ganti perusahaan"
-            onClick={() => setCompanyOpen((v) => !v)}
+            title={expanded ? 'Ganti perusahaan' : 'Buka sidebar'}
+            aria-label={expanded ? undefined : 'Buka sidebar'}
+            aria-expanded={expanded ? companyOpen : false}
+            onClick={() => (expanded ? setCompanyOpen((v) => !v) : onToggle())}
             className={cn(
               'flex w-full items-center gap-2.5 rounded-[10px] border-none bg-transparent text-left transition-colors duration-200 ease-standard hover:bg-bg-app',
               expanded ? 'p-1.5' : 'justify-center p-0',
@@ -79,7 +81,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
             )}
           </button>
 
-          {companyOpen && (
+          {companyOpen && expanded && (
             <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[60] rounded-xl border border-border-1 bg-bg-surface p-1.5 shadow-overlay">
               <div className="px-2.5 pb-1.5 pt-2 t-label text-fg-4">Perusahaan Anda</div>
               {COMPANIES.map((c) => (
@@ -125,7 +127,10 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
           <button
             type="button"
             aria-label="Tutup sidebar"
-            onClick={onToggle}
+            onClick={() => {
+              setCompanyOpen(false);
+              onToggle();
+            }}
             className="flex size-10 items-center justify-center rounded-md text-fg-3 transition-colors duration-200 ease-standard hover:bg-bg-app hover:text-secondary-700"
           >
             <PanelLeft className="size-5" />

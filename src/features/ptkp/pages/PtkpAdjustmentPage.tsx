@@ -73,22 +73,20 @@ export function PtkpAdjustmentPage() {
         crumbs={[{ label: 'Employee Management' }, { label: 'PTKP Adjustment' }]}
         title="PTKP Adjustment"
         description="Atur status penghasilan tidak kena pajak (PTKP) seorang karyawan. Membuka periode baru otomatis menutup periode yang berjalan. Atestasi wajib dan basis pajaknya ditulis ke log yang tidak bisa diubah."
-        actions={
-          <Button variant="secondary" onClick={() => setChanging(true)}>
-            Change employee
-          </Button>
-        }
       >
         <div className="flex flex-col gap-5">
           {subject && (
-            <Card className="flex-row items-center gap-3.5">
+            <Card className="flex-row flex-wrap items-center gap-3.5">
               <Avatar name={subject.name} size="lg" />
-              <div className="flex min-w-0 flex-col gap-0.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="font-display text-base font-bold text-fg-1">{subject.name}</span>
                 <span className="font-body text-xs font-medium text-fg-3">
                   NIK {subject.nik} · {subject.position} · {subject.branch} · {subject.companyId}
                 </span>
               </div>
+              <Button variant="secondary" onClick={() => setChanging(true)}>
+                Change employee
+              </Button>
             </Card>
           )}
 
