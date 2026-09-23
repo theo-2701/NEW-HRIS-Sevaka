@@ -70,12 +70,16 @@ export const NAV: NavSection[] = [
         label: 'Time Management',
         icon: 'clock',
         children: [
-          { label: 'Attendance' },
+          { label: 'Attendance', path: '/me/time/attendance', source: 'time-attendance.html', status: 'done' },
           {
             label: 'Time Off',
-            children: [{ label: 'Time Off' }, { label: 'Delegation' }, { label: 'Time Off Taken' }],
+            children: [
+              { label: 'Time Off', path: '/me/time/time-off', source: 'time-off-request.html', status: 'done' },
+              { label: 'Delegation', path: '/me/time/time-off/delegation', source: 'time-off-request.html', status: 'done' },
+              { label: 'Time Off Taken', path: '/me/time/time-off/taken', source: 'time-off-balance.html', status: 'done' },
+            ],
           },
-          { label: 'Overtime' },
+          { label: 'Overtime', path: '/me/time/overtime', source: 'time-overtime.html', status: 'done' },
         ],
       },
       {
