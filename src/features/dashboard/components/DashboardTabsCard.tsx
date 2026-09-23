@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import { DataTable, CellIdentity } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
@@ -8,7 +8,9 @@ import { RowButton } from '@/components/RowActions';
 import { StatusBadge, toneForStatus } from '@/components/StatusBadge';
 import { Avatar } from '@/components/Avatar';
 import { EmptyState } from '@/components/Card';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatDateTime } from '@/lib/format';
+import { useMyAnnouncements } from '@/features/announcement/hooks/useAnnouncement';
+import { MY_ANNOUNCEMENTS_PATH, type MyAnnouncementRow } from '@/features/announcement/types';
 import { cn } from '@/lib/utils';
 import type { ContractRow } from '@/features/dashboard/types';
 
@@ -19,6 +21,47 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'contract', label: 'Contract & Probation' },
   { id: 'tasks', label: 'Tasks' },
 ];
+
+/** Lima pengumuman terbit terbaru untuk peran karyawan — baca penuh di layar ESS Announcement. */
+function DashboardAnnouncements() {
+  const navigate = useNavigate();
+  const { data: rows = [], isLoading } = useMyAnnouncements('ROLE_EMPLOYEE');
+
+  if (!isLoading && rows.length === 0) {
+    return (
+      <EmptyState
+        title="Belum ada pengumuman"
+        description="Pengumuman perusahaan akan tampil di sini setelah dipublikasikan."
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <DataTable<MyAnnouncementRow>
+        rows={rows.slice(0, 5)}
+        loading={isLoading}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: 'title', header: 'Title', strong: true, render: (row) => row.title },
+          {
+            key: 'published',
+            header: 'Published At',
+            muted: true,
+            nowrap: true,
+            render: (row) => formatDateTime(row.publishedAt),
+          },
+        ]}
+        actions={(row) => (
+          <RowButton onClick={() => navigate(`${MY_ANNOUNCEMENTS_PATH}?id=${row.id}`)}>Read</RowButton>
+        )}
+      />
+      <Link to={MY_ANNOUNCEMENTS_PATH} className="self-end font-body text-[13px] font-bold text-fg-link hover:underline">
+        Lihat semua pengumuman
+      </Link>
+    </div>
+  );
+}
 
 /**
  * Kartu bertab di bawah banner — port `.table-card` + `.tabs-pills`.
@@ -127,15 +170,10 @@ export function DashboardTabsCard({ contracts, loading }: { contracts: ContractR
               }}
             />
           </>
+        ) : tab === 'announcement' ? (
+          <DashboardAnnouncements />
         ) : (
-          <EmptyState
-            title={tab === 'announcement' ? 'Belum ada pengumuman' : 'Belum ada tugas'}
-            description={
-              tab === 'announcement'
-                ? 'Pengumuman perusahaan akan tampil di sini setelah dipublikasikan.'
-                : 'Tugas yang ditugaskan kepada Anda akan tampil di sini.'
-            }
-          />
+          <EmptyState title="Belum ada tugas" description="Tugas yang ditugaskan kepada Anda akan tampil di sini." />
         )}
       </div>
     </section>

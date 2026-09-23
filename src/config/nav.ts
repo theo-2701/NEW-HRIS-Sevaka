@@ -343,7 +343,7 @@ export const NAV: NavSection[] = [
           { label: 'Disposal', path: '/company-management/assets/disposal', source: 'company-disposal.html', status: 'todo' },
         ],
       },
-      { label: 'Announcement', icon: 'megaphone' },
+      { label: 'Announcement', icon: 'megaphone', path: '/company-management/announcements', status: 'done' },
       { label: 'Activity Log', icon: 'activity', path: '/company-management/activity-log', status: 'done' },
       {
         label: 'Notification',

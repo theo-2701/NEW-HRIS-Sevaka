@@ -339,3 +339,45 @@ berdampak FE sudah dicerminkan UIC/FSD di atas.
 
 3 pengujian baru di `profile.test.ts` (HR Staff ditolak ubah field khusus HR tapi boleh field umum,
 reveal enam field + read-audit, ESS/HR Staff reveal 403 tanpa read-audit).
+
+---
+
+## 12. Employee Management & Company Management — 24 September 2026
+
+**Employee Management:** nol selisih. Dokumen Employee di laptop ini (`(150926)-FE-terusan` 0.12/0.27,
+arsip Juli 0.1) semuanya **lebih lama** dari versi yang sudah diaudit §9 (FSD 0.14 / UIC 0.32 / TSD 0.69 /
+ERD 0.32), dan `FE-220926` tidak membawa Employee. Satu-satunya perubahan lintas modul yang menyentuh
+menu ini — tombol **Biodata** di Employee Detail (FSD-PROFILE 0.10 Pintu 2) — sudah dikerjakan §11.
+
+**Company Management (FSD-001-COMPANY 0.32 · UIC-001-COMPANY 0.22):** enam menu master data sudah
+sejajar (§8). Sisa kontrak yang belum punya layar, dikerjakan bertahap:
+
+| Bagian kontrak | Status |
+| :--- | :--- |
+| Announcement (FSD §11, UIC §3C) | **Dibangun** — lihat di bawah |
+| Assets: List, Category, Register, Detail & Lifecycle, Disposal (FSD §7–§9, UIC §3) | Belum |
+| Notice — Notice List, Release, Compliance, Notice Gate (FSD §10, UIC §3B) | Belum |
+| Integration Contact (FSD §13, UIC §3D) | Belum |
+| Impor Excel/JSON + Bulk Edit, delapan endpoint (FSD §14) | Belum |
+
+### 12.1 Announcement
+
+- **Admin** `/company-management/announcements` mengisi baris menu Company Management › Announcement
+  yang sudah ada: grid rancangan + terbit (filter status/kategori, cari judul), modal Susun/Sunting
+  (`category` daftar tertutup `POLICY`/`HOLIDAY`/`EVENT`/`GENERAL` tanpa nilai bawaan, `recipient_role`
+  boleh kosong selama rancangan), halaman detail (Kelola Lampiran + tab Jejak Terbit), dialog Terbitkan
+  dengan peringatan tetap "tidak dapat ditarik".
+- **Aturan yang ditegakkan service** (dan diuji): sesudah terbit keempat medan beku → `422` menyebut
+  medannya; terbit tanpa `recipient_role` → `422` dan tetap `DRAFT`; terbit ulang → `422`; terbit menulis
+  jejak dengan sidik SHA-256 atas empat medan; lampiran = menautkan berkas Company Files (bukan unggah),
+  tetap boleh sesudah terbit, duplikat `409`, berkas tak dikenal `422`, cabut = soft-delete.
+- **ESS** `/me/announcements`: hanya terbit + peran pemanggil, terbaru di atas; salah sasaran/rancangan
+  `404` (anti-enumerasi). **Baris menu ESS belum dipasang** — FSD §11.8 memutuskannya, tetapi aturan
+  repo melarang menambah baris sidebar tanpa persetujuan; sementara dijangkau dari tab Announcement
+  Dashboard (lima terbaru + "Lihat semua").
+- **Penyederhanaan sadar:** "editor teks kaya" diwujudkan textarea multi-paragraf yang dikirim sebagai
+  HTML `<p>` ter-escape (nol dependensi editor baru) dan ditampilkan sebagai teks, bukan `innerHTML`.
+  Direktori Company Files dibaca lewat `POST /documents/search` `owner_type=PERUSAHAAN`
+  (UIC-001-DOCUMENT §2.1); mock memakai lima berkas contoh.
+
+11 pengujian baru di `announcement.test.ts`.

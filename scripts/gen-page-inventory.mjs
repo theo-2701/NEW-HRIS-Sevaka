@@ -94,6 +94,14 @@ const EXTRA_ROWS = [
     '— (layar baru)',
     'Activity Log `/company-management/activity-log` — mengisi baris menu Company Management › Activity Log yang sudah ada; tanpa prototype, dibangun langsung dari FSD-001-AUTH §5 · UIC-001-AUTH §8.',
   ],
+  [
+    '— (layar baru)',
+    'Announcement `/company-management/announcements` (+ detail `/company-management/announcements/detail?id=…`, dibuka dari baris daftar) — mengisi baris menu Company Management › Announcement; dari FSD-001-COMPANY §11 · UIC-001-COMPANY §3C.',
+  ],
+  [
+    '— (layar baru)',
+    'Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard.',
+  ],
 ];
 for (const [screen, note] of EXTRA_ROWS) {
   out += `| ${screen} | ${note} |\n`;
