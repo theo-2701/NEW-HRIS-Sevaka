@@ -5,10 +5,20 @@ import type { PersonalProfile, ProfileActor, Relative, Training, WorkExperience 
 
 export const profileKeys = {
   me: ['profile', 'me'] as const,
+  of: (employeeId: string) => ['profile', 'of', employeeId] as const,
 };
 
-export function useProfile() {
-  return useQuery({ queryKey: profileKeys.me, queryFn: () => profileService.get() });
+/**
+ * Tanpa `employeeId` = profil pemanggil (`/me/*`, jalur ESS). Dengan `employeeId` = profil
+ * karyawan lain, dibuka HR dari halaman Employee Detail — service sudah menerima id sejak awal
+ * (`/employee-profiles/{employeeId}`), tetapi dataset dummy hanya punya satu orang sehingga
+ * isinya sama; pembedanya baru nyata saat backend tersambung.
+ */
+export function useProfile(employeeId?: string) {
+  return useQuery({
+    queryKey: employeeId ? profileKeys.of(employeeId) : profileKeys.me,
+    queryFn: () => (employeeId ? profileService.get(employeeId) : profileService.get()),
+  });
 }
 
 /** Semua mutasi profil memakai invalidasi yang sama + toast seragam. */

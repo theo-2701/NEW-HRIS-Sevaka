@@ -10,7 +10,6 @@ import { EmptyState } from '@/components/Card';
 import { Avatar } from '@/components/Avatar';
 import { EmploymentStatusBadge, WorkArrangementTag } from '@/features/employees/components/EmployeeTags';
 import { EmployeeCriteriaForm } from '@/features/employees/components/EmployeeCriteriaForm';
-import { EmployeeDetailModal } from '@/features/employees/components/EmployeeDetailModal';
 import { ScopeBar } from '@/features/employees/components/ScopeBar';
 import { useEmployeeSearch } from '@/features/employees/hooks/useEmployees';
 import { CURRENT_EMPLOYEE_ID } from '@/features/employees/services/employee.service';
@@ -58,7 +57,8 @@ export function EmployeeDirectoryPage() {
   const [size, setSize] = useState(10);
   const [sortBy, setSortBy] = useState('nik');
   const [sortDir, setSortDir] = useState<SortDirection>('ASC');
-  const [detailId, setDetailId] = useState<string | null>(null);
+
+  const openDetail = (id: string) => navigate(`/employees/directory/detail?id=${id}&scope=${scope}`);
 
   const request = useMemo(
     () => ({ ...criteria, page, size, sortBy, sortDir }),
@@ -147,7 +147,7 @@ export function EmployeeDirectoryPage() {
                             name={
                               <button
                                 type="button"
-                                onClick={() => setDetailId(row.id)}
+                                onClick={() => openDetail(row.id)}
                                 className="text-fg-link hover:underline"
                               >
                                 {row.name}
@@ -181,7 +181,7 @@ export function EmployeeDirectoryPage() {
                       },
                       { key: 'branch', header: 'Unit / Branch', muted: true, render: (row) => row.branchName },
                     ]}
-                    actions={(row) => <RowButton onClick={() => setDetailId(row.id)}>View Detail</RowButton>}
+                    actions={(row) => <RowButton onClick={() => openDetail(row.id)}>View Detail</RowButton>}
                   />
 
                   <Pagination
@@ -201,8 +201,6 @@ export function EmployeeDirectoryPage() {
           )}
         </div>
       </PageShell>
-
-      <EmployeeDetailModal employeeId={detailId} scope={scope} onClose={() => setDetailId(null)} />
     </>
   );
 }
