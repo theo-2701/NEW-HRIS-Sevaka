@@ -5,7 +5,10 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { StatusBadge } from '@/components/StatusBadge';
 import { usePagedRows } from '@/hooks/usePagedRows';
+import { AddButton, RowActions } from '@/components/RowActions';
+import { TableToolbar } from '@/components/TableToolbar';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
+import { OvertimeFormModal, OvertimeWithdrawModal } from '@/features/overtime/components/OvertimeModals';
 import { useMyOvertime } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS } from '@/features/ess-time/mock-data';
 import type { OvertimeRequest, OvertimeStatus } from '@/features/overtime/types';
@@ -42,7 +45,12 @@ const CATEGORY_LABEL = {
  */
 export function EssOvertimePage() {
   const [actor, setActor] = useState(ESS_VIEWERS[0]);
+  /* Lembur adalah scope EMPLOYEE — tidak pernah diajukan atas nama orang lain. */
+  const session = { employeeId: actor.employeeId, role: 'EMPLOYEE' as const };
   const overtime = useMyOvertime(actor);
+  const [form, setForm] = useState(false);
+  const [editing, setEditing] = useState<OvertimeRequest | null>(null);
+  const [withdrawing, setWithdrawing] = useState<OvertimeRequest | null>(null);
 
   const rows = useMemo(() => overtime.data ?? [], [overtime.data]);
   const paged = usePagedRows(rows);
@@ -58,6 +66,7 @@ export function EssOvertimePage() {
       <Card>
         <CardHead title="Lembur saya" sub={`Total jam disetujui: ${approvedHours.toFixed(1)} jam`} />
         <div>
+          <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Ajukan lembur</AddButton>} />
           <DataTable<OvertimeRequest>
             rows={paged.rows}
             rowKey={(row) => row.id}
@@ -107,6 +116,22 @@ export function EssOvertimePage() {
               },
               { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.requestReason || '—' },
             ]}
+            actions={(row) =>
+              row.overtimeStatus === 'PENDING_APPROVAL' ? (
+                <RowActions
+                  actions={[
+                    {
+                      label: 'Ubah',
+                      onSelect: () => {
+                        setEditing(row);
+                        setForm(true);
+                      },
+                    },
+                    { label: 'Tarik pengajuan', danger: true, onSelect: () => setWithdrawing(row) },
+                  ]}
+                />
+              ) : null
+            }
           />
           <Pagination
             page={paged.page}
@@ -118,6 +143,18 @@ export function EssOvertimePage() {
           />
         </div>
       </Card>
+
+      <OvertimeFormModal
+        open={form}
+        session={session}
+        rows={rows}
+        editing={editing}
+        onClose={() => {
+          setForm(false);
+          setEditing(null);
+        }}
+      />
+      <OvertimeWithdrawModal row={withdrawing} session={session} onClose={() => setWithdrawing(null)} />
     </PageShell>
   );
 }

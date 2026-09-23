@@ -6,6 +6,11 @@ import { Pagination } from '@/components/Pagination';
 import { StatusBadge } from '@/components/StatusBadge';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
+import { PunchConsole, PunchSavedModal, SelfieModal } from '@/features/attendance/components/PunchConsole';
+import { useRecordPunch } from '@/features/attendance/hooks/useAttendance';
+import { captureChannel, newIdempotencyKey, nextPunchType } from '@/features/attendance/rules';
+import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
+import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { useMyAttendanceDays, useMyPunchesToday } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS } from '@/features/ess-time/mock-data';
 import { ARRANGEMENT_LABEL, ATTENDANCE_STATUS_LABEL, DAY_TYPE_LABEL } from '@/features/attendance/types';
@@ -33,8 +38,33 @@ const TONE: Record<AttendanceStatus, Tone> = {
  */
 export function EssAttendancePage() {
   const [actor, setActor] = useState(ESS_VIEWERS[0]);
+  const session = { employeeId: actor.employeeId, role: 'EMPLOYEE' as const };
   const days = useMyAttendanceDays(actor);
   const punches = useMyPunchesToday(actor);
+
+  const punch = useRecordPunch(session);
+  const [selfieCaptured, setSelfieCaptured] = useState(false);
+  const [selfieOpen, setSelfieOpen] = useState(false);
+  const [punchResult, setPunchResult] = useState<PunchResult | null>(null);
+
+  const today = punches.data ?? [];
+  const channel = captureChannel(session, days.data ?? []);
+  const nextType = nextPunchType(session.employeeId, today);
+  const tappedIn = today.find((row) => row.punchType === 'IN');
+
+  const doPunch = async () => {
+    try {
+      const result = await punch.mutateAsync({
+        selfieCaptured,
+        // Satu kunci per percobaan tap; ditekan ulang dengan kunci yang sama = baris yang sama.
+        idempotencyKey: newIdempotencyKey(),
+      });
+      setSelfieCaptured(false);
+      setPunchResult(result);
+    } catch {
+      // Penolakan gerbang sudah tampil sebagai toast; frame selfie sengaja dipertahankan.
+    }
+  };
 
   const rows = useMemo(() => days.data ?? [], [days.data]);
   const paged = usePagedRows(rows);
@@ -47,10 +77,22 @@ export function EssAttendancePage() {
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
+        <PunchConsole
+          workDate={ATTENDANCE_TODAY}
+          channel={channel}
+          nextType={nextType}
+          hasTaps={today.length > 0}
+          tappedInAt={tappedIn ? tappedIn.punchAt.slice(11, 16) : null}
+          selfieCaptured={selfieCaptured}
+          onTakeSelfie={() => setSelfieOpen(true)}
+          onPunch={doPunch}
+          busy={punch.isPending}
+        />
+
         <Card>
           <CardHead title="Tap hari ini" sub="Setiap tap tercatat apa adanya — termasuk tap ulang" />
           <DataTable<Punch>
-            rows={punches.data ?? []}
+            rows={today}
             rowKey={(row) => row.id}
             loading={punches.isLoading}
             empty="Belum ada tap hari ini."
@@ -136,6 +178,9 @@ export function EssAttendancePage() {
           </div>
         </Card>
       </div>
+
+      <SelfieModal open={selfieOpen} onClose={() => setSelfieOpen(false)} onCaptured={() => setSelfieCaptured(true)} />
+      <PunchSavedModal result={punchResult} selfieRequired={channel.selfie} onClose={() => setPunchResult(null)} />
     </PageShell>
   );
 }
