@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { profileService } from '@/features/profile/services/profile.service';
+import { employeeService } from '@/features/employees/services/employee.service';
+import { EMPTY_CRITERIA } from '@/features/employees/types';
 import { toast } from '@/store/ui.store';
 import type { PersonalProfile, ProfileActor, Relative, Training, WorkExperience } from '@/features/profile/types';
 
@@ -37,7 +39,7 @@ function useProfileMutation<TVars>(
   });
 }
 
-/** Aktor ikut dikirim: field HR-restricted yang diubah ESS ditolak 403 oleh server. */
+/** Aktor ikut dikirim: field HR-restricted yang diubah di bawah HR Manager ditolak 403 oleh server. */
 export const useUpdateProfile = (actor: ProfileActor = 'ESS') =>
   useProfileMutation<Partial<PersonalProfile>>(
     (patch) => profileService.updateProfile(patch, actor),
@@ -63,10 +65,20 @@ export const useDeleteWork = () =>
   useProfileMutation<string>((id) => profileService.deleteWork(id), 'Riwayat pekerjaan dihapus.');
 
 /** Reveal PII penuh — satu baris read-audit per panggilan (UIC-PROFILE §2.6). */
-export function useRevealProfile() {
+/** Pencarian karyawan untuk modal Pilih Karyawan — memakai pencarian Employee Directory (nama/NIK). */
+export function useEmployeeLookup(keyword: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['profile', 'employee-lookup', keyword],
+    queryFn: () =>
+      employeeService.search({ ...EMPTY_CRITERIA, keyword, page: 1, size: 8, sortBy: 'name', sortDir: 'ASC' }),
+    enabled,
+  });
+}
+
+export function useRevealProfile(actor: ProfileActor, employeeId?: string) {
   return useMutation({
-    mutationFn: () => profileService.reveal(),
-    onSuccess: () => toast('Nilai sensitif ditampilkan — satu baris read-audit ditulis (UIC-PROFILE §2.6).', 'warn'),
+    mutationFn: () => profileService.reveal(actor, employeeId),
+    onSuccess: () => toast('Data sensitif ditampilkan. Akses ini tercatat.', 'warn'),
     onError: (error: Error) => toast(error.message, 'danger'),
   });
 }

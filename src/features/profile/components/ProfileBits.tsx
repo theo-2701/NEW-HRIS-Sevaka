@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowUpRight, CheckCircle2, Database, Flag, IdCard, ShieldCheck, User } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Database, Flag, IdCard, ShieldCheck, User, Users } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import type { ProfileActor } from '@/features/profile/types';
 import { cn } from '@/lib/utils';
@@ -79,11 +79,18 @@ export function IdentityCard({
           Employee · self
         </ScopePill>
         <ScopePill
-          active={actor === 'HR'}
-          onClick={() => onActorChange('HR')}
+          active={actor === 'HR_STAFF'}
+          onClick={() => onActorChange('HR_STAFF')}
+          icon={<Users className="size-3.5" />}
+        >
+          HR Staff
+        </ScopePill>
+        <ScopePill
+          active={actor === 'HR_MANAGER'}
+          onClick={() => onActorChange('HR_MANAGER')}
           icon={<ShieldCheck className="size-3.5" />}
         >
-          HR Manager · restricted fields
+          HR Manager · restricted fields &amp; reveal
         </ScopePill>
 
       </div>

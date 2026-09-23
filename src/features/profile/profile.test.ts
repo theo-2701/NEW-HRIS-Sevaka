@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { profileService } from '@/features/profile/services/profile.service';
+import { profileService, revealAuditTrail } from '@/features/profile/services/profile.service';
+import { REVEAL_FIELDS } from '@/features/profile/types';
 import {
   basicInfoSchema,
   relativeSchema,
@@ -93,16 +94,21 @@ describe('training & pengalaman kerja — urutan periode', () => {
 });
 
 describe('server profile — gerbang UIC-PROFILE-0.2', () => {
-  it('ESS mengubah field HR-restricted ditolak 403, HR boleh', async () => {
+  it('field HR-restricted: ESS dan HR Staff ditolak 403, HR Manager boleh (FSD §1.0)', async () => {
     const { profile } = await profileService.get();
     const other = profile.maritalStatus === 'MARRIED' ? 'SINGLE' : 'MARRIED';
     await expect(profileService.updateProfile({ maritalStatus: other }, 'ESS')).rejects.toThrow(/403/);
-    await expect(profileService.updateProfile({ maritalStatus: other }, 'HR')).resolves.toBeUndefined();
+    await expect(profileService.updateProfile({ maritalStatus: other }, 'HR_STAFF')).rejects.toThrow(/403/);
+    await expect(profileService.updateProfile({ maritalStatus: other }, 'HR_MANAGER')).resolves.toBeUndefined();
+  });
+
+  it('HR Staff tetap boleh mengubah field umum', async () => {
+    await expect(profileService.updateProfile({ personalEmail: 'budi@mail.com' }, 'HR_STAFF')).resolves.toBeUndefined();
   });
 
   it('FOREIGNER tanpa paspor ditolak 422 (MbV)', async () => {
     await expect(
-      profileService.updateProfile({ nationality: 'FOREIGNER', passportNumber: '' }, 'HR'),
+      profileService.updateProfile({ nationality: 'FOREIGNER', passportNumber: '' }, 'HR_MANAGER'),
     ).rejects.toThrow(/422/);
   });
 
@@ -137,11 +143,25 @@ describe('server profile — gerbang UIC-PROFILE-0.2', () => {
   });
 });
 
-describe('Reveal & BPJS (UIC-PROFILE 0.6 §2.1/§2.6)', () => {
-  it('reveal memulangkan PII penuh termasuk dua nomor BPJS', async () => {
-    const full = await profileService.reveal();
-    expect(full).toMatchObject({ bpjsTenagaKerjaNumber: '0011223344', bpjsKesehatanNumber: '0001112223333' });
+describe('Reveal & BPJS (UIC-PROFILE 0.12 §2.1/§2.6)', () => {
+  it('reveal HR Manager memulangkan keenam field sensitif penuh + menulis read-audit', async () => {
+    const before = revealAuditTrail().length;
+    const full = await profileService.reveal('HR_MANAGER');
+    expect(Object.keys(full).sort()).toEqual(REVEAL_FIELDS.map((item) => item.key).sort());
+    expect(full).toMatchObject({
+      npwp: '01.234.567.8-901.000',
+      bpjsTenagaKerjaNumber: '0011223344',
+      bpjsKesehatanNumber: '0001112223333',
+    });
     expect(full.idCardNumber).toHaveLength(16);
+    expect(revealAuditTrail()).toHaveLength(before + 1);
+  });
+
+  it('ESS dan HR Staff tanpa scope reveal ditolak 403 tanpa menulis read-audit', async () => {
+    const before = revealAuditTrail().length;
+    await expect(profileService.reveal('ESS')).rejects.toThrow(/403/);
+    await expect(profileService.reveal('HR_STAFF')).rejects.toThrow(/403/);
+    expect(revealAuditTrail()).toHaveLength(before);
   });
 
   it('nomor BPJS hanya angka, maksimal 20 digit', async () => {

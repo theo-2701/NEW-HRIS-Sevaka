@@ -41,11 +41,23 @@ export type TrainingCategory =
   | 'CERTIFICATION'
   | 'OTHER';
 
-/** Aktor layar: ESS mengunci field yang hanya boleh diubah HR. */
-export type ProfileActor = 'ESS' | 'HR';
+/** Aktor layar Basic Info (FSD-001-PROFILE §1.0 Matriks Peran). `HR_MANAGER` mewakili HR Manager dan Super Admin. */
+export type ProfileActor = 'ESS' | 'HR_STAFF' | 'HR_MANAGER';
 
-/** Field yang terkunci untuk aktor ESS (hanya HR yang boleh mengubah). */
+/** Field yang hanya boleh diubah HR Manager ke atas (gerbang `isHrPlus`). */
 export const HR_RESTRICTED_FIELDS = ['nationality', 'maritalStatus'] as const;
+
+export const canUpdateRestricted = (actor: ProfileActor) => actor === 'HR_MANAGER';
+/** Scope `employee:profile:reveal` — HR Staff tidak memilikinya. */
+export const canRevealPii = (actor: ProfileActor) => actor === 'HR_MANAGER';
+/** Pintu masuk HR ke biodata karyawan lain (tombol "Kelola Biodata Karyawan"). */
+export const canManageBiodata = (actor: ProfileActor) => actor !== 'ESS';
+
+export function parseProfileActor(value: string | null): ProfileActor {
+  if (value === 'HR_STAFF') return 'HR_STAFF';
+  if (value === 'HR_MANAGER' || value === 'HR') return 'HR_MANAGER';
+  return 'ESS';
+}
 
 export interface PostalCode {
   zip: string;
@@ -232,6 +244,20 @@ export function labelOf<T extends string>(options: Options<T>, value: T | '' | u
 export interface ProfileReveal {
   idCardNumber: string;
   motherMaidenName: string;
+  npwp: string;
   bpjsTenagaKerjaNumber: string;
   bpjsKesehatanNumber: string;
+  passportNumber: string;
 }
+
+export type RevealField = keyof ProfileReveal;
+
+/** Urutan keenam field sensitif yang dibuka `/reveal` (UIC-001-PROFILE §2.6). */
+export const REVEAL_FIELDS: { key: RevealField; label: string }[] = [
+  { key: 'idCardNumber', label: 'KTP number' },
+  { key: 'motherMaidenName', label: "Mother's maiden name" },
+  { key: 'npwp', label: 'NPWP' },
+  { key: 'bpjsTenagaKerjaNumber', label: 'BPJS Ketenagakerjaan' },
+  { key: 'bpjsKesehatanNumber', label: 'BPJS Kesehatan' },
+  { key: 'passportNumber', label: 'Passport number' },
+];

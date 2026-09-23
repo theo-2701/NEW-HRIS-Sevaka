@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { HR_RESTRICTED_FIELDS } from '@/features/profile/types';
+import { HR_RESTRICTED_FIELDS, canRevealPii, canUpdateRestricted } from '@/features/profile/types';
 import type {
   EmployeeProfileData,
   ProfileReveal,
@@ -15,11 +15,11 @@ import type {
 /**
  * API service Employee Profile (ESS).
  *
- * Endpoint kontrak (UIC-001-PROFILE-0.6):
+ * Endpoint kontrak (UIC-001-PROFILE-0.12):
  *   GET  /employee-profiles/{employee-id}         — detail HOT+COLD (PII ter-mask)
  *   PUT  /employee-profiles/{employee-id}         — HOT+COLD satu transaksi;
- *                                                   field HR-restricted via ESS → 403
- *   GET  /employee-profiles/{employee-id}/reveal  — PII penuh + read-audit
+ *                                                   field HR-restricted di bawah HR Manager → 403
+ *   GET  /employee-profiles/{employee-id}/reveal  — enam field PII penuh + read-audit; HR Manager ke atas
  *   POST/PUT/DELETE /employee-relatives{/id}      — Family & Emergency Contact (DELETE 200)
  *   POST/PUT/DELETE /trainings{/id}               — DELETE 204
  *   POST/PUT/DELETE /work-experiences{/id}        — DELETE 204
@@ -184,7 +184,7 @@ export const profileService = {
 
   /**
    * PUT HOT + COLD dalam satu transaksi (UIC §2.4). Server membaca baris terkini
-   * lebih dulu; field HR-restricted yang diubah aktor ESS ditolak 403.
+   * lebih dulu; field HR-restricted yang diubah ESS atau HR Staff ditolak 403.
    */
   async updateProfile(
     patch: Partial<PersonalProfile>,
@@ -194,10 +194,10 @@ export const profileService = {
     if (MOCK) {
       await delay();
       const current = mockData.profile;
-      if (actor === 'ESS') {
+      if (!canUpdateRestricted(actor)) {
         const touched = HR_RESTRICTED_FIELDS.filter((field) => field in patch && patch[field] !== current[field]);
         if (touched.length) {
-          throw new Error(`403 — ${touched.join(', ')} hanya boleh diubah HR (field HR-restricted).`);
+          throw new Error(`403 — ${touched.join(', ')} hanya boleh diubah HR Manager ke atas.`);
         }
       }
       const next = { ...current, ...patch };
@@ -220,15 +220,17 @@ export const profileService = {
   },
 
   /**
-   * `GET /employee-profiles/{employee-id}/reveal` — KTP, nama gadis ibu, dan dua nomor
-   * BPJS penuh; scope `employee:profile:reveal` + menulis read-audit (UIC §2.6).
+   * `GET /employee-profiles/{employee-id}/reveal` — enam field sensitif penuh; scope
+   * `employee:profile:reveal` (HR Manager/Super Admin) + menulis read-audit (UIC §2.6).
    */
-  async reveal(employeeId: string = PROFILE_OWNER_ID): Promise<ProfileReveal> {
+  async reveal(actor: ProfileActor, employeeId: string = PROFILE_OWNER_ID): Promise<ProfileReveal> {
     if (MOCK) {
       await delay(200);
-      const { idCardNumber, motherMaidenName, bpjsTenagaKerjaNumber, bpjsKesehatanNumber } = mockData.profile;
+      if (!canRevealPii(actor)) throw new Error('403 — Anda tidak berwenang membuka data sensitif ini.');
+      const { idCardNumber, motherMaidenName, npwp, bpjsTenagaKerjaNumber, bpjsKesehatanNumber, passportNumber } =
+        mockData.profile;
       revealAudit = [...revealAudit, { employeeId, revealedAt: new Date().toISOString() }];
-      return { idCardNumber, motherMaidenName, bpjsTenagaKerjaNumber, bpjsKesehatanNumber };
+      return { idCardNumber, motherMaidenName, npwp, bpjsTenagaKerjaNumber, bpjsKesehatanNumber, passportNumber };
     }
     const { data } = await api.get<ProfileReveal>(`/employee-profiles/${employeeId}/reveal`);
     return data;

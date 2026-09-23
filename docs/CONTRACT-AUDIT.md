@@ -315,3 +315,27 @@ Catatan implementasi Activity Log:
 
 5 pengujian baru (`activity-log.test.ts`: paginasi, urutan terbaru, rentang inklusif, empty,
 toast sesi berakhir + jeda).
+
+---
+
+## 11. Audit Employee Profile 24 September 2026 — repo FSD 0.4 / UIC 0.6 vs FSD 0.10 / UIC 0.12
+
+Sumber: FSD `FE-220926/FSD-001-PROFILE-0.10.md`; UIC/TSD/ERD `FE-Profile/` (UIC 0.12, TSD 0.19,
+ERD 0.12 — 18 September 2026). Pembanding versi lama: `(150926)-FE-terusan/`.
+
+| Versi | Isi changelog | Dampak ke repo |
+| :--- | :--- | :--- |
+| FSD `0.6` / `0.9`, UIC `0.10` / `0.11` | Reveal PII jadi alur dua layar: `R1` modal konfirmasi (daftar field + peringatan read-audit) → `R2` field tampil penuh + banner read-audit + tombol **Sembunyikan** per field. Field yang dibuka kini **enam**: `id_card_number`, `mother_maiden_name`, `npwp`, `bpjs_tenaga_kerja_number`, `bpjs_kesehatan_number`, `passport_number`; `npwp` & `passport_number` ter-mask di Detail | **Diterapkan.** Sebelumnya Reveal langsung membuka 4 field tanpa konfirmasi, NPWP dan paspor tampil utuh. Kini `SensitiveValue` + `RevealConfirmModal` di `BasicInfoSection.tsx`; `ProfileReveal` 6 field; mask NPWP `01.234.567.8-••••-000` |
+| FSD `0.8` / `0.9` (§1.0 Matriks Peran BARU) | Reveal hanya HR Manager / Super Admin (HR Staff nol scope `employee:profile:reveal`); ubah `nationality`/`marital_status` hanya HR Manager ke atas (gerbang `isHrPlus`) — HR Staff ter-strip sama seperti ESS | **Diterapkan.** `ProfileActor` `'ESS' \| 'HR'` → `'ESS' \| 'HR_STAFF' \| 'HR_MANAGER'` + helper `canRevealPii`/`canUpdateRestricted`/`canManageBiodata`; service menolak 403 (reveal tanpa scope tidak menulis read-audit); pemilih aktor di kartu identitas jadi tiga pil |
+| FSD `0.10` | Dua pintu masuk HR ke biodata karyawan: **Pintu 1** tombol "Kelola Biodata Karyawan" di Basic Info milik sendiri (hanya peran HR) → modal `P1` **Pilih Karyawan** (cari nama/NIK, debounce 300 ms, hasil nama + NIK + cabang); **Pintu 2** tombol "Biodata" di Employee Detail | **Dibangun.** `EmployeePickerModal.tsx` memakai pencarian Employee Directory; tombol Employee Detail dilabeli "Biodata" dan membuka profil sebagai HR Manager |
+| UIC `0.7` / `0.12` | Tautan dokumen profil = `…/documents/{id}/content` (bukan URL bertanda tangan); `document_id` asing 422, milik orang lain 403 | Nol dampak — repo belum menampilkan/mengunggah berkas dokumen profil (foto/sertifikat hanya penanda ADA) |
+| UIC `0.8` / `0.9` | Matriks G7; `GET /employee-relatives` dicabut (pakai `POST …/search`) | Nol dampak — repo tidak memanggil `GET /employee-relatives` |
+
+**Belum dikerjakan (tercatat):** cabang `Profil ada? = Belum → Form Create HR` pada FSD §1.3 — dataset
+dummy selalu memuat satu profil, jadi form create HR untuk karyawan tanpa profil belum punya layar.
+Kartu identitas masih menampilkan identitas pengguna login walau membuka profil karyawan lain
+(dataset dummy satu orang). TSD 0.19 / ERD 0.12 tidak diaudit baris per baris — perubahan yang
+berdampak FE sudah dicerminkan UIC/FSD di atas.
+
+3 pengujian baru di `profile.test.ts` (HR Staff ditolak ubah field khusus HR tapi boleh field umum,
+reveal enam field + read-audit, ESS/HR Staff reveal 403 tanpa read-audit).

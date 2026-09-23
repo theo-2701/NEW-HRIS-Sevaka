@@ -10,7 +10,7 @@ import {
   WorkExperienceSection,
 } from '@/features/profile/sections/WorkAndAdditionalSections';
 import { useProfile } from '@/features/profile/hooks/useProfile';
-import { NATIONALITY_OPTIONS, labelOf } from '@/features/profile/types';
+import { NATIONALITY_OPTIONS, labelOf, parseProfileActor } from '@/features/profile/types';
 import type { ProfileActor } from '@/features/profile/types';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -57,11 +57,11 @@ export function EmployeeProfilePage() {
   const section = SECTION_BY_PATH[pathname] ?? 'basic-info';
   const [group, leaf] = CRUMB_BY_SECTION[section];
   const [params] = useSearchParams();
-  /* Dibuka HR dari Employee Detail: ?employee=<id>&as=HR — tanpa keduanya tetap jalur ESS. */
+  /* Dibuka HR lewat tombol Biodata (Employee Detail) atau modal Pilih Karyawan: ?employee=<id>&as=<peran>. */
   const employeeId = params.get('employee') ?? undefined;
   const { data, isLoading } = useProfile(employeeId);
   const user = useAuthStore((s) => s.user);
-  const [actor, setActor] = useState<ProfileActor>(params.get('as') === 'HR' ? 'HR' : 'ESS');
+  const [actor, setActor] = useState<ProfileActor>(() => parseProfileActor(params.get('as')));
 
   const crumbs = [
     { label: 'Employee Profile' },
@@ -89,7 +89,14 @@ export function EmployeeProfilePage() {
           />
 
           <div className="flex flex-col gap-4">
-            {section === 'basic-info' && <BasicInfoSection profile={data.profile} actor={actor} />}
+            {section === 'basic-info' && (
+              <BasicInfoSection
+                key={`${employeeId ?? 'me'}:${actor}`}
+                profile={data.profile}
+                actor={actor}
+                employeeId={employeeId}
+              />
+            )}
             {section === 'family' && <FamilySection relatives={data.relatives} />}
             {section === 'emergency-contact' && <EmergencyContactSection relatives={data.relatives} />}
             {section === 'formal-education' && <FormalEducationSection lastEducation={data.profile.lastEducation} />}

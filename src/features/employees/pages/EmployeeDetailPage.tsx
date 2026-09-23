@@ -79,9 +79,9 @@ export function EmployeeDetailPage() {
           </Button>
           <Button
             disabled={!employeeId}
-            onClick={() => navigate(`/me/profile?employee=${employeeId}${isHr ? '&as=HR' : ''}`)}
+            onClick={() => navigate(`/me/profile?employee=${employeeId}${isHr ? '&as=HR_MANAGER' : ''}`)}
           >
-            {isHr ? 'Ubah profil' : 'Lihat profil'}
+            {isHr ? 'Biodata' : 'Lihat profil'}
           </Button>
         </div>
       }
