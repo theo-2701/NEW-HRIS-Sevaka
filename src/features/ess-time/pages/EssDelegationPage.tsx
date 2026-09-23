@@ -4,7 +4,13 @@ import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
+import { AddButton, RowActions } from '@/components/RowActions';
+import { TableToolbar } from '@/components/TableToolbar';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
+import { DelegationModal } from '@/features/time-off/components/DelegationModal';
+import { useCancelDelegation } from '@/features/time-off/hooks/useTimeOff';
+import { essDelegationSession } from '@/features/ess-time/types';
 import { useMyDelegations } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS, essName } from '@/features/ess-time/mock-data';
 import { DELEGATION_STATUS_LABEL } from '@/features/time-off/types';
@@ -33,6 +39,12 @@ export function EssDelegationPage() {
   const [actor, setActor] = useState(ESS_VIEWERS[1]);
   const [tab, setTab] = useState<Tab>('received');
   const delegations = useMyDelegations(actor);
+  /* Menitipkan kewenangan hanya sah bagi pemegang peran approver (§3.2) — sesi tulis memakai peran asli. */
+  const session = essDelegationSession(actor);
+  const cancel = useCancelDelegation();
+  const [form, setForm] = useState(false);
+  const [editing, setEditing] = useState<Delegation | null>(null);
+  const [cancelling, setCancelling] = useState<Delegation | null>(null);
 
   const received = delegations.data?.received ?? [];
   const given = delegations.data?.given ?? [];
@@ -65,6 +77,15 @@ export function EssDelegationPage() {
             title={tab === 'received' ? 'Kewenangan yang dititipkan ke saya' : 'Kewenangan yang saya titipkan'}
             sub="Masa berlakunya mengikuti tanggal cuti induk; status di sini adalah status persetujuan penunjukan"
           />
+          {tab === 'given' && (
+            <TableToolbar
+              actions={
+                <AddButton disabled={!actor.isApprover} onClick={() => setForm(true)}>
+                  Titipkan kewenangan
+                </AddButton>
+              }
+            />
+          )}
           <DataTable<Delegation>
             rows={rows}
             rowKey={(row) => row.id}
@@ -96,6 +117,22 @@ export function EssDelegationPage() {
               },
               { key: 'created', header: 'Diajukan', muted: true, nowrap: true, render: (row) => formatDate(row.createdAt) },
             ]}
+            actions={(row) =>
+              tab === 'given' && row.status === 'PENDING_APPROVAL' ? (
+                <RowActions
+                  actions={[
+                    {
+                      label: 'Ganti pengganti',
+                      onSelect: () => {
+                        setEditing(row);
+                        setForm(true);
+                      },
+                    },
+                    { label: 'Batalkan', danger: true, onSelect: () => setCancelling(row) },
+                  ]}
+                />
+              ) : null
+            }
           />
           {!actor.isApprover && (
             <p className="mt-2 font-body text-xs font-medium text-fg-4">
@@ -105,6 +142,25 @@ export function EssDelegationPage() {
           )}
         </Card>
       </div>
+
+      <DelegationModal
+        open={form}
+        session={session}
+        editing={editing}
+        onClose={() => {
+          setForm(false);
+          setEditing(null);
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(cancelling)}
+        title="Batalkan penitipan ini?"
+        description="Pembatalan hanya sah selagi penunjukan masih menunggu persetujuan; setelah disetujui, penunjukan terkunci."
+        confirmLabel="Batalkan"
+        loading={cancel.isPending}
+        onOpenChange={(open) => !open && setCancelling(null)}
+        onConfirm={() => cancelling && cancel.mutate({ id: cancelling.id }, { onSuccess: () => setCancelling(null) })}
+      />
     </PageShell>
   );
 }

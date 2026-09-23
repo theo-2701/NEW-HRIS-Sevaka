@@ -5,7 +5,12 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { StatusBadge } from '@/components/StatusBadge';
 import { usePagedRows } from '@/hooks/usePagedRows';
+import { AddButton, RowActions } from '@/components/RowActions';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
+import { RequestFormModal } from '@/features/time-off/components/RequestFormModal';
+import { WithdrawModal } from '@/features/time-off/components/RequestModals';
+import { TableToolbar } from '@/components/TableToolbar';
+import { essReadSession } from '@/features/ess-time/types';
 import { useMyBalances, useMyLeaveRequests } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS } from '@/features/ess-time/mock-data';
 import { leaveTypeOf } from '@/features/time-off/mock-data';
@@ -30,6 +35,10 @@ const TONE: Record<RequestStatus, 'ok' | 'warn' | 'err' | 'info' | 'mute'> = {
  */
 export function EssTimeOffPage() {
   const [actor, setActor] = useState(ESS_VIEWERS[0]);
+  const session = essReadSession(actor);
+  const [form, setForm] = useState(false);
+  const [editing, setEditing] = useState<LeaveRequest | null>(null);
+  const [withdrawing, setWithdrawing] = useState<LeaveRequest | null>(null);
   const requests = useMyLeaveRequests(actor);
   const balances = useMyBalances(actor);
 
@@ -83,6 +92,7 @@ export function EssTimeOffPage() {
         <Card>
           <CardHead title="Pengajuan saya" sub="Seluruh pengajuan cuti dan sakit yang Anda buat" />
           <div>
+            <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Ajukan cuti</AddButton>} />
             <DataTable<LeaveRequest>
               rows={paged.rows}
               rowKey={(row) => row.id}
@@ -118,6 +128,22 @@ export function EssTimeOffPage() {
                 },
                 { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.reason || '—' },
               ]}
+              actions={(row) => {
+                const actions = [];
+                if (row.status === 'PENDING_APPROVAL') {
+                  actions.push({
+                    label: 'Ubah',
+                    onSelect: () => {
+                      setEditing(row);
+                      setForm(true);
+                    },
+                  });
+                }
+                if (row.status === 'PENDING_APPROVAL' || row.status === 'APPROVED' || row.status === 'AUTO_APPROVED') {
+                  actions.push({ label: 'Tarik pengajuan', danger: true, onSelect: () => setWithdrawing(row) });
+                }
+                return actions.length ? <RowActions actions={actions} /> : null;
+              }}
             />
             <Pagination
               page={paged.page}
@@ -130,6 +156,17 @@ export function EssTimeOffPage() {
           </div>
         </Card>
       </div>
+
+      <RequestFormModal
+        open={form}
+        session={session}
+        editing={editing}
+        onClose={() => {
+          setForm(false);
+          setEditing(null);
+        }}
+      />
+      <WithdrawModal request={withdrawing} session={session} onClose={() => setWithdrawing(null)} />
     </PageShell>
   );
 }
