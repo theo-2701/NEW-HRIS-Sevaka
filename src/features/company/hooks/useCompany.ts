@@ -6,6 +6,8 @@ import type {
   BranchGroupDraft,
   CompanyActor,
   CostCenterDraft,
+  GroupLevelDraft,
+  GroupStructDraft,
   JobGradeDraft,
   ModuleCode,
   SbuDraft,
@@ -41,19 +43,28 @@ export const useBranches = (search = '') =>
 export const useGroupStructs = () =>
   useQuery({ queryKey: companyKeys.structs, queryFn: () => companyService.groupStructs() });
 
-export const useGroupLevels = (structId: string) =>
-  useQuery({
-    queryKey: companyKeys.levels(structId),
-    queryFn: () => companyService.groupLevels(structId),
-    enabled: Boolean(structId),
-  });
+export const useSaveGroupStruct = () =>
+  useCompanyMutation(
+    ({ draft, id }: { draft: GroupStructDraft; id?: string }) => companyService.saveGroupStruct(draft, id),
+    (row) => `Group ${row.name} tersimpan.`,
+  );
 
+export const useSaveGroupLevel = () =>
+  useCompanyMutation(
+    ({ draft, id }: { draft: GroupLevelDraft; id?: string }) => companyService.saveGroupLevel(draft, id),
+    (row) => `Level ${row.levelName} tersimpan.`,
+  );
+
+export const useDeleteGroupLevel = () =>
+  useCompanyMutation((id: string) => companyService.deleteGroupLevel(id), () => 'Level dihapus.');
+
+/** `structId` kosong = seluruh group (dipakai filter "Semua group"). */
+export const useGroupLevels = (structId: string) =>
+  useQuery({ queryKey: companyKeys.levels(structId), queryFn: () => companyService.groupLevels(structId) });
+
+/** `structId` kosong = seluruh group. */
 export const usePositions = (structId: string) =>
-  useQuery({
-    queryKey: companyKeys.positions(structId),
-    queryFn: () => companyService.positions(structId),
-    enabled: Boolean(structId),
-  });
+  useQuery({ queryKey: companyKeys.positions(structId), queryFn: () => companyService.positions(structId) });
 
 export const usePositionHistory = (positionId: string) =>
   useQuery({

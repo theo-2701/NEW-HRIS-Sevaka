@@ -109,7 +109,15 @@ export interface GroupStruct {
   name: string;
   isDefault: boolean;
   finalApproverInfo: PersonSnapshot | null;
+  isActive: boolean;
   createdAt: string;
+}
+
+/** Di luar dokumen kontrak — diminta pengguna 23 September 2026 untuk melengkapi UI CRUD Group. */
+export interface GroupStructDraft {
+  name: string;
+  isDefault: boolean;
+  finalApproverEmployeeId: string;
 }
 
 /**
@@ -154,7 +162,15 @@ export interface GroupLevel {
   groupStructId: string;
   levelName: string;
   levelOrder: number;
+  isActive: boolean;
   createdAt: string;
+}
+
+/** Di luar dokumen kontrak — diminta pengguna 23 September 2026. */
+export interface GroupLevelDraft {
+  groupStructId: string;
+  levelName: string;
+  levelOrder: string;
 }
 
 /**
