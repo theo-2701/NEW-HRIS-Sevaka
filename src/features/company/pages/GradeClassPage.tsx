@@ -16,7 +16,7 @@ import { formatCurrency } from '@/lib/format';
 
 /**
  * Settings › Company › Grade & Class — port `_prototype/company-grade-class.html`
- * (UIC-001-COMPANY-0.9 §2.4).
+ * (UIC-001-COMPANY-0.22 §2.4).
  *
  * Satu tabel berjenjang dua tingkat: baris tanpa induk adalah Grade, baris dengan induk adalah
  * Class. Rentang gaji wajib untuk Class dan tidak dipakai Grade.

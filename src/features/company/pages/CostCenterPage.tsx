@@ -23,7 +23,7 @@ type Tab = 'centers' | 'categories';
 
 /**
  * Settings › Company › Cost Center — port `_prototype/company-cost-center.html`
- * (UIC-001-COMPANY-0.9 §2.5).
+ * (UIC-001-COMPANY-0.22 §2.5).
  *
  * Menu ini hanya terbuka bila penetapan cost center dinyalakan di Company Setup. Kode cost
  * center unik antar baris aktif dan terkunci setelah dibuat.

@@ -25,7 +25,7 @@ type Tab = 'branches' | 'groups';
 
 /**
  * Settings › Company › Branch — port `_prototype/company-branch.html`
- * (FSD-001-COMPANY-0.9 §1 · UIC-001-COMPANY-0.9 §2.1–§2.2).
+ * (FSD-001-COMPANY-0.32 §1 · UIC-001-COMPANY-0.22 §2.1–§2.2).
  *
  * Kode cabang unik antar cabang aktif dan terkunci setelah dibuat; provinsi, kota, dan zona
  * waktu ikut kode pos. Tab kategori hanya muncul bila hierarki cabang menyala di Company Setup.

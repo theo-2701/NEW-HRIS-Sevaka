@@ -17,6 +17,11 @@ const BRANCH: BranchDraft = {
   lateToleranceMinutes: '10',
   latitude: '',
   longitude: '',
+  taxNpwp: '',
+  taxNitku: '',
+  taxKlu: '',
+  attendanceRadius: '',
+  attendanceOnMobile: false,
 };
 
 beforeEach(() => resetCompanyMocks());
@@ -51,11 +56,26 @@ describe('rules', () => {
 });
 
 describe('branch', () => {
-  it('menyimpan cabang baru dengan zona waktu hasil kode pos', async () => {
+  it('menyimpan cabang baru dengan wilayah hasil kode pos dibekukan di snapshot', async () => {
     const row = await companyService.saveBranch(BRANCH);
     expect(row.zip.timezone).toBe('Asia/Makassar');
+    expect(row.zip.province).toBe('Bali');
+    expect(row.zip.city).toBe('Denpasar');
     expect(row.parentInfo?.branchName).toBe('Kantor Pusat Jakarta');
     expect(await companyService.branches()).toHaveLength(4);
+  });
+
+  it('menyimpan Tax dan Attendance sebagai kolom asli, bukan lagi GAP', async () => {
+    const row = await companyService.saveBranch({
+      ...BRANCH,
+      taxNpwp: '03.111.222.3-000.000',
+      attendanceRadius: '75',
+      attendanceOnMobile: true,
+    });
+    expect(row.taxNpwp).toBe('03.111.222.3-000.000');
+    expect(row.taxNitku).toBeNull();
+    expect(row.attendanceRadius).toBe(75);
+    expect(row.attendanceOnMobile).toBe(true);
   });
 
   it('menolak kode cabang yang sudah dipakai cabang aktif', async () => {
@@ -76,13 +96,16 @@ describe('branch', () => {
     await expect(companyService.deleteBranch('br-jkt')).rejects.toThrow(/induk/);
   });
 
-  it('menutup menu kategori cabang saat hierarki dimatikan', async () => {
+  it('tetap membolehkan Branch Group walau hierarki dimatikan (UIC 0.16 mencabut gerbang mode)', async () => {
     await companyService.saveSetup({
       branchHierarchyMode: 'DISABLED',
       costCenterAssignmentMode: 'ENABLED',
       sbuAssignmentMode: 'ENABLED',
     });
-    await expect(companyService.branchGroups()).rejects.toThrow(/403/);
+    const groups = await companyService.branchGroups();
+    expect(groups.length).toBeGreaterThan(0);
+    const created = await companyService.saveBranchGroup({ name: 'Kategori Baru', levelOrder: '9', canViewChildData: false });
+    expect(created.name).toBe('Kategori Baru');
   });
 });
 
@@ -143,8 +166,8 @@ describe('grade & class', () => {
     await expect(
       companyService.saveJobGrade({
         name: 'Staff 3',
-        gradeCode: 'S.3',
         parentId: 'jg-staff',
+        sortOrder: '3',
         salaryRangeFrom: '',
         salaryRangeTo: '',
       }),
@@ -155,8 +178,8 @@ describe('grade & class', () => {
     await expect(
       companyService.saveJobGrade({
         name: 'Direksi',
-        gradeCode: 'D',
         parentId: '',
+        sortOrder: '3',
         salaryRangeFrom: '10000000',
         salaryRangeTo: '20000000',
       }),
@@ -165,6 +188,31 @@ describe('grade & class', () => {
 
   it('menolak penghapusan Grade yang masih memayungi Class', async () => {
     await expect(companyService.deleteJobGrade('jg-staff')).rejects.toThrow(/Class/);
+  });
+
+  it('men-generate kode <level>.<huruf> dan menghitungnya ulang untuk seluruh saudara', async () => {
+    const root = await companyService.saveJobGrade({ name: 'Direksi', parentId: '', sortOrder: '3', salaryRangeFrom: '', salaryRangeTo: '' });
+    expect(root.gradeCode).toBe('1.C');
+
+    const staff3 = await companyService.saveJobGrade({
+      name: 'Staff 3',
+      parentId: 'jg-staff',
+      sortOrder: '3',
+      salaryRangeFrom: '3000000',
+      salaryRangeTo: '4000000',
+    });
+    expect(staff3.gradeCode).toBe('2.C');
+    const grades = await companyService.jobGrades();
+    expect(grades.find((row) => row.id === 'jg-staff-1')?.gradeCode).toBe('2.A');
+    expect(grades.find((row) => row.id === 'jg-staff-2')?.gradeCode).toBe('2.B');
+    // Kode boleh duplikat lintas subtree — Manager 1 tetap "2.A" pada grupnya sendiri.
+    expect(grades.find((row) => row.id === 'jg-manager-1')?.gradeCode).toBe('2.A');
+  });
+
+  it('menolak sortOrder kembar antar saudara sekandung', async () => {
+    await expect(
+      companyService.saveJobGrade({ name: 'Staff Kembar', parentId: 'jg-staff', sortOrder: '1', salaryRangeFrom: '1', salaryRangeTo: '2' }),
+    ).rejects.toThrow(/409/);
   });
 });
 
@@ -196,27 +244,42 @@ describe('cost center, sbu, dan vendor', () => {
     ).rejects.toThrow(/tidak bisa diubah/);
   });
 
-  it('menutup cost center dan SBU saat modenya dimatikan', async () => {
+  it('menutup cost center dan SBU dengan 422 (bukan 403) saat modenya dimatikan', async () => {
     await companyService.saveSetup({
       branchHierarchyMode: 'ENABLED',
       costCenterAssignmentMode: 'DISABLED',
       sbuAssignmentMode: 'DISABLED',
     });
-    await expect(companyService.costCenters()).rejects.toThrow(/403/);
-    await expect(companyService.sbus()).rejects.toThrow(/403/);
+    await expect(companyService.costCenters()).rejects.toThrow(/422/);
+    await expect(companyService.sbus()).rejects.toThrow(/422/);
   });
 
-  it('menyimpan vendor dan menolak nama yang sudah terdaftar', async () => {
+  it('menyimpan vendor dengan surel opsional dan menolak nama yang sudah terdaftar', async () => {
     const row = await companyService.saveVendor({
       vendorName: 'PT Seragam Nusantara',
       address: 'Jl. Tekstil No. 3',
       phone: '08123456789',
       telephone: '',
+      email: 'halo@seragamnusantara.co.id',
       vendorType: 'COMPANY',
       picName: 'Bayu',
       picPosition: 'MANAGER',
     });
     expect(row.telephone).toBeNull();
+    expect(row.email).toBe('halo@seragamnusantara.co.id');
+
+    await expect(
+      companyService.saveVendor({
+        vendorName: 'PT Format Salah',
+        address: 'Jl. Lain No. 2',
+        phone: '08120000001',
+        telephone: '',
+        email: 'bukan-surel',
+        vendorType: 'COMPANY',
+        picName: '',
+        picPosition: '',
+      }),
+    ).rejects.toThrow(/format surel/i);
 
     await expect(
       companyService.saveVendor({
@@ -224,6 +287,7 @@ describe('cost center, sbu, dan vendor', () => {
         address: 'Jl. Lain No. 1',
         phone: '08120000000',
         telephone: '',
+        email: '',
         vendorType: 'COMPANY',
         picName: '',
         picPosition: '',

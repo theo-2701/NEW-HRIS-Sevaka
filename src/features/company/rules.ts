@@ -1,7 +1,12 @@
 import { ZIP_BOOK } from '@/features/company/mock-data';
 import type { Branch, CostCenter, GroupLevel, GroupPosition, JobGrade, Sbu } from '@/features/company/types';
 
-/** Provinsi, kota, dan zona waktu diturunkan dari snapshot kode pos. */
+/**
+ * Provinsi, kota, dan zona waktu dari kode pos — dipakai untuk MENYUSUN snapshot zip saat
+ * cabang dibuat/diubah. Sejak `PROB-SERVICE-787` (ERD 0.47/UIC 0.11), `province`/`city` adalah
+ * kunci snapshot yang dibekukan saat itu, bukan lagi diturunkan ulang setiap dibaca — jangan
+ * panggil fungsi ini untuk menampilkan cabang yang sudah tersimpan, baca `branch.zip` langsung.
+ */
 export function deriveZip(zip: string) {
   const row = ZIP_BOOK[zip.trim()];
   return {
@@ -12,8 +17,23 @@ export function deriveZip(zip: string) {
   };
 }
 
-export const branchProvince = (branch: Branch) => deriveZip(branch.zip.zip).province;
-export const branchCity = (branch: Branch) => deriveZip(branch.zip.zip).city;
+export const branchProvince = (branch: Branch) => branch.zip.province;
+export const branchCity = (branch: Branch) => branch.zip.city;
+
+/** Huruf peringkat basis-26: 1→A, 2→B, …, 26→Z, 27→AA, … (`ERD-001-COMPANY` §7.7.1). */
+export function letterFromRank(rank: number): string {
+  let n = rank;
+  let out = '';
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    out = String.fromCharCode(65 + rem) + out;
+    n = Math.floor((n - 1) / 26);
+  }
+  return out || 'A';
+}
+
+/** `grade_code` server-generated = `<level>.<huruf>` — level = kedalaman (root = 1). */
+export const computeGradeCode = (level: number, rank: number) => `${level}.${letterFromRank(rank)}`;
 
 /** Nominal dan bilangan bulat dari isian teks. */
 export function parseNumber(value: string): number | null {
