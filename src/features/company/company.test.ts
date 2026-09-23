@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { companyService, resetCompanyMocks } from '@/features/company/services/company.service';
 import { deriveZip, isDescendantNode, isDescendantPosition, salaryRangeError } from '@/features/company/rules';
-import type { BranchDraft } from '@/features/company/types';
+import type { BranchDraft, CompanyActor } from '@/features/company/types';
 
 const BRANCH: BranchDraft = {
   branchName: 'Cabang Denpasar',
@@ -109,9 +109,14 @@ describe('branch', () => {
   });
 });
 
+const SUPER_ADMIN: CompanyActor = { employeeId: 'emp-hesti', label: 'Super Admin', role: 'ROLE_SUPER_ADMIN' };
+const HR_MANAGER: CompanyActor = { employeeId: 'emp-maya', label: 'HR Manager', role: 'ROLE_HR_MANAGER' };
+const POSITION_BASE = { canSignLetter: false, secondApproverEmployeeId: '' };
+
 describe('group structure', () => {
   it('menulis riwayat setiap posisi dibuat dan diubah', async () => {
-    const row = await companyService.savePosition({
+    const row = await companyService.savePosition(SUPER_ADMIN, {
+      ...POSITION_BASE,
       positionName: 'Recruiter',
       groupStructLevelId: 'lvl-unit',
       employeeId: 'emp-dimas',
@@ -120,7 +125,8 @@ describe('group structure', () => {
     expect(row.supervisorInfo?.nama).toBe('Maya Anggraini');
 
     await companyService.savePosition(
-      { positionName: 'Recruiter', groupStructLevelId: 'lvl-unit', employeeId: '', parentId: 'pos-hr' },
+      SUPER_ADMIN,
+      { ...POSITION_BASE, positionName: 'Recruiter', groupStructLevelId: 'lvl-unit', employeeId: '', parentId: 'pos-hr' },
       row.id,
     );
     const history = await companyService.positionHistory(row.id);
@@ -129,7 +135,8 @@ describe('group structure', () => {
 
   it('menolak atasan yang berada pada level lebih dalam', async () => {
     await expect(
-      companyService.savePosition({
+      companyService.savePosition(SUPER_ADMIN, {
+        ...POSITION_BASE,
         positionName: 'Wakil Direktur',
         groupStructLevelId: 'lvl-direksi',
         employeeId: '',
@@ -138,13 +145,65 @@ describe('group structure', () => {
     ).rejects.toThrow(/level yang lebih dalam/);
   });
 
+  it('gerbang can_sign_letter dua tangan MENYALAKAN, satu tangan MEMATIKAN', async () => {
+    await expect(
+      companyService.savePosition(HR_MANAGER, {
+        ...POSITION_BASE,
+        positionName: 'HR Manager',
+        groupStructLevelId: 'lvl-divisi',
+        employeeId: 'emp-maya',
+        parentId: 'pos-dirut',
+        canSignLetter: true,
+        secondApproverEmployeeId: 'emp-rudi',
+      }, 'pos-hr'),
+    ).rejects.toThrow(/403/);
+
+    await expect(
+      companyService.savePosition(SUPER_ADMIN, {
+        ...POSITION_BASE,
+        positionName: 'HR Manager',
+        groupStructLevelId: 'lvl-divisi',
+        employeeId: 'emp-maya',
+        parentId: 'pos-dirut',
+        canSignLetter: true,
+        secondApproverEmployeeId: SUPER_ADMIN.employeeId,
+      }, 'pos-hr'),
+    ).rejects.toThrow(/tidak boleh sama dengan pemanggil/);
+
+    await expect(
+      companyService.savePosition(SUPER_ADMIN, {
+        ...POSITION_BASE,
+        positionName: 'HR Manager',
+        groupStructLevelId: 'lvl-divisi',
+        employeeId: 'emp-maya',
+        parentId: 'pos-dirut',
+        canSignLetter: true,
+        secondApproverEmployeeId: 'emp-maya',
+      }, 'pos-hr'),
+    ).rejects.toThrow(/harus berperan admin/);
+
+    const on = await companyService.savePosition(SUPER_ADMIN, {
+      ...POSITION_BASE,
+      positionName: 'HR Manager',
+      groupStructLevelId: 'lvl-divisi',
+      employeeId: 'emp-maya',
+      parentId: 'pos-dirut',
+      canSignLetter: true,
+      secondApproverEmployeeId: 'emp-rudi',
+    }, 'pos-hr');
+    expect(on.canSignLetter).toBe(true);
+
+    const off = await companyService.savePosition(SUPER_ADMIN, { ...POSITION_BASE, positionName: 'HR Manager', groupStructLevelId: 'lvl-divisi', employeeId: 'emp-maya', parentId: 'pos-dirut', canSignLetter: false }, 'pos-hr');
+    expect(off.canSignLetter).toBe(false);
+  });
+
   it('menolak posisi yang menjadikan turunannya sebagai atasan', async () => {
     expect(
       isDescendantPosition(
         [
           { id: 'pos-hr', parentId: 'pos-dirut' },
           { id: 'pos-payroll', parentId: 'pos-hr' },
-        ].map((row) => ({ ...row, positionName: '', groupStructLevelId: '', employeeId: null, employeeInfo: null, supervisorInfo: null, createdAt: '' })),
+        ].map((row) => ({ ...row, positionName: '', groupStructLevelId: '', employeeId: null, employeeInfo: null, supervisorInfo: null, canSignLetter: false, createdAt: '' })),
         'pos-payroll',
         'pos-hr',
       ),
@@ -153,11 +212,37 @@ describe('group structure', () => {
 
   it('melepas snapshot atasan pada anak saat pengisi posisi dikosongkan', async () => {
     await companyService.savePosition(
-      { positionName: 'HR Manager', groupStructLevelId: 'lvl-divisi', employeeId: '', parentId: 'pos-dirut' },
+      SUPER_ADMIN,
+      { ...POSITION_BASE, positionName: 'HR Manager', groupStructLevelId: 'lvl-divisi', employeeId: '', parentId: 'pos-dirut' },
       'pos-hr',
     );
     const rows = await companyService.positions('gs-main');
     expect(rows.find((row) => row.id === 'pos-payroll')?.supervisorInfo).toBeNull();
+  });
+});
+
+describe('module group struct map (GS-11)', () => {
+  it('menutup baca bagi peran di luar Super Admin/System Admin/HR Manager/Department Manager', async () => {
+    await expect(
+      companyService.moduleGroupStructMaps({ employeeId: 'emp-ga', label: 'GA Staff', role: 'ROLE_GA_STAFF' }),
+    ).rejects.toThrow(/403/);
+  });
+
+  it('menolak tulis dari HR Manager, membolehkan upsert dan hapus oleh admin', async () => {
+    await expect(
+      companyService.saveModuleGroupStructMap(HR_MANAGER, 'DOCUMENT', 'gs-main'),
+    ).rejects.toThrow(/403/);
+
+    const saved = await companyService.saveModuleGroupStructMap(SUPER_ADMIN, 'DOCUMENT', 'gs-main');
+    expect(saved.groupStructId).toBe('gs-main');
+
+    const cleared = await companyService.clearModuleGroupStructMap(SUPER_ADMIN, 'DOCUMENT');
+    const rows = await companyService.moduleGroupStructMaps(SUPER_ADMIN);
+    expect(rows.find((row) => row.moduleCode === cleared.moduleCode)).toBeUndefined();
+  });
+
+  it('menolak group_struct_id yang tidak menunjuk struktur aktif', async () => {
+    await expect(companyService.saveModuleGroupStructMap(SUPER_ADMIN, 'PERFORMANCE', 'gs-tidak-ada')).rejects.toThrow(/404/);
   });
 });
 

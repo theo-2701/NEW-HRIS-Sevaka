@@ -1,5 +1,12 @@
 import { ZIP_BOOK } from '@/features/company/mock-data';
-import type { Branch, CostCenter, GroupLevel, GroupPosition, JobGrade, Sbu } from '@/features/company/types';
+import type { Branch, CompanyRole, CostCenter, GroupLevel, GroupPosition, JobGrade, Sbu } from '@/features/company/types';
+
+/** `ROLE_SUPER_ADMIN`/`ROLE_SYSTEM_ADMIN` — satu-satunya peran yang boleh menulis GS-11 dan `can_sign_letter`. */
+export const isCompanyAdmin = (role: CompanyRole) => role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_SYSTEM_ADMIN';
+
+/** Peran yang boleh membaca GS-11 (§2.3.1) — lebih longgar dari yang boleh menulis. */
+export const canReadModuleMap = (role: CompanyRole) =>
+  role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_SYSTEM_ADMIN' || role === 'ROLE_HR_MANAGER' || role === 'ROLE_DEPARTMENT_MANAGER';
 
 /**
  * Provinsi, kota, dan zona waktu dari kode pos — dipakai untuk MENYUSUN snapshot zip saat

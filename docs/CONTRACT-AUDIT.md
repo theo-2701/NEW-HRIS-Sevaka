@@ -188,13 +188,34 @@ untuk memastikan bukan sekadar rumusan dokumen yang berubah tanpa dampak kode.
 
 19 pengujian baru/diperbarui di `company.test.ts` (total 22, semuanya lulus).
 
-### 8.1 Sudah dilihat, belum dikerjakan (giliran berikutnya)
+### 8.1 Susulan 23 September 2026 — GS-11 dan `can_sign_letter` dibangun terhadap 0.32/0.22
 
-- **GS-11 "Pemetaan Modul → Struktur"** — tab keempat baru di Group Structure (FSD §2.1.1, UIC
-  §2.3.1, sejak `0.13`/`0.13`).
-- **`can_sign_letter` + Approver Kedua** — toggle dua-tangan MENYALAKAN/satu-tangan MEMATIKAN
-  di posisi Group Structure (FSD §2.1.2, UIC §2.3.2, sejak `0.15`/`0.14`); field ini juga yang
-  meresolusi tanda tangan surat menggantikan gambar per-cabang lama (lihat C3 di atas).
+Dua butir yang tadinya ditandai "belum dikerjakan" sudah dibangun di giliran yang sama, terhadap
+versi terbaru (0.32/0.22) — **bukan** menyalin worktree Kiro yang memakai rilis lebih lama:
+
+- **GS-11 "Pemetaan Modul → Struktur"** (FSD §2.1.1, UIC §2.3.1) — tab kedua baru di
+  `GroupStructurePage` (disederhanakan dari "tab keempat" kontrak karena repo memang belum
+  memisah Group/Level/Position jadi tab tersendiri; enam baris tetap TIME/FINANCE/PERFORMANCE/
+  PRODUCTIVITY/DOCUMENT/EMPLOYEE, nol tombol tambah/hapus, baris kosong tetap terlihat, tulis
+  hanya Super Admin/System Admin — `ModuleMappingCard.tsx`, `moduleGroupStructMaps`/
+  `saveModuleGroupStructMap`/`clearModuleGroupStructMap` di `company.service.ts`).
+- **`can_sign_letter` + Approver Kedua** (FSD §2.1.2, UIC §2.3.2) — field baru di `GroupPosition`,
+  gerbang dua-tangan MENYALAKAN (`second_approver_employee_id` wajib, ≠ pemanggil, harus admin)
+  dan satu-tangan MEMATIKAN, keduanya hanya Super Admin/System Admin; picker Approver Kedua
+  hanya muncul saat menggeser `false→true` pada sesi edit yang sama dan tidak dipersistenkan.
+  Field ini juga yang meresolusi tanda tangan surat menggantikan gambar per-cabang lama (C3).
+- Pemilih "Viewing as" ditambahkan ke `GroupStructurePage` (`COMPANY_VIEWERS` di `mock-data.ts`,
+  4 peran) supaya gerbang peran bisa dicoba dari UI — pola yang sama dipakai modul lain
+  (Salary Settings, ESS Payroll).
+
+7 pengujian baru (gerbang can_sign_letter 1 kasus multi-assert, GS-11 3 kasus) — total 26 di
+`company.test.ts`, semuanya lulus. Worktree Kiro (`… - clean`) yang sempat membangun dua butir
+ini terhadap rilis lebih lama (`FE-Fixing-5-Service`, FSD 0.18/UIC 0.14) sudah ditimpa oleh
+merge `main` ke `ui/clean-dev-notes`; backup diff-nya disimpan di luar repo
+(`HRIS/kiro-wip-backup-2609/`) atas permintaan pengguna.
+
+**Masih belum dikerjakan** (giliran berikutnya):
+
 - **Impor Excel + Bulk Edit** untuk Branch & Job Grade/Class, dan **impor JSON all-or-nothing**
   untuk Cost Center/SBU (FSD §1.4–§1.8/§3.4–§3.8/§4.4–§4.5/§5.4–§5.5, UIC sudah mengontrakkan
   delapan endpoint sejak `0.14`, FSD baru menyusul `0.20`, keputusan USER 21 September 2026:
@@ -202,12 +223,6 @@ untuk memastikan bukan sekadar rumusan dokumen yang berubah tanpa dampak kode.
   sudah ada; belum digambar di Figma juga (dinyatakan eksplisit di kontrak).
 - **Assets, Notice, Announcement, Integration Contact** — empat menu Company lain di luar
   Batch 5 giliran ini (lihat `docs/MODULE-TRACKER.md`).
-
-Sebuah worktree terpisah (`… - clean`, dipakai tool Kiro, belum di-commit per 23 September
-2026) sudah membangun GS-11 dan `can_sign_letter` berdasar rilis yang lebih lama
-(`FE-Fixing-5-Service`, FSD 0.18/UIC 0.14) — satu versi di bawah 0.32/0.22 di atas. Kerjaan itu
-sengaja tidak disentuh/digabung dari sesi ini; siapa pun yang melanjutkan GS-11/`can_sign_letter`
-di repo utama sebaiknya membangun ulang terhadap 0.32/0.22, bukan menyalin dari worktree itu.
 
 ### 8.2 Update tabel §1 (Company baris terakhir sudah usang, dibaca ulang di sini)
 

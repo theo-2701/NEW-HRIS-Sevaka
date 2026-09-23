@@ -7,7 +7,7 @@ import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { PEOPLE, personName } from '@/features/company/mock-data';
-import { deriveZip } from '@/features/company/rules';
+import { deriveZip, isCompanyAdmin } from '@/features/company/rules';
 import {
   useSaveBranch,
   useSaveBranchGroup,
@@ -32,6 +32,7 @@ import type {
   BranchDraft,
   BranchGroup,
   BranchGroupDraft,
+  CompanyActor,
   CostCenter,
   CostCenterCategory,
   CostCenterDraft,
@@ -339,25 +340,44 @@ interface PositionDraft {
   groupStructLevelId: string;
   employeeId: string;
   parentId: string;
+  canSignLetter: boolean;
+  secondApproverEmployeeId: string;
 }
 
-const EMPTY_POSITION: PositionDraft = { positionName: '', groupStructLevelId: '', employeeId: '', parentId: '' };
+const EMPTY_POSITION: PositionDraft = {
+  positionName: '',
+  groupStructLevelId: '',
+  employeeId: '',
+  parentId: '',
+  canSignLetter: false,
+  secondApproverEmployeeId: '',
+};
 
+/**
+ * `GS-6` + tambahan §2.1.2/§2.3.2 (baru `0.14`/`0.15`) — toggle `can_sign_letter` hanya bisa
+ * digeser `ROLE_SUPER_ADMIN`/`ROLE_SYSTEM_ADMIN`; peran lain melihat badge baca-saja. Picker
+ * Approver Kedua hanya muncul saat menggeser dari `false` ke `true` pada sesi edit yang sama.
+ */
 export function PositionFormModal({
   open,
   editing,
   levels,
   positions,
+  actor,
   onClose,
 }: {
   open: boolean;
   editing: GroupPosition | null;
   levels: GroupLevel[];
   positions: GroupPosition[];
+  actor: CompanyActor;
   onClose: () => void;
 }) {
   const save = useSavePosition();
   const [draft, setDraft] = useState<PositionDraft>(EMPTY_POSITION);
+  const canWriteSignLetter = isCompanyAdmin(actor.role);
+  const wasSigner = editing?.canSignLetter ?? false;
+  const turningOn = canWriteSignLetter && !wasSigner && draft.canSignLetter;
 
   useEffect(() => {
     if (!open) return;
@@ -368,6 +388,8 @@ export function PositionFormModal({
             groupStructLevelId: editing.groupStructLevelId,
             employeeId: editing.employeeId ?? '',
             parentId: editing.parentId ?? '',
+            canSignLetter: editing.canSignLetter,
+            secondApproverEmployeeId: '',
           }
         : { ...EMPTY_POSITION, groupStructLevelId: levels[0]?.id ?? '' },
     );
@@ -383,7 +405,7 @@ export function PositionFormModal({
         <FooterButtons
           onClose={onClose}
           saving={save.isPending}
-          onSave={() => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose })}
+          onSave={() => save.mutate({ actor, draft, id: editing?.id }, { onSuccess: onClose })}
         />
       }
     >
@@ -420,6 +442,43 @@ export function PositionFormModal({
         onChange={(employeeId) => setDraft({ ...draft, employeeId })}
         options={PEOPLE_OPTIONS}
       />
+
+      {canWriteSignLetter ? (
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <Checkbox
+            className="mt-0.5"
+            checked={draft.canSignLetter}
+            onCheckedChange={(value) =>
+              setDraft({ ...draft, canSignLetter: value === true, secondApproverEmployeeId: '' })
+            }
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-body text-[13px] font-semibold text-fg-1">
+              Berwenang menandatangani surat resmi
+            </span>
+            <span className="font-body text-xs font-medium text-fg-3">
+              Menyalakan butuh persetujuan orang kedua; mematikan cukup satu tangan.
+            </span>
+          </span>
+        </label>
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="font-body text-[13px] font-semibold text-fg-1">Berwenang menandatangani surat:</span>
+          <StatusBadge tone={wasSigner ? 'ok' : 'mute'}>{wasSigner ? 'Ya' : 'Tidak'}</StatusBadge>
+          <span className="font-body text-xs font-medium text-fg-4">— hanya Super Admin/System Admin yang boleh mengubah ini.</span>
+        </div>
+      )}
+
+      {turningOn && (
+        <SelectRow
+          label="Approver kedua"
+          required
+          hint="Wajib berperan admin dan bukan diri sendiri; tidak disimpan sebagai field posisi, hanya penegak saat ini."
+          value={draft.secondApproverEmployeeId}
+          onChange={(secondApproverEmployeeId) => setDraft({ ...draft, secondApproverEmployeeId })}
+          options={PEOPLE_OPTIONS.filter((option) => option.value !== actor.employeeId)}
+        />
+      )}
     </Modal>
   );
 }

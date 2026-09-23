@@ -112,6 +112,42 @@ export interface GroupStruct {
   createdAt: string;
 }
 
+/**
+ * Peran yang dipakai gerbang Group Structure — `ROLE_SUPER_ADMIN`/`ROLE_SYSTEM_ADMIN` adalah
+ * satu-satunya peran yang boleh menulis Pemetaan Modul dan `can_sign_letter` (UIC §2.3.1/§2.3.2).
+ */
+export type CompanyRole = 'ROLE_SUPER_ADMIN' | 'ROLE_SYSTEM_ADMIN' | 'ROLE_HR_MANAGER' | 'ROLE_DEPARTMENT_MANAGER' | 'ROLE_GA_STAFF';
+
+export interface CompanyActor {
+  employeeId: string;
+  label: string;
+  role: CompanyRole;
+}
+
+/** `module_code` — daftar TERTUTUP enam nilai (`ck_cnf_module_group_struct_map_module_code`). */
+export type ModuleCode = 'TIME' | 'FINANCE' | 'PERFORMANCE' | 'PRODUCTIVITY' | 'DOCUMENT' | 'EMPLOYEE';
+export const MODULE_CODES: ModuleCode[] = ['TIME', 'FINANCE', 'PERFORMANCE', 'PRODUCTIVITY', 'DOCUMENT', 'EMPLOYEE'];
+export const MODULE_CODE_LABEL: Record<ModuleCode, string> = {
+  TIME: 'Time',
+  FINANCE: 'Finance',
+  PERFORMANCE: 'Performance',
+  PRODUCTIVITY: 'Productivity',
+  DOCUMENT: 'Document',
+  EMPLOYEE: 'Employee',
+};
+
+/**
+ * `cnf_module_group_struct_map` — GS-11, menjawab "struktur mana yang memerintah modul ini".
+ * Hanya jadi pemutus saat perusahaan punya >1 struktur aktif; baris kosong = struktur tunggal
+ * dipakai untuk semua modul (mandatory damper). Balasan array FLAT — bukan amplop grid.
+ */
+export interface ModuleGroupStructMap {
+  id: string;
+  moduleCode: ModuleCode;
+  groupStructId: string;
+  createdAt: string;
+}
+
 /** `cnf_group_struct_level`. */
 export interface GroupLevel {
   id: string;
@@ -135,6 +171,12 @@ export interface GroupPosition {
   employeeInfo: PersonSnapshot | null;
   parentId: string | null;
   supervisorInfo: PersonSnapshot | null;
+  /**
+   * `RESOLVED PROB-SERVICE-351` — kewenangan menandatangani surat resmi, melekat pada posisi.
+   * `false→true` butuh dua tangan (`second_approver_employee_id` wajib, tidak dipersistenkan —
+   * murni penegak orang-kedua saat panggilan itu); `true→false` cukup satu tangan.
+   */
+  canSignLetter: boolean;
   createdAt: string;
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageShell } from '@/components/PageShell';
+import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
@@ -10,23 +11,33 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { PositionFormModal, PositionHistoryModal } from '@/features/company/components/CompanyModals';
+import { ModuleMappingCard } from '@/features/company/components/ModuleMappingCard';
 import {
   useDeletePosition,
   useGroupLevels,
   useGroupStructs,
   usePositions,
 } from '@/features/company/hooks/useCompany';
+import { COMPANY_VIEWERS } from '@/features/company/mock-data';
 import type { GroupLevel, GroupPosition } from '@/features/company/types';
+
+type Tab = 'struktur' | 'mapping';
 
 /**
  * Settings › Company › Group Structure — port `_prototype/company-group-structure.html`
- * (UIC-001-COMPANY-0.22 §2.3).
+ * (UIC-001-COMPANY-0.22 §2.3/§2.3.1/§2.3.2).
  *
  * Rantai persetujuan disusun antar **posisi**, bukan antar orang: karyawan hanya pengisi, dan
  * posisi yang ditinggalkan pengisinya tetap berdiri dalam keadaan lowong. Setiap perubahan
- * posisi menulis satu baris riwayat.
+ * posisi menulis satu baris riwayat. Tab kedua (GS-11) memetakan modul ke struktur yang
+ * memerintahnya; menyalakan wewenang tanda tangan surat (`can_sign_letter`) hanya lewat form
+ * posisi (GS-6) dan hanya oleh Super Admin/System Admin.
  */
 export function GroupStructurePage() {
+  const [tab, setTab] = useState<Tab>('struktur');
+  const [actorId, setActorId] = useState(COMPANY_VIEWERS[0].employeeId);
+  const actor = COMPANY_VIEWERS.find((row) => row.employeeId === actorId) ?? COMPANY_VIEWERS[0];
+
   const structs = useGroupStructs();
   const [structId, setStructId] = useState('');
 
@@ -70,21 +81,48 @@ export function GroupStructurePage() {
       title="Group Structure"
       description="Susunan posisi dan rantai persetujuannya. Satu struktur dipakai sebagai bawaan perusahaan."
       actions={
-        <Select value={structId} onValueChange={setStructId}>
-          <SelectTrigger className="h-10 w-[240px]" aria-label="Struktur">
-            <SelectValue placeholder="Pilih struktur" />
-          </SelectTrigger>
-          <SelectContent>
-            {(structs.data ?? []).map((row) => (
-              <SelectItem key={row.id} value={row.id}>
-                {row.isDefault ? `${row.name} (bawaan)` : row.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Select value={actorId} onValueChange={setActorId}>
+            <SelectTrigger className="h-10 w-[260px]" aria-label="Viewing as">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {COMPANY_VIEWERS.map((viewer) => (
+                <SelectItem key={viewer.employeeId} value={viewer.employeeId}>
+                  {viewer.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={structId} onValueChange={setStructId}>
+            <SelectTrigger className="h-10 w-[240px]" aria-label="Struktur">
+              <SelectValue placeholder="Pilih struktur" />
+            </SelectTrigger>
+            <SelectContent>
+              {(structs.data ?? []).map((row) => (
+                <SelectItem key={row.id} value={row.id}>
+                  {row.isDefault ? `${row.name} (bawaan)` : row.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       }
     >
       <div className="flex flex-col gap-5">
+        <TabMenu<Tab>
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: 'struktur', label: 'Struktur' },
+            { value: 'mapping', label: 'Pemetaan Modul' },
+          ]}
+        />
+
+        {tab === 'mapping' && <ModuleMappingCard structs={structs.data ?? []} actor={actor} />}
+
+        {tab === 'struktur' && (
+        <>
         <Card>
           <CardHead
             title="Level"
@@ -164,6 +202,13 @@ export function GroupStructurePage() {
                   muted: true,
                   render: (row) => row.supervisorInfo?.nama ?? '—',
                 },
+                {
+                  key: 'sign',
+                  header: 'Tanda tangan surat',
+                  align: 'center',
+                  render: (row) =>
+                    row.canSignLetter ? <StatusBadge tone="ok">Berwenang</StatusBadge> : <span className="text-fg-4">—</span>,
+                },
               ]}
               actions={(row) => (
                 <RowActions
@@ -191,6 +236,8 @@ export function GroupStructurePage() {
             />
           </div>
         </Card>
+        </>
+        )}
       </div>
 
       <PositionFormModal
@@ -198,6 +245,7 @@ export function GroupStructurePage() {
         editing={editing}
         levels={levelRows}
         positions={positionRows}
+        actor={actor}
         onClose={closeForm}
       />
       <PositionHistoryModal open={Boolean(history)} position={history} onClose={() => setHistory(null)} />
