@@ -172,6 +172,7 @@ layar di sini tanpa keputusan kontrak.
 | Prototype | Catatan |
 |---|---|
 | `add-employee.html` | Dibuka dari tombol di halaman New Joiner, bukan dari menu. |
+| `employee-directory.html` › detail (`/employees/directory/detail`) | Dibuka dari baris Directory. Dulu overlay; dijadikan halaman tersendiri 23 September 2026 atas permintaan pengguna supaya muat tombol PTKP Adjustment, Reprimand, dan buka/ubah profil. |
 | `auth.html` | Layar login; di luar shell bernavigasi. |
 | `company-asset-detail.html` | Halaman detail aset; bentuk `:id` saat modul Assets dikonversi. |
 | `company-integration-contact.html` | Belum punya baris menu di kontrak. |

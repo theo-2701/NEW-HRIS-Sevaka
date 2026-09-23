@@ -49,6 +49,7 @@ import { TransitionDetailPage } from '@/features/transitions/pages/TransitionDet
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
 import { AddEmployeePage } from '@/features/new-joiner/pages/AddEmployeePage';
 import { EmployeeDirectoryPage } from '@/features/employees/pages/EmployeeDirectoryPage';
+import { EmployeeDetailPage } from '@/features/employees/pages/EmployeeDetailPage';
 import { EmployeeProfilePage } from '@/features/profile/pages/EmployeeProfilePage';
 import { LoginEmailPage } from '@/features/auth/pages/LoginEmailPage';
 import { LoginUsernamePage } from '@/features/auth/pages/LoginUsernamePage';
@@ -67,6 +68,8 @@ import { ResetPasswordDonePage, ResetPasswordPage } from '@/features/auth/pages/
 const IMPLEMENTED: RouteObject[] = [
   { index: true, element: <DashboardPage /> },
   { path: 'employees/directory', element: <EmployeeDirectoryPage /> },
+  /* Detail karyawan tidak punya baris menu — dibuka dari baris Directory. */
+  { path: 'employees/directory/detail', element: <EmployeeDetailPage /> },
   { path: 'employees/organization', element: <EmployeeDirectoryPage /> },
   { path: 'employees/new-joiner', element: <NewJoinerPage /> },
   { path: 'employees/new-joiner/add', element: <AddEmployeePage /> },
@@ -123,6 +126,7 @@ const IMPLEMENTED: RouteObject[] = [
 const IMPLEMENTED_PATHS = new Set<string>([
   '/',
   '/employees/directory',
+  '/employees/directory/detail',
   '/employees/organization',
   '/employees/new-joiner',
   '/employees/new-joiner/add',

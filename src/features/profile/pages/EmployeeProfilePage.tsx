@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Breadcrumbs } from '@/components/PageShell';
 import { IdentityCard, ProfileFrame } from '@/features/profile/components/ProfileBits';
 import { BasicInfoSection } from '@/features/profile/sections/BasicInfoSection';
@@ -56,9 +56,12 @@ export function EmployeeProfilePage() {
   const { pathname } = useLocation();
   const section = SECTION_BY_PATH[pathname] ?? 'basic-info';
   const [group, leaf] = CRUMB_BY_SECTION[section];
-  const { data, isLoading } = useProfile();
+  const [params] = useSearchParams();
+  /* Dibuka HR dari Employee Detail: ?employee=<id>&as=HR — tanpa keduanya tetap jalur ESS. */
+  const employeeId = params.get('employee') ?? undefined;
+  const { data, isLoading } = useProfile(employeeId);
   const user = useAuthStore((s) => s.user);
-  const [actor, setActor] = useState<ProfileActor>('ESS');
+  const [actor, setActor] = useState<ProfileActor>(params.get('as') === 'HR' ? 'HR' : 'ESS');
 
   const crumbs = [
     { label: 'Employee Profile' },
@@ -70,6 +73,13 @@ export function EmployeeProfilePage() {
   return (
     <ProfileFrame>
       <Breadcrumbs items={crumbs} />
+
+      {employeeId && (
+        <p className="m-0 rounded-md border border-primary-200 bg-primary-50 px-3.5 py-2.5 font-body text-[12px] font-medium text-secondary-900">
+          Dibuka dari Employee Detail untuk karyawan {employeeId} — dataset dummy hanya memuat satu profil, jadi isinya
+          masih profil contoh yang sama; pembedanya berlaku begitu backend tersambung.
+        </p>
+      )}
 
       {isLoading || !data ? (
         <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat profil…</p>
