@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { timeOffService } from '@/features/time-off/services/time-off.service';
 import { toast } from '@/store/ui.store';
 import { DEMO_NOW } from '@/features/time-off/types';
-import type { AccessPurpose, MedicalAccessLog, RequestDraft, Session } from '@/features/time-off/types';
+import type {
+  AccessPurpose,
+  DecisionInput,
+  MedicalAccessLog,
+  RejectInput,
+  RequestDraft,
+  Session,
+} from '@/features/time-off/types';
 import type { ToastTone } from '@/store/ui.store';
 
 export const timeOffKeys = {
@@ -72,13 +79,21 @@ export const useSubmitRequest = (session: Session) =>
 export function useDecideRequest(session: Session) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, decision, note }: { id: string; decision: 'APPROVED' | 'REJECTED'; note: string }) => {
-      await timeOffService.decide(session, id, decision, note, DEMO_NOW);
+    mutationFn: async ({
+      id,
+      decision,
+      input,
+    }: {
+      id: string;
+      decision: 'APPROVED' | 'REJECTED';
+      input: DecisionInput;
+    }) => {
+      await timeOffService.decide(session, id, decision, input, DEMO_NOW);
       return decision;
     },
-    onSuccess: async (decision, { id, note }) => {
+    onSuccess: async (decision, { id, input }) => {
       toast('200 diterima — keputusan diteruskan ke proses persetujuan.', 'info');
-      await timeOffService.completeDecision(session, id, decision, note, DEMO_NOW);
+      await timeOffService.completeDecision(session, id, decision, input, DEMO_NOW);
       toast(
         decision === 'APPROVED'
           ? 'workflow.process.completed — cuti disetujui; saldo dipotong lewat entri ledger LEAVE_TAKEN.'
@@ -92,8 +107,8 @@ export function useDecideRequest(session: Session) {
 }
 
 export const useRejectSick = (session: Session) =>
-  useTimeOffMutation<{ id: string; reason: string }>(
-    ({ id, reason }) => timeOffService.rejectSick(session, id, reason, DEMO_NOW),
+  useTimeOffMutation<{ id: string; reject: RejectInput }>(
+    ({ id, reject }) => timeOffService.rejectSick(session, id, reject, DEMO_NOW),
     () => ({
       text: 'Penolakan diterima — saldo yang sudah terpotong dikembalikan dan harinya jatuh jadi absen.',
       tone: 'warn',

@@ -26,13 +26,68 @@ import { employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
 import {
   ACCESS_PURPOSE_LABEL,
   DEMO_NOW,
+  REJECT_NOTE_MAX,
+  REJECT_REASON_LABEL,
   SESSION_LABEL,
   canOpenMedical,
 } from '@/features/time-off/types';
-import type { AccessPurpose, LeaveRequest, MedicalAccessLog, Session } from '@/features/time-off/types';
+import type {
+  AccessPurpose,
+  LeaveRequest,
+  MedicalAccessLog,
+  RejectInput,
+  RejectReasonCode,
+  Session,
+} from '@/features/time-off/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type DetailTab = 'detail' | 'medical';
+
+const EMPTY_REJECT: RejectInput = { reason: '', note: '' };
+
+/** Panel keputusan: alasan penolakan dari enum 15 nilai + catatan tambahan opsional (FSD-001-TIME §2.2). */
+function RejectFields({
+  value,
+  onChange,
+  reasonLabel,
+}: {
+  value: RejectInput;
+  onChange: (next: RejectInput) => void;
+  reasonLabel: string;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="reject-reason">{reasonLabel}</Label>
+        <Select value={value.reason} onValueChange={(reason) => onChange({ ...value, reason: reason as RejectReasonCode })}>
+          <SelectTrigger id="reject-reason">
+            <SelectValue placeholder="Pilih alasan penolakan" />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(REJECT_REASON_LABEL) as RejectReasonCode[]).map((code) => (
+              <SelectItem key={code} value={code}>
+                {REJECT_REASON_LABEL[code]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-col gap-1 md:col-span-2">
+        <Label htmlFor="reject-note">Catatan tambahan (opsional)</Label>
+        <Textarea
+          id="reject-note"
+          rows={3}
+          maxLength={REJECT_NOTE_MAX}
+          value={value.note}
+          onChange={(event) => onChange({ ...value, note: event.target.value })}
+        />
+        <span className="self-end font-body text-[11px] font-medium text-fg-4">
+          {value.note.length}/{REJECT_NOTE_MAX}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Detail pengajuan. Sub-tab **Medical Document Access** hanya ada bila
@@ -109,7 +164,10 @@ export function RequestDetailModal({
                 <RequestStatusBadge status={request.status} />
               </KeyValueRow>
               <KeyValueRow label="Diajukan">{formatDateTime(request.submittedAt)}</KeyValueRow>
-              {request.rejectReason && <KeyValueRow label="Alasan penolakan">{request.rejectReason}</KeyValueRow>}
+              {request.rejectReason && (
+                <KeyValueRow label="Alasan penolakan">{REJECT_REASON_LABEL[request.rejectReason]}</KeyValueRow>
+              )}
+              {request.rejectNote && <KeyValueRow label="Catatan penolakan">{request.rejectNote}</KeyValueRow>}
             </KeyValueList>
 
             {request.rejectDeadlineAt && (
@@ -193,7 +251,7 @@ export function RequestDetailModal({
   );
 }
 
-/** Keputusan approver — menyetujui boleh tanpa catatan, menolak wajib beralasan. */
+/** Keputusan approver (D3) — menyetujui boleh membawa catatan, menolak wajib memilih alasan dari daftar. */
 export function DecisionModal({
   request,
   session,
@@ -203,11 +261,11 @@ export function DecisionModal({
   session: Session;
   onClose: () => void;
 }) {
-  const [note, setNote] = useState('');
+  const [reject, setReject] = useState<RejectInput>(EMPTY_REJECT);
   const decide = useDecideRequest(session);
 
   useEffect(() => {
-    if (request) setNote('');
+    if (request) setReject(EMPTY_REJECT);
   }, [request]);
 
   if (!request) return null;
@@ -218,14 +276,14 @@ export function DecisionModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title={`Leave approval — ${request.id}`}
-      description="Menyetujui boleh membawa catatan; menolak wajib beralasan."
+      description="Menyetujui boleh membawa catatan. Menolak wajib memilih alasan penolakan."
       footer={
         <>
           <Button
             variant="danger"
-            disabled={decide.isPending}
+            disabled={decide.isPending || !reject.reason}
             onClick={() =>
-              decide.mutate({ id: request.id, decision: 'REJECTED', note }, { onSuccess: onClose })
+              decide.mutate({ id: request.id, decision: 'REJECTED', input: { reject } }, { onSuccess: onClose })
             }
           >
             Reject
@@ -233,7 +291,10 @@ export function DecisionModal({
           <Button
             disabled={decide.isPending}
             onClick={() =>
-              decide.mutate({ id: request.id, decision: 'APPROVED', note }, { onSuccess: onClose })
+              decide.mutate(
+                { id: request.id, decision: 'APPROVED', input: { note: reject.note.trim() } },
+                { onSuccess: onClose },
+              )
             }
           >
             {decide.isPending ? 'Memproses…' : 'Approve'}
@@ -258,17 +319,7 @@ export function DecisionModal({
           </KeyValueRow>
         </KeyValueList>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="decision-note">Catatan keputusan</Label>
-          <Textarea
-            id="decision-note"
-            rows={3}
-            maxLength={500}
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Wajib diisi bila menolak"
-          />
-        </div>
+        <RejectFields value={reject} onChange={setReject} reasonLabel="Alasan penolakan (wajib untuk tolak)" />
       </div>
     </Modal>
   );
@@ -284,11 +335,11 @@ export function SickRejectModal({
   session: Session;
   onClose: () => void;
 }) {
-  const [reason, setReason] = useState('');
+  const [input, setInput] = useState<RejectInput>(EMPTY_REJECT);
   const reject = useRejectSick(session);
 
   useEffect(() => {
-    if (request) setReason('');
+    if (request) setInput(EMPTY_REJECT);
   }, [request]);
 
   if (!request) return null;
@@ -297,8 +348,9 @@ export function SickRejectModal({
     <Modal
       open
       onOpenChange={(next) => !next && onClose()}
+      size="wide"
       title="Reject sick leave"
-      description="Hanya tersedia di dalam jendela tolak yang dibekukan. Menolak membalik apa yang sudah berlaku — saldo dikembalikan dan harinya jatuh jadi absen."
+      description="Menolak membalik apa yang sudah berlaku — saldo dikembalikan dan harinya jatuh jadi absen."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -306,8 +358,8 @@ export function SickRejectModal({
           </Button>
           <Button
             variant="danger"
-            disabled={reason.trim().length === 0 || reject.isPending}
-            onClick={() => reject.mutate({ id: request.id, reason }, { onSuccess: onClose })}
+            disabled={!input.reason || reject.isPending}
+            onClick={() => reject.mutate({ id: request.id, reject: input }, { onSuccess: onClose })}
           >
             {reject.isPending ? 'Memproses…' : 'Reject sick leave'}
           </Button>
@@ -315,6 +367,12 @@ export function SickRejectModal({
       }
     >
       <div className="flex flex-col gap-4">
+        {request.rejectDeadlineAt && (
+          <Note tone="info" icon={<Clock />}>
+            Jendela tolak <strong>masih terbuka</strong> sampai {formatDateTime(request.rejectDeadlineAt)}. Cuti sakit
+            ini sudah disetujui otomatis, jadi yang tersisa hanya pilihan menolak.
+          </Note>
+        )}
         <KeyValueList>
           <KeyValueRow label="Karyawan">{employeeName(request.employeeId)}</KeyValueRow>
           <KeyValueRow label="Tanggal">
@@ -326,19 +384,7 @@ export function SickRejectModal({
           </KeyValueRow>
         </KeyValueList>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="sick-reason">
-            Alasan penolakan<em>*</em>
-          </Label>
-          <Textarea
-            id="sick-reason"
-            rows={3}
-            maxLength={500}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            placeholder="Wajib diisi"
-          />
-        </div>
+        <RejectFields value={input} onChange={setInput} reasonLabel="Alasan penolakan (wajib)" />
       </div>
     </Modal>
   );

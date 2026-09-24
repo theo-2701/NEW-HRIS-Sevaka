@@ -119,13 +119,13 @@ describe('Pengajuan & keputusan', () => {
   it('menolak keputusan atas pengajuan sendiri (403 SoD)', async () => {
     const rows = await timeOffService.requests(HR);
     const own = rows.find((row) => row.employeeId === HR.employeeId && row.status === 'PENDING_APPROVAL')!;
-    await expect(timeOffService.decide(HR, own.id, 'APPROVED', '', DEMO_NOW)).rejects.toThrow(/403/);
+    await expect(timeOffService.decide(HR, own.id, 'APPROVED', {}, DEMO_NOW)).rejects.toThrow(/403/);
   });
 
   it('menolak tanpa alasan ditolak 422', async () => {
     const rows = await timeOffService.requests(HR);
     const other = rows.find((row) => row.employeeId !== HR.employeeId && row.status === 'PENDING_APPROVAL')!;
-    await expect(timeOffService.decide(HR, other.id, 'REJECTED', '  ', DEMO_NOW)).rejects.toThrow(/422/);
+    await expect(timeOffService.decide(HR, other.id, 'REJECTED', { reject: { reason: '', note: '  ' } }, DEMO_NOW)).rejects.toThrow(/422/);
   });
 });
 
@@ -139,7 +139,7 @@ describe('Cuti sakit — jendela tolak', () => {
   it('menolak cuti sakit di luar jendela ditolak 422', async () => {
     const rows = await timeOffService.requests(HR);
     const closed = rows.find((row) => row.id === 'leave-6')!;
-    await expect(timeOffService.rejectSick(HR, closed.id, 'Alasan', DEMO_NOW)).rejects.toThrow(/422/);
+    await expect(timeOffService.rejectSick(HR, closed.id, { reason: 'UNAUTHORIZED_CLINIC', note: '' }, DEMO_NOW)).rejects.toThrow(/422/);
   });
 });
 
@@ -201,11 +201,11 @@ describe('Keputusan (K9) & ledger saldo — koneksi Time Off → Balance', () =>
     const row = await timeOffService.create(ESS, plan('2026-11-16', '2026-11-17'), DEMO_NOW);
     const before = (await balanceService.ledger({})).length;
 
-    await timeOffService.decide(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await timeOffService.decide(HR, row.id, 'APPROVED', {}, DEMO_NOW);
     expect((await timeOffService.requests(HR)).find((item) => item.id === row.id)!.status).toBe('PENDING_APPROVAL');
     expect(await balanceService.ledger({})).toHaveLength(before);
 
-    await timeOffService.completeDecision(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await timeOffService.completeDecision(HR, row.id, 'APPROVED', {}, DEMO_NOW);
     expect((await timeOffService.requests(HR)).find((item) => item.id === row.id)!.status).toBe('APPROVED');
     const ledger = await balanceService.ledger({});
     const taken = ledger.find((entry) => entry.refId === row.id)!;
@@ -216,19 +216,48 @@ describe('Keputusan (K9) & ledger saldo — koneksi Time Off → Balance', () =>
 
   it('keputusan atas baris yang sudah diputus ditolak 422', async () => {
     const row = await timeOffService.create(ESS, plan('2026-11-23', '2026-11-24'), DEMO_NOW);
-    await timeOffService.decide(HR, row.id, 'APPROVED', '', DEMO_NOW);
-    await timeOffService.completeDecision(HR, row.id, 'APPROVED', '', DEMO_NOW);
-    await expect(timeOffService.decide(HR, row.id, 'REJECTED', 'Berubah.', DEMO_NOW)).rejects.toThrow(/422/);
+    await timeOffService.decide(HR, row.id, 'APPROVED', {}, DEMO_NOW);
+    await timeOffService.completeDecision(HR, row.id, 'APPROVED', {}, DEMO_NOW);
+    await expect(timeOffService.decide(HR, row.id, 'REJECTED', { reject: { reason: 'POLICY_MISMATCH', note: 'Berubah.' } }, DEMO_NOW)).rejects.toThrow(/422/);
   });
 
   it('menarik cuti disetujui sebelum mulai mengembalikan saldo lewat LEAVE_REVERSED', async () => {
     const row = await timeOffService.create(ESS, plan('2026-11-30', '2026-12-01'), DEMO_NOW);
-    await timeOffService.decide(HR, row.id, 'APPROVED', '', DEMO_NOW);
-    await timeOffService.completeDecision(HR, row.id, 'APPROVED', '', DEMO_NOW);
+    await timeOffService.decide(HR, row.id, 'APPROVED', {}, DEMO_NOW);
+    await timeOffService.completeDecision(HR, row.id, 'APPROVED', {}, DEMO_NOW);
     await timeOffService.withdraw(ESS, row.id, DEMO_NOW);
 
     const entries = (await balanceService.ledger({})).filter((entry) => entry.refId === row.id);
     expect(entries.map((entry) => entry.source).sort()).toEqual(['LEAVE_REVERSED', 'LEAVE_TAKEN']);
     expect(entries.reduce((sum, entry) => sum + entry.deltaDays, 0)).toBe(0);
+  });
+});
+
+describe('Alasan penolakan enum + catatan opsional (FSD-TIME 0.4 · UIC-TIME §3.1.6/§3.1.7)', () => {
+  it('kode di luar daftar 15 nilai atau catatan >500 karakter ditolak 422', async () => {
+    const rows = await timeOffService.requests(HR);
+    const other = rows.find((row) => row.employeeId !== HR.employeeId && row.status === 'PENDING_APPROVAL')!;
+    await expect(
+      timeOffService.decide(HR, other.id, 'REJECTED', { reject: { reason: 'NOT_A_CODE' as never, note: '' } }, DEMO_NOW),
+    ).rejects.toThrow(/422/);
+    await expect(
+      timeOffService.decide(HR, other.id, 'REJECTED', { reject: { reason: 'LATE_SUBMISSION', note: 'x'.repeat(501) } }, DEMO_NOW),
+    ).rejects.toThrow(/422/);
+  });
+
+  it('penolakan menyimpan kode enum dan catatan terpisah', async () => {
+    const rows = await timeOffService.requests(HR);
+    const other = rows.find((row) => row.employeeId !== HR.employeeId && row.status === 'PENDING_APPROVAL')!;
+    const input = { reject: { reason: 'LATE_SUBMISSION' as const, note: '  Diajukan sehari sebelum cuti.  ' } };
+    await timeOffService.decide(HR, other.id, 'REJECTED', input, DEMO_NOW);
+    await timeOffService.completeDecision(HR, other.id, 'REJECTED', input, DEMO_NOW);
+    const after = (await timeOffService.requests(HR)).find((row) => row.id === other.id)!;
+    expect(after).toMatchObject({ status: 'REJECTED', rejectReason: 'LATE_SUBMISSION', rejectNote: 'Diajukan sehari sebelum cuti.' });
+  });
+
+  it('tolak cuti sakit di dalam jendela memakai enum; catatan boleh kosong', async () => {
+    await timeOffService.rejectSick(HR, 'leave-2', { reason: 'UNAUTHORIZED_CLINIC', note: '' }, DEMO_NOW);
+    const sick = (await timeOffService.requests(HR)).find((row) => row.id === 'leave-2')!;
+    expect(sick).toMatchObject({ status: 'REJECTED', rejectReason: 'UNAUTHORIZED_CLINIC', rejectNote: null });
   });
 });

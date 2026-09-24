@@ -25,6 +25,56 @@ export type ExtraApprovalReason = 'NEGATIVE_BALANCE' | 'SOFT_BLACKOUT' | 'UNPAID
 
 export type DelegationStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
+/** `reject_reason` — enum 15 nilai tertutup (TSD-001-TIME §4.6, UIC-001-TIME §3.1.6/§3.1.7). */
+export type RejectReasonCode =
+  | 'INCOMPLETE_PROOF'
+  | 'LATE_SUBMISSION'
+  | 'POLICY_MISMATCH'
+  | 'DATA_MISMATCH'
+  | 'DUPLICATE_CLAIM'
+  | 'EXCEEDS_QUOTA'
+  | 'UNAUTHORIZED_CLINIC'
+  | 'INCONSISTENT_HISTORY'
+  | 'WRONG_LEAVE_TYPE'
+  | 'RETROACTIVE_LIMIT'
+  | 'MISSING_APPROVAL_STEP'
+  | 'SUSPECTED_FRAUD'
+  | 'ALREADY_ON_UNPAID'
+  | 'EMPLOYMENT_STATUS_INELIGIBLE'
+  | 'SYSTEM_ERROR_RESUBMIT';
+
+export const REJECT_REASON_LABEL: Record<RejectReasonCode, string> = {
+  INCOMPLETE_PROOF: 'Bukti pendukung tidak lengkap',
+  LATE_SUBMISSION: 'Pengajuan terlambat',
+  POLICY_MISMATCH: 'Tidak sesuai kebijakan',
+  DATA_MISMATCH: 'Data tidak sesuai',
+  DUPLICATE_CLAIM: 'Pengajuan ganda',
+  EXCEEDS_QUOTA: 'Melebihi kuota',
+  UNAUTHORIZED_CLINIC: 'Klinik penerbit surat tidak diakui',
+  INCONSISTENT_HISTORY: 'Riwayat tidak konsisten',
+  WRONG_LEAVE_TYPE: 'Jenis cuti keliru',
+  RETROACTIVE_LIMIT: 'Melewati batas pengajuan mundur',
+  MISSING_APPROVAL_STEP: 'Tahap persetujuan belum lengkap',
+  SUSPECTED_FRAUD: 'Dugaan kecurangan',
+  ALREADY_ON_UNPAID: 'Sudah dalam cuti tanpa upah',
+  EMPLOYMENT_STATUS_INELIGIBLE: 'Status kepegawaian tidak memenuhi syarat',
+  SYSTEM_ERROR_RESUBMIT: 'Kesalahan sistem — ajukan ulang',
+};
+
+/** Badan penolakan: enum wajib + catatan opsional (≤500). */
+export interface RejectInput {
+  reason: RejectReasonCode | '';
+  note: string;
+}
+
+export const REJECT_NOTE_MAX = 500;
+
+/** Keputusan approver: `note` hanya untuk menyetujui, `reject` hanya untuk menolak. */
+export interface DecisionInput {
+  note?: string;
+  reject?: RejectInput;
+}
+
 /** UIC §3.1.8 — `DSR` lama diganti `DATA_SUBJECT_REQUEST`. */
 export type AccessPurpose = 'VERIFICATION' | 'AUDIT' | 'DISPUTE' | 'DATA_SUBJECT_REQUEST';
 
@@ -96,7 +146,8 @@ export interface LeaveRequest {
   extraApprovalReason: ExtraApprovalReason | null;
   /** Dibekukan saat submit untuk cuti sakit. */
   rejectDeadlineAt: string | null;
-  rejectReason: string | null;
+  rejectReason: RejectReasonCode | null;
+  rejectNote: string | null;
   submittedAt: string;
   approvedBy: string | null;
   approvedAt: string | null;

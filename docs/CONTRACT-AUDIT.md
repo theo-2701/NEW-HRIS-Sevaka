@@ -381,3 +381,19 @@ sejajar (§8). Sisa kontrak yang belum punya layar, dikerjakan bertahap:
   (UIC-001-DOCUMENT §2.1); mock memakai lima berkas contoh.
 
 11 pengujian baru di `announcement.test.ts`.
+
+---
+
+## 13. Audit Time Management 24 September 2026 — repo FSD 0.3 / UIC 0.6 vs FSD 0.4 / UIC 0.12
+
+Sumber: `FE-220926/` (FSD-001-TIME-0.4, UIC-001-TIME-0.12). Pembanding: `(150926)-FE-terusan/`.
+
+| Versi | Isi changelog | Dampak ke repo |
+| :--- | :--- | :--- |
+| UIC `0.7`, FSD `0.4` | `reject_reason` teks bebas → **enum 15 nilai wajib** + `reject_note` opsional (≤500) pada tolak cuti biasa (`#65`, cabang `REJECTED`) dan tolak cuti sakit (`#66`). `note` hanya dibaca cabang `APPROVED`. FSD: panel keputusan `D3` = dropdown alasan + catatan tambahan; frame baru `E4` = detail sakit dengan jendela tolak **masih terbuka** (banner info + panel tolak, tanpa Setujui) | **Diterapkan.** `RejectReasonCode` + label Indonesia, `rejectNote` di `LeaveRequest`; `DecisionModal` & `SickRejectModal` memakai `RejectFields` (Reject nonaktif sampai alasan dipilih, penghitung 0/500); detail menampilkan label alasan + catatan terpisah. **Cabang API dibetulkan** — sebelumnya catatan dikirim sebagai `reject_reason` teks; kini `APPROVED → {decision, note}`, `REJECTED → {decision, reject_reason, reject_note}` |
+| UIC `0.8` | Empat alamat "milik saya": `#95` `leave-balances/me-summary`, `#96` `attendance-summaries/me-monthly`, `#97` `today-overview`, `#98` `leave-balance-ledgers/me-search` | Nol dampak — keempatnya sudah dipakai (kartu HOME, ESS Time Off Taken) |
+| UIC `0.9`–`0.10` | Bump kosong / pembersihan catatan dokumen | Nol dampak |
+| UIC `0.11`–`0.12` | Proyeksi grid `POST /leave-requests/search` diperlebar: `requires_extra_approval_reason` + `reject_deadline_at` | Nol dampak — kolom Extra layer dan jendela tolak sakit sudah dibaca dari baris yang sama |
+
+3 pengujian baru di `time-off.test.ts` (kode di luar enum / catatan >500 → 422, penolakan menyimpan
+kode + catatan terpisah, tolak sakit di dalam jendela memakai enum dengan catatan kosong).

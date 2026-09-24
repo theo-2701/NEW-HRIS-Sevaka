@@ -11,16 +11,28 @@ import {
   MEDICAL_ACCESS,
   leaveTypeOf,
 } from '@/features/time-off/mock-data';
-import { LIVE_STATUS, canOpenMedical, isApprover } from '@/features/time-off/types';
+import { LIVE_STATUS, REJECT_NOTE_MAX, REJECT_REASON_LABEL, canOpenMedical, isApprover } from '@/features/time-off/types';
 import type {
   AccessPurpose,
+  DecisionInput,
   Delegation,
   LeaveRequest,
   LeaveType,
   MedicalAccessLog,
+  RejectInput,
   RequestDraft,
   Session,
 } from '@/features/time-off/types';
+
+/** `reject_reason` wajib dari enum 15 nilai; `reject_note` opsional ≤500 (UIC §3.1.6/§3.1.7). */
+function assertRejectInput(reject: RejectInput | undefined) {
+  if (!reject?.reason || !(reject.reason in REJECT_REASON_LABEL)) {
+    throw new Error('422 — alasan penolakan wajib dipilih dari daftar.');
+  }
+  if (reject.note.trim().length > REJECT_NOTE_MAX) {
+    throw new Error(`422 — catatan penolakan maksimal ${REJECT_NOTE_MAX} karakter.`);
+  }
+}
 
 /**
  * API service Time Off Request.
@@ -157,6 +169,7 @@ export const timeOffService = {
         extraApprovalReason: primaryExtraReason(gate.extra),
         rejectDeadlineAt: autoApproved ? deadline.toISOString() : null,
         rejectReason: null,
+        rejectNote: null,
         submittedAt: now.toISOString(),
         approvedBy: null,
         approvedAt: autoApproved ? now.toISOString() : null,
@@ -214,7 +227,7 @@ export const timeOffService = {
     session: Session,
     id: string,
     decision: 'APPROVED' | 'REJECTED',
-    note: string,
+    input: DecisionInput,
     now: Date,
   ): Promise<DecisionAck<LeaveRequest>> {
     if (MOCK) {
@@ -225,14 +238,16 @@ export const timeOffService = {
       }
       if (!isApprover(session)) throw new Error('403 — Anda tidak memegang peran approver.');
       if (row.status !== 'PENDING_APPROVAL') throw new Error('422 — pengajuan ini sudah tidak menunggu keputusan.');
-      if (decision === 'REJECTED' && !note.trim()) throw new Error('422 — alasan penolakan wajib diisi.');
+      if (decision === 'REJECTED') assertRejectInput(input.reject);
       void now;
       return acknowledge(row);
     }
-    const { data } = await api.post<DecisionAck<LeaveRequest>>(`/leave-requests/${id}/approval`, {
-      decision,
-      reject_reason: decision === 'REJECTED' ? note : undefined,
-    });
+    // `note` hanya dibaca cabang APPROVED; cabang REJECTED memakai reject_reason + reject_note (UIC §3.1.6).
+    const body =
+      decision === 'APPROVED'
+        ? { decision, note: input.note || undefined }
+        : { decision, reject_reason: input.reject?.reason, reject_note: input.reject?.note.trim() || undefined };
+    const { data } = await api.post<DecisionAck<LeaveRequest>>(`/leave-requests/${id}/approval`, body);
     return data;
   },
 
@@ -245,7 +260,7 @@ export const timeOffService = {
     session: Session,
     id: string,
     decision: 'APPROVED' | 'REJECTED',
-    note: string,
+    input: DecisionInput,
     now: Date,
   ): Promise<void> {
     await delay(150);
@@ -253,7 +268,10 @@ export const timeOffService = {
     row.status = decision;
     row.approvedBy = session.employeeId;
     row.approvedAt = now.toISOString();
-    if (decision === 'REJECTED') row.rejectReason = note.trim();
+    if (decision === 'REJECTED' && input.reject) {
+      row.rejectReason = input.reject.reason || null;
+      row.rejectNote = input.reject.note.trim() || null;
+    }
 
     mockDelegations.forEach((deleg) => {
       if (deleg.leaveRequestId === row.id && deleg.status === 'PENDING_APPROVAL') {
@@ -264,7 +282,7 @@ export const timeOffService = {
   },
 
   /** Tolak cuti sakit — hanya di dalam jendela beku; di luar itu 422. */
-  async rejectSick(session: Session, id: string, reason: string, now: Date): Promise<void> {
+  async rejectSick(session: Session, id: string, reject: RejectInput, now: Date): Promise<void> {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
@@ -275,17 +293,21 @@ export const timeOffService = {
       if (!sickWindowOpen(row, now)) {
         throw new Error('422 — jendela tolak sudah tertutup; cuti sakit ini permanen.');
       }
-      if (!reason.trim()) throw new Error('422 — alasan penolakan wajib diisi.');
+      assertRejectInput(reject);
 
       row.status = 'REJECTED';
-      row.rejectReason = reason.trim();
+      row.rejectReason = reject.reason || null;
+      row.rejectNote = reject.note.trim() || null;
       row.approvedBy = session.employeeId;
       row.approvedAt = now.toISOString();
       // Saldo yang sempat terpotong dikembalikan lewat entri koreksi, bukan dihapus.
       writeLedger(row, 'LEAVE_REVERSED', session.employeeId, now);
       return;
     }
-    await api.post(`/leave-requests/${id}/sick-rejection`, { reject_reason: reason });
+    await api.post(`/leave-requests/${id}/sick-rejection`, {
+      reject_reason: reject.reason,
+      reject_note: reject.note.trim() || undefined,
+    });
   },
 
   /** Penarikan = transisi status ke CANCELLED, bukan penghapusan baris. */
