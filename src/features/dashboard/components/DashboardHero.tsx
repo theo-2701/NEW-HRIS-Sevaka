@@ -36,7 +36,7 @@ export function DashboardHero() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <HeroPill onClick={() => navigate('/time/attendance')}>Live Attendance</HeroPill>
+          <HeroPill onClick={() => navigate('/time/attendance')}>Attendance</HeroPill>
           <HeroPill onClick={() => navigate('/time/time-off/requests')}>Request Time Off</HeroPill>
 
           <DropdownMenu>

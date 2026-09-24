@@ -11,17 +11,22 @@ import { dayLine, greetingFor } from '@/features/dashboard/home/homeRules';
 
 /**
  * Kepala Home. Nama sapaan datang dari `GET /auth/me`, bukan JWT (FSD-001-AUTH §2.9);
- * bila alamat itu belum menjawab, sapaan tetap tampil tanpa nama.
+ * bila alamat itu belum menjawab, sapaan tetap tampil tanpa nama. Pintu Buka Kunci Akun
+ * (FSD-001-AUTH §4) hanya dipasang untuk lapis HR/admin — `onUnlock` kosong berarti tersembunyi.
  */
 export function HomeHeader({
   name,
   companyName,
   pendingCount,
+  lockedCount,
+  onUnlock,
   now,
 }: {
   name: string | null;
   companyName: string;
   pendingCount: number | null;
+  lockedCount: number | null;
+  onUnlock?: () => void;
   now: Date;
 }) {
   const navigate = useNavigate();
@@ -46,8 +51,18 @@ export function HomeHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        {onUnlock && (
+          <Button variant="secondary" onClick={onUnlock}>
+            Buka Kunci Akun
+            {lockedCount ? (
+              <span className="rounded-full bg-error-600 px-1.5 font-body text-[11px] font-bold leading-[18px] text-white tabular-nums">
+                {lockedCount}
+              </span>
+            ) : null}
+          </Button>
+        )}
         <Button variant="secondary" onClick={() => navigate('/me/time/attendance')}>
-          Live Attendance
+          Attendance
         </Button>
         <Button variant="secondary" onClick={() => navigate('/me/time/time-off')}>
           Request Time Off

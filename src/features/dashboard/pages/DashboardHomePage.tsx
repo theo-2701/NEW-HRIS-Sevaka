@@ -96,6 +96,8 @@ export function DashboardHomePage() {
         name={me?.nickname || me?.fullName || null}
         companyName={COMPANY_NAME[companyId ?? ''] ?? companyId ?? ''}
         pendingCount={pendingCount}
+        lockedCount={summary.data ? summary.data.lockedAccounts.length : null}
+        onUnlock={companyLayer ? () => setUnlockOpen(true) : undefined}
         now={now}
       />
 
