@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { PageShell } from '@/components/PageShell';
+import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
@@ -21,7 +22,10 @@ import { formatDate } from '@/lib/format';
  * Kriterianya sengaja nol memuat `employeeId`: alamat me-search memang hanya menjawab baris
  * pemanggil, jadi layar ini tidak menawarkan pemilih karyawan sama sekali.
  */
+type Tab = 'taken' | 'ledger';
+
 export function EssTimeOffTakenPage() {
+  const [tab, setTab] = useState<Tab>('taken');
   const [actor, setActor] = useState(ESS_VIEWERS[0]);
   const ledger = useMyLedger(actor);
   const requests = useMyLeaveRequests(actor);
@@ -47,92 +51,105 @@ export function EssTimeOffTakenPage() {
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
-        <Card>
-          <CardHead
-            title="Cuti terpakai"
-            sub={`${taken.length} pengajuan disetujui · total ${usedDays} hari`}
-          />
-          <DataTable
-            rows={taken}
-            rowKey={(row) => row.id}
-            loading={requests.isLoading}
-            empty="Belum ada cuti yang disetujui."
-            columns={[
-              {
-                key: 'type',
-                header: 'Jenis',
-                strong: true,
-                render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
-              },
-              {
-                key: 'range',
-                header: 'Tanggal',
-                nowrap: true,
-                render: (row) =>
-                  row.startDate === row.endDate
-                    ? formatDate(row.startDate)
-                    : `${formatDate(row.startDate)} – ${formatDate(row.endDate)}`,
-              },
-              {
-                key: 'days',
-                header: 'Jumlah',
-                align: 'right',
-                render: (row) => <span className="tabular-nums">{row.totalDays} hari</span>,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (row) => (
-                  <StatusBadge tone="ok">{row.status === 'AUTO_APPROVED' ? 'Auto-approved' : 'Approved'}</StatusBadge>
-                ),
-              },
-            ]}
-          />
-        </Card>
+        <TabMenu<Tab>
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: 'taken', label: 'Cuti terpakai', count: taken.length },
+            { value: 'ledger', label: 'Riwayat saldo', count: rows.length },
+          ]}
+        />
 
-        <Card>
-          <CardHead
-            title="Riwayat mutasi saldo"
-            sub="Setiap baris adalah satu peristiwa; baris lama tidak pernah diubah, koreksi selalu ditulis sebagai baris baru"
-          />
-          <div>
-            <DataTable<LedgerEntry>
-              rows={paged.rows}
+        {tab === 'taken' && (
+          <Card>
+            <CardHead
+              title="Cuti terpakai"
+              sub={`${taken.length} pengajuan disetujui · total ${usedDays} hari`}
+            />
+            <DataTable
+              rows={taken}
               rowKey={(row) => row.id}
-              loading={ledger.isLoading}
-              empty="Belum ada mutasi saldo."
+              loading={requests.isLoading}
+              empty="Belum ada cuti yang disetujui."
               columns={[
-                { key: 'date', header: 'Tanggal mutasi', strong: true, nowrap: true, render: (row) => formatDate(row.mutationDate) },
                 {
                   key: 'type',
-                  header: 'Jenis cuti',
+                  header: 'Jenis',
+                  strong: true,
                   render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
                 },
                 {
-                  key: 'delta',
-                  header: 'Perubahan',
+                  key: 'range',
+                  header: 'Tanggal',
+                  nowrap: true,
+                  render: (row) =>
+                    row.startDate === row.endDate
+                      ? formatDate(row.startDate)
+                      : `${formatDate(row.startDate)} – ${formatDate(row.endDate)}`,
+                },
+                {
+                  key: 'days',
+                  header: 'Jumlah',
                   align: 'right',
+                  render: (row) => <span className="tabular-nums">{row.totalDays} hari</span>,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
                   render: (row) => (
-                    <span className={row.deltaDays < 0 ? 'tabular-nums text-error-600' : 'tabular-nums text-success-800'}>
-                      {row.deltaDays > 0 ? '+' : ''}
-                      {row.deltaDays} hari
-                    </span>
+                    <StatusBadge tone="ok">{row.status === 'AUTO_APPROVED' ? 'Auto-approved' : 'Approved'}</StatusBadge>
                   ),
                 },
-                { key: 'source', header: 'Sumber', render: (row) => MUTATION_SOURCE_LABEL[row.source] },
-                { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.reason || '—' },
               ]}
             />
-            <Pagination
-              page={paged.page}
-              pageSize={paged.pageSize}
-              total={paged.total}
-              noun="mutations"
-              onPageChange={paged.setPage}
-              onPageSizeChange={paged.setPageSize}
+          </Card>
+        )}
+
+        {tab === 'ledger' && (
+          <Card>
+            <CardHead
+              title="Riwayat mutasi saldo"
+              sub="Setiap baris adalah satu peristiwa; baris lama tidak pernah diubah, koreksi selalu ditulis sebagai baris baru"
             />
-          </div>
-        </Card>
+            <div>
+              <DataTable<LedgerEntry>
+                rows={paged.rows}
+                rowKey={(row) => row.id}
+                loading={ledger.isLoading}
+                empty="Belum ada mutasi saldo."
+                columns={[
+                  { key: 'date', header: 'Tanggal mutasi', strong: true, nowrap: true, render: (row) => formatDate(row.mutationDate) },
+                  {
+                    key: 'type',
+                    header: 'Jenis cuti',
+                    render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
+                  },
+                  {
+                    key: 'delta',
+                    header: 'Perubahan',
+                    align: 'right',
+                    render: (row) => (
+                      <span className={row.deltaDays < 0 ? 'tabular-nums text-error-600' : 'tabular-nums text-success-800'}>
+                        {row.deltaDays > 0 ? '+' : ''}
+                        {row.deltaDays} hari
+                      </span>
+                    ),
+                  },
+                  { key: 'source', header: 'Sumber', render: (row) => MUTATION_SOURCE_LABEL[row.source] },
+                  { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.reason || '—' },
+                ]}
+              />
+              <Pagination
+                page={paged.page}
+                pageSize={paged.pageSize}
+                total={paged.total}
+                noun="mutations"
+                onPageChange={paged.setPage}
+                onPageSizeChange={paged.setPageSize}
+              />
+            </div>
+          </Card>
+        )}
       </div>
     </PageShell>
   );

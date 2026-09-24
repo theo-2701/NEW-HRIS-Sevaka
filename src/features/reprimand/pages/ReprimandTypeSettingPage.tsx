@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Form, Formik } from 'formik';
 import { Info } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
+import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
@@ -23,6 +24,8 @@ import {
 import { categorySchema } from '@/features/reprimand/validation';
 import type { PolicyMode, PolicyVersion, ReprimandCategory } from '@/features/reprimand/types';
 import { formatDate } from '@/lib/format';
+
+type Tab = 'categories' | 'policy';
 
 const EMPTY_CATEGORY: ReprimandCategory = {
   code: '',
@@ -130,6 +133,7 @@ export function ReprimandTypeSettingPage() {
   const savePolicy = useSavePolicy();
   const { data: versions = [] } = useReprimandPolicyVersions();
 
+  const [tab, setTab] = useState<Tab>('categories');
   const [mode, setMode] = useState<PolicyMode>(savedMode);
   const [editing, setEditing] = useState<{ value: ReprimandCategory; originalCode?: string } | null>(null);
 
@@ -149,112 +153,125 @@ export function ReprimandTypeSettingPage() {
         description="Atur kategori SP dan kebijakan standing untuk perusahaan ini. Standing selalu diturunkan dari snapshot beku saat penerbitan, bukan dari konfigurasi yang berlaku."
       >
         <div className="flex flex-col gap-5">
-          <Card>
-            <CardHead
-              title="SP categories"
-              sub="Kategori tidak bisa dihapus"
-              action={
-                <PanelActionButton onClick={() => setEditing({ value: EMPTY_CATEGORY })}>
-                  Add category
-                </PanelActionButton>
-              }
-            />
+          <TabMenu<Tab>
+            value={tab}
+            onChange={setTab}
+            items={[
+              { value: 'categories', label: 'SP categories', count: activeCategories.length },
+              { value: 'policy', label: 'Standing policy', count: versions.length },
+            ]}
+          />
 
-            <DataTable<ReprimandCategory>
-              rows={activeCategories}
-              rowKey={(row) => row.code}
-              loading={isLoading}
-              empty="Belum ada kategori aktif."
-              columns={[
-                { key: 'code', header: 'Code', strong: true, nowrap: true, render: (row) => row.code },
-                { key: 'label', header: 'Nama', muted: true, render: (row) => row.label },
-                { key: 'point', header: 'Demerit', align: 'center', render: (row) => row.point },
-                { key: 'validity', header: 'Validity (mo)', align: 'center', render: (row) => row.validityMonths },
-                { key: 'level', header: 'Level', align: 'center', render: (row) => row.levelOrder },
-                { key: 'weight', header: 'Perf. Weight', align: 'center', render: (row) => row.performanceWeight },
-                {
-                  key: 'terminal',
-                  header: 'Terminal',
-                  align: 'center',
-                  render: (row) =>
-                    row.terminal ? <StatusBadge tone="err">Terminal</StatusBadge> : <span className="text-fg-3">—</span>,
-                },
-              ]}
-              actions={(row) => (
-                <RowButton onClick={() => setEditing({ value: row, originalCode: row.code })}>Edit</RowButton>
-              )}
-            />
-          </Card>
+          {tab === 'categories' && (
+            <Card>
+              <CardHead
+                title="SP categories"
+                sub="Kategori tidak bisa dihapus"
+                action={
+                  <PanelActionButton onClick={() => setEditing({ value: EMPTY_CATEGORY })}>
+                    Add category
+                  </PanelActionButton>
+                }
+              />
 
-          <Card>
-            <CardHead title="Standing policy" sub="Satu mode per perusahaan" />
-
-            <Note icon={<Info />}>
-              Kebijakan standing menentukan <strong>bagaimana perusahaan mengubah reprimand aktif menjadi level
-              standing</strong> karyawan.
-            </Note>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="policy-mode">
-                Mode kebijakan<em>*</em>
-              </Label>
-              <RadioBranch<PolicyMode>
-                name="policy-mode"
-                value={mode}
-                onChange={setMode}
-                options={[
+              <DataTable<ReprimandCategory>
+                rows={activeCategories}
+                rowKey={(row) => row.code}
+                loading={isLoading}
+                empty="Belum ada kategori aktif."
+                columns={[
+                  { key: 'code', header: 'Code', strong: true, nowrap: true, render: (row) => row.code },
+                  { key: 'label', header: 'Nama', muted: true, render: (row) => row.label },
+                  { key: 'point', header: 'Demerit', align: 'center', render: (row) => row.point },
+                  { key: 'validity', header: 'Validity (mo)', align: 'center', render: (row) => row.validityMonths },
+                  { key: 'level', header: 'Level', align: 'center', render: (row) => row.levelOrder },
+                  { key: 'weight', header: 'Perf. Weight', align: 'center', render: (row) => row.performanceWeight },
                   {
-                    value: 'DIRECT',
-                    title: 'Direct',
-                    description:
-                      'Standing mengikuti urutan level SP aktif tertinggi; tiap kategori langsung memetakan ke satu level. Tidak perlu konfigurasi tambahan.',
+                    key: 'terminal',
+                    header: 'Terminal',
+                    align: 'center',
+                    render: (row) =>
+                      row.terminal ? <StatusBadge tone="err">Terminal</StatusBadge> : <span className="text-fg-3">—</span>,
                   },
+                ]}
+                actions={(row) => (
+                  <RowButton onClick={() => setEditing({ value: row, originalCode: row.code })}>Edit</RowButton>
+                )}
+              />
+            </Card>
+          )}
+
+          {tab === 'policy' && (
+            <Card>
+              <CardHead title="Standing policy" sub="Satu mode per perusahaan" />
+
+              <Note icon={<Info />}>
+                Kebijakan standing menentukan <strong>bagaimana perusahaan mengubah reprimand aktif menjadi level
+                standing</strong> karyawan.
+              </Note>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="policy-mode">
+                  Mode kebijakan<em>*</em>
+                </Label>
+                <RadioBranch<PolicyMode>
+                  name="policy-mode"
+                  value={mode}
+                  onChange={setMode}
+                  options={[
+                    {
+                      value: 'DIRECT',
+                      title: 'Direct',
+                      description:
+                        'Standing mengikuti urutan level SP aktif tertinggi; tiap kategori langsung memetakan ke satu level. Tidak perlu konfigurasi tambahan.',
+                    },
+                    {
+                      value: 'ACCUMULATIVE',
+                      title: 'Accumulative',
+                      description:
+                        'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini. Belum tersedia pada rilis ini.',
+                    },
+                  ]}
+                />
+              </div>
+
+              {mode === 'ACCUMULATIVE' && (
+                <SnapshotPanel title="Ambang (khusus accumulative)">
+                  <SnapshotRow label="≥ 1 poin">Level SP1</SnapshotRow>
+                  <SnapshotRow label="≥ 2 poin">Level SP2</SnapshotRow>
+                  <SnapshotRow label="≥ 3 poin">Final warning (terminal)</SnapshotRow>
+                </SnapshotPanel>
+              )}
+
+              <DataTable<PolicyVersion>
+                rows={versions}
+                rowKey={(row) => row.id}
+                empty="Belum ada versi kebijakan."
+                columns={[
+                  { key: 'version', header: 'Version', strong: true, render: (row) => `v${row.version}` },
+                  { key: 'mode', header: 'Mode', render: (row) => row.mode },
+                  { key: 'from', header: 'Effective From', muted: true, render: (row) => formatDate(row.effectiveFrom) },
                   {
-                    value: 'ACCUMULATIVE',
-                    title: 'Accumulative',
-                    description:
-                      'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini. Belum tersedia pada rilis ini.',
+                    key: 'current',
+                    header: 'Current',
+                    render: (row) => (row.isCurrent ? <StatusBadge tone="ok">Current</StatusBadge> : <span className="text-fg-3">—</span>),
                   },
                 ]}
               />
-            </div>
 
-            {mode === 'ACCUMULATIVE' && (
-              <SnapshotPanel title="Ambang (khusus accumulative)">
-                <SnapshotRow label="≥ 1 poin">Level SP1</SnapshotRow>
-                <SnapshotRow label="≥ 2 poin">Level SP2</SnapshotRow>
-                <SnapshotRow label="≥ 3 poin">Final warning (terminal)</SnapshotRow>
-              </SnapshotPanel>
-            )}
-
-            <DataTable<PolicyVersion>
-              rows={versions}
-              rowKey={(row) => row.id}
-              empty="Belum ada versi kebijakan."
-              columns={[
-                { key: 'version', header: 'Version', strong: true, render: (row) => `v${row.version}` },
-                { key: 'mode', header: 'Mode', render: (row) => row.mode },
-                { key: 'from', header: 'Effective From', muted: true, render: (row) => formatDate(row.effectiveFrom) },
-                {
-                  key: 'current',
-                  header: 'Current',
-                  render: (row) => (row.isCurrent ? <StatusBadge tone="ok">Current</StatusBadge> : <span className="text-fg-3">—</span>),
-                },
-              ]}
-            />
-
-            <div className="flex flex-wrap justify-end gap-2 border-t border-border-1 pt-4">
-              <Button variant="secondary" onClick={() => setMode(savedMode)} disabled={mode === savedMode}>
-                Reset
-              </Button>
-              <Button
-                onClick={() => savePolicy.mutate({ mode })}
-                disabled={savePolicy.isPending || mode === savedMode}
-              >
-                {savePolicy.isPending ? 'Menerbitkan…' : 'Publish new version'}
-              </Button>
-            </div>
-          </Card>
+              <div className="flex flex-wrap justify-end gap-2 border-t border-border-1 pt-4">
+                <Button variant="secondary" onClick={() => setMode(savedMode)} disabled={mode === savedMode}>
+                  Reset
+                </Button>
+                <Button
+                  onClick={() => savePolicy.mutate({ mode })}
+                  disabled={savePolicy.isPending || mode === savedMode}
+                >
+                  {savePolicy.isPending ? 'Menerbitkan…' : 'Publish new version'}
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
       </PageShell>
 

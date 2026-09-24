@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { PageShell } from '@/components/PageShell';
+import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
@@ -36,7 +37,10 @@ const TONE: Record<AttendanceStatus, Tone> = {
  * punya pemilih karyawan. Tap hari ini ditampilkan apa adanya (append-only, satu baris per tap
  * — tap ketiga dan seterusnya tetap tercatat, bukan ditolak).
  */
+type Tab = 'today' | 'history';
+
 export function EssAttendancePage() {
+  const [tab, setTab] = useState<Tab>('today');
   const [actor, setActor] = useState(ESS_VIEWERS[0]);
   const session = { employeeId: actor.employeeId, role: 'EMPLOYEE' as const };
   const days = useMyAttendanceDays(actor);
@@ -77,106 +81,121 @@ export function EssAttendancePage() {
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
-        <PunchConsole
-          workDate={ATTENDANCE_TODAY}
-          channel={channel}
-          nextType={nextType}
-          hasTaps={today.length > 0}
-          tappedInAt={tappedIn ? tappedIn.punchAt.slice(11, 16) : null}
-          selfieCaptured={selfieCaptured}
-          onTakeSelfie={() => setSelfieOpen(true)}
-          onPunch={doPunch}
-          busy={punch.isPending}
+        <TabMenu<Tab>
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: 'today', label: 'Hari ini', count: today.length },
+            { value: 'history', label: 'Rekap harian', count: rows.length },
+          ]}
         />
 
-        <Card>
-          <CardHead title="Tap hari ini" sub="Setiap tap tercatat apa adanya — termasuk tap ulang" />
-          <DataTable<Punch>
-            rows={today}
-            rowKey={(row) => row.id}
-            loading={punches.isLoading}
-            empty="Belum ada tap hari ini."
-            columns={[
-              { key: 'type', header: 'Jenis', strong: true, render: (row) => (row.punchType === 'IN' ? 'Masuk' : 'Pulang') },
-              { key: 'at', header: 'Waktu', nowrap: true, render: (row) => formatDateTime(row.punchAt) },
-              {
-                key: 'geo',
-                header: 'Dalam area',
-                align: 'center',
-                render: (row) =>
-                  row.isWithinGeofence === null ? (
-                    <StatusBadge tone="mute">Tak terbaca</StatusBadge>
-                  ) : row.isWithinGeofence ? (
-                    <StatusBadge tone="ok">Ya</StatusBadge>
-                  ) : (
-                    <StatusBadge tone="warn">Di luar</StatusBadge>
-                  ),
-              },
-              {
-                key: 'flag',
-                header: 'Catatan',
-                muted: true,
-                render: (row) =>
-                  row.isMockLocationSuspected
-                    ? 'Lokasi terindikasi palsu'
-                    : row.isWorkArrangementUnknown
-                      ? 'Pola kerja belum diketahui'
-                      : '—',
-              },
-            ]}
-          />
-        </Card>
+        {tab === 'today' && (
+          <>
+            <PunchConsole
+              workDate={ATTENDANCE_TODAY}
+              channel={channel}
+              nextType={nextType}
+              hasTaps={today.length > 0}
+              tappedInAt={tappedIn ? tappedIn.punchAt.slice(11, 16) : null}
+              selfieCaptured={selfieCaptured}
+              onTakeSelfie={() => setSelfieOpen(true)}
+              onPunch={doPunch}
+              busy={punch.isPending}
+            />
 
-        <Card>
-          <CardHead title="Rekap harian" sub="Hasil penilaian kehadiran per tanggal" />
-          <div>
-            <DataTable<AttendanceDay>
-              rows={paged.rows}
-              rowKey={(row) => row.id}
-              loading={days.isLoading}
-              empty="Belum ada rekap kehadiran."
-              columns={[
-                { key: 'date', header: 'Tanggal', strong: true, nowrap: true, render: (row) => formatDate(row.workDate) },
-                { key: 'dayType', header: 'Jenis hari', muted: true, render: (row) => DAY_TYPE_LABEL[row.dayType] },
-                { key: 'arrangement', header: 'Pola kerja', render: (row) => ARRANGEMENT_LABEL[row.workArrangement] },
-                {
-                  key: 'status',
-                  header: 'Status',
-                  render: (row) => (
-                    <StatusBadge tone={TONE[row.attendanceStatus]}>
-                      {ATTENDANCE_STATUS_LABEL[row.attendanceStatus]}
-                    </StatusBadge>
-                  ),
-                },
-                {
-                  key: 'worked',
-                  header: 'Jam kerja',
-                  align: 'right',
-                  render: (row) => <span className="tabular-nums">{(row.workedMinutes / 60).toFixed(1)} jam</span>,
-                },
-                {
-                  key: 'late',
-                  header: 'Terlambat',
-                  align: 'right',
-                  render: (row) =>
-                    row.lateMinutes > 0 ? (
-                      <span className="tabular-nums text-warning-700">{row.lateMinutes} mnt</span>
-                    ) : (
-                      <span className="text-fg-4">—</span>
+            <Card>
+              <CardHead title="Tap hari ini" sub="Setiap tap tercatat apa adanya — termasuk tap ulang" />
+              <DataTable<Punch>
+                rows={today}
+                rowKey={(row) => row.id}
+                loading={punches.isLoading}
+                empty="Belum ada tap hari ini."
+                columns={[
+                  { key: 'type', header: 'Jenis', strong: true, render: (row) => (row.punchType === 'IN' ? 'Masuk' : 'Pulang') },
+                  { key: 'at', header: 'Waktu', nowrap: true, render: (row) => formatDateTime(row.punchAt) },
+                  {
+                    key: 'geo',
+                    header: 'Dalam area',
+                    align: 'center',
+                    render: (row) =>
+                      row.isWithinGeofence === null ? (
+                        <StatusBadge tone="mute">Tak terbaca</StatusBadge>
+                      ) : row.isWithinGeofence ? (
+                        <StatusBadge tone="ok">Ya</StatusBadge>
+                      ) : (
+                        <StatusBadge tone="warn">Di luar</StatusBadge>
+                      ),
+                  },
+                  {
+                    key: 'flag',
+                    header: 'Catatan',
+                    muted: true,
+                    render: (row) =>
+                      row.isMockLocationSuspected
+                        ? 'Lokasi terindikasi palsu'
+                        : row.isWorkArrangementUnknown
+                          ? 'Pola kerja belum diketahui'
+                          : '—',
+                  },
+                ]}
+              />
+            </Card>
+          </>
+        )}
+
+        {tab === 'history' && (
+          <Card>
+            <CardHead title="Rekap harian" sub="Hasil penilaian kehadiran per tanggal" />
+            <div>
+              <DataTable<AttendanceDay>
+                rows={paged.rows}
+                rowKey={(row) => row.id}
+                loading={days.isLoading}
+                empty="Belum ada rekap kehadiran."
+                columns={[
+                  { key: 'date', header: 'Tanggal', strong: true, nowrap: true, render: (row) => formatDate(row.workDate) },
+                  { key: 'dayType', header: 'Jenis hari', muted: true, render: (row) => DAY_TYPE_LABEL[row.dayType] },
+                  { key: 'arrangement', header: 'Pola kerja', render: (row) => ARRANGEMENT_LABEL[row.workArrangement] },
+                  {
+                    key: 'status',
+                    header: 'Status',
+                    render: (row) => (
+                      <StatusBadge tone={TONE[row.attendanceStatus]}>
+                        {ATTENDANCE_STATUS_LABEL[row.attendanceStatus]}
+                      </StatusBadge>
                     ),
-                },
-              ]}
-            />
-            <Pagination
-              page={paged.page}
-              pageSize={paged.pageSize}
-              total={paged.total}
-              noun="days"
-              onPageChange={paged.setPage}
-              onPageSizeChange={paged.setPageSize}
-            />
-          </div>
-        </Card>
+                  },
+                  {
+                    key: 'worked',
+                    header: 'Jam kerja',
+                    align: 'right',
+                    render: (row) => <span className="tabular-nums">{(row.workedMinutes / 60).toFixed(1)} jam</span>,
+                  },
+                  {
+                    key: 'late',
+                    header: 'Terlambat',
+                    align: 'right',
+                    render: (row) =>
+                      row.lateMinutes > 0 ? (
+                        <span className="tabular-nums text-warning-700">{row.lateMinutes} mnt</span>
+                      ) : (
+                        <span className="text-fg-4">—</span>
+                      ),
+                  },
+                ]}
+              />
+              <Pagination
+                page={paged.page}
+                pageSize={paged.pageSize}
+                total={paged.total}
+                noun="days"
+                onPageChange={paged.setPage}
+                onPageSizeChange={paged.setPageSize}
+              />
+            </div>
+          </Card>
+        )}
       </div>
 
       <SelfieModal open={selfieOpen} onClose={() => setSelfieOpen(false)} onCaptured={() => setSelfieCaptured(true)} />
