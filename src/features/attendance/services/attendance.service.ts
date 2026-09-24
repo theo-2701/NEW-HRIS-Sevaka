@@ -177,7 +177,16 @@ export const attendanceService = {
    */
   async recordPunch(
     session: AttendanceSession,
-    input: { selfieCaptured: boolean; idempotencyKey: string; now?: Date },
+    input: {
+      selfieCaptured: boolean;
+      idempotencyKey: string;
+      now?: Date;
+      /** Jalur API: jenis tap yang dihitung layar dari keadaan hari (`IN`/`OUT`). */
+      punchType?: 'IN' | 'OUT';
+      /** Jalur API: frame swafoto base64 tanpa prefiks data-URL. */
+      selfieBase64?: string;
+      selfieContentType?: string;
+    },
   ): Promise<PunchResult> {
     if (MOCK) {
       await delay(400);
@@ -220,9 +229,20 @@ export const attendanceService = {
       return { punch, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired: channel.selfie };
     }
 
+    // UIC-TIME 0.13 §6.1.1: swafoto dikirim sebagai `selfie_base64` (+ `selfie_content_type`, default
+    // image/jpeg) — PROVISIONAL sampai transport dokumen final. `selfie_document_id`/`selfie_hash`,
+    // `work_date`, dan verdict geofence diturunkan server, tidak dikirim.
+    const now = input.now ?? new Date();
     const { data } = await api.post<Punch>(
       '/attendance-punches',
-      { selfieCaptured: input.selfieCaptured },
+      {
+        punch_type: input.punchType,
+        punch_at: now.toISOString(),
+        punch_at_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ...(input.selfieBase64
+          ? { selfie_base64: input.selfieBase64, selfie_content_type: input.selfieContentType ?? 'image/jpeg' }
+          : {}),
+      },
       { headers: { 'Idempotency-Key': input.idempotencyKey } },
     );
     return { punch: data, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired: input.selfieCaptured };

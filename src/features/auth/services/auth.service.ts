@@ -73,7 +73,7 @@ export const authService = {
   async loginWithWhatsapp(payload: LoginWhatsappPayload): Promise<LoginChallengeResponse> {
     if (MOCK) {
       await delay();
-      return { challenge: 'otp', maskedTarget: maskPhone(`0${payload.phone}`), expiresInSeconds: 300 };
+      return { challenge: 'otp', maskedTarget: maskPhone(payload.phone.trim().replace(/^\+?62/, '0')), expiresInSeconds: 300 };
     }
     // Server menormalkan 08…/62…/+62… — klien tidak menolak bentuk yang berbeda.
     const { data } = await api.post<LoginChallengeResponse>('/auth/login', {

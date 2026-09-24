@@ -150,6 +150,11 @@ describe('Bulk assignment', () => {
     await expect(schedulerService.runBulk({ ...draft, to: '2026-07-20' })).rejects.toThrow(/mendahului/);
     await expect(schedulerService.runBulk({ ...draft, shiftId: '' })).rejects.toThrow(/pola shift/);
   });
+
+  it('HR_STAFF tidak memegang scope bulk — 403; SUPER_ADMIN boleh (FSD-TIME 0.5 §9.5)', async () => {
+    await expect(schedulerService.runBulk(draft, 'ROLE_HR_STAFF')).rejects.toThrow(/403/);
+    await expect(schedulerService.runBulk(draft, 'ROLE_SUPER_ADMIN')).resolves.toBeTruthy();
+  });
 });
 
 describe('Tukar shift', () => {

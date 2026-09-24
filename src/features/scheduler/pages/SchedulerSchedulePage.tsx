@@ -16,7 +16,8 @@ import {
   SourceBadge,
   SwapStatusBadge,
 } from '@/features/scheduler/components/SchedulerBits';
-import { rosterLabel } from '@/features/scheduler/rules';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { canBulkAssign, rosterLabel } from '@/features/scheduler/rules';
 import {
   AssignmentFormModal,
   BulkAssignModal,
@@ -27,8 +28,8 @@ import {
   SwapWithdrawModal,
 } from '@/features/scheduler/components/SchedulerModals';
 import { useAssignments, useShifts, useSwaps, useToggleShift } from '@/features/scheduler/hooks/useScheduler';
-import { ME, employeeName } from '@/features/scheduler/mock-data';
-import type { Shift, ShiftAssignment, ShiftSwap } from '@/features/scheduler/types';
+import { ME, SCHEDULER_ROLES, employeeName } from '@/features/scheduler/mock-data';
+import type { SchedulerRole, Shift, ShiftAssignment, ShiftSwap } from '@/features/scheduler/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type Tab = 'shifts' | 'roster' | 'swap';
@@ -50,6 +51,7 @@ export function SchedulerSchedulePage() {
   const [assignForm, setAssignForm] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<ShiftAssignment | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [role, setRole] = useState<SchedulerRole>('ROLE_HR_MANAGER');
   const [swapForm, setSwapForm] = useState(false);
   const [decidingSwap, setDecidingSwap] = useState<ShiftSwap | null>(null);
   const [withdrawingSwap, setWithdrawingSwap] = useState<ShiftSwap | null>(null);
@@ -106,9 +108,23 @@ export function SchedulerSchedulePage() {
             <Button onClick={() => openShiftForm(null)}>New shift pattern</Button>
           ) : tab === 'roster' ? (
             <div className="flex items-center gap-2">
-              <Button variant="secondary" onClick={() => setBulkOpen(true)}>
-                Bulk assign
-              </Button>
+              <Select value={role} onValueChange={(value) => setRole(value as SchedulerRole)}>
+                <SelectTrigger className="h-10 w-[220px]" aria-label="Viewing as">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SCHEDULER_ROLES.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {canBulkAssign(role) && (
+                <Button variant="secondary" onClick={() => setBulkOpen(true)}>
+                  Bulk assign
+                </Button>
+              )}
               <Button onClick={() => openAssignForm(null)}>Assign roster</Button>
             </div>
           ) : (
@@ -340,7 +356,7 @@ export function SchedulerSchedulePage() {
         shifts={shifts}
         onClose={() => setAssignForm(false)}
       />
-      <BulkAssignModal open={bulkOpen} shifts={shifts} onClose={() => setBulkOpen(false)} />
+      <BulkAssignModal role={role} open={bulkOpen} shifts={shifts} onClose={() => setBulkOpen(false)} />
       <SwapFormModal
         open={swapForm}
         assignments={assignments}

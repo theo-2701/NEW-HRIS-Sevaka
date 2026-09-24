@@ -7,8 +7,11 @@ import { Pagination } from '@/components/Pagination';
 import { RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { usePagedRows } from '@/hooks/usePagedRows';
+import { AssetActorPicker } from '@/features/assets/components/AssetActorPicker';
+import { useAssetActor } from '@/features/assets/store/assetActor.store';
 import { DisposalModal } from '@/features/assets/components/AssetModals';
 import { useAssets, useDisposals } from '@/features/assets/hooks/useAssets';
+import { canWriteAssets } from '@/features/assets/rules';
 import { DISPOSAL_TYPE_LABEL } from '@/features/assets/types';
 import type { Asset, DisposalLog } from '@/features/assets/types';
 import { formatCurrency, formatDateTime } from '@/lib/format';
@@ -18,13 +21,15 @@ type DisposalRow = DisposalLog & { assetCode: string; assetName: string };
 
 /**
  * Company Management › Assets › Disposal (FSD-COMPANY §9, P1–P3). Hanya aset Tersedia yang bisa
- * dilepas. Dijual dan dihibahkan terminal; dilelang masih bisa kembali Tersedia bila lelang batal.
+ * dilepas, dan hanya lewat Dijual atau Dihibahkan — keduanya terminal (UIC 0.25).
  */
 export function DisposalPage() {
   const [tab, setTab] = useState<Tab>('candidates');
   const [target, setTarget] = useState<Asset | null>(null);
   const available = useAssets(['AVAILABLE']);
   const history = useDisposals();
+  const { actor } = useAssetActor();
+  const writable = canWriteAssets(actor.role);
 
   const candidates = useMemo(() => available.data ?? [], [available.data]);
   const past = useMemo(() => history.data ?? [], [history.data]);
@@ -35,7 +40,8 @@ export function DisposalPage() {
     <PageShell
       crumbs={[{ label: 'Company Management' }, { label: 'Assets' }, { label: 'Disposal' }]}
       title="Disposal"
-      description="Pelepasan aset lewat penjualan, lelang, atau hibah — kepada karyawan maupun pihak luar."
+      description="Pelepasan aset lewat penjualan atau hibah — kepada karyawan maupun pihak luar."
+      actions={<AssetActorPicker />}
     >
       <div className="flex flex-col gap-5">
         <TabMenu<Tab>
@@ -49,7 +55,10 @@ export function DisposalPage() {
 
         {tab === 'candidates' && (
           <Card>
-            <CardHead title="Aset yang bisa dilepas" sub="Hanya aset berstatus Tersedia — aset yang dipegang karyawan harus diterima kembali dulu" />
+            <CardHead
+              title="Aset yang bisa dilepas"
+              sub="Hanya aset berstatus Tersedia — aset yang dipegang karyawan harus diterima kembali dulu"
+            />
             <div>
               <DataTable<Asset>
                 rows={pagedCandidates.rows}
@@ -68,10 +77,13 @@ export function DisposalPage() {
                     key: 'residual',
                     header: 'Nilai residu',
                     align: 'right',
-                    render: (row) => (row.currentResidualValue !== null ? formatCurrency(row.currentResidualValue) : '—'),
+                    render: (row) =>
+                      row.currentResidualValue !== null ? formatCurrency(row.currentResidualValue) : '—',
                   },
                 ]}
-                actions={(row) => <RowButton onClick={() => setTarget(row)}>Lepas aset</RowButton>}
+                actions={
+                  writable ? (row) => <RowButton onClick={() => setTarget(row)}>Lepas aset</RowButton> : undefined
+                }
               />
               <Pagination
                 page={pagedCandidates.page}
@@ -95,28 +107,36 @@ export function DisposalPage() {
                 loading={history.isLoading}
                 empty="Belum ada aset yang dilepas."
                 columns={[
-                  { key: 'asset', header: 'Aset', strong: true, render: (row) => `${row.assetCode} — ${row.assetName}` },
+                  {
+                    key: 'asset',
+                    header: 'Aset',
+                    strong: true,
+                    render: (row) => `${row.assetCode} — ${row.assetName}`,
+                  },
                   {
                     key: 'type',
                     header: 'Jenis',
-                    render: (row) => (
-                      <StatusBadge tone={row.disposalType === 'AUCTION' ? 'brand' : 'mute'}>
-                        {DISPOSAL_TYPE_LABEL[row.disposalType]}
-                      </StatusBadge>
-                    ),
+                    render: (row) => <StatusBadge tone="mute">{DISPOSAL_TYPE_LABEL[row.assetStatus]}</StatusBadge>,
                   },
                   {
                     key: 'nominal',
                     header: 'Nominal',
                     align: 'right',
-                    render: (row) => (row.disposalNominal !== null ? formatCurrency(row.disposalNominal) : '—'),
+                    render: (row) => formatCurrency(row.disposalNominal),
                   },
                   {
                     key: 'to',
                     header: 'Penerima',
-                    render: (row) => (row.isEmployee ? `${row.employeeInfo?.nama ?? '—'} (karyawan)` : `${row.fullName} (pihak luar)`),
+                    render: (row) =>
+                      row.isEmployee ? `${row.employeeInfo?.nama ?? '—'} (karyawan)` : `${row.fullName} (pihak luar)`,
                   },
-                  { key: 'at', header: 'Waktu', muted: true, nowrap: true, render: (row) => formatDateTime(row.createdAt) },
+                  {
+                    key: 'at',
+                    header: 'Waktu',
+                    muted: true,
+                    nowrap: true,
+                    render: (row) => formatDateTime(row.createdAt),
+                  },
                 ]}
               />
               <Pagination
@@ -132,7 +152,7 @@ export function DisposalPage() {
         )}
       </div>
 
-      <DisposalModal asset={target} onClose={() => setTarget(null)} />
+      <DisposalModal actor={actor} asset={target} onClose={() => setTarget(null)} />
     </PageShell>
   );
 }

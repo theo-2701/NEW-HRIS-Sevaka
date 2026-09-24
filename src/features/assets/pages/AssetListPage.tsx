@@ -9,8 +9,11 @@ import { AddButton, RowButton } from '@/components/RowActions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { AssetStatusBadge } from '@/features/assets/components/AssetBits';
+import { AssetActorPicker } from '@/features/assets/components/AssetActorPicker';
+import { useAssetActor } from '@/features/assets/store/assetActor.store';
 import { RegisterAssetModal } from '@/features/assets/components/AssetModals';
 import { useAssetCategories, useAssets } from '@/features/assets/hooks/useAssets';
+import { canWriteAssets } from '@/features/assets/rules';
 import { useBranches } from '@/features/company/hooks/useCompany';
 import { ASSET_STATUSES, ASSET_STATUS_LABEL } from '@/features/assets/types';
 import type { Asset, AssetStatus } from '@/features/assets/types';
@@ -31,6 +34,8 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
   const [status, setStatus] = useState(ALL);
   const [search, setSearch] = useState('');
   const [register, setRegister] = useState(false);
+  const { actor } = useAssetActor();
+  const writable = canWriteAssets(actor.role);
 
   const statuses = assigned ? HELD : status === ALL ? [] : [status as AssetStatus];
   const assets = useAssets(statuses, search);
@@ -53,6 +58,7 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
           ? 'Aset yang sedang dipegang karyawan, termasuk yang kelengkapannya belum lengkap.'
           : 'Registri seluruh aset perusahaan beserta status dan pemegangnya.'
       }
+      actions={<AssetActorPicker />}
     >
       <Card>
         <CardHead
@@ -83,7 +89,11 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
               )
             }
             search={{ value: search, onChange: setSearch, placeholder: 'Cari kode atau nama aset' }}
-            actions={assigned ? undefined : <AddButton onClick={() => setRegister(true)}>Daftarkan aset</AddButton>}
+            actions={
+              assigned || !writable ? undefined : (
+                <AddButton onClick={() => setRegister(true)}>Daftarkan aset</AddButton>
+              )
+            }
           />
           <DataTable<Asset>
             rows={paged.rows}
@@ -110,7 +120,9 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
               { key: 'status', header: 'Status', render: (row) => <AssetStatusBadge status={row.lastAssetStatus} /> },
             ]}
             actions={(row) => (
-              <RowButton onClick={() => navigate(`/company-management/assets/detail?id=${row.id}`)}>View Detail</RowButton>
+              <RowButton onClick={() => navigate(`/company-management/assets/detail?id=${row.id}`)}>
+                View Detail
+              </RowButton>
             )}
           />
           <Pagination
@@ -124,7 +136,7 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
         </div>
       </Card>
 
-      <RegisterAssetModal open={register} onClose={() => setRegister(false)} />
+      <RegisterAssetModal actor={actor} open={register} onClose={() => setRegister(false)} />
     </PageShell>
   );
 }

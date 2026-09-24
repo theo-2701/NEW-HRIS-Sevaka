@@ -28,9 +28,8 @@ export const loginUsernameSchema = Yup.object({
 });
 
 export const loginWhatsappSchema = Yup.object({
-  phone: Yup.string()
-    .required('Nomor handphone wajib diisi.')
-    .matches(/^8\d{7,13}$/, 'Nomor diawali 8, tanpa +62 atau 0.'),
+  // Klien DILARANG menolak bentuk 08…/62…/+62… (KA-17) — hanya wajib isi; server yang menormalkan.
+  phone: Yup.string().trim().required('Nomor handphone wajib diisi.'),
   password: Yup.string().required('Password wajib diisi.'),
   turnstileToken: Yup.string().required('Selesaikan verifikasi anti-bot terlebih dahulu.'),
 });

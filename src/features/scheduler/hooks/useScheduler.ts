@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { schedulerService } from '@/features/scheduler/services/scheduler.service';
 import { toast } from '@/store/ui.store';
 import type { AssignmentFilter, BulkResult } from '@/features/scheduler/services/scheduler.service';
-import type { AssignmentDraft, BulkDraft, Shift, ShiftDraft } from '@/features/scheduler/types';
+import type { AssignmentDraft, BulkDraft, SchedulerRole, Shift, ShiftDraft } from '@/features/scheduler/types';
 import type { ToastTone } from '@/store/ui.store';
 
 export const schedulerKeys = {
@@ -86,8 +86,8 @@ export const useDeleteAssignment = () =>
   );
 
 export const useRunBulk = () =>
-  useSchedulerMutation<BulkDraft, BulkResult>(
-    (draft) => schedulerService.runBulk(draft),
+  useSchedulerMutation<{ draft: BulkDraft; role: SchedulerRole }, BulkResult>(
+    ({ draft, role }) => schedulerService.runBulk(draft, role),
     (result) => ({
       text: `200 — ${result.created} dibuat, ${result.overwritten} ditulis ulang, ${result.skipped} dilangkahi (${result.skippedIndividual} individual, ${result.skippedSwap} swap) pada ${result.employees} karyawan.`,
     }),

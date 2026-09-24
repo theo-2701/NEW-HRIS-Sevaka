@@ -103,3 +103,10 @@ export const SWAP_STATUS_LABEL: Record<SwapStatus, string> = {
   REJECTED: 'Rejected',
   CANCELLED: 'Cancelled',
 };
+
+/**
+ * Peran HR di tab Penempatan (FSD-TIME 0.5 §9 · UIC-TIME §10.2.1/§10.2.2). Assign Individu terbuka
+ * untuk ketiganya (`shift-assignment:create`); Assign Massal hanya SUPER_ADMIN/HR_MANAGER
+ * (`shift-assignment:bulk`) — selisih disengaja, `TSD-001-TIME` §15.2.
+ */
+export type SchedulerRole = 'ROLE_SUPER_ADMIN' | 'ROLE_HR_MANAGER' | 'ROLE_HR_STAFF';

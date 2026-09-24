@@ -1,4 +1,11 @@
-import type { Asset, AssetCategory, HandoverLog, MaintenanceLog, TransferLog } from '@/features/assets/types';
+import type {
+  Asset,
+  AssetActor,
+  AssetCategory,
+  HandoverLog,
+  MaintenanceLog,
+  TransferLog,
+} from '@/features/assets/types';
 
 /**
  * Dataset contoh Assets. Branch, vendor, dan karyawan memakai id yang sama dengan fitur
@@ -59,6 +66,7 @@ export const ASSET_SEED: Asset[] = [
     id: 'as-0002',
     assetCode: 'AS-0002',
     assetName: 'Monitor Dell 27"',
+    serialNumber: 'CN0DLL27A',
     assetCategoryId: 'cat-it',
     branchId: 'br-jkt',
     ownershipType: 'OWNED',
@@ -75,6 +83,7 @@ export const ASSET_SEED: Asset[] = [
     id: 'as-0003',
     assetCode: 'AS-0003',
     assetName: 'Toyota Avanza — B 1234 XYZ',
+    serialNumber: 'MHKA1BA3JKK012345',
     assetCategoryId: 'cat-vehicle',
     branchId: 'br-bdg',
     ownershipType: 'LEASED',
@@ -96,6 +105,7 @@ export const ASSET_SEED: Asset[] = [
     id: 'as-0004',
     assetCode: 'AS-0004',
     assetName: 'Kursi Ergonomis',
+    serialNumber: 'KE-2209-01',
     assetCategoryId: 'cat-furniture',
     branchId: 'br-smg',
     ownershipType: 'OWNED',
@@ -111,6 +121,7 @@ export const ASSET_SEED: Asset[] = [
     id: 'as-0005',
     assetCode: 'AS-0005',
     assetName: 'Proyektor Epson',
+    serialNumber: 'EPX7Y12345',
     assetCategoryId: 'cat-it',
     branchId: 'br-bdg',
     ownershipType: 'OWNED',
@@ -132,6 +143,7 @@ export const HANDOVER_SEED: HandoverLog[] = [
     employeeInfo: { employeeId: 'emp-rudi', nama: 'Rudi Hartono', nik: 'PTDIKA-0001' },
     isComplete: true,
     assetStatus: null,
+    assetLocation: null,
     note: 'Laptop kerja lengkap dengan charger dan tas.',
     createdAt: at('2026-01-12'),
   },
@@ -142,6 +154,7 @@ export const HANDOVER_SEED: HandoverLog[] = [
     employeeInfo: { employeeId: 'emp-maya', nama: 'Maya Anggraini', nik: 'PTDIKA-0002' },
     isComplete: false,
     assetStatus: null,
+    assetLocation: null,
     note: 'STNK asli masih di kantor pusat.',
     createdAt: at('2026-01-05'),
   },
@@ -166,4 +179,12 @@ export const EMPLOYEE_OPTIONS = [
   { employeeId: 'emp-maya', nama: 'Maya Anggraini', nik: 'PTDIKA-0002' },
   { employeeId: 'emp-hesti', nama: 'Hesti Wulandari', nik: 'PTDIKA-0003' },
   { employeeId: 'emp-dimas', nama: 'Dimas Pratama', nik: 'PTDIKA-0004' },
+];
+
+/** Identitas untuk mencoba matriks peran §7.0 — dua peran terakhir hanya lihat. */
+export const ASSET_VIEWERS: AssetActor[] = [
+  { employeeId: 'emp-hesti', label: 'Hesti Wulandari — Super Admin', role: 'ROLE_SUPER_ADMIN' },
+  { employeeId: 'emp-dimas', label: 'Dimas Pratama — GA Staff', role: 'ROLE_GA_STAFF' },
+  { employeeId: 'emp-rudi', label: 'Rudi Hartono — System Admin', role: 'ROLE_SYSTEM_ADMIN' },
+  { employeeId: 'emp-maya', label: 'Maya Anggraini — HR Manager (lihat saja)', role: 'ROLE_HR_MANAGER' },
 ];

@@ -3,11 +3,12 @@ import { MOCK } from '@/services/mock';
 import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
 import { ASSIGNMENTS, ME, SHIFTS, SWAPS } from '@/features/scheduler/mock-data';
-import { datesBetween } from '@/features/scheduler/rules';
+import { canBulkAssign, datesBetween } from '@/features/scheduler/rules';
 import type {
   AssignmentDraft,
   BulkDraft,
   BulkPreview,
+  SchedulerRole,
   Shift,
   ShiftAssignment,
   ShiftDraft,
@@ -284,9 +285,13 @@ export const schedulerService = {
     return { created, overwritten, skippedIndividual, skippedSwap, employees: draft.employeeIds.length, dates };
   },
 
-  async runBulk(draft: BulkDraft): Promise<BulkResult> {
+  /** `shift-assignment:bulk` — hanya SUPER_ADMIN/HR_MANAGER; HR_STAFF 403 (FSD-TIME 0.5 §9.5). */
+  async runBulk(draft: BulkDraft, role: SchedulerRole = 'ROLE_HR_MANAGER'): Promise<BulkResult> {
     if (MOCK) {
       await delay(450);
+      if (!canBulkAssign(role)) {
+        throw new Error('403 — Assign Massal hanya untuk Super Admin dan HR Manager.');
+      }
       if (!draft.employeeIds.length) throw new Error('422 — pilih minimal satu karyawan.');
       if (!draft.from || !draft.to) throw new Error('422 — kedua tanggal rentang wajib diisi.');
       if (draft.to < draft.from) throw new Error('422 — akhir rentang tidak boleh mendahului awalnya.');

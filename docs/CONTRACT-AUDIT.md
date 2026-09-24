@@ -397,3 +397,17 @@ Sumber: `FE-220926/` (FSD-001-TIME-0.4, UIC-001-TIME-0.12). Pembanding: `(150926
 
 3 pengujian baru di `time-off.test.ts` (kode di luar enum / catatan >500 → 422, penolakan menyimpan
 kode + catatan terpisah, tolak sakit di dalam jendela memakai enum dengan catatan kosong).
+
+## 14. Rilis FE-230926 (23 September 2026) — Auth, Profile, Employee, Company, Time
+
+Sumber: `HRIS-docs/.../September Handoff (Delivery)/FE-230926/FE-230926/`. Dibaca lewat changelog.
+
+| Area | Dokumen | Perubahan kontrak | Tindakan di repo |
+|---|---|---|---|
+| Auth | FSD-AUTH 0.12 §2.3 (`AUT-105` Q8, `KA-17`) | Prefiks statis "+62" dicabut; satu field nomor bebas `inputmode="tel"`, bentuk `081…`/`62…`/`+62…` dikirim apa adanya, klien dilarang menolak | `LoginWhatsappPage` satu field, `loginWhatsappSchema` hanya wajib isi, mask OTP menormalkan `+62`/`62` → `0` |
+| Company › Assets | FSD-COMPANY 0.34/0.35 · UIC 0.24/0.25 (`CMP-330`) | Matriks peran §7.0 (HR_MANAGER/DEPT_MANAGER lihat saja) · `serial_number` wajib · Transfer = SATU event `log_asset_transfer` antar-branch (alasan, tanggal, foto; pemegang tidak berubah) · Return wajib `asset_location` · Lease wajib foto + `log_asset_lease` · Residual menulis `log_asset_residual` · Dispose hanya `SOLD`/`GRANTED` (AUCTION 422), nominal + berkas + foto wajib | Service/hooks/modal/halaman diselaraskan; pemilih identitas `ASSET_VIEWERS` di empat layar; tombol tulis disembunyikan untuk peran lihat saja; "Batalkan lelang" dihapus; tab riwayat Transfer/Sewa/Nilai residu |
+| Time › Scheduler | FSD-TIME 0.5 §9/§9.5 (`TIM-171`) | Assign Massal (Bulk) hanya `SUPER_ADMIN`/`HR_MANAGER`; `HR_STAFF` tetap boleh Assign Individu | `canBulkAssign`, `runBulk` 403 untuk HR_STAFF, tombol Bulk disembunyikan; pemilih peran di Schedule |
+| Time › Attendance | UIC-TIME 0.13 §6.1.1 (`TIM-164`) | Body tap memuat `selfie_base64` (kondisional, PROVISIONAL) + `selfie_content_type` (default image/jpeg); galat document-service `503` | Cabang API `recordPunch` mengirim `punch_type`/`punch_at`/`punch_at_timezone` + pasangan selfie; cabang mock tidak berubah |
+| Employee Profile | FSD 0.10 / UIC 0.12 | Tidak berubah dari FE-Profile | — |
+| Employee | UIC 0.33 | Koreksi redaksional; filter New Joiner tetap satu status | — |
+| Notification | FSD 0.4 / UIC 0.2 (baru) | Dokumen baru | Dipakai saat membangun Company Management › Notification (belum dikerjakan) |

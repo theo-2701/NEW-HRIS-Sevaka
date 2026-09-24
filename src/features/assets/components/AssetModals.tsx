@@ -22,6 +22,7 @@ import {
 import { DISPOSAL_TYPE_LABEL } from '@/features/assets/types';
 import type {
   Asset,
+  AssetActor,
   AssetCategory,
   AssetDraft,
   DisposalDraft,
@@ -33,7 +34,17 @@ import type {
 
 const PEOPLE = EMPLOYEE_OPTIONS.map((row) => ({ value: row.employeeId, label: `${row.nama} · ${row.nik}` }));
 
-function Footer({ onClose, onSave, saving, label = 'Simpan' }: { onClose: () => void; onSave: () => void; saving: boolean; label?: string }) {
+function Footer({
+  onClose,
+  onSave,
+  saving,
+  label = 'Simpan',
+}: {
+  onClose: () => void;
+  onSave: () => void;
+  saving: boolean;
+  label?: string;
+}) {
   return (
     <>
       <Button variant="secondary" onClick={onClose}>
@@ -46,7 +57,17 @@ function Footer({ onClose, onSave, saving, label = 'Simpan' }: { onClose: () => 
   );
 }
 
-function Check({ checked, onChange, label, hint }: { checked: boolean; onChange: (value: boolean) => void; label: string; hint: string }) {
+function Check({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: string;
+  hint: string;
+}) {
   return (
     <label className="flex cursor-pointer items-start gap-2.5">
       <Checkbox className="mt-0.5" checked={checked} onCheckedChange={(value) => onChange(value === true)} />
@@ -60,7 +81,17 @@ function Check({ checked, onChange, label, hint }: { checked: boolean; onChange:
 
 // ---------- Kategori ----------
 
-export function CategoryFormModal({ open, editing, onClose }: { open: boolean; editing: AssetCategory | null; onClose: () => void }) {
+export function CategoryFormModal({
+  actor,
+  open,
+  editing,
+  onClose,
+}: {
+  actor: AssetActor;
+  open: boolean;
+  editing: AssetCategory | null;
+  onClose: () => void;
+}) {
   const save = useSaveCategory();
   const [name, setName] = useState('');
   const [interval, setInterval] = useState('');
@@ -81,7 +112,12 @@ export function CategoryFormModal({ open, editing, onClose }: { open: boolean; e
         <Footer
           onClose={onClose}
           saving={save.isPending}
-          onSave={() => save.mutate({ draft: { name, maintenanceIntervalDays: interval }, id: editing?.id }, { onSuccess: onClose })}
+          onSave={() =>
+            save.mutate(
+              { actor, draft: { name, maintenanceIntervalDays: interval }, id: editing?.id },
+              { onSuccess: onClose },
+            )
+          }
         />
       }
     >
@@ -121,7 +157,15 @@ const EMPTY: AssetDraft = {
  * dikosongkan — aset tetap lahir, berstatus Tidak tersedia sampai foto menyusul. Berkas kontrak
  * sewa sengaja tidak diminta di sini; ia diisi lewat aksi Sewa sesudah aset tersimpan.
  */
-export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function RegisterAssetModal({
+  actor,
+  open,
+  onClose,
+}: {
+  actor: AssetActor;
+  open: boolean;
+  onClose: () => void;
+}) {
   const register = useRegisterAsset();
   const categories = useAssetCategories();
   const branches = useBranches();
@@ -132,9 +176,12 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
     if (open) setDraft(EMPTY);
   }, [open]);
 
-  const set = <K extends keyof AssetDraft>(key: K, value: AssetDraft[K]) => setDraft((prev) => ({ ...prev, [key]: value }));
+  const set = <K extends keyof AssetDraft>(key: K, value: AssetDraft[K]) =>
+    setDraft((prev) => ({ ...prev, [key]: value }));
   const owned = draft.ownershipType === 'OWNED';
-  const missing = [!draft.branchId && 'branch', !draft.assetCategoryId && 'kategori', !draft.photo1 && 'foto'].filter(Boolean);
+  const missing = [!draft.branchId && 'branch', !draft.assetCategoryId && 'kategori', !draft.photo1 && 'foto'].filter(
+    Boolean,
+  );
 
   return (
     <Modal
@@ -143,7 +190,13 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
       title="Daftarkan aset"
       description="Bentuk form mengikuti kepemilikan. Data umum boleh belum lengkap — aset tetap tersimpan, tetapi belum bisa diserahkan."
       size="wide"
-      footer={<Footer onClose={onClose} saving={register.isPending} onSave={() => register.mutate(draft, { onSuccess: onClose })} />}
+      footer={
+        <Footer
+          onClose={onClose}
+          saving={register.isPending}
+          onSave={() => register.mutate({ actor, draft }, { onSuccess: onClose })}
+        />
+      }
     >
       <Segmented<OwnershipType>
         value={draft.ownershipType}
@@ -157,7 +210,12 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
       <FieldGrid>
         <TextRow label="Kode aset" required value={draft.assetCode} onChange={(value) => set('assetCode', value)} />
         <TextRow label="Nama aset" required value={draft.assetName} onChange={(value) => set('assetName', value)} />
-        <TextRow label="Serial number" value={draft.serialNumber} onChange={(value) => set('serialNumber', value)} />
+        <TextRow
+          label="Serial number"
+          required
+          value={draft.serialNumber}
+          onChange={(value) => set('serialNumber', value)}
+        />
         <SelectRow
           label="Kategori"
           allowEmpty
@@ -185,8 +243,19 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
 
       {owned ? (
         <FieldGrid>
-          <TextRow label="Tanggal beli" required placeholder="yyyy-mm-dd" value={draft.purchaseDate} onChange={(value) => set('purchaseDate', value)} />
-          <TextRow label="Harga beli" required value={draft.purchasePrice} onChange={(value) => set('purchasePrice', value)} />
+          <TextRow
+            label="Tanggal beli"
+            required
+            placeholder="yyyy-mm-dd"
+            value={draft.purchaseDate}
+            onChange={(value) => set('purchaseDate', value)}
+          />
+          <TextRow
+            label="Harga beli"
+            required
+            value={draft.purchasePrice}
+            onChange={(value) => set('purchasePrice', value)}
+          />
           <TextRow
             label="Nomor faktur"
             required
@@ -196,7 +265,12 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
         </FieldGrid>
       ) : (
         <FieldGrid>
-          <TextRow label="Nilai sewa" required value={draft.leaseAmount} onChange={(value) => set('leaseAmount', value)} />
+          <TextRow
+            label="Nilai sewa"
+            required
+            value={draft.leaseAmount}
+            onChange={(value) => set('leaseAmount', value)}
+          />
           <SelectRow
             label="Vendor"
             required
@@ -204,8 +278,20 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
             onChange={(value) => set('vendorId', value)}
             options={(vendors.data ?? []).map((row) => ({ value: row.id, label: row.vendorName }))}
           />
-          <TextRow label="Mulai sewa" required placeholder="yyyy-mm-dd" value={draft.leaseStartDate} onChange={(value) => set('leaseStartDate', value)} />
-          <TextRow label="Akhir sewa" required placeholder="yyyy-mm-dd" value={draft.leaseEndDate} onChange={(value) => set('leaseEndDate', value)} />
+          <TextRow
+            label="Mulai sewa"
+            required
+            placeholder="yyyy-mm-dd"
+            value={draft.leaseStartDate}
+            onChange={(value) => set('leaseStartDate', value)}
+          />
+          <TextRow
+            label="Akhir sewa"
+            required
+            placeholder="yyyy-mm-dd"
+            value={draft.leaseEndDate}
+            onChange={(value) => set('leaseEndDate', value)}
+          />
           <TextRow
             label="Nomor kontrak sewa"
             required
@@ -230,7 +316,17 @@ export function RegisterAssetModal({ open, onClose }: { open: boolean; onClose: 
 
 export type LifecycleAction = 'assign' | 'return' | 'transfer' | 'maintain' | 'lease' | 'residual';
 
-export function LifecycleModal({ asset, action, onClose }: { asset: Asset; action: LifecycleAction | null; onClose: () => void }) {
+export function LifecycleModal({
+  actor,
+  asset,
+  action,
+  onClose,
+}: {
+  actor: AssetActor;
+  asset: Asset;
+  action: LifecycleAction | null;
+  onClose: () => void;
+}) {
   const assign = useAssign();
   const giveBack = useReturnAsset();
   const transfer = useTransfer();
@@ -244,7 +340,11 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
   const [isComplete, setIsComplete] = useState(true);
   const [note, setNote] = useState('');
   const [returnStatus, setReturnStatus] = useState<ReturnStatus>('AVAILABLE');
+  const [location, setLocation] = useState('');
   const [toBranchId, setToBranchId] = useState('');
+  const [reason, setReason] = useState('');
+  const [transferDate, setTransferDate] = useState('');
+  const [photo, setPhoto] = useState(false);
   const [maintenanceType, setMaintenanceType] = useState<MaintenanceType>('SCHEDULED');
   const [maintenanceDate, setMaintenanceDate] = useState('');
   const [cost, setCost] = useState('');
@@ -258,7 +358,11 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
     setIsComplete(true);
     setNote('');
     setReturnStatus('AVAILABLE');
-    setToBranchId(asset.branchId ?? '');
+    setLocation('');
+    setToBranchId('');
+    setReason('');
+    setTransferDate('');
+    setPhoto(false);
     setMaintenanceType('SCHEDULED');
     setMaintenanceDate('');
     setCost('');
@@ -271,39 +375,48 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
   const config: Record<LifecycleAction, { title: string; description: string; saving: boolean; save: () => void }> = {
     assign: {
       title: 'Serahkan aset',
-      description: 'Kelengkapan yang kurang membuat aset berstatus "Dipegang — belum lengkap": tetap dipegang karyawan, bukan terblokir.',
+      description:
+        'Kelengkapan yang kurang membuat aset berstatus "Dipegang — belum lengkap": tetap dipegang karyawan, bukan terblokir.',
       saving: assign.isPending,
-      save: () => assign.mutate({ id: asset.id, employeeId, isComplete, note }, done),
+      save: () => assign.mutate({ actor, id: asset.id, employeeId, isComplete, note }, done),
     },
     return: {
       title: 'Terima kembali aset',
       description: 'Kondisi saat diterima menentukan status aset — tiga hasil yang berbeda, dua di antaranya terminal.',
       saving: giveBack.isPending,
-      save: () => giveBack.mutate({ id: asset.id, assetStatus: returnStatus, note }, done),
+      save: () =>
+        giveBack.mutate({ actor, id: asset.id, assetStatus: returnStatus, assetLocation: location, note }, done),
     },
     transfer: {
       title: 'Pindahkan aset',
-      description: 'Tercatat sebagai dua event: diterima dari pemegang lama, lalu diserahkan ke pemegang baru.',
+      description: 'Memindahkan aset ke branch lain. Pemegang aset tidak berubah.',
       saving: transfer.isPending,
-      save: () => transfer.mutate({ id: asset.id, toBranchId, toEmployeeId: employeeId }, done),
+      save: () =>
+        transfer.mutate(
+          { actor, id: asset.id, toBranchId, transferReason: reason, transferDate, photoAttached: photo },
+          done,
+        ),
     },
     maintain: {
       title: 'Catat maintenance',
-      description: 'Perawatan terjadwal menggeser jadwal berikutnya sejauh interval kategori; perawatan tak terjadwal tidak.',
+      description:
+        'Perawatan terjadwal menggeser jadwal berikutnya sejauh interval kategori; perawatan tak terjadwal tidak.',
       saving: maintain.isPending,
-      save: () => maintain.mutate({ id: asset.id, maintenanceType, maintenanceDate, cost, note }, done),
+      save: () => maintain.mutate({ actor, id: asset.id, maintenanceType, maintenanceDate, cost, note }, done),
     },
     lease: {
       title: 'Perbarui sewa',
-      description: 'Berkas kontrak sewa diunggah di sini, bukan saat registrasi.',
+      description:
+        'Berkas kontrak sewa diunggah di sini, bukan saat registrasi. Setiap pembaruan tercatat di riwayat sewa.',
       saving: lease.isPending,
-      save: () => lease.mutate({ id: asset.id, vendorId, leaseContractNumber: contract }, done),
+      save: () =>
+        lease.mutate({ actor, id: asset.id, vendorId, leaseContractNumber: contract, photoAttached: photo }, done),
     },
     residual: {
       title: 'Perbarui nilai residu',
       description: 'Nilai terkini aset; riwayat perubahannya tetap tersimpan.',
       saving: residual.isPending,
-      save: () => residual.mutate({ id: asset.id, value }, done),
+      save: () => residual.mutate({ actor, id: asset.id, value }, done),
     },
   };
 
@@ -318,9 +431,9 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
       description={current.description}
       footer={<Footer onClose={onClose} saving={current.saving} onSave={current.save} />}
     >
-      {(action === 'assign' || action === 'transfer') && (
+      {action === 'assign' && (
         <SelectRow
-          label={action === 'assign' ? 'Karyawan penerima' : 'Pemegang baru'}
+          label="Karyawan penerima"
           required
           value={employeeId}
           onChange={setEmployeeId}
@@ -336,12 +449,36 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
         />
       )}
       {action === 'transfer' && (
-        <SelectRow
-          label="Branch tujuan"
-          required
-          value={toBranchId}
-          onChange={setToBranchId}
-          options={(branches.data ?? []).map((row) => ({ value: row.id, label: row.branchName }))}
+        <>
+          <FieldGrid>
+            <SelectRow
+              label="Branch tujuan"
+              required
+              value={toBranchId}
+              onChange={setToBranchId}
+              options={(branches.data ?? [])
+                .filter((row) => row.id !== asset.branchId)
+                .map((row) => ({ value: row.id, label: row.branchName }))}
+            />
+            <TextRow
+              label="Tanggal transfer"
+              required
+              placeholder="yyyy-mm-dd"
+              value={transferDate}
+              onChange={setTransferDate}
+            />
+          </FieldGrid>
+          <Field label="Alasan transfer" required>
+            <Textarea rows={2} value={reason} onChange={(event) => setReason(event.target.value)} />
+          </Field>
+        </>
+      )}
+      {(action === 'transfer' || action === 'lease') && (
+        <Check
+          checked={photo}
+          onChange={setPhoto}
+          label="Foto kondisi aset sudah dipilih"
+          hint="Wajib — foto kondisi aset saat aksi ini dicatat."
         />
       )}
       {action === 'return' && (
@@ -357,6 +494,15 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
           />
         </Field>
       )}
+      {action === 'return' && (
+        <TextRow
+          label="Lokasi aset"
+          required
+          placeholder="mis. Gudang IT lantai 3"
+          value={location}
+          onChange={setLocation}
+        />
+      )}
       {action === 'maintain' && (
         <>
           <Field label="Jenis maintenance" required>
@@ -370,7 +516,13 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
             />
           </Field>
           <FieldGrid>
-            <TextRow label="Tanggal" required placeholder="yyyy-mm-dd" value={maintenanceDate} onChange={setMaintenanceDate} />
+            <TextRow
+              label="Tanggal"
+              required
+              placeholder="yyyy-mm-dd"
+              value={maintenanceDate}
+              onChange={setMaintenanceDate}
+            />
             <TextRow label="Biaya" value={cost} onChange={setCost} />
           </FieldGrid>
         </>
@@ -400,8 +552,10 @@ export function LifecycleModal({ asset, action, onClose }: { asset: Asset; actio
 // ---------- Disposal ----------
 
 const EMPTY_DISPOSAL: DisposalDraft = {
-  disposalType: 'SOLD',
+  assetStatus: 'SOLD',
   disposalNominal: '',
+  disposalFileAttached: false,
+  photoAttached: false,
   isEmployee: false,
   employeeId: '',
   fullName: '',
@@ -410,8 +564,19 @@ const EMPTY_DISPOSAL: DisposalDraft = {
   phone: '',
 };
 
-/** Disposal (§9): penerima karyawan vs pihak luar adalah dua sub-form dengan field wajib berbeda. */
-export function DisposalModal({ asset, onClose }: { asset: Asset | null; onClose: () => void }) {
+/**
+ * Disposal (§9): hanya Dijual atau Dihibahkan (keduanya terminal). Nominal, berkas bukti, dan foto
+ * wajib untuk keduanya. Penerima karyawan vs pihak luar = dua sub-form dengan field wajib berbeda.
+ */
+export function DisposalModal({
+  actor,
+  asset,
+  onClose,
+}: {
+  actor: AssetActor;
+  asset: Asset | null;
+  onClose: () => void;
+}) {
   const dispose = useDispose();
   const [draft, setDraft] = useState<DisposalDraft>(EMPTY_DISPOSAL);
 
@@ -420,37 +585,53 @@ export function DisposalModal({ asset, onClose }: { asset: Asset | null; onClose
   }, [asset]);
 
   if (!asset) return null;
-  const set = <K extends keyof DisposalDraft>(key: K, value: DisposalDraft[K]) => setDraft((prev) => ({ ...prev, [key]: value }));
+  const set = <K extends keyof DisposalDraft>(key: K, value: DisposalDraft[K]) =>
+    setDraft((prev) => ({ ...prev, [key]: value }));
 
   return (
     <Modal
       open
       onOpenChange={(next) => !next && onClose()}
       title={`Lepas aset — ${asset.assetCode}`}
-      description="Dijual dan dihibahkan tidak bisa dibatalkan. Dilelang masih bisa dikembalikan ke Tersedia bila lelang batal."
+      description="Pelepasan tidak bisa dibatalkan — aset keluar dari siklus dan tidak bisa diserahkan lagi."
       size="wide"
       footer={
         <Footer
           onClose={onClose}
           saving={dispose.isPending}
           label="Lepas aset"
-          onSave={() => dispose.mutate({ id: asset.id, draft }, { onSuccess: onClose })}
+          onSave={() => dispose.mutate({ actor, id: asset.id, draft }, { onSuccess: onClose })}
         />
       }
     >
       <Field label="Jenis pelepasan" required>
         <Segmented<DisposalType>
-          value={draft.disposalType}
-          onChange={(value) => set('disposalType', value)}
-          options={(['SOLD', 'AUCTION', 'GRANTED'] as DisposalType[]).map((value) => ({ value, label: DISPOSAL_TYPE_LABEL[value] }))}
+          value={draft.assetStatus}
+          onChange={(value) => set('assetStatus', value)}
+          options={(['SOLD', 'GRANTED'] as DisposalType[]).map((value) => ({
+            value,
+            label: DISPOSAL_TYPE_LABEL[value],
+          }))}
         />
       </Field>
       <TextRow
         label="Nominal"
-        required={draft.disposalType === 'SOLD'}
-        hint={draft.disposalType === 'SOLD' ? 'Wajib bila dijual.' : 'Opsional.'}
+        required
+        hint={draft.assetStatus === 'SOLD' ? 'Harga jual.' : 'Nilai aset yang dihibahkan.'}
         value={draft.disposalNominal}
         onChange={(value) => set('disposalNominal', value)}
+      />
+      <Check
+        checked={draft.disposalFileAttached}
+        onChange={(value) => set('disposalFileAttached', value)}
+        label="Berkas bukti pelepasan sudah dipilih"
+        hint="Wajib — kuitansi penjualan atau berita acara hibah."
+      />
+      <Check
+        checked={draft.photoAttached}
+        onChange={(value) => set('photoAttached', value)}
+        label="Foto kondisi aset sudah dipilih"
+        hint="Wajib — foto kondisi aset saat dilepas."
       />
       <Check
         checked={draft.isEmployee}
@@ -459,11 +640,23 @@ export function DisposalModal({ asset, onClose }: { asset: Asset | null; onClose
         hint="Matikan bila penerimanya pihak luar — data identitasnya wajib diisi."
       />
       {draft.isEmployee ? (
-        <SelectRow label="Karyawan penerima" required value={draft.employeeId} onChange={(value) => set('employeeId', value)} options={PEOPLE} />
+        <SelectRow
+          label="Karyawan penerima"
+          required
+          value={draft.employeeId}
+          onChange={(value) => set('employeeId', value)}
+          options={PEOPLE}
+        />
       ) : (
         <FieldGrid>
           <TextRow label="Nama lengkap" required value={draft.fullName} onChange={(value) => set('fullName', value)} />
-          <TextRow label="Nomor KTP" required hint="16 digit." value={draft.idCardNumber} onChange={(value) => set('idCardNumber', value)} />
+          <TextRow
+            label="Nomor KTP"
+            required
+            hint="16 digit."
+            value={draft.idCardNumber}
+            onChange={(value) => set('idCardNumber', value)}
+          />
           <TextRow label="Surel" value={draft.email} onChange={(value) => set('email', value)} />
           <TextRow label="Telepon" required value={draft.phone} onChange={(value) => set('phone', value)} />
         </FieldGrid>

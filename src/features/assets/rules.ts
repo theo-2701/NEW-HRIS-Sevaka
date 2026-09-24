@@ -1,5 +1,9 @@
 import { TERMINAL_STATUSES } from '@/features/assets/types';
-import type { Asset, AssetStatus, ReturnStatus } from '@/features/assets/types';
+import type { Asset, AssetRole, AssetStatus, ReturnStatus } from '@/features/assets/types';
+
+/** Matriks peran §7.0 (FSD 0.34): HR_MANAGER dan DEPARTMENT_MANAGER hanya lihat. */
+export const canWriteAssets = (role: AssetRole) =>
+  role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_SYSTEM_ADMIN' || role === 'ROLE_GA_STAFF';
 
 /**
  * Blocker NOT_AVAILABLE (§7.3, `K2` `CMP-245`): branch, kategori, **atau foto** kosong. Aset
@@ -22,8 +26,14 @@ export const canAssign = (asset: Asset) => asset.lastAssetStatus === 'AVAILABLE'
 export const canReturn = (asset: Asset) =>
   asset.lastAssetStatus === 'ASSIGNED' || asset.lastAssetStatus === 'INCOMPLETE';
 
-/** Disposal hanya dari AVAILABLE (§9.3); AUCTION boleh kembali AVAILABLE, jadi tidak terminal. */
+/** Disposal hanya dari AVAILABLE (UIC 0.24 §3.3). */
 export const canDispose = (asset: Asset) => asset.lastAssetStatus === 'AVAILABLE';
+
+/**
+ * Transfer = SATU event antar-branch (FSD/UIC 0.35/0.25) — tidak menyentuh pemegang, jadi sah
+ * untuk aset mana pun yang belum terminal, dipegang maupun tidak.
+ */
+export const canTransfer = (asset: Asset) => !isTerminal(asset.lastAssetStatus);
 
 /** Aksi Sewa hanya untuk aset LEASED — OWNED tidak punya kontrak sewa. */
 export const canLease = (asset: Asset) => asset.ownershipType === 'LEASED' && !isTerminal(asset.lastAssetStatus);

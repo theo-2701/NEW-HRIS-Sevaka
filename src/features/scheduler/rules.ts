@@ -1,6 +1,6 @@
 import { formatDate, toIsoDate } from '@/lib/format';
 import { employeeName } from '@/features/scheduler/mock-data';
-import type { Shift, ShiftAssignment } from '@/features/scheduler/types';
+import type { SchedulerRole, Shift, ShiftAssignment } from '@/features/scheduler/types';
 
 /** Aturan murni Scheduler — tidak menyentuh jaringan. */
 
@@ -45,3 +45,6 @@ export function rosterLabel(assignment: ShiftAssignment | undefined, shifts: Shi
   const what = assignment.isOffDay ? 'Off day' : (shift?.shiftCode ?? '—');
   return `${formatDate(assignment.workDate)} · ${employeeName(assignment.employeeId)} · ${what}`;
 }
+
+/** Scope `shift-assignment:bulk` — HR_STAFF tidak memegangnya (FSD-TIME 0.5 §9.5). */
+export const canBulkAssign = (role: SchedulerRole) => role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER';

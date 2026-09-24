@@ -33,6 +33,7 @@ import { SHIFT_TYPE_LABEL } from '@/features/scheduler/types';
 import type {
   AssignmentDraft,
   BulkDraft,
+  SchedulerRole,
   Shift,
   ShiftAssignment,
   ShiftDraft,
@@ -370,10 +371,12 @@ export function AssignmentFormModal({
  * baris yang dikunci penyesuaian individual atau swap akan dilangkahi.
  */
 export function BulkAssignModal({
+  role,
   open,
   shifts,
   onClose,
 }: {
+  role: SchedulerRole;
   open: boolean;
   shifts: Shift[];
   onClose: () => void;
@@ -411,7 +414,7 @@ export function BulkAssignModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button disabled={run.isPending} onClick={() => run.mutate(draft, { onSuccess: onClose })}>
+          <Button disabled={run.isPending} onClick={() => run.mutate({ draft, role }, { onSuccess: onClose })}>
             {run.isPending ? 'Menjalankan…' : 'Run bulk assignment'}
           </Button>
         </>

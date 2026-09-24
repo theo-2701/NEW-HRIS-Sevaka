@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { assetService } from '@/features/assets/services/asset.service';
 import { toast } from '@/store/ui.store';
-import type { AssetDraft, AssetStatus, DisposalDraft, MaintenanceType, ReturnStatus } from '@/features/assets/types';
+import type {
+  AssetActor,
+  AssetDraft,
+  AssetStatus,
+  DisposalDraft,
+  MaintenanceType,
+  ReturnStatus,
+} from '@/features/assets/types';
 
 export const assetKeys = {
   all: ['assets'] as const,
@@ -26,7 +33,10 @@ export const useAssetHistory = (id: string) =>
 
 export const useDisposals = () => useQuery({ queryKey: assetKeys.disposals, queryFn: () => assetService.disposals() });
 
-function useAssetMutation<TVars, TResult>(mutationFn: (vars: TVars) => Promise<TResult>, message: (result: TResult) => string) {
+function useAssetMutation<TVars, TResult>(
+  mutationFn: (vars: TVars) => Promise<TResult>,
+  message: (result: TResult) => string,
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
@@ -38,19 +48,24 @@ function useAssetMutation<TVars, TResult>(mutationFn: (vars: TVars) => Promise<T
   });
 }
 
+type WithActor<T> = T & { actor: AssetActor };
+
 export const useSaveCategory = () =>
   useAssetMutation(
-    ({ draft, id }: { draft: { name: string; maintenanceIntervalDays: string }; id?: string }) =>
-      assetService.saveCategory(draft, id),
+    ({ actor, draft, id }: WithActor<{ draft: { name: string; maintenanceIntervalDays: string }; id?: string }>) =>
+      assetService.saveCategory(actor, draft, id),
     (row) => `Kategori ${row.name} tersimpan.`,
   );
 
 export const useDeleteCategory = () =>
-  useAssetMutation((id: string) => assetService.deleteCategory(id), () => 'Kategori dihapus.');
+  useAssetMutation(
+    ({ actor, id }: WithActor<{ id: string }>) => assetService.deleteCategory(actor, id),
+    () => 'Kategori dihapus.',
+  );
 
 export const useRegisterAsset = () =>
   useAssetMutation(
-    (draft: AssetDraft) => assetService.register(draft),
+    ({ actor, draft }: WithActor<{ draft: AssetDraft }>) => assetService.register(actor, draft),
     (row) =>
       row.lastAssetStatus === 'NOT_AVAILABLE'
         ? `201 — ${row.assetCode} terdaftar, tetapi masih Tidak tersedia sampai datanya lengkap.`
@@ -58,59 +73,80 @@ export const useRegisterAsset = () =>
   );
 
 export const useUploadPhoto = () =>
-  useAssetMutation((id: string) => assetService.uploadPhoto(id), (row) => `Foto ${row.assetCode} terunggah.`);
+  useAssetMutation(
+    ({ actor, id }: WithActor<{ id: string }>) => assetService.uploadPhoto(actor, id),
+    (row) => `Foto ${row.assetCode} terunggah.`,
+  );
 
 export const useAssign = () =>
   useAssetMutation(
-    ({ id, ...payload }: { id: string; employeeId: string; isComplete: boolean; note: string }) =>
-      assetService.assign(id, payload),
+    ({ actor, id, ...payload }: WithActor<{ id: string; employeeId: string; isComplete: boolean; note: string }>) =>
+      assetService.assign(actor, id, payload),
     (row) => `${row.assetCode} diserahkan ke ${row.employeeInfo?.nama ?? '—'}.`,
   );
 
 export const useReturnAsset = () =>
   useAssetMutation(
-    ({ id, ...payload }: { id: string; assetStatus: ReturnStatus; note: string }) => assetService.returnAsset(id, payload),
+    ({
+      actor,
+      id,
+      ...payload
+    }: WithActor<{ id: string; assetStatus: ReturnStatus; assetLocation: string; note: string }>) =>
+      assetService.returnAsset(actor, id, payload),
     (row) => `${row.assetCode} dikembalikan.`,
   );
 
 export const useTransfer = () =>
   useAssetMutation(
-    ({ id, ...payload }: { id: string; toBranchId: string; toEmployeeId: string }) => assetService.transfer(id, payload),
-    (row) => `${row.assetCode} dipindahkan — dua event serah-terima tercatat.`,
+    ({
+      actor,
+      id,
+      ...payload
+    }: WithActor<{
+      id: string;
+      toBranchId: string;
+      transferReason: string;
+      transferDate: string;
+      photoAttached: boolean;
+    }>) => assetService.transfer(actor, id, payload),
+    (row) => `${row.assetCode} dipindahkan ke branch baru.`,
   );
 
 export const useMaintain = () =>
   useAssetMutation(
     ({
+      actor,
       id,
       ...payload
-    }: {
+    }: WithActor<{
       id: string;
       maintenanceType: MaintenanceType;
       maintenanceDate: string;
       cost: string;
       note: string;
-    }) => assetService.maintain(id, payload),
+    }>) => assetService.maintain(actor, id, payload),
     (row) => `Maintenance ${row.assetCode} tercatat.`,
   );
 
 export const useLease = () =>
   useAssetMutation(
-    ({ id, ...payload }: { id: string; vendorId: string; leaseContractNumber: string }) => assetService.lease(id, payload),
+    ({
+      actor,
+      id,
+      ...payload
+    }: WithActor<{ id: string; vendorId: string; leaseContractNumber: string; photoAttached: boolean }>) =>
+      assetService.lease(actor, id, payload),
     (row) => `Kontrak sewa ${row.assetCode} tersimpan.`,
   );
 
 export const useResidual = () =>
   useAssetMutation(
-    ({ id, value }: { id: string; value: string }) => assetService.setResidual(id, value),
+    ({ actor, id, value }: WithActor<{ id: string; value: string }>) => assetService.setResidual(actor, id, value),
     (row) => `Nilai residu ${row.assetCode} diperbarui.`,
   );
 
 export const useDispose = () =>
   useAssetMutation(
-    ({ id, draft }: { id: string; draft: DisposalDraft }) => assetService.dispose(id, draft),
+    ({ actor, id, draft }: WithActor<{ id: string; draft: DisposalDraft }>) => assetService.dispose(actor, id, draft),
     (row) => `${row.assetCode} dilepas.`,
   );
-
-export const useCancelAuction = () =>
-  useAssetMutation((id: string) => assetService.cancelAuction(id), (row) => `Lelang ${row.assetCode} dibatalkan.`);

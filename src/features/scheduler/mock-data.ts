@@ -1,5 +1,5 @@
 import { EMPLOYEES } from '@/features/time-off/mock-data';
-import type { Shift, ShiftAssignment, ShiftSwap } from '@/features/scheduler/types';
+import type { SchedulerRole, Shift, ShiftAssignment, ShiftSwap } from '@/features/scheduler/types';
 
 /** Dataset Skenario Positif Scheduler (UIC-001-TIME §9) — disalin apa adanya. */
 
@@ -42,3 +42,10 @@ export function employeeName(id: string): string {
 }
 
 export { EMPLOYEES };
+
+/** Pemilih peran untuk mencoba gerbang tombol Assign Massal. */
+export const SCHEDULER_ROLES: { value: SchedulerRole; label: string }[] = [
+  { value: 'ROLE_HR_MANAGER', label: 'HR Manager' },
+  { value: 'ROLE_SUPER_ADMIN', label: 'Super Admin' },
+  { value: 'ROLE_HR_STAFF', label: 'HR Staff (tanpa bulk)' },
+];

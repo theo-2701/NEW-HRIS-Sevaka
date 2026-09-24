@@ -7,8 +7,11 @@ import { TableToolbar } from '@/components/TableToolbar';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AddButton, RowActions } from '@/components/RowActions';
 import { usePagedRows } from '@/hooks/usePagedRows';
+import { AssetActorPicker } from '@/features/assets/components/AssetActorPicker';
+import { useAssetActor } from '@/features/assets/store/assetActor.store';
 import { CategoryFormModal } from '@/features/assets/components/AssetModals';
 import { useAssetCategories, useAssets, useDeleteCategory } from '@/features/assets/hooks/useAssets';
+import { canWriteAssets } from '@/features/assets/rules';
 import type { AssetCategory } from '@/features/assets/types';
 
 /** Company Management › Assets › Asset Category (FSD-COMPANY §7.1 A4) — nama unik, soft-delete. */
@@ -16,6 +19,8 @@ export function AssetCategoryPage() {
   const categories = useAssetCategories();
   const assets = useAssets();
   const remove = useDeleteCategory();
+  const { actor } = useAssetActor();
+  const writable = canWriteAssets(actor.role);
   const [form, setForm] = useState(false);
   const [editing, setEditing] = useState<AssetCategory | null>(null);
   const [deleting, setDeleting] = useState<AssetCategory | null>(null);
@@ -33,7 +38,10 @@ export function AssetCategoryPage() {
       <Card>
         <CardHead title="Kategori aset" sub="Kategori yang masih dipakai aset tidak bisa dihapus" />
         <div>
-          <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Add Category</AddButton>} />
+          <TableToolbar
+            filters={<AssetActorPicker />}
+            actions={writable ? <AddButton onClick={() => setForm(true)}>Add Category</AddButton> : undefined}
+          />
           <DataTable<AssetCategory>
             rows={paged.rows}
             rowKey={(row) => row.id}
@@ -60,20 +68,24 @@ export function AssetCategoryPage() {
                 render: (row) => <span className="tabular-nums">{usage(row.id)}</span>,
               },
             ]}
-            actions={(row) => (
-              <RowActions
-                actions={[
-                  {
-                    label: 'Ubah',
-                    onSelect: () => {
-                      setEditing(row);
-                      setForm(true);
-                    },
-                  },
-                  { label: 'Hapus', danger: true, onSelect: () => setDeleting(row) },
-                ]}
-              />
-            )}
+            actions={
+              writable
+                ? (row) => (
+                    <RowActions
+                      actions={[
+                        {
+                          label: 'Ubah',
+                          onSelect: () => {
+                            setEditing(row);
+                            setForm(true);
+                          },
+                        },
+                        { label: 'Hapus', danger: true, onSelect: () => setDeleting(row) },
+                      ]}
+                    />
+                  )
+                : undefined
+            }
           />
           <Pagination
             page={paged.page}
@@ -87,6 +99,7 @@ export function AssetCategoryPage() {
       </Card>
 
       <CategoryFormModal
+        actor={actor}
         open={form}
         editing={editing}
         onClose={() => {
@@ -100,7 +113,7 @@ export function AssetCategoryPage() {
         description={deleting ? `${deleting.name} hanya bisa dihapus bila tidak ada aset yang memakainya.` : undefined}
         loading={remove.isPending}
         onOpenChange={(open) => !open && setDeleting(null)}
-        onConfirm={() => deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })}
+        onConfirm={() => deleting && remove.mutate({ actor, id: deleting.id }, { onSuccess: () => setDeleting(null) })}
       />
     </PageShell>
   );

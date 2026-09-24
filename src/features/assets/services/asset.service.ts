@@ -14,39 +14,49 @@ import {
   canDispose,
   canLease,
   canReturn,
+  canTransfer,
+  canWriteAssets,
   isTerminal,
   nextMaintenanceDate,
   parseAmount,
 } from '@/features/assets/rules';
 import type {
   Asset,
+  AssetActor,
   AssetCategory,
   AssetDraft,
   AssetStatus,
   DisposalDraft,
   DisposalLog,
   HandoverLog,
+  LeaseLog,
   MaintenanceLog,
   MaintenanceType,
   PersonSnapshot,
+  ResidualLog,
   ReturnStatus,
   TransferLog,
 } from '@/features/assets/types';
 
 /**
- * API service Assets (UIC-001-COMPANY-0.22 §3.2). Registri, kategori, aksi lifecycle (Assign,
- * Return, Transfer, Maintenance, Lease, Residual), dan Disposal. Setiap aksi menulis log
- * append-only dan memperbarui state master dalam satu transaksi.
+ * API service Assets (UIC-001-COMPANY-0.25 §3.1–§3.3, FSD-COMPANY 0.35 §7–§9).
+ *
+ * Registri, kategori, aksi lifecycle, dan Disposal. Tiap aksi menulis log append-only miliknya
+ * sendiri (handover/transfer/maintenance/lease/residual/disposal) dan memperbarui state master
+ * dalam satu transaksi. Seluruh tulis dijaga matriks peran §7.0: HR_MANAGER/DEPARTMENT_MANAGER
+ * hanya lihat (403). Alamat lifecycle FLAT (`POST /asset-leases`, `/asset-residuals`, …) dan
+ * riwayat lewat `POST /asset-{resource}/search`, sesuai koreksi UIC 0.25.
  */
 const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
 const now = () => new Date().toISOString();
-const today = () => now().slice(0, 10);
 
 let categories: AssetCategory[] = [];
 let assets: Asset[] = [];
 let handovers: HandoverLog[] = [];
 let maintenances: MaintenanceLog[] = [];
 let transfers: TransferLog[] = [];
+let leases: LeaseLog[] = [];
+let residuals: ResidualLog[] = [];
 let disposals: DisposalLog[] = [];
 let sequence = 0;
 
@@ -56,12 +66,22 @@ export function resetAssetMocks() {
   handovers = HANDOVER_SEED.map((row) => ({ ...row }));
   maintenances = MAINTENANCE_SEED.map((row) => ({ ...row }));
   transfers = TRANSFER_SEED.map((row) => ({ ...row }));
+  leases = [];
+  residuals = [];
   disposals = [];
   sequence = 0;
 }
 resetAssetMocks();
 
 const nextId = (prefix: string) => `${prefix}-${(sequence += 1).toString(36)}${Date.now().toString(36).slice(-4)}`;
+
+function requireWrite(actor: AssetActor) {
+  if (!canWriteAssets(actor.role)) {
+    throw new Error(
+      '403 — peran ini hanya boleh melihat aset; perubahan milik Super Admin, System Admin, dan GA Staff.',
+    );
+  }
+}
 
 const snapshotOf = (employeeId: string): PersonSnapshot => {
   const person = EMPLOYEE_OPTIONS.find((row) => row.employeeId === employeeId);
@@ -75,10 +95,19 @@ function findAsset(id: string): Asset {
   return row;
 }
 
-/** Status setelah registrasi atau setelah blocker berubah: NOT_AVAILABLE bila ada blocker. */
+/** NOT_AVAILABLE bila ada blocker, AVAILABLE bila tidak — hanya untuk dua status itu. */
 function settleAvailability(row: Asset) {
   if (row.lastAssetStatus !== 'AVAILABLE' && row.lastAssetStatus !== 'NOT_AVAILABLE') return;
   row.lastAssetStatus = blockerReasons(row).length ? 'NOT_AVAILABLE' : 'AVAILABLE';
+}
+
+export interface AssetHistory {
+  handovers: HandoverLog[];
+  maintenances: MaintenanceLog[];
+  transfers: TransferLog[];
+  leases: LeaseLog[];
+  residuals: ResidualLog[];
+  disposals: DisposalLog[];
 }
 
 export const assetService = {
@@ -93,9 +122,14 @@ export const assetService = {
     return data.data;
   },
 
-  async saveCategory(draft: { name: string; maintenanceIntervalDays: string }, id?: string): Promise<AssetCategory> {
+  async saveCategory(
+    actor: AssetActor,
+    draft: { name: string; maintenanceIntervalDays: string },
+    id?: string,
+  ): Promise<AssetCategory> {
     if (MOCK) {
       await delay(220);
+      requireWrite(actor);
       const name = draft.name.trim();
       if (!name) throw new Error('422 VALIDATION_ERROR — nama kategori wajib diisi.');
       if (categories.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase())) {
@@ -119,9 +153,10 @@ export const assetService = {
     return data;
   },
 
-  async deleteCategory(id: string): Promise<{ id: string }> {
+  async deleteCategory(actor: AssetActor, id: string): Promise<{ id: string }> {
     if (MOCK) {
       await delay(200);
+      requireWrite(actor);
       if (assets.some((row) => row.assetCategoryId === id)) {
         throw new Error('409 — kategori ini masih dipakai aset aktif.');
       }
@@ -141,8 +176,7 @@ export const assetService = {
       return assets
         .filter((row) => !filter.statuses?.length || filter.statuses.includes(row.lastAssetStatus))
         .filter(
-          (row) =>
-            !query || row.assetName.toLowerCase().includes(query) || row.assetCode.toLowerCase().includes(query),
+          (row) => !query || row.assetName.toLowerCase().includes(query) || row.assetCode.toLowerCase().includes(query),
         )
         .map((row) => ({ ...row }))
         .sort((a, b) => a.assetCode.localeCompare(b.assetCode));
@@ -163,15 +197,19 @@ export const assetService = {
   /**
    * Registrasi bercabang OWNED vs LEASED (§7.3). Branch/kategori/foto kosong tidak menolak —
    * aset tetap lahir (201) sebagai NOT_AVAILABLE. Blok pembelian/sewa yang tidak lengkap MENOLAK
-   * (422 Mandatory-by-Value). Berkas kontrak sewa sengaja tidak diterima di sini (asimetri §7.3).
+   * (422 Mandatory-by-Value). `serial_number` wajib (`@NotBlank`, 0.35). Tanggal beli tidak boleh
+   * melewati hari ini. Berkas kontrak sewa sengaja tidak diterima di sini (asimetri §7.3).
    */
-  async register(draft: AssetDraft): Promise<Asset> {
+  async register(actor: AssetActor, draft: AssetDraft): Promise<Asset> {
     if (MOCK) {
       await delay(300);
+      requireWrite(actor);
       const code = draft.assetCode.trim().toUpperCase();
       const name = draft.assetName.trim();
+      const serial = draft.serialNumber.trim();
       if (!code) throw new Error('422 VALIDATION_ERROR — kode aset wajib diisi.');
       if (!name) throw new Error('422 VALIDATION_ERROR — nama aset wajib diisi.');
+      if (!serial) throw new Error('422 VALIDATION_ERROR — serial number wajib diisi.');
       if (assets.some((row) => row.assetCode === code)) {
         throw new Error(`409 — kode aset ${code} sudah dipakai aset aktif lain.`);
       }
@@ -181,11 +219,15 @@ export const assetService = {
       let leaseAmount: number | null = null;
       if (owned) {
         purchasePrice = parseAmount(draft.purchasePrice);
-        if (purchasePrice === null) throw new Error('422 VALIDATION_ERROR — harga beli wajib untuk aset milik sendiri.');
+        if (purchasePrice === null)
+          throw new Error('422 VALIDATION_ERROR — harga beli wajib untuk aset milik sendiri.');
         if (!draft.purchaseInvoiceNumber.trim()) {
           throw new Error('422 VALIDATION_ERROR — nomor faktur wajib untuk aset milik sendiri.');
         }
         if (!draft.purchaseDate) throw new Error('422 VALIDATION_ERROR — tanggal beli wajib untuk aset milik sendiri.');
+        if (draft.purchaseDate > now().slice(0, 10)) {
+          throw new Error('422 VALIDATION_ERROR — tanggal beli tidak boleh melewati hari ini.');
+        }
       } else {
         leaseAmount = parseAmount(draft.leaseAmount);
         if (leaseAmount === null) throw new Error('422 VALIDATION_ERROR — nilai sewa wajib untuk aset sewaan.');
@@ -195,7 +237,8 @@ export const assetService = {
         if (draft.leaseEndDate < draft.leaseStartDate) {
           throw new Error('422 VALIDATION_ERROR — akhir sewa tidak boleh sebelum mulai sewa.');
         }
-        if (!draft.leaseContractNumber.trim()) throw new Error('422 VALIDATION_ERROR — nomor kontrak sewa wajib diisi.');
+        if (!draft.leaseContractNumber.trim())
+          throw new Error('422 VALIDATION_ERROR — nomor kontrak sewa wajib diisi.');
         if (!draft.vendorId) throw new Error('422 VALIDATION_ERROR — vendor wajib untuk aset sewaan.');
       }
 
@@ -203,7 +246,7 @@ export const assetService = {
         id: nextId('as'),
         assetCode: code,
         assetName: name,
-        serialNumber: draft.serialNumber.trim() || null,
+        serialNumber: serial,
         assetCategoryId: draft.assetCategoryId || null,
         branchId: draft.branchId || null,
         ownershipType: draft.ownershipType,
@@ -236,9 +279,10 @@ export const assetService = {
   },
 
   /** Pintu relay `POST /assets/{id}/files` — foto menyusul; blocker foto terangkat bila tinggal itu. */
-  async uploadPhoto(id: string): Promise<Asset> {
+  async uploadPhoto(actor: AssetActor, id: string): Promise<Asset> {
     if (MOCK) {
       await delay(300);
+      requireWrite(actor);
       const row = findAsset(id);
       if (isTerminal(row.lastAssetStatus)) throw new Error('422 — aset terminal tidak menerima berkas baru.');
       row.photo1 = `doc-photo-${row.assetCode.toLowerCase()}`;
@@ -249,14 +293,9 @@ export const assetService = {
     return data;
   },
 
-  // ---------- Riwayat ----------
+  // ---------- Riwayat — POST /asset-*/search per resource ----------
 
-  async history(id: string): Promise<{
-    handovers: HandoverLog[];
-    maintenances: MaintenanceLog[];
-    transfers: TransferLog[];
-    disposals: DisposalLog[];
-  }> {
+  async history(id: string): Promise<AssetHistory> {
     if (MOCK) {
       await delay(150);
       const byAsset = <T extends { assetId: string; createdAt: string }>(rows: T[]) =>
@@ -268,24 +307,35 @@ export const assetService = {
         handovers: byAsset(handovers),
         maintenances: byAsset(maintenances),
         transfers: byAsset(transfers),
+        leases: byAsset(leases),
+        residuals: byAsset(residuals),
         disposals: byAsset(disposals),
       };
     }
-    const { data } = await api.get<{
-      handovers: HandoverLog[];
-      maintenances: MaintenanceLog[];
-      transfers: TransferLog[];
-      disposals: DisposalLog[];
-    }>(`/assets/${id}/histories`);
-    return data;
+    const search = async <T>(resource: string) =>
+      (await api.post<{ data: T[] }>(`/asset-${resource}/search`, { filters: { asset_id: id } })).data.data;
+    const [h, m, t, l, r, d] = await Promise.all([
+      search<HandoverLog>('handovers'),
+      search<MaintenanceLog>('maintenances'),
+      search<TransferLog>('transfers'),
+      search<LeaseLog>('leases'),
+      search<ResidualLog>('residuals'),
+      search<DisposalLog>('disposals'),
+    ]);
+    return { handovers: h, maintenances: m, transfers: t, leases: l, residuals: r, disposals: d };
   },
 
   // ---------- Lifecycle ----------
 
   /** Assign (GIVING): `is_complete` true → ASSIGNED, false → INCOMPLETE (tetap dipegang). */
-  async assign(id: string, payload: { employeeId: string; isComplete: boolean; note: string }): Promise<Asset> {
+  async assign(
+    actor: AssetActor,
+    id: string,
+    payload: { employeeId: string; isComplete: boolean; note: string },
+  ): Promise<Asset> {
     if (MOCK) {
       await delay(250);
+      requireWrite(actor);
       const row = findAsset(id);
       if (!canAssign(row)) {
         throw new Error(
@@ -308,21 +358,32 @@ export const assetService = {
         employeeInfo: info,
         isComplete: payload.isComplete,
         assetStatus: null,
+        assetLocation: null,
         note: payload.note.trim() || null,
         createdAt: now(),
       });
       return { ...row };
     }
-    const { data } = await api.post<Asset>(`/assets/${id}/assign`, payload);
+    const { data } = await api.post<Asset>('/asset-handovers', { asset_id: id, event: 'GIVING', ...payload });
     return data;
   },
 
-  /** Return (RECEIVE): tiga hasil master berbeda — AVAILABLE, ACCIDENTALLY_LOST, EMPLOYEE_NEGLIGENCE. */
-  async returnAsset(id: string, payload: { assetStatus: ReturnStatus; note: string }): Promise<Asset> {
+  /**
+   * Return (RECEIVE): tiga hasil master berbeda — AVAILABLE, ACCIDENTALLY_LOST,
+   * EMPLOYEE_NEGLIGENCE. `asset_location` wajib (`AssetReturnRequest`, UIC 0.25).
+   */
+  async returnAsset(
+    actor: AssetActor,
+    id: string,
+    payload: { assetStatus: ReturnStatus; assetLocation: string; note: string },
+  ): Promise<Asset> {
     if (MOCK) {
       await delay(250);
+      requireWrite(actor);
       const row = findAsset(id);
       if (!canReturn(row)) throw new Error('422 — hanya aset yang sedang dipegang yang bisa dikembalikan.');
+      const location = payload.assetLocation.trim();
+      if (!location) throw new Error('422 VALIDATION_ERROR — lokasi aset saat diterima wajib diisi.');
       const holder = row.employeeInfo;
       Object.assign(row, {
         employeeId: null,
@@ -338,79 +399,63 @@ export const assetService = {
         employeeInfo: holder,
         isComplete: null,
         assetStatus: payload.assetStatus,
+        assetLocation: location,
         note: payload.note.trim() || null,
         createdAt: now(),
       });
       return { ...row };
     }
-    const { data } = await api.post<Asset>(`/assets/${id}/return`, payload);
+    const { data } = await api.post<Asset>('/asset-handovers', { asset_id: id, event: 'RECEIVE', ...payload });
     return data;
   },
 
   /**
-   * Transfer = DUA event (§8.3): RECEIVE dari pemegang lama lalu GIVING ke pemegang baru, bukan
-   * satu langkah. Pindah branch memperbarui `branch_id`.
+   * Transfer = SATU event `log_asset_transfer` antar-BRANCH (FSD 0.35 / UIC 0.25 —
+   * `AssetLifecycleService.java:106-136`). Nol menyentuh `log_asset_handover` maupun pemegang;
+   * narasi lama "RECEIVE lalu GIVING" tertukar dengan semantik Assign/Return dan sudah dicabut.
+   * Wajib `transfer_reason`, `transfer_date`, dan foto.
    */
-  async transfer(id: string, payload: { toBranchId: string; toEmployeeId: string }): Promise<Asset> {
+  async transfer(
+    actor: AssetActor,
+    id: string,
+    payload: { toBranchId: string; transferReason: string; transferDate: string; photoAttached: boolean },
+  ): Promise<Asset> {
     if (MOCK) {
       await delay(300);
+      requireWrite(actor);
       const row = findAsset(id);
-      if (!canReturn(row)) throw new Error('422 — hanya aset yang sedang dipegang yang bisa dipindahkan.');
+      if (!canTransfer(row)) throw new Error('422 — aset terminal tidak bisa dipindahkan.');
       if (!payload.toBranchId) throw new Error('422 VALIDATION_ERROR — branch tujuan wajib dipilih.');
-      const from = row.employeeInfo;
-      const to = snapshotOf(payload.toEmployeeId);
-      if (from?.employeeId === to.employeeId && row.branchId === payload.toBranchId) {
-        throw new Error('422 — tujuan transfer sama dengan asal.');
-      }
-      const stamp = now();
-      handovers.push({
-        id: nextId('ho'),
-        assetId: id,
-        event: 'RECEIVE',
-        employeeInfo: from,
-        isComplete: null,
-        assetStatus: 'AVAILABLE',
-        note: 'Transfer — diterima dari pemegang lama.',
-        createdAt: stamp,
-      });
-      handovers.push({
-        id: nextId('ho'),
-        assetId: id,
-        event: 'GIVING',
-        employeeInfo: to,
-        isComplete: row.lastAssetStatus === 'ASSIGNED',
-        assetStatus: null,
-        note: 'Transfer — diserahkan ke pemegang baru.',
-        createdAt: stamp,
-      });
+      if (payload.toBranchId === row.branchId) throw new Error('422 — branch tujuan sama dengan branch asal.');
+      if (!payload.transferReason.trim()) throw new Error('422 VALIDATION_ERROR — alasan transfer wajib diisi.');
+      if (!payload.transferDate) throw new Error('422 VALIDATION_ERROR — tanggal transfer wajib diisi.');
+      if (!payload.photoAttached) throw new Error('422 VALIDATION_ERROR — foto kondisi aset wajib dilampirkan.');
       transfers.push({
         id: nextId('tr'),
         assetId: id,
         fromBranchId: row.branchId,
         toBranchId: payload.toBranchId,
-        fromEmployeeInfo: from,
-        toEmployeeInfo: to,
-        createdAt: stamp,
+        transferReason: payload.transferReason.trim(),
+        transferDate: payload.transferDate,
+        createdAt: now(),
       });
-      Object.assign(row, {
-        branchId: payload.toBranchId,
-        employeeId: to.employeeId,
-        employeeInfo: to,
-        currentHandoverStatus: 'GIVING',
-      });
+      row.branchId = payload.toBranchId;
+      settleAvailability(row);
       return { ...row };
     }
-    const { data } = await api.post<Asset>(`/assets/${id}/transfer`, payload);
+    const { data } = await api.post<Asset>('/asset-transfers', { asset_id: id, ...payload });
     return data;
   },
 
   /** SCHEDULED menggeser `next_maintenance_date` sejauh interval kategori; UNSCHEDULED tidak. */
   async maintain(
+    actor: AssetActor,
     id: string,
     payload: { maintenanceType: MaintenanceType; maintenanceDate: string; cost: string; note: string },
   ): Promise<Asset> {
     if (MOCK) {
       await delay(250);
+      requireWrite(actor);
       const row = findAsset(id);
       if (isTerminal(row.lastAssetStatus)) throw new Error('422 — aset terminal tidak bisa dirawat.');
       if (!payload.maintenanceDate) throw new Error('422 VALIDATION_ERROR — tanggal maintenance wajib diisi.');
@@ -431,22 +476,40 @@ export const assetService = {
       }
       return { ...row };
     }
-    const { data } = await api.post<Asset>(`/assets/${id}/maintenances`, payload);
+    const { data } = await api.post<Asset>('/asset-maintenances', { asset_id: id, ...payload });
     return data;
   },
 
-  /** Aksi Sewa — hanya aset LEASED, vendor wajib; di sinilah berkas kontrak sewa diisi (§7.3). */
-  async lease(id: string, payload: { vendorId: string; leaseContractNumber: string }): Promise<Asset> {
+  /**
+   * Aksi Sewa — FLAT `POST /asset-leases`, hanya aset LEASED, vendor + foto wajib. Di sinilah
+   * berkas kontrak sewa diisi (asimetri §7.3), tercatat append-only di `log_asset_lease`.
+   */
+  async lease(
+    actor: AssetActor,
+    id: string,
+    payload: { vendorId: string; leaseContractNumber: string; photoAttached: boolean },
+  ): Promise<Asset> {
     if (MOCK) {
       await delay(250);
+      requireWrite(actor);
       const row = findAsset(id);
       if (!canLease(row)) throw new Error('422 — aksi sewa hanya untuk aset sewaan yang masih aktif.');
       if (!payload.vendorId) throw new Error('422 VALIDATION_ERROR — vendor wajib dipilih.');
       if (!payload.leaseContractNumber.trim()) throw new Error('422 VALIDATION_ERROR — nomor kontrak wajib diisi.');
+      if (!payload.photoAttached) throw new Error('422 VALIDATION_ERROR — foto kondisi aset wajib dilampirkan.');
+      const file = `doc-lease-${row.assetCode.toLowerCase()}-${leases.length + 1}`;
+      leases.push({
+        id: nextId('ls'),
+        assetId: id,
+        vendorId: payload.vendorId,
+        leaseContractNumber: payload.leaseContractNumber.trim(),
+        leaseContractFile: file,
+        createdAt: now(),
+      });
       Object.assign(row, {
         vendorId: payload.vendorId,
         leaseContractNumber: payload.leaseContractNumber.trim(),
-        currentLeaseContractFile: `doc-lease-${row.assetCode.toLowerCase()}`,
+        currentLeaseContractFile: file,
       });
       return { ...row };
     }
@@ -454,35 +517,45 @@ export const assetService = {
     return data;
   },
 
-  async setResidual(id: string, value: string): Promise<Asset> {
+  /** FLAT `POST /asset-residuals` — nilai terkini + satu baris `log_asset_residual`. */
+  async setResidual(actor: AssetActor, id: string, value: string): Promise<Asset> {
     if (MOCK) {
       await delay(200);
+      requireWrite(actor);
       const row = findAsset(id);
+      if (isTerminal(row.lastAssetStatus)) throw new Error('422 — aset terminal tidak lagi dinilai.');
       const amount = parseAmount(value);
       if (amount === null) throw new Error('422 VALIDATION_ERROR — nilai residu wajib angka tidak negatif.');
+      residuals.push({ id: nextId('rs'), assetId: id, residualValue: amount, createdAt: now() });
       row.currentResidualValue = amount;
       return { ...row };
     }
-    const { data } = await api.post<Asset>(`/assets/${id}/residuals`, { value });
+    const { data } = await api.post<Asset>('/asset-residuals', { asset_id: id, value });
     return data;
   },
 
   // ---------- Disposal ----------
 
   /**
-   * Disposal hanya dari AVAILABLE. Nominal wajib bila SOLD. Penerima employee vs pihak luar
-   * adalah Mandatory-by-Value `is_employee` — dua sub-form dengan field wajib berbeda. SOLD dan
-   * GRANTED terminal; AUCTION boleh kembali AVAILABLE.
+   * Disposal hanya dari AVAILABLE. `asset_status` hanya SOLD|GRANTED — AUCTION ditolak 422
+   * (regex `AssetDisposeRequest.java:18`; tetap nilai `last_asset_status` yang sah dibaca).
+   * Nominal wajib untuk KEDUA jenis, berkas bukti dan foto wajib. Penerima karyawan vs pihak
+   * luar = Mandatory-by-Value `is_employee`.
    */
-  async dispose(id: string, draft: DisposalDraft): Promise<Asset> {
+  async dispose(actor: AssetActor, id: string, draft: DisposalDraft): Promise<Asset> {
     if (MOCK) {
       await delay(300);
+      requireWrite(actor);
       const row = findAsset(id);
       if (!canDispose(row)) throw new Error('422 — hanya aset berstatus Tersedia yang bisa dilepas.');
-      const nominal = draft.disposalNominal.trim() ? parseAmount(draft.disposalNominal) : null;
-      if (draft.disposalType === 'SOLD' && nominal === null) {
-        throw new Error('422 VALIDATION_ERROR — nominal wajib bila aset dijual.');
+      if (draft.assetStatus !== 'SOLD' && draft.assetStatus !== 'GRANTED') {
+        throw new Error('422 VALIDATION_ERROR — jenis pelepasan hanya Dijual atau Dihibahkan.');
       }
+      const nominal = parseAmount(draft.disposalNominal);
+      if (nominal === null) throw new Error('422 VALIDATION_ERROR — nominal pelepasan wajib diisi.');
+      if (!draft.disposalFileAttached)
+        throw new Error('422 VALIDATION_ERROR — berkas bukti pelepasan wajib dilampirkan.');
+      if (!draft.photoAttached) throw new Error('422 VALIDATION_ERROR — foto kondisi aset wajib dilampirkan.');
       let employeeInfo: PersonSnapshot | null = null;
       if (draft.isEmployee) {
         if (!draft.employeeId) throw new Error('422 VALIDATION_ERROR — karyawan penerima wajib dipilih.');
@@ -497,8 +570,9 @@ export const assetService = {
       disposals.push({
         id: nextId('dp'),
         assetId: id,
-        disposalType: draft.disposalType,
+        assetStatus: draft.assetStatus,
         disposalNominal: nominal,
+        disposalFile: `doc-disposal-${row.assetCode.toLowerCase()}`,
         isEmployee: draft.isEmployee,
         employeeInfo,
         fullName: draft.isEmployee ? null : draft.fullName.trim(),
@@ -507,24 +581,10 @@ export const assetService = {
         phone: draft.isEmployee ? null : draft.phone.trim(),
         createdAt: now(),
       });
-      row.lastAssetStatus = draft.disposalType;
+      row.lastAssetStatus = draft.assetStatus;
       return { ...row };
     }
-    const { data } = await api.post<Asset>(`/assets/${id}/dispose`, draft);
-    return data;
-  },
-
-  /** Lelang yang batal: AUCTION kembali AVAILABLE (satu-satunya jenis pelepasan yang reversibel). */
-  async cancelAuction(id: string): Promise<Asset> {
-    if (MOCK) {
-      await delay(200);
-      const row = findAsset(id);
-      if (row.lastAssetStatus !== 'AUCTION') throw new Error('422 — hanya aset yang sedang dilelang yang bisa dibatalkan.');
-      row.lastAssetStatus = 'AVAILABLE';
-      settleAvailability(row);
-      return { ...row };
-    }
-    const { data } = await api.post<Asset>(`/assets/${id}/cancel-auction`, {});
+    const { data } = await api.post<Asset>('/asset-disposals', { asset_id: id, ...draft });
     return data;
   },
 
@@ -545,5 +605,3 @@ export const assetService = {
     return data.data;
   },
 };
-
-export { today as assetToday };

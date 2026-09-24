@@ -7,26 +7,25 @@ import { AuthAltLink, AuthFootLink, AuthHeading, AuthOr, AuthSubmit } from '@/fe
 import { useLoginWhatsapp } from '@/features/auth/hooks/useAuth';
 import { loginWhatsappSchema } from '@/features/auth/validation';
 
-/** Field nomor HP dengan prefiks +62 — port `.field--phone`. */
+/**
+ * Satu field nomor bebas (FSD-AUTH 0.12 §2.3, `KA-17`): `081…`, `62…`, maupun `+62…` diterima dan
+ * dikirim apa adanya — server yang menormalkan ke `+62…`. Prefiks statis "+62" dicabut.
+ */
 function PhoneField() {
   const [field, meta] = useField('phone');
   const error = meta.touched && meta.error ? meta.error : undefined;
 
   return (
     <FormField name="phone" label="Nomor Handphone" error={error}>
-      <div className="flex items-stretch gap-2">
-        <span className="inline-flex h-9 items-center rounded-md border border-silver bg-vapor px-3 font-body text-xs font-bold text-fg-2">
-          +62
-        </span>
-        <Input
-          id="phone"
-          type="tel"
-          inputMode="numeric"
-          placeholder="81234567890"
-          aria-invalid={Boolean(error)}
-          {...field}
-        />
-      </div>
+      <Input
+        id="phone"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        placeholder="081234567890"
+        aria-invalid={Boolean(error)}
+        {...field}
+      />
     </FormField>
   );
 }

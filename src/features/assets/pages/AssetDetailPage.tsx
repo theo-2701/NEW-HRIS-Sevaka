@@ -7,17 +7,28 @@ import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { AssetActorPicker } from '@/features/assets/components/AssetActorPicker';
+import { useAssetActor } from '@/features/assets/store/assetActor.store';
 import { AssetStatusBadge } from '@/features/assets/components/AssetBits';
 import { DisposalModal, LifecycleModal } from '@/features/assets/components/AssetModals';
 import type { LifecycleAction } from '@/features/assets/components/AssetModals';
-import { useAsset, useAssetCategories, useAssetHistory, useCancelAuction, useUploadPhoto } from '@/features/assets/hooks/useAssets';
+import { useAsset, useAssetCategories, useAssetHistory, useUploadPhoto } from '@/features/assets/hooks/useAssets';
 import { useBranches, useVendors } from '@/features/company/hooks/useCompany';
-import { blockerReasons, canAssign, canDispose, canLease, canReturn, isTerminal } from '@/features/assets/rules';
+import {
+  blockerReasons,
+  canAssign,
+  canDispose,
+  canLease,
+  canReturn,
+  canTransfer,
+  canWriteAssets,
+  isTerminal,
+} from '@/features/assets/rules';
 import { ASSET_STATUS_LABEL } from '@/features/assets/types';
-import type { HandoverLog, MaintenanceLog, TransferLog } from '@/features/assets/types';
+import type { HandoverLog, LeaseLog, MaintenanceLog, ResidualLog, TransferLog } from '@/features/assets/types';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 
-type Tab = 'handover' | 'maintenance' | 'transfer';
+type Tab = 'handover' | 'maintenance' | 'transfer' | 'lease' | 'residual';
 
 function Info({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -30,8 +41,9 @@ function Info({ label, children }: { label: string; children: ReactNode }) {
 
 /**
  * Company Management › Assets › Asset Detail (FSD-COMPANY §8, D1–D9) — halaman hub satu aset:
- * hero + tiga tab riwayat + aksi lifecycle. Tombol aksi hanya tampil bila sah untuk status aset
- * saat ini, supaya penolakan 422 tidak jadi satu-satunya cara pengguna tahu aksi itu tidak boleh.
+ * hero + tab riwayat per log (serah-terima, maintenance, transfer, sewa, residu) + aksi lifecycle.
+ * Tombol aksi hanya tampil bila sah untuk status aset dan peran saat ini (§7.0: HR Manager dan
+ * Department Manager hanya lihat), supaya 403/422 tidak jadi satu-satunya cara pengguna tahu.
  */
 export function AssetDetailPage() {
   const [params] = useSearchParams();
@@ -42,7 +54,8 @@ export function AssetDetailPage() {
   const branches = useBranches();
   const vendors = useVendors();
   const upload = useUploadPhoto();
-  const cancelAuction = useCancelAuction();
+  const { actor } = useAssetActor();
+  const writable = canWriteAssets(actor.role);
 
   const [tab, setTab] = useState<Tab>('handover');
   const [action, setAction] = useState<LifecycleAction | null>(null);
@@ -64,44 +77,42 @@ export function AssetDetailPage() {
         { label: row?.assetCode ?? 'Detail' },
       ]}
       title={row ? `${row.assetCode} — ${row.assetName}` : 'Asset Detail'}
-      description="Riwayat serah-terima, perawatan, dan perpindahan satu aset beserta aksi lifecycle-nya."
+      description="Riwayat serah-terima, perawatan, perpindahan, sewa, dan nilai residu satu aset beserta aksi lifecycle-nya."
       actions={
-        row && (
-          <div className="flex flex-wrap items-center gap-2">
-            {canAssign(row) && <Button onClick={() => setAction('assign')}>Serahkan</Button>}
-            {canReturn(row) && <Button onClick={() => setAction('return')}>Terima kembali</Button>}
-            {canReturn(row) && (
-              <Button variant="secondary" onClick={() => setAction('transfer')}>
-                Pindahkan
-              </Button>
-            )}
-            {!isTerminal(row.lastAssetStatus) && (
-              <Button variant="secondary" onClick={() => setAction('maintain')}>
-                Maintenance
-              </Button>
-            )}
-            {canLease(row) && (
-              <Button variant="secondary" onClick={() => setAction('lease')}>
-                Sewa
-              </Button>
-            )}
-            {!isTerminal(row.lastAssetStatus) && (
-              <Button variant="secondary" onClick={() => setAction('residual')}>
-                Nilai residu
-              </Button>
-            )}
-            {canDispose(row) && (
-              <Button variant="secondary" onClick={() => setDisposing(true)}>
-                Lepas aset
-              </Button>
-            )}
-            {row.lastAssetStatus === 'AUCTION' && (
-              <Button variant="secondary" disabled={cancelAuction.isPending} onClick={() => cancelAuction.mutate(row.id)}>
-                Batalkan lelang
-              </Button>
-            )}
-          </div>
-        )
+        <div className="flex flex-wrap items-center gap-2">
+          <AssetActorPicker />
+          {row && writable && (
+            <>
+              {canAssign(row) && <Button onClick={() => setAction('assign')}>Serahkan</Button>}
+              {canReturn(row) && <Button onClick={() => setAction('return')}>Terima kembali</Button>}
+              {canTransfer(row) && (
+                <Button variant="secondary" onClick={() => setAction('transfer')}>
+                  Pindahkan
+                </Button>
+              )}
+              {!isTerminal(row.lastAssetStatus) && (
+                <Button variant="secondary" onClick={() => setAction('maintain')}>
+                  Maintenance
+                </Button>
+              )}
+              {canLease(row) && (
+                <Button variant="secondary" onClick={() => setAction('lease')}>
+                  Sewa
+                </Button>
+              )}
+              {!isTerminal(row.lastAssetStatus) && (
+                <Button variant="secondary" onClick={() => setAction('residual')}>
+                  Nilai residu
+                </Button>
+              )}
+              {canDispose(row) && (
+                <Button variant="secondary" onClick={() => setDisposing(true)}>
+                  Lepas aset
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       }
     >
       {asset.isLoading || !row ? (
@@ -116,7 +127,9 @@ export function AssetDetailPage() {
             <div className="flex flex-wrap items-center gap-3 border-b border-border-1 pb-4">
               <AssetStatusBadge status={row.lastAssetStatus} />
               {row.currentHandoverStatus !== 'NONE' && (
-                <StatusBadge tone="mute">{row.currentHandoverStatus === 'GIVING' ? 'Diserahkan' : 'Diterima kembali'}</StatusBadge>
+                <StatusBadge tone="mute">
+                  {row.currentHandoverStatus === 'GIVING' ? 'Diserahkan' : 'Diterima kembali'}
+                </StatusBadge>
               )}
               {row.lastAssetStatus === 'EMPLOYEE_NEGLIGENCE' && <StatusBadge tone="err">Ditandai klaim</StatusBadge>}
             </div>
@@ -126,8 +139,12 @@ export function AssetDetailPage() {
                 <span className="font-body text-xs font-medium text-error-700">
                   Belum bisa diserahkan: {blockers.join(', ')}.
                 </span>
-                {!row.photo1 && (
-                  <Button variant="secondary" disabled={upload.isPending} onClick={() => upload.mutate(row.id)}>
+                {!row.photo1 && writable && (
+                  <Button
+                    variant="secondary"
+                    disabled={upload.isPending}
+                    onClick={() => upload.mutate({ actor, id: row.id })}
+                  >
                     {upload.isPending ? 'Mengunggah…' : 'Unggah foto'}
                   </Button>
                 )}
@@ -138,7 +155,9 @@ export function AssetDetailPage() {
               <Info label="Kategori">{categoryName(row.assetCategoryId)}</Info>
               <Info label="Branch">{branchName(row.branchId)}</Info>
               <Info label="Serial number">{row.serialNumber ?? '—'}</Info>
-              <Info label="Pemegang">{row.employeeInfo ? `${row.employeeInfo.nama} · ${row.employeeInfo.nik}` : '—'}</Info>
+              <Info label="Pemegang">
+                {row.employeeInfo ? `${row.employeeInfo.nama} · ${row.employeeInfo.nik}` : '—'}
+              </Info>
               <Info label="Kepemilikan">{row.ownershipType === 'OWNED' ? 'Milik sendiri' : 'Sewa'}</Info>
               {row.ownershipType === 'OWNED' ? (
                 <>
@@ -160,7 +179,9 @@ export function AssetDetailPage() {
               <Info label="Nilai residu">
                 {row.currentResidualValue !== null ? formatCurrency(row.currentResidualValue) : '—'}
               </Info>
-              <Info label="Maintenance berikutnya">{row.nextMaintenanceDate ? formatDate(row.nextMaintenanceDate) : '—'}</Info>
+              <Info label="Maintenance berikutnya">
+                {row.nextMaintenanceDate ? formatDate(row.nextMaintenanceDate) : '—'}
+              </Info>
             </div>
           </Card>
 
@@ -170,14 +191,21 @@ export function AssetDetailPage() {
             items={[
               { value: 'handover', label: 'Serah-terima', count: history.data?.handovers.length ?? 0 },
               { value: 'maintenance', label: 'Maintenance', count: history.data?.maintenances.length ?? 0 },
-              { value: 'transfer', label: 'Perpindahan', count: history.data?.transfers.length ?? 0 },
+              { value: 'transfer', label: 'Transfer', count: history.data?.transfers.length ?? 0 },
+              ...(row.ownershipType === 'LEASED'
+                ? [{ value: 'lease' as const, label: 'Sewa', count: history.data?.leases.length ?? 0 }]
+                : []),
+              { value: 'residual', label: 'Nilai residu', count: history.data?.residuals.length ?? 0 },
             ]}
           />
 
           <Card>
             {tab === 'handover' && (
               <>
-                <CardHead title="Riwayat serah-terima" sub="Append-only — setiap penyerahan dan penerimaan kembali satu baris" />
+                <CardHead
+                  title="Riwayat serah-terima"
+                  sub="Append-only — setiap penyerahan dan penerimaan kembali satu baris"
+                />
                 <DataTable<HandoverLog>
                   rows={history.data?.handovers ?? []}
                   rowKey={(item) => item.id}
@@ -206,22 +234,38 @@ export function AssetDetailPage() {
                             ? ASSET_STATUS_LABEL[item.assetStatus]
                             : '—',
                     },
+                    { key: 'location', header: 'Lokasi', muted: true, render: (item) => item.assetLocation ?? '—' },
                     { key: 'note', header: 'Catatan', muted: true, render: (item) => item.note ?? '—' },
-                    { key: 'at', header: 'Waktu', muted: true, nowrap: true, render: (item) => formatDateTime(item.createdAt) },
+                    {
+                      key: 'at',
+                      header: 'Waktu',
+                      muted: true,
+                      nowrap: true,
+                      render: (item) => formatDateTime(item.createdAt),
+                    },
                   ]}
                 />
               </>
             )}
             {tab === 'maintenance' && (
               <>
-                <CardHead title="Riwayat maintenance" sub="Hanya perawatan terjadwal yang menggeser jadwal berikutnya" />
+                <CardHead
+                  title="Riwayat maintenance"
+                  sub="Hanya perawatan terjadwal yang menggeser jadwal berikutnya"
+                />
                 <DataTable<MaintenanceLog>
                   rows={history.data?.maintenances ?? []}
                   rowKey={(item) => item.id}
                   loading={history.isLoading}
                   empty="Belum ada maintenance."
                   columns={[
-                    { key: 'date', header: 'Tanggal', strong: true, nowrap: true, render: (item) => formatDate(item.maintenanceDate) },
+                    {
+                      key: 'date',
+                      header: 'Tanggal',
+                      strong: true,
+                      nowrap: true,
+                      render: (item) => formatDate(item.maintenanceDate),
+                    },
                     {
                       key: 'type',
                       header: 'Jenis',
@@ -244,18 +288,75 @@ export function AssetDetailPage() {
             )}
             {tab === 'transfer' && (
               <>
-                <CardHead title="Riwayat perpindahan" sub="Setiap perpindahan juga tercatat sebagai dua event di riwayat serah-terima" />
+                <CardHead title="Riwayat transfer" sub="Perpindahan antar-branch; pemegang aset tidak ikut berubah" />
                 <DataTable<TransferLog>
                   rows={history.data?.transfers ?? []}
                   rowKey={(item) => item.id}
                   loading={history.isLoading}
-                  empty="Belum ada perpindahan."
+                  empty="Belum ada transfer."
                   columns={[
+                    {
+                      key: 'date',
+                      header: 'Tanggal',
+                      strong: true,
+                      nowrap: true,
+                      render: (item) => formatDate(item.transferDate),
+                    },
                     { key: 'from', header: 'Dari branch', render: (item) => branchName(item.fromBranchId) },
                     { key: 'to', header: 'Ke branch', strong: true, render: (item) => branchName(item.toBranchId) },
-                    { key: 'fromWho', header: 'Pemegang lama', muted: true, render: (item) => item.fromEmployeeInfo?.nama ?? '—' },
-                    { key: 'toWho', header: 'Pemegang baru', render: (item) => item.toEmployeeInfo?.nama ?? '—' },
-                    { key: 'at', header: 'Waktu', muted: true, nowrap: true, render: (item) => formatDateTime(item.createdAt) },
+                    { key: 'reason', header: 'Alasan', muted: true, render: (item) => item.transferReason },
+                  ]}
+                />
+              </>
+            )}
+            {tab === 'lease' && (
+              <>
+                <CardHead title="Riwayat sewa" sub="Setiap pembaruan kontrak sewa satu baris" />
+                <DataTable<LeaseLog>
+                  rows={history.data?.leases ?? []}
+                  rowKey={(item) => item.id}
+                  loading={history.isLoading}
+                  empty="Belum ada pembaruan sewa."
+                  columns={[
+                    { key: 'vendor', header: 'Vendor', strong: true, render: (item) => vendorName(item.vendorId) },
+                    { key: 'contract', header: 'Nomor kontrak', render: (item) => item.leaseContractNumber },
+                    {
+                      key: 'at',
+                      header: 'Waktu',
+                      muted: true,
+                      nowrap: true,
+                      render: (item) => formatDateTime(item.createdAt),
+                    },
+                  ]}
+                />
+              </>
+            )}
+            {tab === 'residual' && (
+              <>
+                <CardHead
+                  title="Riwayat nilai residu"
+                  sub="Nilai terkini tampil di atas; riwayat perubahannya di sini"
+                />
+                <DataTable<ResidualLog>
+                  rows={history.data?.residuals ?? []}
+                  rowKey={(item) => item.id}
+                  loading={history.isLoading}
+                  empty="Belum ada perubahan nilai residu."
+                  columns={[
+                    {
+                      key: 'value',
+                      header: 'Nilai residu',
+                      strong: true,
+                      align: 'right',
+                      render: (item) => formatCurrency(item.residualValue),
+                    },
+                    {
+                      key: 'at',
+                      header: 'Waktu',
+                      muted: true,
+                      nowrap: true,
+                      render: (item) => formatDateTime(item.createdAt),
+                    },
                   ]}
                 />
               </>
@@ -264,8 +365,8 @@ export function AssetDetailPage() {
         </div>
       )}
 
-      {row && <LifecycleModal asset={row} action={action} onClose={() => setAction(null)} />}
-      <DisposalModal asset={disposing ? (row ?? null) : null} onClose={() => setDisposing(false)} />
+      {row && <LifecycleModal actor={actor} asset={row} action={action} onClose={() => setAction(null)} />}
+      <DisposalModal actor={actor} asset={disposing ? (row ?? null) : null} onClose={() => setDisposing(false)} />
     </PageShell>
   );
 }

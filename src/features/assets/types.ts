@@ -2,10 +2,24 @@
  * Company Management › Assets — FSD-001-COMPANY-0.32 §7 (List/Category/Register), §8 (Detail &
  * Lifecycle), §9 (Disposal) · UIC-001-COMPANY-0.22 §3.2.
  *
- * `purchase_date` diperlakukan sebagai kolom asli: FSD 0.32 §7.2 masih memasang banner GAP,
- * tetapi UIC 0.20 mengembalikannya ke RESOLVED (`CMP-241` CLOSE, dipetakan dan teruji live) —
- * kontrak API menang atas prosa FSD yang tertinggal.
+ * Diselaraskan ke FSD-COMPANY 0.35 / UIC 0.25 (24 September 2026, `CMP-330` — enam titik
+ * dibetulkan dari kode nyata): `purchase_date` RESOLVED, `serial_number` wajib, Transfer SATU
+ * event antar-branch, dispose memakai `asset_status` SOLD|GRANTED (AUCTION ditolak), nominal +
+ * berkas bukti wajib, Return wajib `asset_location`, Lease/Residual menulis log sendiri.
  */
+
+/**
+ * Matriks peran §7.0 (FSD 0.34): tulis/lifecycle hanya SUPER_ADMIN, SYSTEM_ADMIN, GA_STAFF;
+ * HR_MANAGER dan DEPARTMENT_MANAGER hanya lihat.
+ */
+export type AssetRole =
+  'ROLE_SUPER_ADMIN' | 'ROLE_SYSTEM_ADMIN' | 'ROLE_GA_STAFF' | 'ROLE_HR_MANAGER' | 'ROLE_DEPARTMENT_MANAGER';
+
+export interface AssetActor {
+  employeeId: string;
+  label: string;
+  role: AssetRole;
+}
 
 /** 9 nilai `last_asset_status`. INCOMPLETE ≠ NOT_AVAILABLE ditegakkan eksplisit. */
 export type AssetStatus =
@@ -125,6 +139,8 @@ export interface HandoverLog {
   employeeInfo: PersonSnapshot | null;
   isComplete: boolean | null;
   assetStatus: ReturnStatus | null;
+  /** Lokasi fisik saat aset diterima kembali — wajib pada Return (`AssetReturnRequest`, 0.25). */
+  assetLocation: string | null;
   note: string | null;
   createdAt: string;
 }
@@ -141,30 +157,48 @@ export interface MaintenanceLog {
   createdAt: string;
 }
 
+/** `log_asset_transfer` — SATU event antar-branch; nol menyentuh `log_asset_handover` (0.35). */
 export interface TransferLog {
   id: string;
   assetId: string;
   fromBranchId: string | null;
   toBranchId: string;
-  fromEmployeeInfo: PersonSnapshot | null;
-  toEmployeeInfo: PersonSnapshot | null;
+  transferReason: string;
+  transferDate: string;
   createdAt: string;
 }
 
-export type DisposalType = 'SOLD' | 'AUCTION' | 'GRANTED';
+export interface LeaseLog {
+  id: string;
+  assetId: string;
+  vendorId: string;
+  leaseContractNumber: string;
+  leaseContractFile: string;
+  createdAt: string;
+}
 
-export const DISPOSAL_TYPE_LABEL: Record<DisposalType, string> = {
-  SOLD: 'Dijual',
-  AUCTION: 'Dilelang',
-  GRANTED: 'Dihibahkan',
-};
+export interface ResidualLog {
+  id: string;
+  assetId: string;
+  residualValue: number;
+  createdAt: string;
+}
+
+/**
+ * `asset_status` pada `/dispose` — regex `SOLD|GRANTED` saja. AUCTION tetap nilai
+ * `last_asset_status` yang sah DIBACA, tetapi tidak ada jalur kode yang dapat menyetelnya.
+ */
+export type DisposalType = 'SOLD' | 'GRANTED';
+
+export const DISPOSAL_TYPE_LABEL: Record<DisposalType, string> = { SOLD: 'Dijual', GRANTED: 'Dihibahkan' };
 
 /** `log_asset_disposal` — penerima employee vs pihak luar (Mandatory-by-Value `is_employee`). */
 export interface DisposalLog {
   id: string;
   assetId: string;
-  disposalType: DisposalType;
-  disposalNominal: number | null;
+  assetStatus: DisposalType;
+  disposalNominal: number;
+  disposalFile: string;
   isEmployee: boolean;
   employeeInfo: PersonSnapshot | null;
   fullName: string | null;
@@ -175,8 +209,11 @@ export interface DisposalLog {
 }
 
 export interface DisposalDraft {
-  disposalType: DisposalType;
+  assetStatus: DisposalType;
   disposalNominal: string;
+  /** Berkas bukti — wajib (`@NotNull UUID`); di dummy ditandai sudah dilampirkan. */
+  disposalFileAttached: boolean;
+  photoAttached: boolean;
   isEmployee: boolean;
   employeeId: string;
   fullName: string;
