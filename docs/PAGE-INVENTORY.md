@@ -104,10 +104,10 @@ Prototype: 88 file HTML · Route bernav: 93
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/company-management/assets` | Asset List | `company-assets.html` | todo |
-| `/company-management/assets/assigned` | Assigned Assets | `company-assets.html` | todo |
-| `/company-management/assets/category` | Asset Category | `company-assets.html` | todo |
-| `/company-management/assets/disposal` | Disposal | `company-disposal.html` | todo |
+| `/company-management/assets` | Asset List | `company-assets.html` | done |
+| `/company-management/assets/assigned` | Assigned Assets | `company-assets.html` | done |
+| `/company-management/assets/category` | Asset Category | `company-assets.html` | done |
+| `/company-management/assets/disposal` | Disposal | `company-disposal.html` | done |
 | `/company-management/files/company` | Company Files | `document-company-files.html` | todo |
 | `/company-management/files/employee` | Employee Files | `document-employee-files.html` | todo |
 | `/company-management/files/other` | Other Files | `document-other-files.html` | todo |

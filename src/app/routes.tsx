@@ -36,6 +36,10 @@ import { CostCenterPage } from '@/features/company/pages/CostCenterPage';
 import { SbuPage } from '@/features/company/pages/SbuPage';
 import { VendorPage } from '@/features/company/pages/VendorPage';
 import { ActivityLogPage } from '@/features/activity-log/pages/ActivityLogPage';
+import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
+import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
+import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
+import { DisposalPage } from '@/features/assets/pages/DisposalPage';
 import { AnnouncementListPage } from '@/features/announcement/pages/AnnouncementListPage';
 import { AnnouncementDetailPage } from '@/features/announcement/pages/AnnouncementDetailPage';
 import { MyAnnouncementsPage } from '@/features/announcement/pages/MyAnnouncementsPage';
@@ -130,6 +134,12 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'company/cost-center', element: <CostCenterPage /> },
   { path: 'company/sbu', element: <SbuPage /> },
   { path: 'company/vendor', element: <VendorPage /> },
+  { path: 'company-management/assets', element: <AssetListPage /> },
+  { path: 'company-management/assets/assigned', element: <AssignedAssetsPage /> },
+  { path: 'company-management/assets/category', element: <AssetCategoryPage /> },
+  { path: 'company-management/assets/disposal', element: <DisposalPage /> },
+  /* Asset Detail tidak punya baris menu — dibuka dari baris Asset List / Assigned Assets. */
+  { path: 'company-management/assets/detail', element: <AssetDetailPage /> },
   { path: 'company-management/activity-log', element: <ActivityLogPage /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
@@ -197,6 +207,11 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company/cost-center',
   '/company/sbu',
   '/company/vendor',
+  '/company-management/assets',
+  '/company-management/assets/assigned',
+  '/company-management/assets/category',
+  '/company-management/assets/disposal',
+  '/company-management/assets/detail',
   '/company-management/activity-log',
   '/company-management/announcements',
   '/company-management/announcements/detail',
