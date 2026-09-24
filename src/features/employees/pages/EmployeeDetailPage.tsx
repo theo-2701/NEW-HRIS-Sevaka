@@ -37,7 +37,6 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 const mono = 'font-mono tracking-[0.03em]';
 
 /**
-/**
  * Halaman detail karyawan — profil gabungan read-only: work data, rekening, dan identitas.
  * Tiga tombol aksi membawa ke layar yang berwenang mengubah data: PTKP Adjustment, Reprimand,
  * dan profil karyawan (ubah hanya untuk HR).
