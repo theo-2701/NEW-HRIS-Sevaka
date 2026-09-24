@@ -114,6 +114,14 @@ features/<modul>/
   `ROUTES` di `js/shell.js`. Router membuat `PlaceholderPage` otomatis untuk setiap
   leaf ber-`path` yang belum dikonversi, sehingga menu tidak pernah mati.
 - **Panel tweaks prototype tidak diport** (`tweaks-*.jsx`) — itu alat desain.
+- **Dashboard direnovasi** (24 Sep 2026): beranda `/` kini `features/dashboard/pages/DashboardHomePage.tsx`
+  + komponen `features/dashboard/home/` — header sapaan tanpa hero bergambar, lima angka HOME
+  (FSD-AUTH §2.9) dalam satu pita dua lapis, antrean "Perlu tindak lanjut", dan satu panel
+  "Tenaga kerja" menggantikan empat kartu grafik. Warna seri grafik lewat token `series-1`/`series-2`
+  (lolos validasi CVD/kontras). **Versi lama tidak dihapus** — `DashboardPage` + komponennya tetap
+  ada dan bisa dibuka di `/dashboard/classic`.
+- **Dua tabel dalam satu halaman** dipecah `<TabMenu>` (ESS Time Off, ESS Time Off Taken,
+  ESS Attendance, Reprimand Type Setting) sesuai `UI-STANDARDS` — satu layar satu tabel.
 - **Logo** (diperbarui 9 Sep 2026): burung dummy dari tim desain di
   `public/brand/sevaka-mark.svg` — hasil trace `LOGO_NEWEST (1).svg` yang sudah
   dibersihkan (68 path noise dibuang, warna diseragamkan, viewBox dipotong pas

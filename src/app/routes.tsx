@@ -8,6 +8,7 @@ import { NAV_PATHS } from '@/config/nav';
 
 // ---- Modul yang SUDAH dikonversi -------------------------------------------
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { DashboardHomePage } from '@/features/dashboard/pages/DashboardHomePage';
 import { TimeOffSettingsPage } from '@/features/time-off/pages/TimeOffSettingsPage';
 import { AttendancePage } from '@/features/attendance/pages/AttendancePage';
 import { AttendanceSettingsPage } from '@/features/attendance/pages/AttendanceSettingsPage';
@@ -75,7 +76,9 @@ import { ResetPasswordDonePage, ResetPasswordPage } from '@/features/auth/pages/
  * `status` leaf-nya di `src/config/nav.ts` menjadi `'done'`.
  */
 const IMPLEMENTED: RouteObject[] = [
-  { index: true, element: <DashboardPage /> },
+  { index: true, element: <DashboardHomePage /> },
+  /* Dashboard lama dipertahankan sebagai pembanding — tanpa baris menu. */
+  { path: 'dashboard/classic', element: <DashboardPage /> },
   { path: 'employees/directory', element: <EmployeeDirectoryPage /> },
   /* Detail karyawan tidak punya baris menu — dibuka dari baris Directory. */
   { path: 'employees/directory/detail', element: <EmployeeDetailPage /> },
@@ -145,6 +148,7 @@ const IMPLEMENTED: RouteObject[] = [
 /** Path yang sudah punya komponen (dipakai untuk melewati placeholder). */
 const IMPLEMENTED_PATHS = new Set<string>([
   '/',
+  '/dashboard/classic',
   '/employees/directory',
   '/employees/directory/detail',
   '/employees/organization',

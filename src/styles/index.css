@@ -51,6 +51,12 @@
   --color-tertiary-900: #72673e;
   --color-tertiary-950: #595130;
 
+  /* ---------- Chart series (kategori, urutan tetap) ----------
+     Divalidasi lolos CVD/kontras terhadap permukaan putih: slot 1 = Ocean brand,
+     slot 2 = oranye pelengkap. Status (success/warning/error) tidak dipakai sebagai seri. */
+  --color-series-1: #0284c7;
+  --color-series-2: #eb6834;
+
   /* ---------- Semantic ---------- */
   --color-success-50: #ebfbf5;
   --color-success-100: #e1f8f0;

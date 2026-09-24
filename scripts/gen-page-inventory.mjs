@@ -99,6 +99,10 @@ const EXTRA_ROWS = [
     'Announcement `/company-management/announcements` (+ detail `/company-management/announcements/detail?id=…`, dibuka dari baris daftar) — mengisi baris menu Company Management › Announcement; dari FSD-001-COMPANY §11 · UIC-001-COMPANY §3C.',
   ],
   [
+    '`index.html` › versi lama (`/dashboard/classic`)',
+    'Dashboard sebelum renovasi 24 September 2026, dipertahankan sebagai pembanding tanpa baris menu; beranda `/` kini `DashboardHomePage`.',
+  ],
+  [
     '— (layar baru)',
     'Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard.',
   ],

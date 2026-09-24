@@ -196,4 +196,5 @@ layar di sini tanpa keputusan kontrak.
 | — (layar baru) | Detail periode gaji `/payroll/salary-processing/period?id=…`; dibuka dari baris tabel periode di Salary Processing maupun Authorization & Handover. |
 | — (layar baru) | Activity Log `/company-management/activity-log` — mengisi baris menu Company Management › Activity Log yang sudah ada; tanpa prototype, dibangun langsung dari FSD-001-AUTH §5 · UIC-001-AUTH §8. |
 | — (layar baru) | Announcement `/company-management/announcements` (+ detail `/company-management/announcements/detail?id=…`, dibuka dari baris daftar) — mengisi baris menu Company Management › Announcement; dari FSD-001-COMPANY §11 · UIC-001-COMPANY §3C. |
+| `index.html` › versi lama (`/dashboard/classic`) | Dashboard sebelum renovasi 24 September 2026, dipertahankan sebagai pembanding tanpa baris menu; beranda `/` kini `DashboardHomePage`. |
 | — (layar baru) | Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard. |
