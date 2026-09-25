@@ -37,6 +37,13 @@ import { SbuPage } from '@/features/company/pages/SbuPage';
 import { VendorPage } from '@/features/company/pages/VendorPage';
 import { ActivityLogPage } from '@/features/activity-log/pages/ActivityLogPage';
 import { NotificationInboxPage } from '@/features/notification/pages/NotificationInboxPage';
+import {
+  CompanyFilesPage,
+  EmployeeFilesPage,
+  EssFilesPage,
+  OtherFilesPage,
+} from '@/features/documents/pages/FilesPages';
+import { DocumentTemplatesPage } from '@/features/documents/pages/DocumentTemplatesPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -143,6 +150,11 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'company-management/assets/detail', element: <AssetDetailPage /> },
   { path: 'company-management/activity-log', element: <ActivityLogPage /> },
   { path: 'company-management/notifications', element: <NotificationInboxPage /> },
+  { path: 'company-management/files/company', element: <CompanyFilesPage /> },
+  { path: 'company-management/files/employee', element: <EmployeeFilesPage /> },
+  { path: 'company-management/files/other', element: <OtherFilesPage /> },
+  { path: 'company-management/files/templates', element: <DocumentTemplatesPage /> },
+  { path: 'me/files', element: <EssFilesPage /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
   { path: 'company-management/announcements/detail', element: <AnnouncementDetailPage /> },
@@ -216,6 +228,11 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company-management/assets/detail',
   '/company-management/activity-log',
   '/company-management/notifications',
+  '/company-management/files/company',
+  '/company-management/files/employee',
+  '/company-management/files/other',
+  '/company-management/files/templates',
+  '/me/files',
   '/company-management/announcements',
   '/company-management/announcements/detail',
   '/me/announcements',

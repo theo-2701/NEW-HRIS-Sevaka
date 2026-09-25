@@ -91,7 +91,7 @@ export const NAV: NavSection[] = [
         ],
       },
       { label: 'Finance', icon: 'hand-coins', path: '/me/finance', source: 'finance-ess.html', status: 'done' },
-      { label: 'Files', icon: 'folder', path: '/me/files', source: 'document-ess-files.html', status: 'todo' },
+      { label: 'Files', icon: 'folder', path: '/me/files', source: 'document-ess-files.html', status: 'done' },
       { label: 'Assets', icon: 'box' },
       {
         label: 'History',
@@ -359,10 +359,10 @@ export const NAV: NavSection[] = [
         icon: 'folder',
         note: 'FSD-001-DOCUMENT §1: Files berisi tepat empat baris (3 layar file + Document Templates).',
         children: [
-          { label: 'Company Files', path: '/company-management/files/company', source: 'document-company-files.html', status: 'todo' },
-          { label: 'Employee Files', path: '/company-management/files/employee', source: 'document-employee-files.html', status: 'todo' },
-          { label: 'Other Files', path: '/company-management/files/other', source: 'document-other-files.html', status: 'todo' },
-          { label: 'Document Templates', path: '/company-management/files/templates', source: 'document-templates.html', status: 'todo' },
+          { label: 'Company Files', path: '/company-management/files/company', source: 'document-company-files.html', status: 'done' },
+          { label: 'Employee Files', path: '/company-management/files/employee', source: 'document-employee-files.html', status: 'done' },
+          { label: 'Other Files', path: '/company-management/files/other', source: 'document-other-files.html', status: 'done' },
+          { label: 'Document Templates', path: '/company-management/files/templates', source: 'document-templates.html', status: 'done' },
         ],
       },
     ],

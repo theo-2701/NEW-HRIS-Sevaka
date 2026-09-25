@@ -429,3 +429,29 @@ bawaan terbaru di atas) dan `N2` `PUT /notifications/inbox/{id}/read` (klik bari
 - **GAP:** contoh DTO `N1` tidak memuat teks judul/isi, padahal FSD §1.1 menampilkan "judul+isi dirangkai
   backend". Dimodelkan opsional (`title`/`body`); bila kosong layar memakai label kode jenis.
 - "Notification (rich inbox)" (`inbox.html`) dihapus dari sidebar atas permintaan Theo (25 Sep 2026).
+
+## 16. Company Management › Files + ESS › Files — FSD-DOCUMENT 0.8 / UIC-DOCUMENT 0.6 (25 September 2026)
+
+Dibangun di `src/features/documents/` — lima layar: Company Files, Employee Files, Other Files, Document
+Templates (`/company-management/files/*`) dan ESS Files (`/me/files`).
+
+- **Satu katalog, satu pintu baca** (`A3`/`A4`/`A2`/`A16`) dipakai empat layar berkas lewat komponen
+  `DocumentCatalog`; pembedanya hanya `owner_type`(+`owner_id`). Nol tombol unggah dan nol hapus.
+- **Hak baca per baris** (baris tak berhak tidak muncul): HR Staff tanpa berkas SENSITIF, Health Data Officer
+  hanya SENSITIF, Dept Manager hanya unit yang dipimpin (fail-closed), GA Staff hanya aset & vendor.
+  Isi SENSITIF hanya HR Manager / Health Data Officer / Super Admin / pemilik (ESS); lainnya `404` seragam.
+- **`A2` lewat satu komponen bersama** (`DocumentViewer`): byte ditarik via service lalu ditampilkan dari blob
+  URL yang dilepas saat ditutup; SENSITIF hanya penampil dalam-aplikasi. Grid/detail nol jejak akses, isi
+  berkas menulis satu baris `log_document_access` (PER_PEMBUKAAN / PER_PERMINTAAN).
+- **Employee Files** wajib pilih karyawan (`EF-1`) lebih dulu; kolom Asal sengaja dikurangi.
+- **Document Templates**: HR Manager buat / naskah versi baru / nonaktifkan (idempoten, tanpa aktifkan
+  kembali); Super Admin orang kedua (setuju/tolak + alasan, penilai ≠ penyunting). Penunjuk versi aktif hanya
+  bergeser saat versi DISETUJUI terbaru. HR Staff nol akses.
+- **ESS Minta Surat** (`A15` + `A10` jalur mandiri): hanya templat bisa-diminta-sendiri berkategori TEMPORARY;
+  `subject_employee_id` tidak dikirim. Tanpa gerbang → TERBIT seketika, berkas lahir di katalog (badge New).
+- Koneksi: lima berkas Company Files memakai `documentId` yang sama dengan lampiran Announcement; Other Files
+  memakai id aset/vendor/cabang dari fitur Assets/Company.
+- **Di luar cakupan menu** (baris menunya belum ada di sidebar kontrak): Letter Issuance, Pengaturan Kategori,
+  Jejak Akses Dokumen, Malware Alerts, dan halaman publik Pemeriksaan Keaslian.
+- **Asumsi**: regex nama templat dan daftar "ungkapan mesin templat" belum dikutip dari TSD §18 — dipakai
+  pendekatan (`${`, `<%`, `{%` ditolak; `%%penanda%%` dan `{{letter_no}}` sah).
