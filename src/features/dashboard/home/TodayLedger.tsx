@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react';
+import { ArrowRight, CalendarCheck, CalendarDays, Palmtree, UserCheck, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { monthLabel } from '@/features/dashboard/home/homeRules';
 import type { HomeStats } from '@/features/dashboard/types';
@@ -10,43 +12,65 @@ interface Figure {
   foot: string;
   cta: string;
   to: string;
+  icon: LucideIcon;
 }
 
-function FigureCell({ figure, loading }: { figure: Figure; loading: boolean }) {
+/** Satu kartu kaca: seluruh kartu bisa diklik menuju layar rinciannya. */
+function FigureCard({ figure, loading }: { figure: Figure; loading: boolean }) {
   const navigate = useNavigate();
   const empty = !loading && figure.value === null;
+  const Icon = figure.icon;
 
   return (
-    <div className="flex min-w-0 flex-col gap-1 px-5 py-4">
-      <span className="font-body text-[13px] font-semibold leading-tight text-fg-2">{figure.label}</span>
-      <span className="font-display text-[34px] font-bold leading-none tracking-[-0.03em] text-fg-1 tabular-nums">
+    <button
+      type="button"
+      onClick={() => navigate(figure.to)}
+      className="group flex min-w-0 flex-col gap-1 rounded-xl bg-linear-to-b from-white/16 to-white/6 p-4 text-left ring-1 ring-inset ring-white/20 backdrop-blur-md transition duration-200 ease-standard hover:-translate-y-0.5 hover:from-white/22 hover:to-white/10 hover:ring-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="font-body text-[13px] font-semibold leading-tight text-white/80">{figure.label}</span>
+        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/15 ring-1 ring-inset ring-white/20">
+          <Icon className="size-4 text-white" strokeWidth={1.75} />
+        </span>
+      </span>
+      <span className="font-display text-[34px] font-bold leading-none tracking-[-0.03em] text-white tabular-nums">
         {loading ? '…' : empty ? '—' : figure.value}
         {figure.unit && !loading && !empty && (
-          <small className="ml-1.5 font-body text-sm font-medium tracking-normal text-fg-3">{figure.unit}</small>
+          <small className="ml-1.5 font-body text-sm font-medium tracking-normal text-white/70">{figure.unit}</small>
         )}
       </span>
-      <span className="font-body text-xs font-medium text-fg-3">{empty ? 'Data belum tersedia' : figure.foot}</span>
-      <button
-        type="button"
-        onClick={() => navigate(figure.to)}
-        className="mt-1 w-fit font-body text-[13px] font-semibold text-fg-link hover:text-fg-link-hover hover:underline"
-      >
+      <span className="font-body text-xs font-medium text-white/65">{empty ? 'Data belum tersedia' : figure.foot}</span>
+      <span className="mt-1.5 inline-flex w-fit items-center gap-1 font-body text-[13px] font-semibold text-primary-200 transition-colors group-hover:text-white">
         {figure.cta}
-      </button>
-    </div>
+        <ArrowRight
+          className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+          strokeWidth={1.75}
+        />
+      </span>
+    </button>
   );
 }
 
-function Group({ title, figures, loading }: { title: string; figures: Figure[]; loading: boolean }) {
+function Group({
+  title,
+  figures,
+  loading,
+  columns,
+}: {
+  title: string;
+  figures: Figure[];
+  loading: boolean;
+  columns: string;
+}) {
   return (
-    <div className="flex min-w-0 flex-col">
-      <span className="t-label px-5 pt-3.5 text-fg-3">{title}</span>
-      <div
-        className="grid divide-y divide-border-1 sm:divide-x sm:divide-y-0"
-        style={{ gridTemplateColumns: `repeat(auto-fit, minmax(170px, 1fr))` }}
-      >
+    <div className="flex min-w-0 flex-col gap-2.5">
+      <span className="flex items-center gap-3 font-body text-[11px] font-bold uppercase tracking-[0.08em] text-white/70">
+        {title}
+        <span className="h-px flex-1 bg-white/15" />
+      </span>
+      <div className={`grid gap-3 ${columns}`}>
         {figures.map((figure) => (
-          <FigureCell key={figure.label} figure={figure} loading={loading} />
+          <FigureCard key={figure.label} figure={figure} loading={loading} />
         ))}
       </div>
     </div>
@@ -54,8 +78,8 @@ function Group({ title, figures, loading }: { title: string; figures: Figure[]; 
 }
 
 /**
- * Lima angka HOME dua lapis (FSD-001-AUTH §2.9) dalam satu pita: **Milik saya** untuk semua
- * peran, **Perusahaan** hanya HR/manajemen. Gagal-sebagian tampil "—", layar tidak ikut gagal.
+ * Lima angka HOME dua lapis (FSD-001-AUTH §2.9) sebagai kartu kaca di dalam hero: **Milik saya**
+ * untuk semua peran, **Perusahaan** hanya HR/manajemen. Gagal-sebagian tampil "—", layar tidak ikut gagal.
  */
 export function TodayLedger({
   stats,
@@ -74,6 +98,7 @@ export function TodayLedger({
       foot: `Cuti tahunan · periode ${stats?.periodYear ?? ''}`,
       cta: 'Ajukan cuti',
       to: '/me/time/time-off',
+      icon: CalendarDays,
     },
     {
       label: 'Kehadiran saya bulan ini',
@@ -82,6 +107,7 @@ export function TodayLedger({
       foot: `Hadir atau terlambat · ${stats ? monthLabel(stats.month) : 'bulan berjalan'}`,
       cta: 'Lihat kehadiran',
       to: '/me/time/attendance',
+      icon: CalendarCheck,
     },
   ];
 
@@ -92,6 +118,7 @@ export function TodayLedger({
       foot: 'Status kerja Active',
       cta: 'Lihat direktori',
       to: '/employees/directory',
+      icon: Users,
     },
     {
       label: 'Hadir hari ini',
@@ -99,6 +126,7 @@ export function TodayLedger({
       foot: stats ? formatDate(stats.workDate) : 'Hari ini',
       cta: 'Lihat kehadiran',
       to: '/time/attendance',
+      icon: UserCheck,
     },
     {
       label: 'Sedang cuti hari ini',
@@ -106,24 +134,14 @@ export function TodayLedger({
       foot: 'Cuti atau sakit',
       cta: 'Lihat pengajuan cuti',
       to: '/time/time-off/requests',
+      icon: Palmtree,
     },
   ];
 
   return (
-    <section
-      className={
-        companyLayer
-          ? 'grid rounded-xl border border-border-1 bg-bg-surface lg:grid-cols-[2fr_3fr] lg:divide-x lg:divide-border-1'
-          : 'grid rounded-xl border border-border-1 bg-bg-surface'
-      }
-      aria-label="Ringkasan hari ini"
-    >
-      <Group title="Milik saya" figures={mine} loading={loading} />
-      {companyLayer && (
-        <div className="border-t border-border-1 lg:border-t-0">
-          <Group title="Perusahaan" figures={company} loading={loading} />
-        </div>
-      )}
-    </section>
+    <div className={companyLayer ? 'grid gap-5 lg:grid-cols-[2fr_3fr]' : 'grid gap-5'}>
+      <Group title="Milik saya" figures={mine} loading={loading} columns="sm:grid-cols-2" />
+      {companyLayer && <Group title="Perusahaan" figures={company} loading={loading} columns="sm:grid-cols-3" />}
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ChartColumn } from 'lucide-react';
 import { Panel } from '@/features/dashboard/home/Panel';
 import type { DashboardSummary, GenderSlice, JobLevelSlice, SeriesPoint } from '@/features/dashboard/types';
 import { cn } from '@/lib/utils';
@@ -28,7 +29,7 @@ function Block({
           <span className="font-body text-xs font-medium text-fg-3">{note}</span>
         </div>
       </div>
-      {children}
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );
 }
@@ -40,10 +41,23 @@ function HeadcountBars({ data }: { data: SeriesPoint[] }) {
   const barWidth = slot * 0.46;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="h-[88px] w-full" role="img"
-        aria-label={`Karyawan aktif per bulan: ${data.map((d) => `${d.label} ${d.value}`).join(', ')}`}>
-        <line x1="0" x2="100" y1="59.5" y2="59.5" className="stroke-border-2" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <div className="flex flex-1 flex-col gap-1.5">
+      <svg
+        viewBox="0 0 100 60"
+        preserveAspectRatio="none"
+        className="min-h-[88px] w-full flex-1"
+        role="img"
+        aria-label={`Karyawan aktif per bulan: ${data.map((d) => `${d.label} ${d.value}`).join(', ')}`}
+      >
+        <line
+          x1="0"
+          x2="100"
+          y1="59.5"
+          y2="59.5"
+          className="stroke-border-2"
+          strokeWidth="0.5"
+          vectorEffect="non-scaling-stroke"
+        />
         {data.map((d, i) => {
           const h = (d.value / max) * 54;
           const x = i * slot + (slot - barWidth) / 2;
@@ -65,7 +79,10 @@ function HeadcountBars({ data }: { data: SeriesPoint[] }) {
           );
         })}
       </svg>
-      <div className="grid font-body text-[11px] font-medium text-fg-3" style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}>
+      <div
+        className="grid font-body text-[11px] font-medium text-fg-3"
+        style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}
+      >
         {data.map((d, i) => (
           <span key={d.label} className={cn('text-center', i === data.length - 1 && 'font-semibold text-fg-1')}>
             {d.label}
@@ -85,8 +102,8 @@ function TurnoverLine({ data, average }: { data: SeriesPoint[]; average: number 
   const lastIndex = data.length - 1;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="relative h-[88px]">
+    <div className="flex flex-1 flex-col gap-1.5">
+      <div className="relative min-h-[88px] flex-1">
         <svg
           viewBox="0 0 100 60"
           preserveAspectRatio="none"
@@ -94,7 +111,15 @@ function TurnoverLine({ data, average }: { data: SeriesPoint[]; average: number 
           role="img"
           aria-label={`Turnover bulanan: ${data.map((d) => `${d.label} ${d.value}%`).join(', ')}`}
         >
-          <line x1="0" x2="100" y1="59.5" y2="59.5" className="stroke-border-2" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+          <line
+            x1="0"
+            x2="100"
+            y1="59.5"
+            y2="59.5"
+            className="stroke-border-2"
+            strokeWidth="0.5"
+            vectorEffect="non-scaling-stroke"
+          />
           <line
             x1="0"
             x2="100"
@@ -129,7 +154,10 @@ function TurnoverLine({ data, average }: { data: SeriesPoint[]; average: number 
           </span>
         ))}
       </div>
-      <div className="grid font-body text-[11px] font-medium text-fg-3" style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}>
+      <div
+        className="grid font-body text-[11px] font-medium text-fg-3"
+        style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}
+      >
         {data.map((d, i) => (
           <span key={d.label} className={cn('text-center', i === lastIndex && 'font-semibold text-fg-1')}>
             {d.label}
@@ -145,25 +173,55 @@ const GENDER_FILL: Record<string, string> = {
   Male: 'bg-series-2',
 };
 
-/** 100% bertumpuk dengan celah 2px; "Not Filled" = data kosong → abu netral, bukan warna kategori. */
-function GenderBar({ data }: { data: GenderSlice[] }) {
+const GENDER_STROKE: Record<string, string> = {
+  Female: 'stroke-series-1',
+  Male: 'stroke-series-2',
+};
+
+/**
+ * Donut komposisi — celah tipis antar-irisan; "Not Filled" = data kosong → abu netral, bukan
+ * warna kategori. Bentuk donut dipilih supaya tinggi blok setara grafik lain di baris yang sama.
+ */
+function GenderDonut({ data }: { data: GenderSlice[] }) {
   const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
+  const radius = 15.915; // keliling ≈ 100 → panjang dash langsung dalam persen
+  const gap = data.length > 1 ? 1.2 : 0;
+  let offset = 25; // mulai dari jam 12
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex h-3 w-full gap-[2px]" role="img" aria-label={data.map((d) => `${d.label} ${d.value}%`).join(', ')}>
+    <div className="flex flex-1 items-center gap-5">
+      <svg
+        viewBox="0 0 42 42"
+        className="size-[120px] shrink-0 -rotate-0"
+        role="img"
+        aria-label={data.map((d) => `${d.label} ${d.value}%`).join(', ')}
+      >
+        <circle cx="21" cy="21" r={radius} fill="none" className="stroke-vapor" strokeWidth="5" />
+        {data.map((d) => {
+          const share = (d.value / total) * 100;
+          const segment = (
+            <circle
+              key={d.label}
+              cx="21"
+              cy="21"
+              r={radius}
+              fill="none"
+              className={GENDER_STROKE[d.label] ?? 'stroke-silver'}
+              strokeWidth="5"
+              strokeDasharray={`${Math.max(share - gap, 0)} ${100 - Math.max(share - gap, 0)}`}
+              strokeDashoffset={offset}
+            >
+              <title>{`${d.label}: ${percent(share)}`}</title>
+            </circle>
+          );
+          offset -= share;
+          return segment;
+        })}
+      </svg>
+      <ul className="m-0 flex list-none flex-col gap-2 p-0 font-body text-xs">
         {data.map((d) => (
-          <span
-            key={d.label}
-            title={`${d.label}: ${percent((d.value / total) * 100)}`}
-            className={cn('h-full first:rounded-l-[4px] last:rounded-r-[4px]', GENDER_FILL[d.label] ?? 'bg-silver')}
-            style={{ width: `${(d.value / total) * 100}%` }}
-          />
-        ))}
-      </div>
-      <ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-1.5 p-0 font-body text-xs">
-        {data.map((d) => (
-          <li key={d.label} className="flex items-center gap-1.5">
-            <span className={cn('size-2 rounded-full', GENDER_FILL[d.label] ?? 'bg-silver')} />
+          <li key={d.label} className="flex items-center gap-2 whitespace-nowrap">
+            <span className={cn('size-2.5 rounded-full', GENDER_FILL[d.label] ?? 'bg-silver')} />
             <span className="font-medium text-fg-2">{d.label}</span>
             <span className="font-semibold text-fg-1 tabular-nums">{percent((d.value / total) * 100)}</span>
           </li>
@@ -183,7 +241,7 @@ function JobLevelRanks({ data }: { data: JobLevelSlice[] }) {
         <li
           key={d.label}
           title={`${d.label}: ${number(d.count)} karyawan (${percent(d.percent)})`}
-          className="grid grid-cols-[84px_minmax(0,1fr)_40px_44px] items-center gap-2.5 font-body text-xs"
+          className="grid grid-cols-[64px_minmax(0,1fr)_30px_38px] items-center gap-2 font-body text-xs"
         >
           <span className="truncate font-medium text-fg-2">{d.label}</span>
           <span className="h-1.5 overflow-hidden rounded-pill bg-vapor">
@@ -197,11 +255,11 @@ function JobLevelRanks({ data }: { data: JobLevelSlice[] }) {
   );
 }
 
-/** Tenaga kerja — empat bacaan ringkas dalam satu panel, menggantikan empat kartu grafik lama. */
+/** Tenaga kerja — empat bacaan ringkas dalam satu panel memanjang, menggantikan empat kartu grafik lama. */
 export function WorkforcePanel({ summary }: { summary: DashboardSummary | undefined }) {
   if (!summary) {
     return (
-      <Panel title="Tenaga kerja">
+      <Panel title="Tenaga kerja" icon={ChartColumn}>
         <p className="m-0 py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat data…</p>
       </Panel>
     );
@@ -215,12 +273,17 @@ export function WorkforcePanel({ summary }: { summary: DashboardSummary | undefi
   const average = turnover.reduce((sum, d) => sum + d.value, 0) / Math.max(turnover.length, 1);
 
   return (
-    <Panel title="Tenaga kerja" meta={`${staff[0]?.label ?? ''} – ${staff.at(-1)?.label ?? ''}`}>
-      <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
+    <Panel title="Tenaga kerja" icon={ChartColumn} meta={`${staff[0]?.label ?? ''} – ${staff.at(-1)?.label ?? ''}`}>
+      {/* Empat bacaan memanjang ke samping; di layar sempit turun jadi 2 lalu 1 kolom. */}
+      <div className="grid gap-y-8 md:grid-cols-2 md:gap-x-10 xl:grid-cols-[1fr_1fr_1fr_1.15fr] xl:gap-x-0 xl:divide-x xl:divide-border-1 [&>*]:xl:px-6 [&>*:first-child]:xl:pl-0 [&>*:last-child]:xl:pr-0">
         <Block
           title="Karyawan aktif"
           value={number(latest)}
-          note={delta === 0 ? 'sama dengan bulan lalu' : `${delta > 0 ? '+' : '−'}${number(Math.abs(delta))} dari bulan lalu`}
+          note={
+            delta === 0
+              ? 'sama dengan bulan lalu'
+              : `${delta > 0 ? '+' : '−'}${number(Math.abs(delta))} dari bulan lalu`
+          }
         >
           <HeadcountBars data={staff} />
         </Block>
@@ -228,13 +291,17 @@ export function WorkforcePanel({ summary }: { summary: DashboardSummary | undefi
         <Block
           title="Turnover bulanan"
           value={percent(turnover.at(-1)?.value ?? 0)}
-          note={`rata-rata 6 bulan ${percent(average)} (garis putus-putus)`}
+          note={`rata-rata 6 bulan ${percent(average)}`}
         >
           <TurnoverLine data={turnover} average={average} />
         </Block>
 
-        <Block title="Komposisi gender" value={percent(summary.gender[0]?.value ?? 0)} note={`${summary.gender[0]?.label ?? ''} dari karyawan aktif`}>
-          <GenderBar data={summary.gender} />
+        <Block
+          title="Komposisi gender"
+          value={percent(summary.gender[0]?.value ?? 0)}
+          note={`${summary.gender[0]?.label ?? ''} dari karyawan aktif`}
+        >
+          <GenderDonut data={summary.gender} />
         </Block>
 
         <Block title="Jenjang jabatan" value={number(summary.totalEmployees)} note="total karyawan">

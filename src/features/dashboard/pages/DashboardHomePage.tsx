@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { CalendarClock, FileClock, LockKeyhole, Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UnlockAccountModal } from '@/features/dashboard/components/UnlockAccountModal';
 import { useDashboardSummary, useHomeStats, useMe } from '@/features/dashboard/hooks/useDashboard';
@@ -59,6 +60,7 @@ export function DashboardHomePage() {
         ? leave.data.filter((row) => row.status === 'PENDING_APPROVAL' && row.employeeId !== APPROVER.employeeId).length
         : null,
       title: 'Pengajuan cuti menunggu keputusan',
+      icon: CalendarClock,
       detail: 'Putuskan sebelum tanggal cutinya tiba.',
       action: { label: 'Tinjau', onClick: () => navigate('/time/time-off/requests') },
     },
@@ -66,6 +68,7 @@ export function DashboardHomePage() {
       key: 'locked',
       count: summary.data ? summary.data.lockedAccounts.length : null,
       title: 'Akun karyawan terkunci',
+      icon: LockKeyhole,
       detail: 'Terkunci otomatis setelah 5× gagal login; terbuka sendiri dalam 15 menit.',
       action: { label: 'Buka kunci', onClick: () => setUnlockOpen(true) },
     },
@@ -73,12 +76,14 @@ export function DashboardHomePage() {
       key: 'contracts',
       count: summary.data ? endingSoon : null,
       title: 'Kontrak & probation berakhir ≤ 30 hari',
+      icon: FileClock,
       detail: 'Rinciannya ada di panel Kontrak berakhir.',
     },
     {
       key: 'drafts',
       count: drafts.data ? drafts.data.totalData : null,
       title: 'Rancangan pengumuman belum terbit',
+      icon: Megaphone,
       detail: 'Lengkapi peran penerima lalu terbitkan.',
       action: { label: 'Buka', onClick: () => navigate(ANNOUNCEMENT_LIST_PATH) },
     },
@@ -99,22 +104,30 @@ export function DashboardHomePage() {
         lockedCount={summary.data ? summary.data.lockedAccounts.length : null}
         onUnlock={companyLayer ? () => setUnlockOpen(true) : undefined}
         now={now}
-      />
+      >
+        <TodayLedger stats={stats.data} loading={stats.isLoading} companyLayer={companyLayer} />
+      </HomeHeader>
 
-      <TodayLedger stats={stats.data} loading={stats.isLoading} companyLayer={companyLayer} />
-
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex min-w-0 flex-col gap-4">
-          {companyLayer && <ActionQueue items={queue} />}
-          <WorkforcePanel summary={summary.data} />
+      {/* Dua kolom setinggi: panel terakhir tiap kolom melar (flex-1) supaya dasar keduanya rata. */}
+      {companyLayer ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-4">
+            <ActionQueue items={queue} />
+            <QuickAccessPanel className="flex-1" />
+          </div>
+          <div className="flex min-w-0 flex-col gap-4">
+            <AnnouncementsPanel />
+            <ContractsPanel contracts={contracts} now={now} className="flex-1" />
+          </div>
         </div>
-
-        <div className="flex min-w-0 flex-col gap-4">
+      ) : (
+        <div className="grid items-start gap-4 lg:grid-cols-2">
           <AnnouncementsPanel />
-          {companyLayer && <ContractsPanel contracts={contracts} now={now} />}
           <QuickAccessPanel />
         </div>
-      </div>
+      )}
+
+      <WorkforcePanel summary={summary.data} />
 
       <UnlockAccountModal open={unlockOpen} onOpenChange={setUnlockOpen} />
     </>
