@@ -386,6 +386,16 @@
   }
 }
 
+/* Scroll tanpa scrollbar (tetap bisa digulir roda/sentuh/keyboard) — dipakai sidebar. */
+@utility scroll-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Soft-press: efek khas SEVAKA untuk hover/active tombol sekunder & icon button */
 @utility shadow-press {
   box-shadow: var(--shadow-press);
