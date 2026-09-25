@@ -411,3 +411,21 @@ Sumber: `HRIS-docs/.../September Handoff (Delivery)/FE-230926/FE-230926/`. Dibac
 | Employee Profile | FSD 0.10 / UIC 0.12 | Tidak berubah dari FE-Profile | — |
 | Employee | UIC 0.33 | Koreksi redaksional; filter New Joiner tetap satu status | — |
 | Notification | FSD 0.4 / UIC 0.2 (baru) | Dokumen baru | Dipakai saat membangun Company Management › Notification (belum dikerjakan) |
+
+## 15. Company Management › Notification — FSD-NOTIFICATION 0.4 / UIC 0.2 (25 September 2026)
+
+Dibangun di `src/features/notification/` (route `/company-management/notifications`). Satu layar kotak masuk,
+dua endpoint: `N1` `GET /notifications/inbox` (filter `is_read`, whitelist `sort_by` `created_at`|`is_read`,
+bawaan terbaru di atas) dan `N2` `PUT /notifications/inbox/{id}/read` (klik baris, idempoten: panggilan kedua
+200 apa adanya, `read_at` tidak bergeser).
+
+- Tautan "Lihat Perkara": dirakit FE dari `reference_type` + `reference_id`. Hanya `ANNOUNCEMENT` yang target
+  layarnya berkontrak → ESS Announcement (`/me/announcements?id=`). `NULL` dan nilai tak dikenal → tanpa
+  tautan (bukan tombol mati). `FINANCE_REQUEST`/`PRODUCTIVITY_RECAP` dikenal, targetnya belum berkontrak.
+- Koneksi antar modul: Announcement terbit → `notificationService.deliver()` menitip kabar
+  `ANNOUNCEMENT_PUBLISHED` (pengganti event Kafka; judul pengumuman tidak dimuat).
+- Titik di ikon bell kini biner mengikuti ada/tidaknya kabar belum dibaca (bukan badge hitungan — dilarang §2).
+- Sengaja tidak ada: tandai-semua, hapus, pencarian teks, kategori, badge kabar penting, kolom NIK.
+- **GAP:** contoh DTO `N1` tidak memuat teks judul/isi, padahal FSD §1.1 menampilkan "judul+isi dirangkai
+  backend". Dimodelkan opsional (`title`/`body`); bila kosong layar memakai label kode jenis.
+- "Notification (rich inbox)" (`inbox.html`) dihapus dari sidebar atas permintaan Theo (25 Sep 2026).

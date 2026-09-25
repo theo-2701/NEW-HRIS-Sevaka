@@ -28,6 +28,8 @@ import { Avatar } from '@/components/Avatar';
 import { SevakaLogo } from '@/components/brand/SevakaLogo';
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/features/auth/services/auth.service';
+import { useHasUnread } from '@/features/notification/hooks/useNotification';
+import { NOTIFICATION_PATH } from '@/features/notification/types';
 import { cn } from '@/lib/utils';
 
 interface ProductEntry {
@@ -56,6 +58,7 @@ const PRODUCTS: ProductEntry[] = [
 /** Topnav — port `topnavHTML()` (`js/shell.js`) + `.topnav` (`css/app.css`). */
 export function Topnav() {
   const navigate = useNavigate();
+  const { data: hasUnread } = useHasUnread();
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
   const [product, setProduct] = useState<string>('HRIS');
@@ -134,12 +137,15 @@ export function Topnav() {
         </IconButton>
 
         <Link
-          to="/company-management/notifications"
+          to={NOTIFICATION_PATH}
           aria-label="Notifikasi"
           className="relative inline-flex size-9 items-center justify-center rounded-md text-fg-2 transition-colors duration-200 ease-standard hover:bg-mist hover:text-secondary-700"
         >
           <Bell className="size-[18px]" />
-          <span className="absolute right-1.5 top-1.5 size-2 rounded-full border-2 border-bg-surface bg-error-500" />
+          {/* Titik biner, bukan badge hitungan — badge jumlah belum-dibaca dilarang (FSD-NOTIFICATION §2). */}
+          {hasUnread && (
+            <span className="absolute right-1.5 top-1.5 size-2 rounded-full border-2 border-bg-surface bg-error-500" />
+          )}
         </Link>
 
         <IconButton label="Aplikasi">

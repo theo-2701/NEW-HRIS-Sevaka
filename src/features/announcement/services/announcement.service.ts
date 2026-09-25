@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { notificationService } from '@/features/notification/services/notification.service';
 import { textToHtml } from '@/features/announcement/content';
 import {
   CATEGORY_OPTIONS,
@@ -349,6 +350,15 @@ export const announcementService = {
         ...row.publishLog,
         { publishedAt: new Date().toISOString(), recipientRole: row.recipientRole, publishedBy: ANNOUNCEMENT_ACTOR, contentHash },
       ];
+      // Pengganti event ANNOUNCEMENT_PUBLISHED → notification-service (TSD-NOTIFICATION §6.9.9). Judul
+      // pengumuman sengaja TIDAK dimuat di kabar (AN-16/AN-18). Mode dummy: penerima = pengguna aktif.
+      notificationService.deliver({
+        notificationType: 'ANNOUNCEMENT_PUBLISHED',
+        title: 'New announcement for you',
+        body: 'A new company announcement has been published for your role.',
+        referenceType: 'ANNOUNCEMENT',
+        referenceId: row.id,
+      });
       return;
     }
     await api.post(`/announcements/${id}/publish`);

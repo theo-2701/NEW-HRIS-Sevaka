@@ -39,6 +39,11 @@ interface DataTableProps<T> {
   sort?: { by: string; dir: 'ASC' | 'DESC' };
   /** Dipanggil saat header kolom ber-`sortKey` diklik. */
   onSortChange?: (sortKey: string) => void;
+  /**
+   * Klik baris (mis. tandai-dibaca di Kotak Masuk). Tombol/tautan di dalam sel wajib
+   * `stopPropagation` supaya tidak ikut memicu aksi baris.
+   */
+  onRowClick?: (row: T, index: number) => void;
   className?: string;
 }
 
@@ -67,6 +72,7 @@ export function DataTable<T>({
   loading = false,
   sort,
   onSortChange,
+  onRowClick,
   className,
 }: DataTableProps<T>) {
   const frozen = Boolean(actions);
@@ -148,7 +154,11 @@ export function DataTable<T>({
 
           {!loading &&
             rows.map((row, index) => (
-              <tr key={rowKey(row, index)} className="group last:[&>td]:border-b-0">
+              <tr
+                key={rowKey(row, index)}
+                className={cn('group last:[&>td]:border-b-0', onRowClick && 'cursor-pointer')}
+                onClick={onRowClick ? () => onRowClick(row, index) : undefined}
+              >
                 {columns.map((col, i) => (
                   <td
                     key={col.key}

@@ -350,9 +350,10 @@ export const NAV: NavSection[] = [
         icon: 'bell',
         path: '/company-management/notifications',
         source: 'notification-inbox.html',
-        status: 'todo',
+        status: 'done',
       },
-      { label: 'Notification (rich inbox)', icon: 'inbox', path: '/company-management/inbox', source: 'inbox.html', status: 'todo' },
+      // "Notification (rich inbox)" (inbox.html) disembunyikan dulu atas permintaan Theo, 25 Sep 2026 —
+      // banyak elemennya tanpa jangkar FSD-NOTIFICATION (lihat _prototype/NOTIFICATION-GAP-NOTES.md).
       {
         label: 'Files',
         icon: 'folder',
