@@ -476,3 +476,23 @@ FSD/UIC EMPLOYEE 0.16/0.35, FSD/UIC NOTIFICATION 0.5/0.3, FSD/UIC TIME 0.10/0.14
 | Time | UIC 0.14 §10.2.2: bulk roster `employee_ids[]` ATAU `scope_level`+`scope_ref`, plus `is_off_day` | Body API dipetakan ke `employee_ids`; opsi "Mass day off" di modal bulk |
 | Time | FSD 0.6: Scheduler penempatan = peran HR saja; Overtime Tarik = dialog kustom | Sudah sesuai — tanpa perubahan |
 | Time | FSD 0.7–0.10 | Hanya perapian repositori gambar — tanpa dampak kode |
+
+## 18. System › Settings › Time & Employee — FSD-SETTINGS 0.21 / UIC-SETTINGS 0.12 (28 September 2026)
+
+Dibangun di `src/features/settings/` (route `/settings/configuration/time` dan `/employee`). Satu pintu baca
+`A1 GET /settings` dan satu pintu tulis `A2 PUT /settings` dipakai kedua Menu; layar menyaring subset `setup_code`.
+
+- **Waktu:** 26 setelan dalam 7 tab awalan (`attendance.` 5 · `leave.` 5 · `overtime.` 6 · `sick.` 4 · `schedule.` 3 ·
+  `oncall.` 2 · `outbox.` 1). Nama, default, dan domain nilai diambil dari katalog `TSD-001-TIME-1.23` (dokumen FE
+  hanya menamai sebagian). 3 baris DAFTAR (`leave.approval_extra_tier_approver` HIGHER_MANAGER/HR/HIGHER_MANAGER,HR ·
+  `leave.joint_leave_deducts_annual` · `sick.doctor_note_required`), sisanya INTERVAL.
+- **Karyawan:** satu enum `REPRIMAND_RULE` (ACTIVE/NON-ACTIVE), bukan pola R/O/D.
+- **Kelas akses:** HR Manager/Super Admin PENUH (ubah); HR Staff R‡ (baca-saja, penawaran di-omit, tanpa Save);
+  peran lain tanpa setelan → 403 di gerbang. Baris terkunci (`settings.identity_retention_days`) tidak pernah tampil.
+- **Tulis:** Save mengirim hanya baris tersunting pada Menu ini (lintas tab), satu transaksi; seluruh baris dinilai,
+  satu ditolak ⇒ nol berubah, kode paling keras menang (modal WKT-7); sukses menampilkan Changed?/versi baru (WKT-6).
+  Pindah Menu dengan suntingan belum tersimpan meminta konfirmasi.
+- **Koneksi:** Reprimand Type Setting menampilkan `REPRIMAND_RULE` sebagai spanduk baca-saja dari Settings — satu
+  sumber nilai (menutup selisih PROB-FRONTEND-042 di aplikasi ini).
+- **Asumsi:** `label`/`label_awalan` diisi di data contoh (fallback ke kode/awalan mentah tetap berjalan, mis. tab
+  `outbox.`); batas `min`/`max` hanya yang disebut dokumen — sisanya terbuka.

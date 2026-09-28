@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { TextField } from '@/components/form/TextField';
 import { ToggleField } from '@/components/form/ToggleField';
 import { Note, SnapshotPanel, SnapshotRow } from '@/features/reprimand/components/ReprimandBits';
+import { useReprimandRule } from '@/features/settings/hooks/useSettings';
 import {
   useReprimandCategories,
   useReprimandPolicy,
@@ -140,6 +141,7 @@ export function ReprimandTypeSettingPage() {
   useEffect(() => setMode(savedMode), [savedMode]);
 
   const activeCategories = categories.filter((row) => row.active).sort((a, b) => a.levelOrder - b.levelOrder);
+  const reprimandRule = useReprimandRule();
 
   return (
     <>
@@ -153,6 +155,11 @@ export function ReprimandTypeSettingPage() {
         description="Atur kategori SP dan kebijakan standing untuk perusahaan ini. Standing selalu diturunkan dari snapshot beku saat penerbitan, bukan dari konfigurasi yang berlaku."
       >
         <div className="flex flex-col gap-5">
+          {/* REPRIMAND_RULE milik Settings › Employee — spanduk baca-saja, satu sumber nilai (TSD-SETTINGS §7.3). */}
+          <Note icon={<Info />}>
+            Reprimand rule:{' '}
+            <strong>{reprimandRule.data ?? '—'}</strong> (dikelola di Settings › Employee).
+          </Note>
           <TabMenu<Tab>
             value={tab}
             onChange={setTab}

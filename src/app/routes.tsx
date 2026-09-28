@@ -44,6 +44,7 @@ import {
   OtherFilesPage,
 } from '@/features/documents/pages/FilesPages';
 import { DocumentTemplatesPage } from '@/features/documents/pages/DocumentTemplatesPage';
+import { SettingsConfigurationPage } from '@/features/settings/pages/SettingsConfigurationPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -156,6 +157,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'company-management/files/other', element: <OtherFilesPage /> },
   { path: 'company-management/files/templates', element: <DocumentTemplatesPage /> },
   { path: 'me/files', element: <EssFilesPage /> },
+  { path: 'settings/configuration/time', element: <SettingsConfigurationPage key="time" menu="time" /> },
+  { path: 'settings/configuration/employee', element: <SettingsConfigurationPage key="employee" menu="employee" /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
   { path: 'company-management/announcements/detail', element: <AnnouncementDetailPage /> },
@@ -234,6 +237,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company-management/files/other',
   '/company-management/files/templates',
   '/me/files',
+  '/settings/configuration/time',
+  '/settings/configuration/employee',
   '/company-management/announcements',
   '/company-management/announcements/detail',
   '/me/announcements',
