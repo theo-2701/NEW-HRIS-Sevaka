@@ -51,3 +51,20 @@ export interface ResetPasswordPayload {
   password: string;
   passwordConfirmation: string;
 }
+
+/** `POST /auth/activate` — tautan undangan membawa `aid` (otp_attempt_id) + `token` (UIC §5.1). */
+export interface ActivatePayload {
+  aid: string;
+  token: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
+/** Baris "Kirim Ulang Undangan" — akun `global_status=PENDING` + tautan undangan terakhir (FSD §6.1). */
+export interface PendingInvitation {
+  employeeId: string;
+  name: string;
+  email: string;
+  sentAt: string;
+  expiresAt: string;
+}

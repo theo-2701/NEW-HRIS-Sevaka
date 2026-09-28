@@ -333,20 +333,34 @@ export const transitionService = {
       maybeComplete(find(transitionId));
       return;
     }
-    await api.post(`/transition-tasks/${taskId}/waive`, { waive_reason: payload.reason });
+    await api.post(`/transition-tasks/${taskId}/waive`, {
+      waive_reason: payload.reason,
+      waive_control_class: payload.control,
+    });
   },
 
-  /** TR-CLEARANCE force-release — elevated, tercatat di audit log. */
+  /**
+   * TR-CLEARANCE force-release = `POST /transition-tasks/{id}/waive` dengan `waive_control_class=ELEVATED`
+   * untuk tiap task clearance-blocking yang belum selesai — BUKAN endpoint terpisah (FSD-EMPLOYEE 0.15 §5.1,
+   * TSD §7.6.4). Task berakhir WAIVED (hanya dua state terminal: COMPLETED/WAIVED, `VAL-HRIS-128`).
+   */
   async forceRelease(transitionId: string, reason: string): Promise<void> {
+    const blocking = find(transitionId).tasks.filter(
+      (item) => item.clearanceBlocking && item.status !== 'COMPLETED' && item.status !== 'WAIVED',
+    );
     if (MOCK) {
       await delay();
       const row = find(transitionId);
-      row.tasks.forEach((item) => {
-        if (item.clearanceBlocking && item.status !== 'COMPLETED') item.status = 'COMPLETED';
+      blocking.forEach((item) => {
+        item.status = 'WAIVED';
+        item.skipReason = reason;
+        item.waiveControl = 'ELEVATED';
       });
       row.status = 'COMPLETED';
       return;
     }
-    await api.post(`/transitions/${transitionId}/force-release`, { reason });
+    for (const item of blocking) {
+      await api.post(`/transition-tasks/${item.id}/waive`, { waive_reason: reason, waive_control_class: 'ELEVATED' });
+    }
   },
 };

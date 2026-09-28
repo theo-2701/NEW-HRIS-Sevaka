@@ -9,10 +9,22 @@ import { toast } from '@/store/ui.store';
  * membuat `features/<fitur>/services/<nama>.service.ts` yang memakai `api`.
  */
 export const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',
   timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+/**
+ * Service GLOBAL dipanggil TANPA segmen penyewa (UIC-AUTH §1.1, UIC-NOTIFICATION 0.3 §1.1); service lain
+ * tenant-scoped: `/api/v1/{COMPANY_CODE}/<resource>` — segmen dirakit FE dari `company_code` sesi aktif,
+ * gerbang menegakkan klaim token == segmen path (UIC-COMPANY §1.1, koreksi `NTF-68`).
+ */
+const GLOBAL_PREFIXES = ['/auth/', '/notifications'];
+
+export function tenantPath(url: string, companyCode: string | null | undefined): string {
+  if (!companyCode || /^https?:\/\//.test(url) || GLOBAL_PREFIXES.some((prefix) => url.startsWith(prefix))) return url;
+  return `/${encodeURIComponent(companyCode)}${url.startsWith('/') ? url : `/${url}`}`;
+}
 
 api.interceptors.request.use((config) => {
   // Mode dummy: tidak ada HTTP call yang boleh keluar (lihat `services/mock.ts`).
@@ -21,8 +33,7 @@ api.interceptors.request.use((config) => {
   }
   const { token, companyId } = useAuthStore.getState();
   if (token) config.headers.Authorization = `Bearer ${token}`;
-  // Multi-tenant: satu akun bisa memegang beberapa perusahaan.
-  if (companyId) config.headers['X-Company-Id'] = companyId;
+  if (config.url) config.url = tenantPath(config.url, companyId);
   return config;
 });
 

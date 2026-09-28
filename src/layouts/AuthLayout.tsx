@@ -39,18 +39,13 @@ export function AuthLayout() {
       </div>
 
       <footer className={cn('flex flex-col items-center gap-2 text-center', revealClass)}>
+        {/* FSD-AUTH 0.14 §2.1: ketiga halaman tujuan belum terbit — sengaja teks, bukan tautan aktif. */}
         <div className="flex items-center gap-2 font-body text-xs font-medium text-white/80">
-          <a href="#" className="hover:underline">
-            Kebijakan privasi
-          </a>
+          <span>Kebijakan privasi</span>
           <span aria-hidden>•</span>
-          <a href="#" className="hover:underline">
-            Ketentuan penggunaan
-          </a>
+          <span>Ketentuan penggunaan</span>
           <span aria-hidden>•</span>
-          <a href="#" className="hover:underline">
-            Tentang Sevaka
-          </a>
+          <span>Tentang Sevaka</span>
         </div>
         <p className="m-0 font-body text-[11px] font-medium text-white/60">
           © 2025 PT Danamas Insan Kreasi Andalan

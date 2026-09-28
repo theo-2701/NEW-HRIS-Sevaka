@@ -8,7 +8,7 @@ import { passwordStrength, resetPasswordSchema, STRENGTH_LABELS } from '@/featur
 import { cn } from '@/lib/utils';
 
 /** Meter kekuatan password — port `.pw-strength`. */
-function PasswordStrengthMeter() {
+export function PasswordStrengthMeter() {
   const { values } = useFormikContext<{ password: string }>();
   const score = passwordStrength(values.password);
 

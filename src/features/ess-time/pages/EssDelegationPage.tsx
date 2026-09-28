@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { PageShell } from '@/components/PageShell';
-import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -17,8 +16,6 @@ import { DELEGATION_STATUS_LABEL } from '@/features/time-off/types';
 import type { Delegation, DelegationStatus } from '@/features/time-off/types';
 import { formatDate } from '@/lib/format';
 
-type Tab = 'received' | 'given';
-
 const TONE: Record<DelegationStatus, 'ok' | 'warn' | 'err' | 'mute'> = {
   PENDING_APPROVAL: 'warn',
   APPROVED: 'ok',
@@ -29,15 +26,13 @@ const TONE: Record<DelegationStatus, 'ok' | 'warn' | 'err' | 'mute'> = {
 /**
  * ESS › Time Management › Time Off › Delegation — penitipan kewenangan approval (UIC-TIME §3.2).
  *
- * Dua arah dipisah jadi dua tab: **dititipkan kepada saya** (menu ESS yang kontraknya sebut
- * "kewenangan apa saja yang sedang dititipkan kepada saya", §3.2.4) dan **saya titipkan** saat
- * cuti. Status di sini adalah status **persetujuan penunjukan**, bukan aktif-tidaknya: delegasi
+ * Menu ini = "kewenangan apa saja yang sedang SAYA TITIPKAN kepada orang lain" — filter `employee_id`
+ * (pemberi), bukan arah sebaliknya (dikoreksi UIC-TIME 0.14 §3.2.4). Status di sini adalah status **persetujuan penunjukan**, bukan aktif-tidaknya: delegasi
  * dan cuti induknya diputuskan bersamaan, tanpa jalur menyetujui delegasi terpisah. Masa berlaku
  * mengikuti tanggal cuti induknya — resource ini memang tidak punya kolom periode sendiri.
  */
 export function EssDelegationPage() {
-  const [actor, setActor] = useState(ESS_VIEWERS[1]);
-  const [tab, setTab] = useState<Tab>('received');
+  const [actor, setActor] = useState(ESS_VIEWERS.find((row) => row.employeeId === 'emp-hendra') ?? ESS_VIEWERS[1]);
   const delegations = useMyDelegations(actor);
   /* Menitipkan kewenangan hanya sah bagi pemegang peran approver (§3.2) — sesi tulis memakai peran asli. */
   const session = essDelegationSession(actor);
@@ -46,9 +41,7 @@ export function EssDelegationPage() {
   const [editing, setEditing] = useState<Delegation | null>(null);
   const [cancelling, setCancelling] = useState<Delegation | null>(null);
 
-  const received = delegations.data?.received ?? [];
-  const given = delegations.data?.given ?? [];
-  const rows = tab === 'received' ? received : given;
+  const rows = delegations.data ?? [];
 
   return (
     <PageShell
@@ -63,44 +56,29 @@ export function EssDelegationPage() {
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
-        <TabMenu<Tab>
-          value={tab}
-          onChange={setTab}
-          items={[
-            { value: 'received', label: 'Dititipkan ke saya', count: received.length },
-            { value: 'given', label: 'Saya titipkan', count: given.length },
-          ]}
-        />
-
         <Card>
           <CardHead
-            title={tab === 'received' ? 'Kewenangan yang dititipkan ke saya' : 'Kewenangan yang saya titipkan'}
+            title="Kewenangan yang saya titipkan"
             sub="Masa berlakunya mengikuti tanggal cuti induk; status di sini adalah status persetujuan penunjukan"
           />
-          {tab === 'given' && (
-            <TableToolbar
-              actions={
-                <AddButton disabled={!actor.isApprover} onClick={() => setForm(true)}>
-                  Titipkan kewenangan
-                </AddButton>
-              }
-            />
-          )}
+          <TableToolbar
+            actions={
+              <AddButton disabled={!actor.isApprover} onClick={() => setForm(true)}>
+                Titipkan kewenangan
+              </AddButton>
+            }
+          />
           <DataTable<Delegation>
             rows={rows}
             rowKey={(row) => row.id}
             loading={delegations.isLoading}
-            empty={
-              tab === 'received'
-                ? 'Belum ada kewenangan yang dititipkan kepada Anda.'
-                : 'Anda belum menitipkan kewenangan approval.'
-            }
+            empty="Anda belum menitipkan kewenangan approval."
             columns={[
               {
                 key: 'counterpart',
-                header: tab === 'received' ? 'Pemberi delegasi' : 'Pengganti',
+                header: 'Pengganti',
                 strong: true,
-                render: (row) => essName(tab === 'received' ? row.delegatorId : row.substituteId),
+                render: (row) => essName(row.substituteId),
               },
               {
                 key: 'leave',
@@ -118,7 +96,7 @@ export function EssDelegationPage() {
               { key: 'created', header: 'Diajukan', muted: true, nowrap: true, render: (row) => formatDate(row.createdAt) },
             ]}
             actions={(row) =>
-              tab === 'given' && row.status === 'PENDING_APPROVAL' ? (
+              row.status === 'PENDING_APPROVAL' ? (
                 <RowActions
                   actions={[
                     {
@@ -136,8 +114,8 @@ export function EssDelegationPage() {
           />
           {!actor.isApprover && (
             <p className="mt-2 font-body text-xs font-medium text-fg-4">
-              Anda tidak memegang peran approver, jadi tidak pernah perlu menitipkan kewenangan — kolom "Saya titipkan"
-              memang kosong untuk identitas ini.
+              Anda tidak memegang peran approver, jadi tidak pernah perlu menitipkan kewenangan — daftar ini memang
+              kosong untuk identitas ini.
             </p>
           )}
         </Card>

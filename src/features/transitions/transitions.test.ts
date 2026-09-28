@@ -132,13 +132,20 @@ describe('Task — dua pihak, waive, dan clearance', () => {
     expect(waived.skipReason).toBe('Vendor terlambat');
   });
 
-  it('force-release membersihkan task blocking dan menutup offboarding', async () => {
+  it('force-release = waive ELEVATED atas task blocking yang terbuka, lalu offboarding tertutup (FSD 0.15)', async () => {
     const rows = await transitionService.list();
     const offboarding = rows.find((row) => row.type === 'OFFBOARDING' && row.status === 'IN_PROGRESS')!;
+    const openBlocking = offboarding.tasks
+      .filter((task) => task.clearanceBlocking && task.status !== 'COMPLETED' && task.status !== 'WAIVED')
+      .map((task) => task.id);
     await transitionService.forceRelease(offboarding.id, 'Karyawan sudah tidak dapat dihubungi');
     const after = await transitionService.get(offboarding.id);
     expect(after.status).toBe('COMPLETED');
-    expect(after.tasks.filter((task) => task.clearanceBlocking && task.status !== 'COMPLETED')).toHaveLength(0);
+    const released = after.tasks.filter((task) => openBlocking.includes(task.id));
+    expect(released.every((task) => task.status === 'WAIVED' && task.waiveControl === 'ELEVATED')).toBe(true);
+    expect(
+      after.tasks.filter((task) => task.clearanceBlocking && !['COMPLETED', 'WAIVED'].includes(task.status)),
+    ).toHaveLength(0);
   });
 
   it('progres menghitung COMPLETED, WAIVED, dan SKIPPED sebagai selesai', async () => {

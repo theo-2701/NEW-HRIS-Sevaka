@@ -382,12 +382,12 @@ export function BulkAssignModal({
   onClose: () => void;
 }) {
   const run = useRunBulk();
-  const [draft, setDraft] = useState<BulkDraft>({ employeeIds: [], from: '', to: '', shiftId: '' });
+  const [draft, setDraft] = useState<BulkDraft>({ employeeIds: [], from: '', to: '', shiftId: '', isOffDay: false });
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (open) {
-      setDraft({ employeeIds: [], from: '', to: '', shiftId: '' });
+      setDraft({ employeeIds: [], from: '', to: '', shiftId: '', isOffDay: false });
       setSearch('');
     }
   }, [open]);
@@ -481,11 +481,25 @@ export function BulkAssignModal({
           </div>
         </div>
 
+        <label className="flex cursor-pointer items-center gap-3">
+          <Checkbox
+            checked={Boolean(draft.isOffDay)}
+            onCheckedChange={(value) => setDraft((prev) => ({ ...prev, isOffDay: value === true, shiftId: '' }))}
+          />
+          <span className="font-body text-[13px] font-medium text-fg-2">
+            Mass day off — set these dates as off days without a shift pattern
+          </span>
+        </label>
+
         <div className="flex flex-col gap-1">
           <Label>
-            Shift pattern<em>*</em>
+            Shift pattern{!draft.isOffDay && <em>*</em>}
           </Label>
-          <Select value={draft.shiftId} onValueChange={(shiftId) => setDraft((prev) => ({ ...prev, shiftId }))}>
+          <Select
+            value={draft.shiftId}
+            disabled={Boolean(draft.isOffDay)}
+            onValueChange={(shiftId) => setDraft((prev) => ({ ...prev, shiftId }))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select shift pattern" />
             </SelectTrigger>

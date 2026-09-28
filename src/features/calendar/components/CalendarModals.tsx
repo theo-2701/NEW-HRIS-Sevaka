@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Form, Formik, useFormikContext } from 'formik';
 import * as Yup from 'yup';
 import { Lock, ShieldCheck, TriangleAlert } from 'lucide-react';
@@ -146,6 +146,8 @@ export function HolidayFormModal({
   const save = useSaveHoliday();
   const locked = Boolean(editing);
   const wasDraft = editing?.approvalStatus === 'DRAFT';
+  /** Tombol mana yang memicu submit Formik — Simpan (tetap Draft) atau Simpan & ajukan. */
+  const submitIntent = useRef(false);
 
   const initial: HolidayDraft = editing
     ? {
@@ -174,7 +176,7 @@ export function HolidayFormModal({
       enableReinitialize
       onSubmit={(values, helpers) =>
         save.mutate(
-          { draft: values, id: editing?.id, wasDraft },
+          { draft: values, id: editing?.id, wasDraft, submit: submitIntent.current },
           {
             onSuccess: () => {
               helpers.resetForm();
@@ -196,7 +198,9 @@ export function HolidayFormModal({
             title={editing ? 'Edit holiday' : 'New holiday'}
             description={
               editing
-                ? 'Hanya nama dan sumber yang terbuka. Menyimpan baris Draft sekaligus mengajukannya untuk approval.'
+                ? wasDraft
+                  ? 'Hanya nama dan sumber yang terbuka. Save menyimpan tetap Draft; Save & submit sekaligus mengajukannya untuk approval.'
+                  : 'Hanya nama dan sumber yang terbuka.'
                 : 'Libur regional dan company saja — layer nasional disemai sistem dan tidak bisa dibuat di sini.'
             }
             size="wide"
@@ -205,9 +209,39 @@ export function HolidayFormModal({
                 <Button variant="secondary" onClick={close}>
                   Cancel
                 </Button>
-                <Button onClick={submitForm} disabled={save.isPending}>
-                  {editing ? (wasDraft ? 'Save & submit for approval' : 'Save changes') : 'Save as draft'}
-                </Button>
+                {editing && wasDraft ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      disabled={save.isPending}
+                      onClick={() => {
+                        submitIntent.current = false;
+                        void submitForm();
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      disabled={save.isPending}
+                      onClick={() => {
+                        submitIntent.current = true;
+                        void submitForm();
+                      }}
+                    >
+                      Save & submit for approval
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      submitIntent.current = false;
+                      void submitForm();
+                    }}
+                    disabled={save.isPending}
+                  >
+                    {editing ? 'Save changes' : 'Save as draft'}
+                  </Button>
+                )}
               </>
             }
           >

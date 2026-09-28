@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/features/auth/services/auth.service';
 import { useAuthFlowStore } from '@/features/auth/store/authFlow.store';
@@ -120,6 +120,12 @@ export function useResetPassword() {
     onError: (error: Error) => toast(error.message, 'danger'),
   });
 }
+
+export const pendingInvitationKeys = ['auth', 'pending-invitations'] as const;
+
+/** Akun menunggu aktivasi (FSD-AUTH §6) — untuk antrean Dashboard dan modal Kirim Ulang Undangan. */
+export const usePendingInvitations = (enabled = true) =>
+  useQuery({ queryKey: pendingInvitationKeys, queryFn: () => authService.pendingInvitations(), enabled });
 
 /** Hitung mundur detik — dipakai countdown OTP (TTL 5 menit). */
 export function useCountdown(seconds: number) {

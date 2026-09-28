@@ -36,14 +36,16 @@ function useCalendarMutation<TVars, TResult = void>(
 }
 
 export const useSaveHoliday = () =>
-  useCalendarMutation<{ draft: HolidayDraft; id?: string; wasDraft?: boolean }>(
-    ({ draft, id }) => calendarService.saveHoliday(draft, id).then(() => undefined),
-    (_result, { id, wasDraft }) => ({
+  useCalendarMutation<{ draft: HolidayDraft; id?: string; wasDraft?: boolean; submit?: boolean }>(
+    ({ draft, id, submit }) => calendarService.saveHoliday(draft, id, submit).then(() => undefined),
+    (_result, { id, wasDraft, submit }) => ({
       text: !id
         ? '201 — libur tersimpan sebagai Draft. Buka "Edit & submit" untuk memulai approval.'
-        : wasDraft
+        : wasDraft && submit
           ? '200 — tersimpan sekaligus diajukan; barisnya kini menunggu checker.'
-          : '200 — perubahan tersimpan; status approval tidak tersentuh.',
+          : wasDraft
+            ? '200 — tersimpan; baris tetap Draft dan belum diajukan.'
+            : '200 — perubahan tersimpan; status approval tidak tersentuh.',
     }),
   );
 

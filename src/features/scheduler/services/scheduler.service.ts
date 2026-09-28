@@ -295,7 +295,9 @@ export const schedulerService = {
       if (!draft.employeeIds.length) throw new Error('422 — pilih minimal satu karyawan.');
       if (!draft.from || !draft.to) throw new Error('422 — kedua tanggal rentang wajib diisi.');
       if (draft.to < draft.from) throw new Error('422 — akhir rentang tidak boleh mendahului awalnya.');
-      if (!draft.shiftId) throw new Error('422 — pilih pola shift yang akan diterapkan.');
+      if (!draft.shiftId && !draft.isOffDay) throw new Error('422 — pilih pola shift yang akan diterapkan.');
+      const shiftId = draft.isOffDay ? null : draft.shiftId;
+      const isOffDay = Boolean(draft.isOffDay);
 
       const preview = schedulerService.previewBulk(draft);
 
@@ -311,8 +313,8 @@ export const schedulerService = {
             ) {
               return;
             }
-            existing.shiftId = draft.shiftId;
-            existing.isOffDay = false;
+            existing.shiftId = shiftId;
+            existing.isOffDay = isOffDay;
             existing.assignmentSource = 'BULK_UNIT';
             return;
           }
@@ -322,8 +324,8 @@ export const schedulerService = {
               id: `as-${mockAssignments.length + 100}`,
               employeeId,
               workDate: iso,
-              shiftId: draft.shiftId,
-              isOffDay: false,
+              shiftId,
+              isOffDay,
               assignmentSource: 'BULK_UNIT',
             },
           ];
@@ -333,7 +335,13 @@ export const schedulerService = {
       return { ...preview, skipped: preview.skippedIndividual + preview.skippedSwap };
     }
 
-    const { data } = await api.post<BulkResult>('/shift-assignments/bulk', draft);
+    // Tepat satu bentuk cakupan: layar ini selalu mengirim daftar eksplisit `employee_ids[]`.
+    const { data } = await api.post<BulkResult>('/shift-assignments/bulk', {
+      employee_ids: draft.employeeIds,
+      start_date: draft.from,
+      end_date: draft.to || undefined,
+      ...(draft.isOffDay ? { is_off_day: true } : { shift_id: draft.shiftId, is_off_day: false }),
+    });
     return data;
   },
 

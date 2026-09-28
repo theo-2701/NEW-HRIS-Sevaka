@@ -19,16 +19,12 @@ export const essTimeService = {
   },
 
   /**
-   * Delegasi yang menyentuh pemanggil, dua arah: yang ia titipkan saat cuti (`delegatorId`) dan
-   * yang dititipkan kepadanya (`substituteId` — menu ESS "kewenangan apa saja yang sedang
-   * dititipkan kepada saya", UIC §3.2.4).
+   * Menu ESS Delegation = "kewenangan yang SAYA TITIPKAN kepada orang lain" — filter `employee_id`
+   * (pemanggil sebagai pemberi), BUKAN `substitute_id` (dikoreksi UIC-TIME 0.14 §3.2.4, `TIM-165`).
    */
-  async myDelegations(actor: EssActor): Promise<{ given: Delegation[]; received: Delegation[] }> {
+  async myDelegations(actor: EssActor): Promise<Delegation[]> {
     const rows = await timeOffService.delegations();
-    return {
-      given: rows.filter((row) => row.delegatorId === actor.employeeId),
-      received: rows.filter((row) => row.substituteId === actor.employeeId),
-    };
+    return rows.filter((row) => row.delegatorId === actor.employeeId);
   },
 
   /** Riwayat mutasi saldo milik sendiri — padanan `POST /leave-balance-ledgers/me-search` (§4.1.3). */

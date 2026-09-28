@@ -15,9 +15,9 @@ import { essReadSession } from '@/features/ess-time/types';
 import { useMyBalances, useMyLeaveRequests } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS } from '@/features/ess-time/mock-data';
 import { leaveTypeOf } from '@/features/time-off/mock-data';
-import { REQUEST_STATUS_LABEL, SESSION_LABEL } from '@/features/time-off/types';
+import { REQUEST_STATUS_LABEL, SESSION_LABEL, DEMO_NOW } from '@/features/time-off/types';
 import type { LeaveBalance, LeaveRequest, RequestStatus } from '@/features/time-off/types';
-import { formatDate } from '@/lib/format';
+import { formatDate, toIsoDate } from '@/lib/format';
 
 type Tab = 'requests' | 'balance';
 
@@ -155,7 +155,12 @@ export function EssTimeOffPage() {
                       },
                     });
                   }
-                  if (row.status === 'PENDING_APPROVAL' || row.status === 'APPROVED' || row.status === 'AUTO_APPROVED') {
+                  // APPROVED boleh ditarik selama tanggal mulainya belum tiba (UIC-TIME 0.14 §3.1.5).
+                  const withdrawable =
+                    row.status === 'PENDING_APPROVAL' ||
+                    row.status === 'AUTO_APPROVED' ||
+                    (row.status === 'APPROVED' && row.startDate > toIsoDate(DEMO_NOW));
+                  if (withdrawable) {
                     actions.push({ label: 'Tarik pengajuan', danger: true, onSelect: () => setWithdrawing(row) });
                   }
                   return actions.length ? <RowActions actions={actions} /> : null;

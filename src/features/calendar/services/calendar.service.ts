@@ -100,7 +100,12 @@ export const calendarService = {
   },
 
   /** Baru → DRAFT. Menyimpan DRAFT = sekaligus mengajukan untuk approval. */
-  async saveHoliday(draft: HolidayDraft, id?: string): Promise<CalendarHoliday> {
+  /**
+   * Baris Draft punya DUA aksi simpan terpisah (FSD-TIME 0.6 §1.1/§1.3, `CAL-2`): *Simpan* =
+   * `PUT` tanpa `approval_status` (tetap Draft); *Simpan & Ajukan* = `PUT {approval_status:
+   * "PENDING_APPROVAL"}`. Menyimpan Draft TIDAK lagi otomatis mengajukannya.
+   */
+  async saveHoliday(draft: HolidayDraft, id?: string, submit = false): Promise<CalendarHoliday> {
     if (MOCK) {
       await delay(350);
       const name = draft.holidayName.trim();
@@ -114,7 +119,7 @@ export const calendarService = {
         // Hanya nama dan sumber yang terbuka; tanggal/tipe/scope beku.
         row.holidayName = name;
         row.source = draft.source.trim();
-        if (row.approvalStatus === 'DRAFT') row.approvalStatus = 'PENDING_APPROVAL';
+        if (submit && row.approvalStatus === 'DRAFT') row.approvalStatus = 'PENDING_APPROVAL';
         return cloneHoliday(row);
       }
 
@@ -159,7 +164,11 @@ export const calendarService = {
     }
 
     const { data } = id
-      ? await api.put<CalendarHoliday>(`/holidays/${id}`, { holiday_name: draft.holidayName, source: draft.source })
+      ? await api.put<CalendarHoliday>(`/holidays/${id}`, {
+          holiday_name: draft.holidayName,
+          source: draft.source,
+          ...(submit ? { approval_status: 'PENDING_APPROVAL' } : {}),
+        })
       : await api.post<CalendarHoliday>('/holidays', draft);
     return data;
   },

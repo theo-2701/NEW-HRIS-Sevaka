@@ -81,6 +81,7 @@ import { VerifyMagicLinkPage } from '@/features/auth/pages/VerifyMagicLinkPage';
 import { OtpPage } from '@/features/auth/pages/OtpPage';
 import { ForgotPasswordPage, ForgotPasswordSentPage } from '@/features/auth/pages/ForgotPasswordPage';
 import { ResetPasswordDonePage, ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage';
+import { ActivateAccountDonePage, ActivateAccountPage } from '@/features/auth/pages/ActivateAccountPage';
 
 /**
  * Route modul yang sudah punya komponen nyata.
@@ -272,6 +273,8 @@ export const routes: RouteObject[] = [
       { path: 'forgot-password/sent', element: <ForgotPasswordSentPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'reset-password/done', element: <ResetPasswordDonePage /> },
+      { path: 'activate', element: <ActivateAccountPage /> },
+      { path: 'activate/done', element: <ActivateAccountDonePage /> },
     ],
   },
   {

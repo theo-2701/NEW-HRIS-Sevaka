@@ -30,12 +30,12 @@ describe('ESS Time — cakupan selalu milik pemanggil', () => {
     expect(overtime.every((row) => row.employeeId === RINA.employeeId)).toBe(true);
   });
 
-  it('delegasi dipisah dua arah: yang dititipkan ke saya dan yang saya titipkan', async () => {
-    const sari = await essTimeService.myDelegations(SARI);
-    expect(sari.received.every((row) => row.substituteId === SARI.employeeId)).toBe(true);
-    expect(sari.given.every((row) => row.delegatorId === SARI.employeeId)).toBe(true);
-
-    // Dataset contoh menitipkan kewenangan kepada Sari, jadi sisi "received"-nya tidak kosong.
-    expect(sari.received.length).toBeGreaterThan(0);
+  it('delegasi ESS hanya yang SAYA titipkan (employee_id pemberi, UIC-TIME 0.14 §3.2.4)', async () => {
+    // Sari hanya penerima titipan di dataset — menu ESS-nya kosong, bukan menampilkan titipan orang lain.
+    expect(await essTimeService.myDelegations(SARI)).toEqual([]);
+    const hendra = ESS_VIEWERS.find((row) => row.employeeId === 'emp-hendra')!;
+    const given = await essTimeService.myDelegations(hendra);
+    expect(given.length).toBeGreaterThan(0);
+    expect(given.every((row) => row.delegatorId === 'emp-hendra')).toBe(true);
   });
 });

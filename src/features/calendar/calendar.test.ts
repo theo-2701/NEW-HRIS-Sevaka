@@ -44,13 +44,16 @@ describe('Holiday — dua lapis', () => {
     expect(row.isSystem).toBe(false);
   });
 
-  it('menyimpan baris Draft sekaligus mengajukannya', async () => {
+  it('baris Draft: Simpan tetap Draft, Simpan & Ajukan mengajukan (FSD-TIME 0.6 §1.1)', async () => {
     const draftRow = HOLIDAYS.find((row) => row.approvalStatus === 'DRAFT')!;
-    const row = await calendarService.saveHoliday(
+    const saved = await calendarService.saveHoliday({ ...holidayDraft, holidayName: 'HUT Unit Ops' }, draftRow.id);
+    expect(saved.approvalStatus).toBe('DRAFT');
+    const submitted = await calendarService.saveHoliday(
       { ...holidayDraft, holidayName: 'HUT Unit Operations' },
       draftRow.id,
+      true,
     );
-    expect(row.approvalStatus).toBe('PENDING_APPROVAL');
+    expect(submitted.approvalStatus).toBe('PENDING_APPROVAL');
   });
 
   it('slot tanggal × tipe × scope dipegang baris hidup apa pun, termasuk yang ditolak', async () => {

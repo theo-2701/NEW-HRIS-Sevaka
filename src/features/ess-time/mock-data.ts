@@ -9,6 +9,7 @@ export const ESS_VIEWERS: EssActor[] = [
   { employeeId: 'emp-rina', label: 'Rina — Karyawan', isApprover: false },
   { employeeId: 'emp-budi', label: 'Budi — Dept Manager (juga karyawan)', isApprover: true },
   { employeeId: 'emp-sari', label: 'Sari — Penerima delegasi', isApprover: true },
+  { employeeId: 'emp-hendra', label: 'Hendra — HR Manager (juga karyawan)', isApprover: true },
 ];
 
 export const essName = (id: string) =>

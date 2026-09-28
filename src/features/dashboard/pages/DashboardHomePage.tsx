@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, FileClock, LockKeyhole, Megaphone } from 'lucide-react';
+import { CalendarClock, FileClock, LockKeyhole, MailPlus, Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UnlockAccountModal } from '@/features/dashboard/components/UnlockAccountModal';
+import { ResendInvitationModal } from '@/features/dashboard/components/ResendInvitationModal';
+import { usePendingInvitations } from '@/features/auth/hooks/useAuth';
 import { useDashboardSummary, useHomeStats, useMe } from '@/features/dashboard/hooks/useDashboard';
 import { ActionQueue, type QueueItem } from '@/features/dashboard/home/ActionQueue';
 import { HomeHeader } from '@/features/dashboard/home/HomeHeader';
@@ -40,12 +42,14 @@ export function DashboardHomePage() {
   const companyId = useAuthStore((s) => s.companyId);
   const companyLayer = canSeeCompanyLayer(user?.role);
   const [unlockOpen, setUnlockOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const { data: me } = useMe();
   const summary = useDashboardSummary();
   const stats = useHomeStats();
   const leave = useLeaveRequests(APPROVER);
   const drafts = useAnnouncements(DRAFT_FILTER);
+  const invitations = usePendingInvitations(companyLayer);
 
   const contracts = summary.data?.contracts ?? [];
   const endingSoon = contracts.filter((row) => {
@@ -71,6 +75,14 @@ export function DashboardHomePage() {
       icon: LockKeyhole,
       detail: 'Terkunci otomatis setelah 5× gagal login; terbuka sendiri dalam 15 menit.',
       action: { label: 'Buka kunci', onClick: () => setUnlockOpen(true) },
+    },
+    {
+      key: 'invitations',
+      count: invitations.data ? invitations.data.length : null,
+      title: 'Akun menunggu aktivasi',
+      detail: 'Undangan belum dipakai pemiliknya; kirim ulang bila tautannya hilang atau kedaluwarsa.',
+      icon: MailPlus,
+      action: { label: 'Kirim ulang', onClick: () => setInviteOpen(true) },
     },
     {
       key: 'contracts',
@@ -130,6 +142,7 @@ export function DashboardHomePage() {
       <WorkforcePanel summary={summary.data} />
 
       <UnlockAccountModal open={unlockOpen} onOpenChange={setUnlockOpen} />
+      <ResendInvitationModal open={inviteOpen} onOpenChange={setInviteOpen} />
     </>
   );
 }

@@ -74,10 +74,13 @@ export interface AssignmentDraft {
 }
 
 export interface BulkDraft {
+  /** Bentuk daftar eksplisit `employee_ids[]` — alternatif `scope_level`+`scope_ref` (UIC-TIME 0.14 §10.2.2). */
   employeeIds: string[];
   from: string;
   to: string;
   shiftId: string;
+  /** Libur massal: tanpa pola shift (`is_off_day: true`, `shift_id` tidak wajib). */
+  isOffDay?: boolean;
 }
 
 /** Hitungan kering sebelum bulk dijalankan — barisnya belum bergerak. */

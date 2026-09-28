@@ -422,10 +422,11 @@ export const announcementService = {
         .map((row) => ({ id: row.id, title: row.title, publishedAt: row.publishLog.at(-1)!.publishedAt }))
         .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     }
-    const { data } = await api.get<{ data: { announcement_id: string; title: string; published_at: string }[] }>(
+    // Array BARE di akar, bukan amplop grid (UIC-COMPANY 0.27 §3C.6).
+    const { data } = await api.get<{ announcement_id: string; title: string; published_at: string }[]>(
       '/company/my-announcements',
     );
-    return data.data.map((raw) => ({ id: raw.announcement_id, title: raw.title, publishedAt: raw.published_at }));
+    return data.map((raw) => ({ id: raw.announcement_id, title: raw.title, publishedAt: raw.published_at }));
   },
 
   /** Salah sasaran atau masih rancangan → 404, bukan 403 (anti-enumerasi). */

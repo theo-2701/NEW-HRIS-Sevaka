@@ -178,6 +178,8 @@ layar di sini tanpa keputusan kontrak.
 |---|---|
 | `add-employee.html` | Dibuka dari tombol di halaman New Joiner, bukan dari menu. |
 | `auth.html` | Layar login; di luar shell bernavigasi. |
+| *(FSD-AUTH 0.14 §5, tanpa prototype)* Aktivasi Akun | `/auth/activate?aid=…&token=…` + `/auth/activate/done` — halaman publik dari tautan email undangan, tanpa sesi dan tanpa menu. |
+| *(FSD-AUTH 0.14 §6, tanpa prototype)* Kirim Ulang Undangan | Modal dari baris "Akun menunggu aktivasi" di panel Perlu tindak lanjut (Dashboard) — menu "Manajemen Akun" tidak ada di pohon sidebar kontrak. |
 | `company-asset-detail.html` | Halaman detail aset; bentuk `:id` saat modul Assets dikonversi. |
 | `company-integration-contact.html` | Belum punya baris menu di kontrak. |
 | `finance-loan-detail.html` | Sudah dikonversi ke `/finance/loan/detail?id=…`; dibuka dari baris tabel Loan, bukan dari menu. |

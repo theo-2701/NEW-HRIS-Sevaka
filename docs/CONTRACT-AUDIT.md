@@ -455,3 +455,24 @@ Templates (`/company-management/files/*`) dan ESS Files (`/me/files`).
   Jejak Akses Dokumen, Malware Alerts, dan halaman publik Pemeriksaan Keaslian.
 - **Asumsi**: regex nama templat dan daftar "ungkapan mesin templat" belum dikutip dari TSD §18 — dipakai
   pendekatan (`${`, `<%`, `{%` ditolak; `%%penanda%%` dan `{{letter_no}}` sah).
+
+## 17. Rilis FE-240926 (24 September 2026)
+
+Sumber: `HRIS-docs/.../September Handoff (Delivery)/FE-240926/FE-240926/`. Berubah: FSD/UIC AUTH 0.14/0.19,
+FSD/UIC EMPLOYEE 0.16/0.35, FSD/UIC NOTIFICATION 0.5/0.3, FSD/UIC TIME 0.10/0.14, UIC COMPANY 0.27, UIC INSIGHT 0.4
+(baru). Dokumen berversi sama dicek md5 — isinya identik.
+
+| Area | Perubahan kontrak | Tindakan di repo |
+|---|---|---|
+| Auth | FSD 0.13 §5 Aktivasi Akun (`POST /auth/activate`, 401/422/502 dibedakan) | Halaman publik `/auth/activate` (AA-1/AA-ERR/AA-DONE); 502 menyatakan tautan masih hidup |
+| Auth | FSD 0.13 §6 Kirim Ulang Undangan (`POST /auth/resend-invitation`, 422 → paksa `force_invalidate`) | Modal dari antrean Dashboard "Akun menunggu aktivasi"; RI-CONFIRM = ConfirmDialog "Kirim Ulang Paksa". **GAP:** alamat daftar akun menunggu aktivasi belum berkontrak — data contoh |
+| Auth | FSD 0.14 §2.1 footer Kebijakan/Ketentuan/Tentang tanpa tautan aktif (halaman belum ada) | Footer login jadi teks biasa |
+| Company / Notification | UIC-COMPANY 0.27: `my-announcements` daftar = array BARE; UIC/FSD-NOTIFICATION 0.3/0.5: alamat tenant-scoped wajib `/api/v1/{COMPANY_CODE}/…` | `myList` membaca array bare; interceptor axios merakit prefix `{COMPANY_CODE}` untuk semua service kecuali global (`/auth`, `/notifications`); baseURL `/api/v1` |
+| Employee | UIC 0.34/0.35 + FSD 0.16: requisition `reason`; regex `candidate_name` §8.9 | Sudah sesuai sejak audit 23 Sep — tanpa perubahan |
+| Employee | FSD 0.15 §5.1: Force-release = `POST /transition-tasks/{id}/waive` `waive_control_class=ELEVATED` | `forceRelease` mem-waive tiap task blocking (status WAIVED, bukan COMPLETED); `waiveTask` mengirim `waive_control_class` |
+| Time | UIC 0.14 §3.2.4: menu ESS Delegation = yang SAYA titipkan (`employee_id` pemberi) | Tab "Dititipkan ke saya" dihapus; satu daftar pemberi; Hendra ditambah ke pemilih identitas ESS |
+| Time | UIC 0.14 §3.1.5: APPROVED boleh ditarik selama `start_date` belum tiba | Tombol Tarik di ESS Time Off mengikuti aturan ini (service & HR sudah sesuai) |
+| Time | FSD 0.6 §1.1: baris Draft Holiday punya dua simpan — Simpan (tetap Draft) & Simpan & Ajukan | Footer modal Holiday Draft kini dua tombol; service `saveHoliday(…, submit)` |
+| Time | UIC 0.14 §10.2.2: bulk roster `employee_ids[]` ATAU `scope_level`+`scope_ref`, plus `is_off_day` | Body API dipetakan ke `employee_ids`; opsi "Mass day off" di modal bulk |
+| Time | FSD 0.6: Scheduler penempatan = peran HR saja; Overtime Tarik = dialog kustom | Sudah sesuai — tanpa perubahan |
+| Time | FSD 0.7–0.10 | Hanya perapian repositori gambar — tanpa dampak kode |
