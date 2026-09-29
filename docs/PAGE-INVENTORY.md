@@ -139,16 +139,16 @@ Prototype: 88 file HTML · Route bernav: 93
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/settings/change-history` | Change History | `settings-change-history.html` | todo |
-| `/settings/configuration/document` | Document | `settings-configuration.html` | todo |
-| `/settings/configuration/employee` | Employee | `settings-configuration.html` | todo |
-| `/settings/configuration/finance` | Finance | `settings-configuration.html` | todo |
-| `/settings/configuration/organization` | Organization | `settings-configuration.html` | todo |
-| `/settings/configuration/payroll` | Payroll | `settings-configuration.html` | todo |
-| `/settings/configuration/performance` | Performance | `settings-configuration.html` | todo |
-| `/settings/configuration/productivity` | Productivity | `settings-configuration.html` | todo |
-| `/settings/configuration/time` | Time | `settings-configuration.html` | todo |
-| `/settings/erasure-requests` | Personal Data Erasure | `settings-erasure-requests.html` | todo |
+| `/settings/change-history` | Change History | `settings-change-history.html` | done |
+| `/settings/configuration/document` | Document | `settings-configuration.html` | done |
+| `/settings/configuration/employee` | Employee | `settings-configuration.html` | done |
+| `/settings/configuration/finance` | Finance | `settings-configuration.html` | done |
+| `/settings/configuration/organization` | Organization | `settings-configuration.html` | done |
+| `/settings/configuration/payroll` | Payroll | `settings-configuration.html` | done |
+| `/settings/configuration/performance` | Performance | `settings-configuration.html` | done |
+| `/settings/configuration/productivity` | Productivity | `settings-configuration.html` | done |
+| `/settings/configuration/time` | Time | `settings-configuration.html` | done |
+| `/settings/erasure-requests` | Personal Data Erasure | `settings-erasure-requests.html` | done |
 
 ## Recruitment
 

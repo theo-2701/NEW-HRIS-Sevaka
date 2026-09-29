@@ -45,6 +45,8 @@ import {
 } from '@/features/documents/pages/FilesPages';
 import { DocumentTemplatesPage } from '@/features/documents/pages/DocumentTemplatesPage';
 import { SettingsConfigurationPage } from '@/features/settings/pages/SettingsConfigurationPage';
+import { SettingsChangeHistoryPage } from '@/features/settings/pages/SettingsChangeHistoryPage';
+import { ErasureRequestsPage } from '@/features/settings/pages/ErasureRequestsPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -158,7 +160,24 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'company-management/files/templates', element: <DocumentTemplatesPage /> },
   { path: 'me/files', element: <EssFilesPage /> },
   { path: 'settings/configuration/time', element: <SettingsConfigurationPage key="time" menu="time" /> },
+  { path: 'settings/configuration/finance', element: <SettingsConfigurationPage key="finance" menu="finance" /> },
+  { path: 'settings/configuration/payroll', element: <SettingsConfigurationPage key="payroll" menu="payroll" /> },
+  {
+    path: 'settings/configuration/performance',
+    element: <SettingsConfigurationPage key="performance" menu="performance" />,
+  },
+  {
+    path: 'settings/configuration/productivity',
+    element: <SettingsConfigurationPage key="productivity" menu="productivity" />,
+  },
+  { path: 'settings/configuration/document', element: <SettingsConfigurationPage key="document" menu="document" /> },
+  {
+    path: 'settings/configuration/organization',
+    element: <SettingsConfigurationPage key="organization" menu="organization" />,
+  },
   { path: 'settings/configuration/employee', element: <SettingsConfigurationPage key="employee" menu="employee" /> },
+  { path: 'settings/change-history', element: <SettingsChangeHistoryPage /> },
+  { path: 'settings/erasure-requests', element: <ErasureRequestsPage /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
   { path: 'company-management/announcements/detail', element: <AnnouncementDetailPage /> },
@@ -238,7 +257,15 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company-management/files/templates',
   '/me/files',
   '/settings/configuration/time',
+  '/settings/configuration/finance',
+  '/settings/configuration/payroll',
+  '/settings/configuration/performance',
+  '/settings/configuration/productivity',
+  '/settings/configuration/document',
+  '/settings/configuration/organization',
   '/settings/configuration/employee',
+  '/settings/change-history',
+  '/settings/erasure-requests',
   '/company-management/announcements',
   '/company-management/announcements/detail',
   '/me/announcements',
@@ -257,10 +284,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
  */
 const PLACEHOLDERS: RouteObject[] = NAV_PATHS.filter(
   (entry) => !IMPLEMENTED_PATHS.has(entry.path) && entry.path !== '/verify',
-).map((entry) => ({
-  path: entry.path.replace(/^\//, ''),
-  element: <PlaceholderPage />,
-}));
+).map((entry) => ({ path: entry.path.replace(/^\//, ''), element: <PlaceholderPage /> }));
 
 export const routes: RouteObject[] = [
   {

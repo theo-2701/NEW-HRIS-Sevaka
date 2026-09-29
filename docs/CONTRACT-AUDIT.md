@@ -496,3 +496,42 @@ Dibangun di `src/features/settings/` (route `/settings/configuration/time` dan `
   sumber nilai (menutup selisih PROB-FRONTEND-042 di aplikasi ini).
 - **Asumsi:** `label`/`label_awalan` diisi di data contoh (fallback ke kode/awalan mentah tetap berjalan, mis. tab
   `outbox.`); batas `min`/`max` hanya yang disebut dokumen — sisanya terbuka.
+
+## 19. System › Settings › enam Menu sisa + Riwayat Perubahan + Penghapusan Data — FSD-SETTINGS 0.21 / UIC-SETTINGS 0.12 (29 September 2026)
+
+Satu halaman `SettingsConfigurationPage` kini melayani kedelapan Menu setelan (`/settings/configuration/{menu}`);
+dua halaman baru: `/settings/change-history` (`A3`) dan `/settings/erasure-requests` (`A5`/`A6`/`A7`).
+
+- **Katalog 76 baris** (26 Waktu · 27 Keuangan · 8 Penggajian · 7 Kinerja · 2 Produktivitas · 2 Dokumen · 3 Organisasi
+  · 1 Karyawan, cocok UIC §7). Bawaan Keuangan dari `TSD-001-FINANCE-0.45` (keputusan USER); Kinerja dari
+  `TSD-001-PERFORMANCE-0.35` §14; Penggajian/Produktivitas/Dokumen/Organisasi dari FSD §3/§5/§6/§7 + UIC §2.4.
+- **Penurunan Sub Menu mekanis** (FSD §2.5): Keuangan 4 tab (`finance.benefit.` 6 · `finance.loan.` 14 ·
+  `finance.cash_advance.` 4 · `finance.` 3 — `finance.retention.years` gugur ke `finance.`); Waktu 7 tab; Menu lain nol tab.
+- **Kelas akses (UIC §7):** R‡ HR Staff 29 baris (Waktu+Produktivitas+Karyawan), Finance Officer 27, Payroll Officer 8,
+  Department Manager 7, System Admin 3; Dokumen nol kelas R‡. Pemilih "Viewing as" memuat persona kelima peran.
+- **Bentuk kontrol (G3):** deretan majemuk `finance.loan.tenor_custom_list` = chip berulang (tidak pernah dipipihkan —
+  PROB-FRONTEND-036, daftar dipegang layar); enum bernama yang pilihannya belum disusun = dropdown terkunci berisi nilai
+  berlaku saja; penawaran `null` = tanpa kontrol (Dokumen), kecuali penunjuk `performance.assessment_structure_id` =
+  isian bebas (PROB-FRONTEND-038); `finance.benefit.period_close_date` = isian `MM-DD`.
+- **Medan turunan `A1`:** `keadaan_nilai` (+`pasangan_key`) dirender sebagai lencana + kalimat sikap layar
+  (Penggajian: kosong-sah, bersyarat bergantung `payroll.suspension_pay_mode`); `jangkauan` Produktivitas
+  ("Drives 3/2 gates") hanya kelas PENUH. Lencana Kinerja (Frozen/Temporary/Pointer) dan Produktivitas dinyatakan
+  sebagai keterangan turunan dokumen sumber, bukan medan server.
+- **Gerbang R/O/D (UIC §2.4):** hanya CC/SBU; `confirm_transition` pada baris lain → 422; transisi ke DISABLED
+  ditanya dulu lewat ConfirmDialog lalu dikirim `confirm_transition:true` (keputusan layar atas PROB-FRONTEND-046);
+  transisi ke REQUIRED hari ini → 500 (VIEW gap belum digelar, ORG-6); proyeksi setelah digelar (CC gap 37 → 422
+  `ASSIGNMENT_GAP_BLOCKS_REQUIRED`, SBU gap 0 lolos) diuji lewat saklar `ASSIGNMENT_GAP.viewProvisioned`.
+- **Hasil tulis Penggajian (GAJ-5):** modal sukses menambah kolom "Partner state" bila pasangan wajib-bersyarat masih
+  kosong. `[]` lolos hampa tetap diterima (PROB-SERVICE-440 — perilaku kontrak apa adanya).
+- **Riwayat Perubahan:** tepat dua peran (R‡ tetap 403); badan NESTED; filter Modul (9 checkbox — sembilan/nol
+  dicentang ⇒ `setup_code_prefixes` tidak dikirim, SET-130), Setelan, Pelaku, Kelas pelaku 3-keadaan, rentang tanggal;
+  grid 8 kolom, baris ANONIM tetap tampil saat mesin dibuang, baris TERKUNCI tampil berlencana, `Before` kosong di
+  versi 1; nol tombol; deep-link `?setup_code=` (tombol "History" per baris setelan) dan `?menu=` ("Menu history").
+- **Penghapusan Data:** daftar berhalaman (ringkasan angka, subjek nama/NIK fail-open, ANONYMIZED apa adanya), form tiga
+  medan (subjek dari PICKER termasuk mantan karyawan, tanggal surat ≤ hari ini, zona IANA), 201 → ringkasan 14 pelacak
+  PENDING/0 siaran, 409 bila subjek masih punya permintaan terbuka, detail dengan tanggal surat & pencatatan
+  berdampingan + tabel pelacak ber-`broadcast_count`; nol tombol "tandai selesai".
+- **Asumsi:** `label` diisi di data contoh (fallback tetap berjalan); nilai Kinerja `period_length_days`/`scale_length`
+  dan riwayat awal (versi 2+) adalah contoh; persona NIK di luar dokumen dikarang untuk tampilan.
+- **Belum dikerjakan:** menu "Personal Data Erasure" masih di bagian nav "Settings — no menu row yet" — FSD 0.21 sudah
+  memutuskan ia Menu ke-10 Group `Pengaturan` (Jalan A), tetapi pohon sidebar dikunci; menunggu keputusan pemilik repo.
