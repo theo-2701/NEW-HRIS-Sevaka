@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { productForPath } from '@/config/nav';
 import {
   Award,
   Bell,
@@ -61,7 +61,7 @@ export function Topnav() {
   const { data: hasUnread } = useHasUnread();
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
-  const [product, setProduct] = useState<string>('HRIS');
+  const product = productForPath(useLocation().pathname);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-5 border-b border-border-1 bg-bg-surface px-6 shadow-card-sm">
@@ -93,7 +93,6 @@ export function Topnav() {
                 disabled={soon}
                 onSelect={() => {
                   if (!p.route) return;
-                  setProduct(p.id);
                   navigate(p.route);
                 }}
                 className="gap-2.5 p-2.5"

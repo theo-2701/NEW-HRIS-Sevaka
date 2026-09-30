@@ -614,3 +614,27 @@ berkas langsung muncul di jejak akses.
   cabang; atribut kelola kategori (kode, batas ukuran, jenis berkas, peran pembaca) dan NIK persona di luar dataset
   dikarang; angka dampak = cacah dokumen di katalog contoh; pemetaan peran pembaca belum memengaruhi penyaring katalog
   Files (penyaring baca tetap aturan kelas yang ada).
+
+---
+
+## 22. Performance › Menu 1 Siklus & Setelan — FSD-001-PERFORMANCE 0.11 / UIC-001-PERFORMANCE 0.12 (30 September 2026)
+
+Sumber: `FE-220926/` (FE-240926 tidak mengubah dokumen Performance). Produk terpisah: sidebar kini memilih pohon
+`NAV_PERFORMANCE` / `NAV_RECRUITMENT` menurut URL (`navForPath`) — sebelumnya sidebar selalu merender pohon HRIS di
+halaman `/performance/*`; label produk di Topnav ikut diturunkan dari URL. Pohon menu sendiri tidak berubah.
+
+- **Peran** mengikuti §Matriks Menu/Tab → Peran (tabel C): grid periode (`#3`) HRM/HRS/SA; buka · mulai pengesahan ·
+  tutup (`#1`/`#6`/`#7`) HRM/SA; detail (`#2`) + DM; daftar ketidaklayakan (`#4`/`#5`) HRM/HRS/SA. `ROLE_SUPER_ADMIN`
+  = superset. Pemilih "Viewing as" dibagi ke seluruh layar Performance (`usePerfActor`).
+- **`A1`–`A3`:** grid + filter fase (whitelist), badge tiga warna; modal satu field `period_name` (1–100) dengan
+  pratinjau `P1.04`; ringkasan `eligibility_summary` tampil sesudah `201` (dihitung, tidak disimpan).
+- **Gerbang `P1.01`:** periode `FILLING` lain → `422 PERIOD_PHASE_INVALID` menyebut periode penahan; setelan
+  `performance.scale_length` & `performance.assessment_structure_id` dibaca terkini dari modul Settings lalu dibekukan;
+  skala `< 2` → `SCALE_LENGTH_INVALID`; penunjuk struktur tak dikenal → `VALIDATION_ERROR`.
+- **`B1`–`B5`:** tombol transisi hanya dirender bila sah (Filling → Mulai pengesahan, Signing → Tutup periode, Closed →
+  nol tombol + catatan terminal); dua tabel ketidaklayakan terpisah sebagai tab (HR saja, periode belum ditutup).
+  `NOT_INCLUDED_MID_PERIOD` hanya untuk periode yang dibuka sebelum tanggal bergabung.
+- **Asumsi:** nama struktur penilaian diresolusi dari tabel kecil di data Performance (penunjuk setelan belum ada di
+  data Company); Lukman Hakim (HR Staff) dan akun Administrator (Super Admin) melengkapi aktor dataset kontrak.
+
+10 pengujian baru di `performance/period.test.ts`.

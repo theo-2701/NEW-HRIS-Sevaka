@@ -472,7 +472,7 @@ export const NAV_PERFORMANCE: NavSection[] = [
         icon: 'calendar-range',
         path: '/performance/cycles',
         source: 'performance-cycles.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'KPI Master & Weight',
@@ -515,6 +515,22 @@ export const NAV_PERFORMANCE: NavSection[] = [
 ];
 
 export const ALL_NAV: NavSection[] = [...NAV, ...NAV_RECRUITMENT, ...NAV_PERFORMANCE];
+
+export type ProductId = 'HRIS' | 'Recruitment' | 'Performance';
+
+/** Produk aktif ditentukan URL — tiap produk punya shell sidebar sendiri di prototype. */
+export function productForPath(path: string): ProductId {
+  if (path.startsWith('/performance')) return 'Performance';
+  if (path.startsWith('/recruitment')) return 'Recruitment';
+  return 'HRIS';
+}
+
+export function navForPath(path: string): NavSection[] {
+  const product = productForPath(path);
+  if (product === 'Performance') return NAV_PERFORMANCE;
+  if (product === 'Recruitment') return NAV_RECRUITMENT;
+  return NAV;
+}
 
 export interface NavPathEntry {
   path: string;

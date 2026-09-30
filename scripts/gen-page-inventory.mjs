@@ -106,6 +106,10 @@ const EXTRA_ROWS = [
     '— (layar baru)',
     'Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard.',
   ],
+  [
+    '`performance-cycles.html` › detail (`/performance/cycles/detail?id=…`)',
+    'Detail periode penilaian (B1–B5) — dibuka dari baris daftar Cycles & Settings; tab ketidaklayakan hanya untuk HR.',
+  ],
 ];
 for (const [screen, note] of EXTRA_ROWS) {
   out += `| ${screen} | ${note} |\n`;

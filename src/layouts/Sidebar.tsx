@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, LayoutGrid, LogOut, PanelLeftClose } from 'lucide-react';
 import dikaLogo from '@/assets/brand/dika-logo-trim.png';
 import { CompanyLogo } from '@/components/brand/CompanyLogo';
-import { NAV, type NavLeaf, type NavSection } from '@/config/nav';
+import { navForPath, type NavLeaf, type NavSection } from '@/config/nav';
 import { NavIcon } from '@/components/NavIcon';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,8 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
   const companyId = useAuthStore((s) => s.companyId) ?? 'DIKA';
   const company = COMPANY_IDENTITY[companyId] ?? { name: companyId, sub: '', logo: null };
 
-  const activeSection = NAV.find((section) =>
+  const nav = navForPath(location.pathname);
+  const activeSection = nav.find((section) =>
     section.children.some((node) => containsPath(node, location.pathname)),
   )?.section;
   const [openSection, setOpenSection] = useState<string | null>(activeSection ?? null);
@@ -139,7 +140,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
       >
         <OpenRequest.Provider value={requested}>
           {expanded
-            ? NAV.map((section) => (
+            ? nav.map((section) => (
                 <SidebarSection
                   key={section.section}
                   section={section}
@@ -151,7 +152,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
                   }}
                 />
               ))
-            : NAV.map((section, i) => (
+            : nav.map((section, i) => (
                 <div
                   key={section.section}
                   className={cn('flex flex-col', i > 0 && 'mt-1.5 border-t border-border-1 pt-1.5')}

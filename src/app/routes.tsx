@@ -58,6 +58,8 @@ import { SummaryPage } from '@/features/productivity/pages/SummaryPage';
 import { TrackerReportPage } from '@/features/productivity/pages/TrackerReportPage';
 import { GroupListPage, TaskListPage } from '@/features/productivity/pages/PayrollGroupPages';
 import { FormsPage, MySubmissionsPage } from '@/features/productivity/pages/FormsPages';
+import { CyclesPage } from '@/features/performance/pages/CyclesPage';
+import { CycleDetailPage } from '@/features/performance/pages/CycleDetailPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -195,6 +197,9 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'settings/change-history', element: <SettingsChangeHistoryPage /> },
   { path: 'settings/erasure-requests', element: <ErasureRequestsPage /> },
   { path: 'productivity/projects', element: <ProjectsPage key="active" state="AKTIF" /> },
+  { path: 'performance/cycles', element: <CyclesPage /> },
+  /* Detail periode tidak punya baris menu — dibuka dari baris daftar periode. */
+  { path: 'performance/cycles/detail', element: <CycleDetailPage /> },
   /* Archive = sisi ARSIP dari page-pair Project; URL sendiri, tanpa baris menu (sidebar hanya 'Project'). */
   { path: 'productivity/projects/archive', element: <ProjectsPage key="archive" state="ARSIP" /> },
   { path: 'productivity/tasks', element: <TasksPage /> },
@@ -299,6 +304,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/settings/change-history',
   '/settings/erasure-requests',
   '/productivity/projects',
+  '/performance/cycles',
+  '/performance/cycles/detail',
   '/productivity/projects/archive',
   '/productivity/tasks',
   '/productivity/timesheet/tracker',

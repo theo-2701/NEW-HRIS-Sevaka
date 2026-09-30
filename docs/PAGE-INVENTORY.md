@@ -3,7 +3,7 @@
 Dibuat dari `src/config/nav.ts`. Kolom **Status** mengikuti field `status` di file itu:
 `done` = sudah jadi komponen React, `todo` = masih `PlaceholderPage`.
 
-Prototype: 88 file HTML · Route bernav: 93
+Prototype: 88 file HTML · Route bernav: 92
 
 > Saat sebuah layar selesai dikonversi: daftarkan route-nya di `src/app/routes.tsx`,
 > ubah `status` leaf-nya jadi `'done'` di `src/config/nav.ts`, lalu regenerasi dokumen ini.
@@ -19,7 +19,7 @@ Prototype: 88 file HTML · Route bernav: 93
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/me/files` | Files | `document-ess-files.html` | todo |
+| `/me/files` | Files | `document-ess-files.html` | done |
 | `/me/finance` | Finance | `finance-ess.html` | done |
 | `/me/payroll` | Payroll Info | `payroll-doc-ess.html` | done |
 | `/me/payslip` | Payslip | `payroll-doc-payslip.html` | done |
@@ -108,12 +108,11 @@ Prototype: 88 file HTML · Route bernav: 93
 | `/company-management/assets/assigned` | Assigned Assets | `company-assets.html` | done |
 | `/company-management/assets/category` | Asset Category | `company-assets.html` | done |
 | `/company-management/assets/disposal` | Disposal | `company-disposal.html` | done |
-| `/company-management/files/company` | Company Files | `document-company-files.html` | todo |
-| `/company-management/files/employee` | Employee Files | `document-employee-files.html` | todo |
-| `/company-management/files/other` | Other Files | `document-other-files.html` | todo |
-| `/company-management/files/templates` | Document Templates | `document-templates.html` | todo |
-| `/company-management/inbox` | Notification (rich inbox) | `inbox.html` | todo |
-| `/company-management/notifications` | Notification | `notification-inbox.html` | todo |
+| `/company-management/files/company` | Company Files | `document-company-files.html` | done |
+| `/company-management/files/employee` | Employee Files | `document-employee-files.html` | done |
+| `/company-management/files/other` | Other Files | `document-other-files.html` | done |
+| `/company-management/files/templates` | Document Templates | `document-templates.html` | done |
+| `/company-management/notifications` | Notification | `notification-inbox.html` | done |
 
 ## Company
 
@@ -162,7 +161,7 @@ Prototype: 88 file HTML · Route bernav: 93
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
 | `/performance/approvals` | Score Approvals | `performance-approvals.html` | todo |
-| `/performance/cycles` | Cycles & Settings | `performance-cycles.html` | todo |
+| `/performance/cycles` | Cycles & Settings | `performance-cycles.html` | done |
 | `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | todo |
 | `/performance/objections` | Objections | `performance-objections.html` | todo |
 | `/performance/reports` | Monitor & Reports | `performance-reports.html` | todo |
@@ -178,11 +177,10 @@ layar di sini tanpa keputusan kontrak.
 |---|---|
 | `add-employee.html` | Dibuka dari tombol di halaman New Joiner, bukan dari menu. |
 | `auth.html` | Layar login; di luar shell bernavigasi. |
-| *(FSD-AUTH 0.14 §5, tanpa prototype)* Aktivasi Akun | `/auth/activate?aid=…&token=…` + `/auth/activate/done` — halaman publik dari tautan email undangan, tanpa sesi dan tanpa menu. |
-| *(FSD-AUTH 0.14 §6, tanpa prototype)* Kirim Ulang Undangan | Modal dari baris "Akun menunggu aktivasi" di panel Perlu tindak lanjut (Dashboard) — menu "Manajemen Akun" tidak ada di pohon sidebar kontrak. |
 | `company-asset-detail.html` | Halaman detail aset; bentuk `:id` saat modul Assets dikonversi. |
 | `company-integration-contact.html` | Belum punya baris menu di kontrak. |
 | `finance-loan-detail.html` | Sudah dikonversi ke `/finance/loan/detail?id=…`; dibuka dari baris tabel Loan, bukan dari menu. |
+| `inbox.html` | Belum punya baris menu di kontrak. |
 | `index.html` | Dashboard — tile tersendiri di sidebar, bukan baris NAV. |
 | `payroll-compliance.html` | Belum punya baris menu di kontrak. |
 | `payroll-components.html` | Belum punya baris menu di kontrak. |
@@ -200,4 +198,4 @@ layar di sini tanpa keputusan kontrak.
 | — (layar baru) | Announcement `/company-management/announcements` (+ detail `/company-management/announcements/detail?id=…`, dibuka dari baris daftar) — mengisi baris menu Company Management › Announcement; dari FSD-001-COMPANY §11 · UIC-001-COMPANY §3C. |
 | `index.html` › versi lama (`/dashboard/classic`) | Dashboard sebelum renovasi 24 September 2026, dipertahankan sebagai pembanding tanpa baris menu; beranda `/` kini `DashboardHomePage`. |
 | — (layar baru) | Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard. |
-| — (layar baru) | Malware Alerts `/company-management/files/malware-alerts` — FSD-001-DOCUMENT 0.8 §8A menyatakan baris menunya sudah aktif (Company Management › Files, urutan 7), tetapi pohon sidebar repo dikunci empat baris Files; route dipasang tanpa baris menu sampai ada izin. |
+| `performance-cycles.html` › detail (`/performance/cycles/detail?id=…`) | Detail periode penilaian (B1–B5) — dibuka dari baris daftar Cycles & Settings; tab ketidaklayakan hanya untuk HR. |
