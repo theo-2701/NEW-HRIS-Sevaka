@@ -723,3 +723,28 @@ sebagai tab di detail lembar dan kartu di "Lembar saya" (`#29` untuk HRS/EMP dib
   padahal lembar sudah diajukan). Restart `npm run dev` membereskannya; build produksi tidak terdampak.
 
 6 pengujian baru di `performance/approval.test.ts`.
+
+## 26. Performance › Menu 5 Sanggahan — FSD-001-PERFORMANCE 0.11 §5 / UIC-001-PERFORMANCE 0.12 §6 (30 September 2026)
+
+`/performance/objections` — empat tab menurut peran: **Sanggahan saya** (G1/G2 + "Milik saya"), **Sanggahan masuk**
+(G3/G4), **HR: Belum dijawab** (G5), **Buka kembali jendela** (G6). Tab awal mengikuti Matriks B (EMP → saya,
+DM → masuk, HR/SA → belum dijawab).
+
+- **G1/G2 dua entry-point:** tombol "Sanggah nilai disahkan" (lembar `APPROVED`, badge biru, penjawab = penilai via
+  rantai) dan "Sanggah tolak final" (lembar `REJECTED_FINAL`, badge merah, putaran ditolak + penjawab = penyetuju
+  putaran itu). Jenis tidak pernah dipilih lewat dropdown. Catatan divalidasi §4.5.11 (1–4000, tanpa `<`/`>`).
+- **Tenggat:** `OBJECTION_DEADLINE_PASSED` bila lewat `performance.objection_deadline_days` sejak keputusan dan tidak
+  ada jendela aktif; jendela yang dipakai tercatat di `via_reopen_window_id`. Angka hari selalu dibaca dari setelan /
+  respons, tidak ditulis konstan.
+- **G3/G5:** DM dipaksa holder = dirinya; HR di "Sanggahan masuk" mengirim holder = dirinya, di tab HR tanpa filter
+  holder + hanya `SUBMITTED`, tanpa aksi Jawab. Di G3 "Jawab" mati untuk baris yang sudah dijawab (dua aksi → Action ▾).
+  Jawaban 1:1 langsung `ANSWERED`; bukan pemikul teraktif → `403 OBJECTION_ANSWER_FORBIDDEN`.
+- **G6:** Create-only oleh HR Manager (HR Staff melihat riwayat saja), alasan kosong →
+  `422 REOPEN_WINDOW_REASON_REQUIRED`, tenggat baru = jangka penuh sejak dibuka, nol batas jumlah pembukaan.
+- **Deviasi / asumsi:** Matriks C menulis "Sanggahan saya" hanya EMP · SA, tetapi persona G0/G1 adalah Budi (DM) yang
+  menyanggah lembarnya sendiri — atasan juga karyawan, jadi tab itu dibuka untuk DM; gerbang sesungguhnya kepemilikan
+  lembar. Respons hanya membawa `employee_id`; nama diambil dari direktori kecil mode dummy (`PERF_DIRECTORY`), pada API
+  sungguhan lewat Directory. Eskalasi pemikul (`PF-42`) dan transisi "sanggahan diterima → penilaian ulang" tidak
+  punya endpoint klien, jadi tidak disimulasikan.
+
+7 pengujian baru di `performance/objection.test.ts`.

@@ -7,6 +7,7 @@ export const PERF_PATHS = {
   sheets: '/performance/sheets',
   sheetDetail: (id: string) => `/performance/sheets/detail?id=${id}`,
   approvals: '/performance/approvals',
+  objections: '/performance/objections',
 };
 
 export type PerfRole =
@@ -305,6 +306,85 @@ export interface DecisionDraft {
 export interface DecisionForwarded {
   status: 'FORWARDED';
   message: string;
+}
+
+// ---------- Menu 5 — Sanggahan ----------
+
+export type ObjectionSubject = 'VALUE' | 'REJECTED_FINAL';
+export type ObjectionStatus = 'SUBMITTED' | 'ANSWERED';
+/** Klasifikasi pemikul kewajiban menjawab — perpindahannya job latar (`PF-42`), nol layar. */
+export type HolderContext = 'PENILAI_ASLI' | 'NAIK_RANTAI' | 'PENADAH_HR';
+
+export const SUBJECT_LABEL: Record<ObjectionSubject, string> = {
+  VALUE: 'Nilai disahkan',
+  REJECTED_FINAL: 'Tolak final',
+};
+
+export const OBJECTION_STATUS_LABEL: Record<ObjectionStatus, string> = {
+  SUBMITTED: 'Belum dijawab',
+  ANSWERED: 'Dijawab',
+};
+
+export const HOLDER_CONTEXT_LABEL: Record<HolderContext, string> = {
+  PENILAI_ASLI: 'Pemikul pertama',
+  NAIK_RANTAI: 'Naik rantai',
+  PENADAH_HR: 'Penadah HR',
+};
+
+export interface ObjectionHolder {
+  holderEmployeeId: string;
+  holderContext: HolderContext | null;
+  assignedAt: string | null;
+}
+
+export interface ObjectionAnswer {
+  answeredByEmployeeId: string;
+  answerText: string;
+  answeredAt: string;
+}
+
+/** Baris grid `P5.03`/`P5.04`. */
+export interface ObjectionRow {
+  id: string;
+  reviewSheetId: string;
+  subjectType: ObjectionSubject;
+  status: ObjectionStatus;
+  submittedByEmployeeId: string;
+  submittedAt: string;
+  currentHolder: ObjectionHolder;
+}
+
+export interface ObjectionDetail extends ObjectionRow {
+  approvalRoundId: string | null;
+  viaReopenWindowId: string | null;
+  submissionNote: string;
+  answer: ObjectionAnswer | null;
+}
+
+export interface ObjectionDraft {
+  reviewSheetId: string;
+  subjectType: ObjectionSubject;
+  approvalRoundId?: string;
+  submissionNote: string;
+}
+
+export interface ObjectionSearch {
+  status?: ObjectionStatus;
+  /** Diabaikan server untuk DM (dipaksa = pemanggil); HR boleh kosong = company-wide. */
+  holderEmployeeId?: string;
+  page: number;
+  size: number;
+  sortBy?: 'submitted_at' | 'status';
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export interface ReopenWindow {
+  id: string;
+  reviewSheetId: string;
+  openedByEmployeeId: string;
+  reason: string | null;
+  openedAt: string;
+  newDeadlineAt: string;
 }
 
 /** Respons `200` `P4.01` — instans alur kerja sudah terisi karena dimulai sinkron. */

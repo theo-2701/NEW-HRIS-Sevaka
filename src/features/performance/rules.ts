@@ -45,6 +45,19 @@ export const canReadRoundsAsHr = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
 export const returnsUsed = (rounds: { cycleNo: number; outcome: string | null }[], cycleNo: number) =>
   rounds.filter((row) => row.cycleNo === cycleNo && row.outcome === 'RETURNED').length;
 
+// Menu 5 — Sanggahan
+/**
+ * Tab "Sanggahan saya" (`#31`/`#34`, SELF). Matriks menulis EMP · SA, tetapi persona FSD G0/G1 adalah
+ * Budi (DM) — atasan juga karyawan yang punya lembar, jadi DM ikut. Gerbang sesungguhnya: pemilik lembar.
+ */
+export const hasOwnObjectionSurface = allow('ROLE_EMPLOYEE', 'ROLE_DEPT_MANAGER');
+/** `#33` grid — DM dipaksa holder = dirinya; HR boleh company-wide. */
+export const canSearchObjections = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF', 'ROLE_DEPT_MANAGER');
+/** Tab HR "Belum dijawab" + riwayat jendela (`#33` tanpa filter holder, `#37`/`#38`). */
+export const canSeeHrObjections = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
+/** `#36` buka kembali jendela sanggah. */
+export const canReopenWindow = allow('ROLE_HR_MANAGER');
+
 /** Gerbang `PF-37`: isian diri terbuka otomatis begitu SELURUH baris berlaku punya nilai awal. */
 export const selfAssessmentOpen = (items: { initialValueRecordedAt: string | null }[]) =>
   items.length > 0 && items.every((row) => row.initialValueRecordedAt);

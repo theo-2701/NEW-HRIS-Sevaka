@@ -1,3 +1,8 @@
+import { PERF_DIRECTORY } from '@/features/performance/mock-data';
+
+/** Nama tampilan — respons kontrak hanya membawa `employee_id`; API sungguhan meresolusi lewat Directory. */
+export const displayName = (employeeId: string) => PERF_DIRECTORY[employeeId] ?? employeeId.slice(0, 8);
+
 /** Bobot `numeric(6,2)` selalu tampil dua desimal, format Indonesia. */
 export const formatWeight = (value: number) =>
   value.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

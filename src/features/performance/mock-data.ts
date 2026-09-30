@@ -5,6 +5,9 @@ import type {
   KpiItem,
   NamedEmployee,
   NotAssessableReason,
+  ObjectionDetail,
+  ObjectionHolder,
+  ReopenWindow,
   OutOfAssessmentReason,
   PerfActor,
   ReviewPeriod,
@@ -505,5 +508,72 @@ export const SHEET_SEED: SheetSeed[] = [
         createdAt: '2026-04-01T10:05:00+07:00',
       },
     ],
+  },
+];
+
+// ---------- Menu 5 — Sanggahan ----------
+
+/**
+ * Nama tampilan per `employee_id` — respons Performance hanya membawa id. Pada API sungguhan nama
+ * diresolusi lewat Directory; mode dummy memakai tabel ini.
+ */
+export const PERF_DIRECTORY: Record<string, string> = {
+  ...Object.fromEntries(PERF_ACTORS.map((row) => [row.employeeId, row.name])),
+  'emp-eko': 'Eko Prasetyo',
+  'emp-ahmad': 'Ahmad Fauzi',
+  'emp-wayan': 'Wayan Sudira',
+  'emp-fajar': 'Fajar Setiawan',
+};
+
+export interface ObjectionSeed extends ObjectionDetail {
+  holders: ObjectionHolder[];
+}
+
+/** Dataset UIC §6: `OBJ-0001` (Budi, nilai disahkan) dan `OBJ-0002` (Yanti, tolak final, sudah dijawab). */
+export const OBJECTION_SEED: ObjectionSeed[] = [
+  {
+    id: 'obj-0001',
+    reviewSheetId: 'rs-0002',
+    approvalRoundId: null,
+    viaReopenWindowId: null,
+    subjectType: 'VALUE',
+    status: 'SUBMITTED',
+    submittedByEmployeeId: 'emp-budi-dm',
+    submissionNote: 'Saya rasa skor kolaborasi saya seharusnya lebih tinggi mengingat inisiatif retro mingguan.',
+    submittedAt: '2026-07-10T09:00:00+07:00',
+    currentHolder: { holderEmployeeId: 'emp-rina-amelia', holderContext: 'PENILAI_ASLI', assignedAt: '2026-07-10T09:00:00+07:00' },
+    holders: [{ holderEmployeeId: 'emp-rina-amelia', holderContext: 'PENILAI_ASLI', assignedAt: '2026-07-10T09:00:00+07:00' }],
+    answer: null,
+  },
+  {
+    id: 'obj-0002',
+    reviewSheetId: 'rs-0004',
+    approvalRoundId: 'ar-0004-2',
+    viaReopenWindowId: null,
+    subjectType: 'REJECTED_FINAL',
+    status: 'ANSWERED',
+    submittedByEmployeeId: 'emp-yanti',
+    submissionNote: 'Saya sudah merevisi target sesuai arahan sebelumnya, mohon ditinjau ulang.',
+    submittedAt: '2026-04-15T14:00:00+07:00',
+    currentHolder: { holderEmployeeId: 'emp-rina-amelia', holderContext: 'PENILAI_ASLI', assignedAt: '2026-04-15T14:00:00+07:00' },
+    holders: [{ holderEmployeeId: 'emp-rina-amelia', holderContext: 'PENILAI_ASLI', assignedAt: '2026-04-15T14:00:00+07:00' }],
+    answer: {
+      answeredByEmployeeId: 'emp-rina-amelia',
+      answerText:
+        'Setelah ditinjau ulang, target masih kurang spesifik. Saran: ajukan kembali via jalur review baru semester depan.',
+      answeredAt: '2026-04-20T10:00:00+07:00',
+    },
+  },
+];
+
+/** `RW-0001` — Hesti membuka kembali jendela sanggah `RS-0004`; jangka penuh 14 hari dari saat dibuka. */
+export const REOPEN_SEED: ReopenWindow[] = [
+  {
+    id: 'rw-0001',
+    reviewSheetId: 'rs-0004',
+    openedByEmployeeId: 'emp-hesti',
+    reason: 'Ditemukan kesalahan input target saat audit internal Mei 2026',
+    openedAt: '2026-05-10T10:00:00+07:00',
+    newDeadlineAt: '2026-05-24T10:00:00+07:00',
   },
 ];

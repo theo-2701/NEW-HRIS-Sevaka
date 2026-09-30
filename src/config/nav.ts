@@ -500,7 +500,7 @@ export const NAV_PERFORMANCE: NavSection[] = [
         icon: 'message-square-warning',
         path: '/performance/objections',
         source: 'performance-objections.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Monitor & Reports',
