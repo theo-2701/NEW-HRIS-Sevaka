@@ -54,6 +54,7 @@ import { ActivitiesPage } from '@/features/productivity/pages/ActivitiesPage';
 import { SummaryPage } from '@/features/productivity/pages/SummaryPage';
 import { TrackerReportPage } from '@/features/productivity/pages/TrackerReportPage';
 import { GroupListPage, TaskListPage } from '@/features/productivity/pages/PayrollGroupPages';
+import { FormsPage, MySubmissionsPage } from '@/features/productivity/pages/FormsPages';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -195,6 +196,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'productivity/timesheet/report', element: <TrackerReportPage /> },
   { path: 'productivity/payroll-group/tasks', element: <TaskListPage /> },
   { path: 'productivity/payroll-group/groups', element: <GroupListPage /> },
+  { path: 'productivity/forms', element: <FormsPage /> },
+  { path: 'productivity/forms/my-submissions', element: <MySubmissionsPage /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
   { path: 'company-management/announcements/detail', element: <AnnouncementDetailPage /> },
@@ -292,6 +295,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/productivity/timesheet/report',
   '/productivity/payroll-group/tasks',
   '/productivity/payroll-group/groups',
+  '/productivity/forms',
+  '/productivity/forms/my-submissions',
   '/company-management/announcements',
   '/company-management/announcements/detail',
   '/me/announcements',

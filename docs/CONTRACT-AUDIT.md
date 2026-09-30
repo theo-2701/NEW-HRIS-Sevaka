@@ -535,3 +535,43 @@ dua halaman baru: `/settings/change-history` (`A3`) dan `/settings/erasure-reque
   dan riwayat awal (versi 2+) adalah contoh; persona NIK di luar dokumen dikarang untuk tampilan.
 - **Belum dikerjakan:** menu "Personal Data Erasure" masih di bagian nav "Settings — no menu row yet" — FSD 0.21 sudah
   memutuskan ia Menu ke-10 Group `Pengaturan` (Jalan A), tetapi pohon sidebar dikunci; menunggu keputusan pemilik repo.
+
+## 20. Productivity — FSD-PRODUCTIVITY 0.2 / UIC-PRODUCTIVITY 0.4 / TSD-PRODUCTIVITY 0.18 (30 September 2026)
+
+Dibangun di `src/features/productivity/` — 10 baris nav: Project (+ `/productivity/projects/archive` tanpa baris
+menu), Tasks (+ tab Kategori), Time Tracker, Activities, Summary, Tracker Report, Task List, Group List, Forms,
+My Submissions. Pemilih "Viewing as" dibagi ke seluruh layar (Dedi pengerja · Rina atasan berjenjang · Hesti HR
+Manager · Lukman HR Staff · Fajar · Nadia Health Data Officer).
+
+- **Project:** Active & Archive = dua URL (keputusan granularitas SAD §4.6, sidebar hanya punya satu baris
+  "Project" → dihubungkan tab). Lahir AKTIF dengan pemilik dari token; arsip ditolak `PROD_PROJECT_ARCHIVE_HAS_OPEN_TASK`
+  selama ada task terbuka; restore mengosongkan `archived_at`; keanggotaan upsert (baru/dipulihkan/no-op, bukan 409).
+- **Tasks:** `task_origin` ditentukan server; penugasan hanya ke bawahan berjenjang/anggota proyek yang dipimpin
+  (`PROD_TASK_ASSIGN_NOT_AUTHORIZED`); tenggat task DITUGASKAN hanya penugas/atasan, mundur wajib beralasan; riwayat
+  `log_task_change` terbaru dulu. **Selisih dokumen:** diagram status FSD 0.2 §3.3 masih menggambar buka-kembali
+  `SELESAI/DIBATALKAN → SEDANG_DIKERJAKAN` dan menyebut `BELUM→SELESAI` tidak sah; TSD 0.18 (PROB-SERVICE-298)
+  mengoreksi: `BELUM→TERTAHAN` yang tidak sah, dan keadaan akhir hanya saling berpindah `SELESAI ↔ DIBATALKAN` dalam
+  jendela. Aplikasi mengikuti TSD. Jendela membaca `productivity.entry_window_days` dari Settings (koneksi modul).
+- **Time Tracker:** penghitung lama dihentikan otomatis + panel pemberitahuan; catat manual tanpa jam, jendela 7 hari,
+  batas 1440 menit/hari lintas-origin; `paid_work_group_id_snapshot` dibekukan dari pemetaan kategori saat pencatatan.
+- **Activities:** sunting/hapus pemilik saja (atasan & HR ditolak); koreksi baris DIHENTIKAN_SISTEM → DIKOREKSI_PEMILIK;
+  atasan berjenjang "Accept as is" (durasi tetap, SoD menolak pemilik); pembukaan jendela oleh atasan/HR (TS-11,
+  ditolak bila menyentuh periode DISAHKAN); periode DISAHKAN beku (`PROD_PERIOD_ALREADY_APPROVED`).
+- **Summary:** rekap per bulan (total, per task, komposisi origin, menit task dibatalkan, baris menggantung);
+  pengajuan digerbangi `PROD_PENDING_SYSTEM_STOP`; reopen oleh atasan langsung/HR beralasan; payroll lock permanen.
+  Juli 2026 Dedi = 780 menit (240+60+300+180) sesuai dataset. Transisi MENUNGGU→DISAHKAN/DIKEMBALIKAN hanya lewat
+  workflow — tidak ada tombolnya di sini.
+- **Tracker Report:** atasan/HR saja, baris detail, unduh CSV sisi klien.
+- **Group for Payroll:** Task List (satu kategori satu pemetaan aktif, nonaktifkan bukan hapus) dan Group List (nama
+  unik, "Delete" dinonaktifkan dengan alasan, catatan Anti-Kompresi saat menonaktifkan kelompok).
+- **Forms:** composer 7 field + pertanyaan dinamis (Anonim×Wajib terkunci); detail bertab (Pertanyaan · Jawaban ·
+  Belum mengisi · Dibuka untuk · Agregat) menggantikan tiga affordance baris FSD; gerbang sensitif (HR Staff 403,
+  Health Data Officer boleh); agregat angka-saja dengan ambang interim 5 (PROB-SECURITY-076); anonim tanpa kolom
+  responden dan tanpa grant. Form D (sensitif) adalah contoh hipotetis — dataset positif tidak memuatnya.
+- **My Submissions:** formulir berindentitas (isi/sunting pemilik saja, pertanyaan dari salinan beku, riwayat sunting);
+  formulir anonim di kartu terpisah, tidak dapat disunting.
+- **Asumsi:** penanda "mendekati batas harian" = ≥ 1296 menit (90% dari 1440, tidak disebut dokumen); persona Nadia
+  Putri (Health Data Officer), Lukman Hakim, Sinta Maharani, dan NIK di luar dataset dikarang untuk tampilan;
+  baris Timesheet Agustus–September ditambahkan agar alur koreksi/pengajuan dapat dicoba di dalam jendela.
+- **Belum:** "Document Templates" di grup Productivity tetap tanpa layar (PROB-FRONTEND-019, milik company-service);
+  master jenis kegiatan (TS-01) dan audit jejak akses (F5.01) tidak punya layar di FSD — hanya dipakai sebagai data.

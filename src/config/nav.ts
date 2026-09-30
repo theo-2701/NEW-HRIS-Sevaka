@@ -299,12 +299,12 @@ export const NAV: NavSection[] = [
         label: 'Forms & Survey',
         icon: 'clipboard-check',
         children: [
-          { label: 'Forms', path: '/productivity/forms', source: 'productivity-forms.html', status: 'todo' },
+          { label: 'Forms', path: '/productivity/forms', source: 'productivity-forms.html', status: 'done' },
           {
             label: 'My Submissions',
             path: '/productivity/forms/my-submissions',
             source: 'productivity-my-submissions.html',
-            status: 'todo',
+            status: 'done',
           },
         ],
       },

@@ -61,6 +61,14 @@ export const PROD_EMPLOYEES: ProdEmployee[] = [
     positionName: 'HR Staff',
     supervisorId: 'emp-hesti',
   },
+  {
+    employeeId: 'emp-nadia',
+    name: 'Nadia Putri',
+    nik: '20240109',
+    positionId: 'pos-health',
+    positionName: 'Occupational Health Officer',
+    supervisorId: 'emp-hesti',
+  },
 ];
 
 export const PROD_ACTORS: ProdActor[] = [
@@ -73,6 +81,7 @@ export const PROD_ACTORS: ProdActor[] = [
   { employeeId: 'emp-hesti', role: 'ROLE_HR_MANAGER', label: 'Hesti Wulandari — HR Manager' },
   { employeeId: 'emp-lukman', role: 'ROLE_HR_STAFF', label: 'Lukman Hakim — HR Staff' },
   { employeeId: 'emp-fajar', role: 'ROLE_EMPLOYEE', label: 'Fajar Setiawan — Employee' },
+  { employeeId: 'emp-nadia', role: 'ROLE_HEALTH_DATA_OFFICER', label: 'Nadia Putri — Health Data Officer' },
 ];
 
 type ProjectSeed = Omit<Project, 'memberCount' | 'openTaskCount'> & { deletedAt: string | null };

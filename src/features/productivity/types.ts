@@ -263,3 +263,118 @@ export interface CategoryMapping {
   createdAt: string;
   deactivatedAt: string | null;
 }
+
+/* ── Forms & Survey (`FT4`) ────────────────────────────────────────────────────────────────── */
+
+export type IdentityMode = 'BER_IDENTITAS' | 'ANONIM';
+export type Obligation = 'WAJIB' | 'SUKARELA';
+export type AudienceScope = 'SELURUH_KARYAWAN' | 'PER_BAGIAN';
+export type FormState = 'TERBUKA' | 'DITUTUP';
+export type QuestionType = 'PILIHAN_SATU' | 'PILIHAN_BANYAK' | 'ISIAN_TEKS' | 'ANGKA' | 'TANGGAL';
+
+export interface FormQuestion {
+  id: string;
+  questionType: QuestionType;
+  questionText: string;
+  questionChoices: string[] | null;
+  questionOrder: number;
+}
+
+export interface Form {
+  id: string;
+  code: string;
+  formTitle: string;
+  identityMode: IdentityMode;
+  obligation: Obligation;
+  audienceScope: AudienceScope;
+  audiencePositionIds: string[];
+  isSensitive: boolean;
+  responseDueDate: string | null;
+  retentionMonths: number | null;
+  state: FormState;
+  submissionCount: number;
+  /** identity_mode & is_sensitive terkunci permanen sejak jawaban pertama masuk. */
+  attributesLocked: boolean;
+  questions: FormQuestion[];
+  createdAt: string;
+}
+
+export interface FormDraft {
+  formTitle: string;
+  identityMode: IdentityMode;
+  obligation: Obligation;
+  audienceScope: AudienceScope;
+  audiencePositionIds: string[];
+  isSensitive: boolean;
+  responseDueDate: string;
+  retentionMonths: string;
+  questions: { questionType: QuestionType; questionText: string; questionChoices: string }[];
+}
+
+/** Satu jawaban membawa salinan beku pertanyaannya (ERD §6.4.4) — bukan definisi hari ini. */
+export interface SubmissionItem {
+  questionId: string;
+  questionTypeSnapshot: QuestionType;
+  questionTextSnapshot: string;
+  questionChoicesSnapshot: string[] | null;
+  answerValue: string[];
+}
+
+export interface FormSubmission {
+  id: string;
+  formId: string;
+  /** null pada formulir ANONIM — kolom domain sengaja kosong (PD-55). */
+  respondentEmployeeId: string | null;
+  submittedAt: string;
+  items: SubmissionItem[];
+}
+
+export interface SubmissionChange {
+  id: string;
+  submissionId: string;
+  questionTextSnapshot: string;
+  oldValue: string;
+  newValue: string;
+  createdAt: string;
+}
+
+export interface FormDistribution {
+  formId: string;
+  formTitle: string;
+  identityMode: IdentityMode;
+  obligation: Obligation;
+  responseDueDate: string | null;
+  state: FormState;
+  /** Selalu false pada formulir ANONIM. */
+  alreadySubmitted: boolean;
+  windowGranted: boolean;
+  submissionId: string | null;
+}
+
+export interface FormAggregate {
+  formId: string;
+  respondentCount: number;
+  questions: {
+    questionId: string;
+    questionText: string;
+    questionType: QuestionType;
+    answeredCount: number;
+    /** Pilihan → cacah per pilihan; ISIAN_TEKS → hanya `{count}`, teks jawaban tidak pernah dikirim. */
+    aggregate: Record<string, number>;
+  }[];
+}
+
+export interface PendingRespondent {
+  employeeId: string;
+  name: string;
+  positionName: string;
+}
+
+export interface FormWindowGrant {
+  id: string;
+  formId: string;
+  targetEmployeeId: string;
+  grantReason: string;
+  grantedBy: AuditRef;
+  grantedAt: string;
+}

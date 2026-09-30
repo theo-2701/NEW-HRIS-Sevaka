@@ -89,16 +89,16 @@ Prototype: 88 file HTML · Route bernav: 93
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/productivity/forms` | Forms | `productivity-forms.html` | todo |
-| `/productivity/forms/my-submissions` | My Submissions | `productivity-my-submissions.html` | todo |
-| `/productivity/payroll-group/groups` | Group List | `productivity-group-list.html` | todo |
-| `/productivity/payroll-group/tasks` | Task List | `productivity-task-list.html` | todo |
-| `/productivity/projects` | Project | `productivity-projects.html` | todo |
-| `/productivity/tasks` | Tasks | `productivity-tasks.html` | todo |
-| `/productivity/timesheet/activities` | Activities | `productivity-activities.html` | todo |
-| `/productivity/timesheet/report` | Tracker Report | `productivity-tracker-report.html` | todo |
-| `/productivity/timesheet/summary` | Summary | `productivity-summary.html` | todo |
-| `/productivity/timesheet/tracker` | Time Tracker | `productivity-time-tracker.html` | todo |
+| `/productivity/forms` | Forms | `productivity-forms.html` | done |
+| `/productivity/forms/my-submissions` | My Submissions | `productivity-my-submissions.html` | done |
+| `/productivity/payroll-group/groups` | Group List | `productivity-group-list.html` | done |
+| `/productivity/payroll-group/tasks` | Task List | `productivity-task-list.html` | done |
+| `/productivity/projects` | Project | `productivity-projects.html` | done |
+| `/productivity/tasks` | Tasks | `productivity-tasks.html` | done |
+| `/productivity/timesheet/activities` | Activities | `productivity-activities.html` | done |
+| `/productivity/timesheet/report` | Tracker Report | `productivity-tracker-report.html` | done |
+| `/productivity/timesheet/summary` | Summary | `productivity-summary.html` | done |
+| `/productivity/timesheet/tracker` | Time Tracker | `productivity-time-tracker.html` | done |
 
 ## Company Management
 

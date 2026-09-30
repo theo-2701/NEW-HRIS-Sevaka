@@ -1,11 +1,16 @@
 import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
 import type {
+  AudienceScope,
   CorrectionMode,
+  FormState,
+  IdentityMode,
+  Obligation,
   ProdActor,
   ProdRole,
   TaskOrigin,
   TaskPriority,
   TaskStatus,
+  QuestionType,
   TimesheetPeriodState,
   WorklogOrigin,
 } from '@/features/productivity/types';
@@ -131,3 +136,38 @@ export const PERIOD_STATE_META: Record<TimesheetPeriodState, { label: string; to
     meaning: 'Approved. It becomes permanent once payroll confirms it has used the hours.',
   },
 };
+
+/* ── Forms & Survey ─────────────────────────────────────────────────────────────────────────── */
+
+export const IDENTITY_META: Record<IdentityMode, { label: string; tone: Tone }> = {
+  BER_IDENTITAS: { label: 'Named', tone: 'info' },
+  ANONIM: { label: 'Anonymous', tone: 'brand' },
+};
+
+export const OBLIGATION_META: Record<Obligation, { label: string; tone: Tone }> = {
+  WAJIB: { label: 'Mandatory', tone: 'warn' },
+  SUKARELA: { label: 'Voluntary', tone: 'mute' },
+};
+
+export const AUDIENCE_LABEL: Record<AudienceScope, string> = {
+  SELURUH_KARYAWAN: 'All employees',
+  PER_BAGIAN: 'By position',
+};
+
+export const FORM_STATE_META: Record<FormState, { label: string; tone: Tone }> = {
+  TERBUKA: { label: 'Open', tone: 'ok' },
+  DITUTUP: { label: 'Closed', tone: 'mute' },
+};
+
+export const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
+  PILIHAN_SATU: 'Single choice',
+  PILIHAN_BANYAK: 'Multiple choice',
+  ISIAN_TEKS: 'Text',
+  ANGKA: 'Number',
+  TANGGAL: 'Date',
+};
+
+/** Posisi struktural yang dikenal dataset — sumber pemilih audiens PER_BAGIAN (company.cnf_group_struct_pos). */
+export const POSITIONS = PROD_EMPLOYEES.filter(
+  (row, index, list) => list.findIndex((item) => item.positionId === row.positionId) === index,
+).map((row) => ({ value: row.positionId, label: row.positionName }));
