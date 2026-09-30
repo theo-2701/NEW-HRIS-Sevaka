@@ -270,8 +270,8 @@ export const NAV: NavSection[] = [
         label: 'Project & Task',
         icon: 'square-kanban',
         children: [
-          { label: 'Project', path: '/productivity/projects', source: 'productivity-projects.html', status: 'todo' },
-          { label: 'Tasks', path: '/productivity/tasks', source: 'productivity-tasks.html', status: 'todo' },
+          { label: 'Project', path: '/productivity/projects', source: 'productivity-projects.html', status: 'done' },
+          { label: 'Tasks', path: '/productivity/tasks', source: 'productivity-tasks.html', status: 'done' },
           {
             label: 'Timesheet',
             children: [

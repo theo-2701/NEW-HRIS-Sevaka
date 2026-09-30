@@ -47,6 +47,8 @@ import { DocumentTemplatesPage } from '@/features/documents/pages/DocumentTempla
 import { SettingsConfigurationPage } from '@/features/settings/pages/SettingsConfigurationPage';
 import { SettingsChangeHistoryPage } from '@/features/settings/pages/SettingsChangeHistoryPage';
 import { ErasureRequestsPage } from '@/features/settings/pages/ErasureRequestsPage';
+import { ProjectsPage } from '@/features/productivity/pages/ProjectsPage';
+import { TasksPage } from '@/features/productivity/pages/TasksPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -178,6 +180,10 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'settings/configuration/employee', element: <SettingsConfigurationPage key="employee" menu="employee" /> },
   { path: 'settings/change-history', element: <SettingsChangeHistoryPage /> },
   { path: 'settings/erasure-requests', element: <ErasureRequestsPage /> },
+  { path: 'productivity/projects', element: <ProjectsPage key="active" state="AKTIF" /> },
+  /* Archive = sisi ARSIP dari page-pair Project; URL sendiri, tanpa baris menu (sidebar hanya 'Project'). */
+  { path: 'productivity/projects/archive', element: <ProjectsPage key="archive" state="ARSIP" /> },
+  { path: 'productivity/tasks', element: <TasksPage /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
   { path: 'company-management/announcements/detail', element: <AnnouncementDetailPage /> },
@@ -266,6 +272,9 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/settings/configuration/employee',
   '/settings/change-history',
   '/settings/erasure-requests',
+  '/productivity/projects',
+  '/productivity/projects/archive',
+  '/productivity/tasks',
   '/company-management/announcements',
   '/company-management/announcements/detail',
   '/me/announcements',

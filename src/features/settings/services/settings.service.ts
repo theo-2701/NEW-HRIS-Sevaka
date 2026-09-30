@@ -445,6 +445,17 @@ export const settingsService = {
   },
 
   /**
+   * Koneksi antar modul (tanpa API): service lain membaca nilai berjalan satu setelan — mis. productivity membaca
+   * `productivity.entry_window_days` untuk gerbang jendela. Di produksi tiap service membaca `setup.cnf_company_setup`
+   * sendiri tiap permintaan (tanpa cache), bukan lewat layar ini.
+   */
+  numberValue(code: string, fallback: number): number {
+    const value = store.find((row) => row.setupCode === code)?.setupValue?.[0];
+    const n = typeof value === 'number' ? value : Number(value);
+    return value === undefined || !Number.isFinite(n) ? fallback : n;
+  },
+
+  /**
    * Koneksi antar modul (tanpa API): nilai `REPRIMAND_RULE` dibaca layar Reprimand Type Setting sebagai
    * spanduk baca-saja — satu sumber nilai untuk kedua layar (PROB-FRONTEND-042).
    */
