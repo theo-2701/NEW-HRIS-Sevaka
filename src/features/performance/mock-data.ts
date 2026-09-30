@@ -1,4 +1,5 @@
 import type {
+  AccessLogRow,
   ApprovalRound,
   AuditActor,
   EligibilityEntry,
@@ -14,6 +15,8 @@ import type {
   SelfAssessment,
   SheetItem,
   SheetRow,
+  SignalGroup,
+  SnapshotDetail,
   SupervisorHistoryRow,
 } from '@/features/performance/types';
 
@@ -563,6 +566,188 @@ export const OBJECTION_SEED: ObjectionSeed[] = [
         'Setelah ditinjau ulang, target masih kurang spesifik. Saran: ajukan kembali via jalur review baru semester depan.',
       answeredAt: '2026-04-20T10:00:00+07:00',
     },
+  },
+];
+
+// ---------- Menu 6 — Papan Pantau & Laporan ----------
+
+/** Kalimat tetap `reprimand_disclaimer` — selalu tampil di papan pantau (§4.7.1.2). */
+export const REPRIMAND_DISCLAIMER =
+  'Angka papan ini sudah memperhitungkan keadaan yang dimaafkan. Aturan pemaafan hanya berlaku untuk penilaian — surat peringatan di modul karyawan dihitung dengan aturannya sendiri.';
+
+/** Golongan saat pengesahan (dibaca Company saat snapshot dibuat). "Staff 2" = padanan "Staff Grade 3". */
+export const EMPLOYEE_GRADE: Record<string, string> = {
+  'emp-dedi': 'Staff 2',
+  'emp-yanti': 'Staff 2',
+  'emp-budi-dm': 'Staff 2',
+  'emp-rina-amelia': 'Manager 1',
+};
+
+const noRecord = (groupKey: SignalGroup['groupKey'], recap: Record<string, number>): SignalGroup => ({
+  groupKey,
+  recap,
+  details: [],
+  emptyState: 'NO_RECORD',
+});
+const reprimandUnavailable: SignalGroup = { groupKey: 'REPRIMAND', recap: null, details: [], emptyState: 'NOT_AVAILABLE' };
+
+/** `signal_recap` periode Semester 1 2026 per karyawan — Dedi mengikuti dataset UIC `PL-01` persis. */
+export const SIGNAL_SEED: Record<string, SignalGroup[]> = {
+  'emp-dedi': [
+    {
+      groupKey: 'ATTENDANCE',
+      recap: { late_occurrence_count: 2, absent_occurrence_count: 0 },
+      details: [
+        { date: '2026-03-05', attendance_status: 'LATE' },
+        { date: '2026-02-10', attendance_status: 'LATE' },
+      ],
+      emptyState: null,
+    },
+    {
+      groupKey: 'OVERTIME',
+      recap: { overtime_hours_total: 12.5, overtime_days_count: 3 },
+      details: [
+        { date: '2026-03-18', payable_hours: 5 },
+        { date: '2026-02-20', payable_hours: 3 },
+        { date: '2026-02-12', payable_hours: 4.5 },
+      ],
+      emptyState: null,
+    },
+    {
+      groupKey: 'TRANSITION',
+      recap: { transition_legal_late_count: 0, transition_operational_late_count: 1 },
+      details: [{ date: '2026-04-02', deadline_class: 'OPERATIONAL', is_late: true }],
+      emptyState: null,
+    },
+    {
+      groupKey: 'PRODUCTIVITY',
+      recap: { productivity_task_assigned_count: 5, productivity_task_ontime_count: 0 },
+      details: [],
+      emptyState: null,
+    },
+    noRecord('PENDING_DECISION', {
+      finance_decision_delay_count: 0,
+      finance_settlement_delay_count: 0,
+      approval_delay_minutes_total: 0,
+      approval_delay_count: 0,
+    }),
+    reprimandUnavailable,
+  ],
+  'emp-yanti': [
+    {
+      groupKey: 'ATTENDANCE',
+      recap: { late_occurrence_count: 1, absent_occurrence_count: 1 },
+      details: [
+        { date: '2026-03-23', attendance_status: 'ABSENT' },
+        { date: '2026-01-19', attendance_status: 'LATE' },
+      ],
+      emptyState: null,
+    },
+    noRecord('OVERTIME', { overtime_hours_total: 0, overtime_days_count: 0 }),
+    noRecord('TRANSITION', { transition_legal_late_count: 0, transition_operational_late_count: 0 }),
+    { groupKey: 'PRODUCTIVITY', recap: null, details: [], emptyState: 'NO_TASK_ASSIGNED' },
+    noRecord('PENDING_DECISION', {
+      finance_decision_delay_count: 0,
+      finance_settlement_delay_count: 0,
+      approval_delay_minutes_total: 0,
+      approval_delay_count: 0,
+    }),
+    reprimandUnavailable,
+  ],
+  'emp-budi-dm': [
+    noRecord('ATTENDANCE', { late_occurrence_count: 0, absent_occurrence_count: 0 }),
+    {
+      groupKey: 'OVERTIME',
+      recap: { overtime_hours_total: 6, overtime_days_count: 2 },
+      details: [
+        { date: '2026-03-27', payable_hours: 2.5 },
+        { date: '2026-02-26', payable_hours: 3.5 },
+      ],
+      emptyState: null,
+    },
+    noRecord('TRANSITION', { transition_legal_late_count: 0, transition_operational_late_count: 0 }),
+    { groupKey: 'PRODUCTIVITY', recap: null, details: [], emptyState: 'NO_TASK_ASSIGNED' },
+    {
+      groupKey: 'PENDING_DECISION',
+      recap: {
+        finance_decision_delay_count: 0,
+        finance_settlement_delay_count: 0,
+        approval_delay_minutes_total: 2880,
+        approval_delay_count: 1,
+      },
+      details: [{ date: '2026-03-02', delay_minutes: 2880, resolution_state: 'RESOLVED' }],
+      emptyState: null,
+    },
+    reprimandUnavailable,
+  ],
+  'emp-rina-amelia': [
+    noRecord('ATTENDANCE', { late_occurrence_count: 0, absent_occurrence_count: 0 }),
+    noRecord('OVERTIME', { overtime_hours_total: 0, overtime_days_count: 0 }),
+    noRecord('TRANSITION', { transition_legal_late_count: 0, transition_operational_late_count: 0 }),
+    { groupKey: 'PRODUCTIVITY', recap: null, details: [], emptyState: 'NO_TASK_ASSIGNED' },
+    {
+      groupKey: 'PENDING_DECISION',
+      recap: {
+        finance_decision_delay_count: 0,
+        finance_settlement_delay_count: 0,
+        approval_delay_minutes_total: 1440,
+        approval_delay_count: 1,
+      },
+      details: [{ date: '2026-07-01', delay_minutes: 1440, resolution_state: 'PENDING' }],
+      emptyState: null,
+    },
+    reprimandUnavailable,
+  ],
+};
+
+export const SIGNAL_COMPUTED_AT = '2026-07-28T06:00:00+07:00';
+
+export interface SnapshotSeed extends Omit<SnapshotDetail, 'objectionSummary' | 'currentIncidentRecapAvailable'> {
+  reviewPeriodId: string;
+}
+
+/** `SNAP-0002-1` — pengesahan lembar Budi (`RS-0002`) 05 Jul 2026. */
+export const SNAPSHOT_SEED: SnapshotSeed[] = [
+  {
+    snapshotId: 'snap-0002-1',
+    reviewSheetId: 'rs-0002',
+    reviewPeriodId: 'rp-2026-s1',
+    revisionNo: 1,
+    employeeId: 'emp-budi-dm',
+    jobGradeNameSnapshot: 'Staff 2',
+    scaleLength: 5,
+    objectionDeadlineDaysFrozen: 14,
+    reprimandStateSnapshot: { state: 'CLEAR', standingLevel: 'CLEAR', activePoints: 0, policyVersionId: 'pv-fiktif-01' },
+    approvedAt: '2026-07-05T11:00:00+07:00',
+    approvedAtTimezone: 'Asia/Jakarta',
+  },
+];
+
+/** `AL-0001`–`AL-0003` dataset §5.2. */
+export const ACCESS_LOG_SEED: AccessLogRow[] = [
+  {
+    id: 'al-0002',
+    readerEmployeeId: 'emp-hesti',
+    subjectEmployeeId: 'emp-dedi',
+    createdBy: { employeeId: 'emp-hesti', name: 'Hesti Wulandari', role: 'ROLE_HR_MANAGER' },
+    createdAt: '2026-07-15T09:00:00+07:00',
+    activity: 'I',
+  },
+  {
+    id: 'al-0001',
+    readerEmployeeId: 'emp-rina-amelia',
+    subjectEmployeeId: 'emp-budi-dm',
+    createdBy: { employeeId: 'emp-rina-amelia', name: 'Rina Amelia', role: 'ROLE_DEPARTMENT_MANAGER' },
+    createdAt: '2026-07-05T10:45:00+07:00',
+    activity: 'I',
+  },
+  {
+    id: 'al-0003',
+    readerEmployeeId: 'emp-hesti',
+    subjectEmployeeId: 'emp-rina-amelia',
+    createdBy: { employeeId: 'emp-hesti', name: 'Hesti Wulandari', role: 'ROLE_HR_MANAGER' },
+    createdAt: '2026-06-20T14:50:00+07:00',
+    activity: 'I',
   },
 ];
 

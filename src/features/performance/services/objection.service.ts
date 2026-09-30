@@ -1,6 +1,7 @@
 import { ApiError, api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { OBJECTION_SEED, REOPEN_SEED, type ObjectionSeed } from '@/features/performance/mock-data';
+import { recordAccess } from '@/features/performance/services/access-log';
 import { delay, uuidV7 } from '@/features/performance/services/ids';
 import { readPerfNumber } from '@/features/performance/services/setup';
 import { sheetStore } from '@/features/performance/services/sheet.service';
@@ -34,6 +35,9 @@ export function resetObjectionMocks() {
   usedKeys = new Set();
 }
 resetObjectionMocks();
+
+/** Akses mentah untuk Menu 6 (ringkasan sanggahan pada riwayat beku, laporan sanggahan belum dijawab). */
+export const objectionStore = { all: () => objections };
 
 const notFound = () => new ApiError('Sanggahan tidak ditemukan.', 404, 'NOT_FOUND');
 const invalid = (message: string) => new ApiError(message, 422, 'VALIDATION_ERROR');
@@ -209,6 +213,11 @@ export const objectionService = {
       await delay(150);
       const row = objections.find((item) => item.id === id);
       if (!row || !canRead(actor, row)) throw notFound();
+      /* Titik pemicu jejak akses: HR membuka detail sanggahan orang lain. */
+      const involved =
+        row.submittedByEmployeeId === actor.employeeId ||
+        row.holders.some((holder) => holder.holderEmployeeId === actor.employeeId);
+      if (!involved) recordAccess(actor, row.submittedByEmployeeId);
       return toDetail(row);
     }
     const { data } = await api.get<RawObjection>(`/performance/objections/${id}`);

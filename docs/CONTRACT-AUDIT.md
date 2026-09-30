@@ -748,3 +748,33 @@ DM → masuk, HR/SA → belum dijawab).
   punya endpoint klien, jadi tidak disimulasikan.
 
 7 pengujian baru di `performance/objection.test.ts`.
+
+## 27. Performance › Menu 6 Papan Pantau & Laporan — FSD-001-PERFORMANCE 0.11 §6 / UIC-001-PERFORMANCE 0.12 §7 (1 Oktober 2026)
+
+Sidebar hanya punya satu baris "Monitor & Reports" (terkunci), jadi tiga Sub Menu menjadi empat muka TabMenu di
+`/performance/reports` mengikuti prototipe: **Papan pantau** (H1/H2), **Riwayat beku** (H3/H4 + detail `PL-05`),
+**Laporan HR** (I1–I8, daftar laporan di kiri), **Jejak akses** (J1/J2). Nol CRUD, nol Idempotency-Key.
+
+- **Peran:** SELF (`/me/...`) hanya EMP (+SA); DM/HR membuka milik orang lain — DM sebatas rantai SEKARANG, HR
+  seluruh company, lainnya `404` anti-enumerasi. Laporan: HRM 8, HRS 6 (tanpa I3/I5), DM 2 (I1/I8 ter-scope dirinya).
+  Jejak akses HR saja, bukan permukaan SELF.
+- **Papan pantau:** enam kelompok urutan tetap, rekap dulu lalu rincian terbaru di atas; empat bentuk kosong empat
+  warna (0 dari N amber, tidak ada catatan brand/ungu, sumber tidak menjawab abu, tanpa tugas biru) + legenda;
+  disclaimer teguran selalu tampil. Pemilih periode hanya untuk HR (grid periode `#3` HR saja).
+- **Riwayat beku:** revisi terbaru per lembar atau semua revisi (Segmented); detail memisahkan kotak **Beku**
+  (golongan, skala, tenggat sanggah, keadaan teguran bertanda waktu pengesahan) dan **Hidup** (ringkasan sanggahan,
+  rekap kejadian). Pengesahan `K9` APPROVED di Menu 4 kini membentuk revisi beku baru.
+- **Laporan HR:** tanpa kontrol pengurutan (`PF-71`); `null` tugas tampil "Tanpa tugas", bukan 0; batas porsi hanya
+  keterangan. DM tidak berhak grid periode, jadi periode laporannya diambil dari lembar yang ia nilai (`P3.02`).
+- **Jejak akses:** enam kolom persis kontrak, pill urutan tetap, filter subjek/pembaca/rentang tanggal lewat modal.
+  Titik pemicu yang kini benar-benar menulis baris: papan & riwayat orang lain, detail lembar dibuka HR/rantai
+  (bukan pemilik/pemegang kursi), detail sanggahan dibuka HR yang tidak terlibat. Baca ditolak ⇒ nol baris. J2 =
+  tabel referensi empat pintu.
+- **Selisih dengan angka contoh dokumen:** I4 Budi = 13,0% (bukan 17,6%) dan I7 Budi = 50% (bukan 33,3%) karena
+  rumus TSD menghitung SEMUA lembar yang dinilai Budi (RS-0001 + RS-0004), sedangkan contoh dokumen hanya memakai
+  RS-0001; I8 "hari sejak diajukan" dihitung ke hari ini, bukan ke `computed_at` dataset. Perlu konfirmasi pemilik TSD.
+- **Asumsi:** roster "papan milik" diambil dari rantai struktur (API sungguhan: Company/Directory); rekap sinyal
+  hanya diisi untuk Semester 1 2026 (Dedi persis dataset, karyawan lain dibuat netral). ID jejak akses menampilkan
+  ekor acak uuid karena awalannya timestamp.
+
+9 pengujian baru di `performance/monitor.test.ts`.

@@ -164,7 +164,7 @@ Prototype: 88 file HTML · Route bernav: 92
 | `/performance/cycles` | Cycles & Settings | `performance-cycles.html` | done |
 | `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | done |
 | `/performance/objections` | Objections | `performance-objections.html` | done |
-| `/performance/reports` | Monitor & Reports | `performance-reports.html` | todo |
+| `/performance/reports` | Monitor & Reports | `performance-reports.html` | done |
 | `/performance/sheets` | Review Sheets | `performance-sheets.html` | done |
 
 ## Belum masuk peta nav

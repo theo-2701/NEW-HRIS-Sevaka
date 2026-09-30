@@ -52,7 +52,7 @@ describe('Putuskan (P4.02, pola K9)', () => {
     });
     expect((await sheetService.get(BUDI, 'rs-0001')).status).toBe('PENDING_APPROVAL');
     await expect(approvalService.decide(RINA, 'rs-0001', { decision: 'APPROVED' })).rejects.toMatchObject({ status: 422 });
-    flushWorkflow();
+    await flushWorkflow();
     expect((await sheetService.get(BUDI, 'rs-0001')).status).toBe('APPROVED');
     const rounds = await approvalService.rounds(RINA, 'rs-0001');
     expect(rounds[0]).toMatchObject({ outcome: 'APPROVED', decisionReason: null });
@@ -72,14 +72,14 @@ describe('Putuskan (P4.02, pola K9)', () => {
   it('Kembalikan → dikembalikan ke penilai; ajukan ulang = putaran 2 dan jatah habis', async () => {
     await submitDedi();
     await approvalService.decide(RINA, 'rs-0001', { decision: 'RETURNED', decisionReason: 'Lengkapi bukti.' });
-    flushWorkflow();
+    await flushWorkflow();
     expect((await sheetService.get(BUDI, 'rs-0001')).status).toBe('RETURNED_TO_ASSESSOR');
     await expect(sheetService.submit(BUDI, 'rs-0001')).resolves.toMatchObject({ cycleNo: 1, roundNo: 2 });
     await expect(
       approvalService.decide(RINA, 'rs-0001', { decision: 'RETURNED', decisionReason: 'Lagi.' }),
     ).rejects.toMatchObject({ status: 422, code: 'RETURN_QUOTA_EXCEEDED' });
     await approvalService.decide(RINA, 'rs-0001', { decision: 'REJECTED_FINAL', decisionReason: 'Tetap belum terukur.' });
-    flushWorkflow();
+    await flushWorkflow();
     expect((await sheetService.get(BUDI, 'rs-0001')).status).toBe('REJECTED_FINAL');
   });
 

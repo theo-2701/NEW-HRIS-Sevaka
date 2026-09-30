@@ -507,7 +507,7 @@ export const NAV_PERFORMANCE: NavSection[] = [
         icon: 'bar-chart-3',
         path: '/performance/reports',
         source: 'performance-reports.html',
-        status: 'todo',
+        status: 'done',
       },
       { label: 'Settings', icon: 'settings' },
     ],

@@ -8,6 +8,7 @@ export const PERF_PATHS = {
   sheetDetail: (id: string) => `/performance/sheets/detail?id=${id}`,
   approvals: '/performance/approvals',
   objections: '/performance/objections',
+  reports: '/performance/reports',
 };
 
 export type PerfRole =
@@ -385,6 +386,135 @@ export interface ReopenWindow {
   reason: string | null;
   openedAt: string;
   newDeadlineAt: string;
+}
+
+// ---------- Menu 6 — Papan Pantau & Laporan ----------
+
+export type SignalGroupKey = 'ATTENDANCE' | 'OVERTIME' | 'TRANSITION' | 'PRODUCTIVITY' | 'PENDING_DECISION' | 'REPRIMAND';
+
+export const SIGNAL_GROUP_LABEL: Record<SignalGroupKey, string> = {
+  ATTENDANCE: 'Kehadiran',
+  OVERTIME: 'Lembur',
+  TRANSITION: 'Perpindahan',
+  PRODUCTIVITY: 'Ketepatan tugas',
+  PENDING_DECISION: 'Keputusan tertunda',
+  REPRIMAND: 'Teguran berjalan',
+};
+
+/** Empat bentuk kosong (§4.7.1.1) — "tanpa kunci" (0 dari N) adalah `null` dengan rekap terisi. */
+export type SignalEmptyState = 'NOT_AVAILABLE' | 'NO_TASK_ASSIGNED' | 'NO_RECORD';
+
+export interface SignalGroup {
+  groupKey: SignalGroupKey;
+  /** Kolom rekap apa adanya dari `signal_recap` — nama kolom kontrak, nilai hitungan murni. */
+  recap: Record<string, number> | null;
+  details: Record<string, string | number | boolean>[];
+  emptyState: SignalEmptyState | null;
+}
+
+export interface SignalBoard {
+  reviewPeriodId: string;
+  reviewPeriodName: string;
+  reviewPeriodPhase: PeriodPhase;
+  employeeId: string;
+  groups: SignalGroup[];
+  reprimandDisclaimer: string;
+  computedAt: string;
+}
+
+export interface SnapshotRow {
+  snapshotId: string;
+  reviewSheetId: string;
+  revisionNo: number;
+  approvedAt: string;
+  jobGradeNameSnapshot?: string;
+  employeeName?: string;
+}
+
+export interface ReprimandState {
+  state: string;
+  standingLevel: string;
+  activePoints: number;
+  policyVersionId?: string;
+}
+
+/** `PL-05` — empat field BEKU + dua field HIDUP yang menempel, tidak disalin. */
+export interface SnapshotDetail {
+  snapshotId: string;
+  reviewSheetId: string;
+  revisionNo: number;
+  employeeId: string;
+  jobGradeNameSnapshot: string;
+  scaleLength: number;
+  objectionDeadlineDaysFrozen: number;
+  reprimandStateSnapshot: ReprimandState | null;
+  approvedAt: string;
+  approvedAtTimezone: string;
+  objectionSummary: { status: ObjectionStatus; objectionId: string } | null;
+  currentIncidentRecapAvailable: boolean;
+}
+
+export type ReportKey =
+  | 'task-distribution'
+  | 'kpi-item-target-type-mix'
+  | 'kpi-item-inactive'
+  | 'additional-item-ratio'
+  | 'not-yet-assessable'
+  | 'excluded-from-assessment'
+  | 'blank-input-ratio'
+  | 'pending-objections';
+
+export interface TaskDistributionRow {
+  supervisorEmployeeId: string;
+  subordinates: { employeeId: string; employeeName: string; assignedTaskCount: number | null }[];
+}
+export interface TargetMixRow {
+  jobGradeNameSnapshot: string;
+  numericCount: number;
+  narrativeCount: number;
+}
+export interface InactiveKpiRow {
+  jobGradeNameSnapshot: string;
+  isActive: boolean;
+}
+export interface AdditionalRatioRow {
+  supervisorEmployeeId: string;
+  additionalWeightRatio: number;
+  maxRatioThreshold: number;
+}
+export interface ReasonRow {
+  employeeId: string;
+  employeeName: string;
+  reason: NotAssessableReason | OutOfAssessmentReason;
+}
+export interface BlankInputRow {
+  supervisorEmployeeId: string;
+  blankSelfAssessmentRatio: number;
+  unreadItemRatio: number;
+}
+export interface PendingObjectionRow {
+  objectionId: string;
+  currentHolderEmployeeId: string;
+  currentHolderContext: HolderContext;
+  daysSinceSubmitted: number;
+}
+
+export interface AccessLogRow {
+  id: string;
+  readerEmployeeId: string;
+  subjectEmployeeId: string;
+  createdBy: { employeeId: string; name: string; role: string };
+  createdAt: string;
+  activity: 'I';
+}
+
+export interface AccessLogSearch {
+  subjectEmployeeId?: string;
+  readerEmployeeId?: string;
+  startDate?: string;
+  endDate?: string;
+  page: number;
+  size: number;
 }
 
 /** Respons `200` `P4.01` — instans alur kerja sudah terisi karena dimulai sinkron. */

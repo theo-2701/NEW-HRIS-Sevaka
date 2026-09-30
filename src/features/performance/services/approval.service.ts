@@ -4,6 +4,7 @@ import { ASSESSOR_AVERAGE, type SheetSeed } from '@/features/performance/mock-da
 import { delay } from '@/features/performance/services/ids';
 import { readPerfNumber } from '@/features/performance/services/setup';
 import { sheetStore } from '@/features/performance/services/sheet.service';
+import { snapshotStore } from '@/features/performance/services/snapshot-store';
 import { canReadRoundsAsHr, canSeeApprovalQueue, returnsUsed } from '@/features/performance/rules';
 import type {
   ApprovalRound,
@@ -31,8 +32,11 @@ export function resetApprovalMocks() {
   inFlight = [];
 }
 
-/** Konsumsi `workflow.process.completed`: tulis outcome putaran + status lembar. */
-function complete(job: Completion) {
+/**
+ * Konsumsi `workflow.process.completed`: tulis outcome putaran + status lembar. Pengesahan (APPROVED)
+ * sekaligus membentuk revisi beku untuk Riwayat Beku (Menu 6).
+ */
+async function complete(job: Completion) {
   inFlight = inFlight.filter((row) => row !== job);
   const sheet = sheetStore.find(job.sheetId);
   const round = sheet?.rounds.find((row) => row.id === job.roundId);
@@ -42,14 +46,16 @@ function complete(job: Completion) {
   round.decidedAt = new Date().toISOString();
   sheet.status =
     job.draft.decision === 'APPROVED' ? 'APPROVED' : job.draft.decision === 'RETURNED' ? 'RETURNED_TO_ASSESSOR' : 'REJECTED_FINAL';
+  if (job.draft.decision === 'APPROVED') {
+    snapshotStore.add(sheet, await readPerfNumber('performance.objection_deadline_days', 14));
+  }
 }
 
 /** Untuk pengujian — selesaikan seluruh proses alur kerja yang masih berjalan sekarang juga. */
-export function flushWorkflow() {
-  for (const job of [...inFlight]) {
-    clearTimeout(job.timer);
-    complete(job);
-  }
+export async function flushWorkflow() {
+  const jobs = [...inFlight];
+  for (const job of jobs) clearTimeout(job.timer);
+  await Promise.all(jobs.map(complete));
 }
 
 const running = (sheet: SheetSeed) => {
@@ -174,7 +180,7 @@ export const approvalService = {
       if (inFlight.some((row) => row.roundId === round.id)) {
         throw new ApiError('Keputusan untuk putaran ini sedang diproses mesin alur kerja.', 422, 'VALIDATION_ERROR');
       }
-      const job: Completion = { sheetId, roundId: round.id, draft, timer: setTimeout(() => complete(job), WORKFLOW_DELAY_MS) };
+      const job: Completion = { sheetId, roundId: round.id, draft, timer: setTimeout(() => void complete(job), WORKFLOW_DELAY_MS) };
       inFlight.push(job);
       return { status: 'FORWARDED', message: 'Keputusan diteruskan ke mesin alur kerja.' };
     }

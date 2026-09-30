@@ -58,6 +58,18 @@ export const canSeeHrObjections = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
 /** `#36` buka kembali jendela sanggah. */
 export const canReopenWindow = allow('ROLE_HR_MANAGER');
 
+// Menu 6 — Papan Pantau & Laporan
+/** `#39`/`#49` permukaan SELF — hanya karyawan (DM/HR tidak punya route `/me/...` di menu ini). */
+export const hasOwnBoard = allow('ROLE_EMPLOYEE');
+/** `#40`/`#50` papan & riwayat orang lain — DM ber-rantai, HR seluruh company. */
+export const canReadOthersBoard = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF', 'ROLE_DEPT_MANAGER');
+/** Enam laporan HRM + HRS (`#42`/`#44`/`#46`/`#47`, plus `#41`/`#48` yang juga terbuka untuk DM). */
+export const canReadHrReports = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
+/** Dua laporan HRM saja (`#43` induk tidak-berlaku, `#45` belum bisa dinilai). */
+export const canReadManagerReports = allow('ROLE_HR_MANAGER');
+/** `#52` Jejak Akses — HR saja, bukan permukaan SELF. */
+export const canReadAccessLog = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
+
 /** Gerbang `PF-37`: isian diri terbuka otomatis begitu SELURUH baris berlaku punya nilai awal. */
 export const selfAssessmentOpen = (items: { initialValueRecordedAt: string | null }[]) =>
   items.length > 0 && items.every((row) => row.initialValueRecordedAt);

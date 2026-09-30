@@ -9,6 +9,7 @@ import {
   type SheetSeed,
 } from '@/features/performance/mock-data';
 import { kpiService } from '@/features/performance/services/kpi.service';
+import { recordAccess } from '@/features/performance/services/access-log';
 import { delay, uuidV7 } from '@/features/performance/services/ids';
 import { readPerfNumber } from '@/features/performance/services/setup';
 import { canListSheets, canReadHistoryAsHr, canScopeAllSheets, selfAssessmentOpen } from '@/features/performance/rules';
@@ -298,6 +299,8 @@ export const sheetService = {
       await delay(150);
       const sheet = sheetOf(id);
       if (!canRead(actor, sheet)) throw notFound();
+      /* Titik pemicu jejak akses: HR/rantai membuka lembar orang lain; pemegang kursi & pemilik tidak. */
+      if (!isOwner(actor, sheet) && !isHolder(actor, sheet)) recordAccess(actor, sheet.employeeId);
       return project(actor, sheet);
     }
     const { data } = await api.get<RawSheet>(base(id));

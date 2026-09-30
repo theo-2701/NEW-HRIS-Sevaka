@@ -65,6 +65,7 @@ import { SheetsPage } from '@/features/performance/pages/SheetsPage';
 import { SheetDetailPage } from '@/features/performance/pages/SheetDetailPage';
 import { ApprovalsPage } from '@/features/performance/pages/ApprovalsPage';
 import { ObjectionsPage } from '@/features/performance/pages/ObjectionsPage';
+import { ReportsPage } from '@/features/performance/pages/ReportsPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -210,6 +211,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'performance/sheets/detail', element: <SheetDetailPage /> },
   { path: 'performance/approvals', element: <ApprovalsPage /> },
   { path: 'performance/objections', element: <ObjectionsPage /> },
+  { path: 'performance/reports', element: <ReportsPage /> },
   /* Archive = sisi ARSIP dari page-pair Project; URL sendiri, tanpa baris menu (sidebar hanya 'Project'). */
   { path: 'productivity/projects/archive', element: <ProjectsPage key="archive" state="ARSIP" /> },
   { path: 'productivity/tasks', element: <TasksPage /> },
@@ -321,6 +323,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/performance/sheets/detail',
   '/performance/approvals',
   '/performance/objections',
+  '/performance/reports',
   '/productivity/projects/archive',
   '/productivity/tasks',
   '/productivity/timesheet/tracker',

@@ -117,7 +117,8 @@ Baca dulu: `_prototype/SETTINGS-GAP-NOTES.md`.
 ## Batch 9 — Produk lain (product picker)
 
 - [ ] Recruitment: home, job listings (+ create, + detail `:id`), add candidate, import logs (+ detail)
-- [ ] Performance: cycles, KPI items, sheets, approvals, objections, reports
+- [x] Performance: cycles, KPI items, sheets, approvals, objections, reports (FSD-PERFORMANCE 0.11 / UIC 0.12 —
+      audit `docs/CONTRACT-AUDIT.md` §22–§27)
 
 ## Batch 10 — Pengerasan
 
