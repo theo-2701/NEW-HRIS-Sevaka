@@ -372,22 +372,22 @@ export const NAV: NavSection[] = [
     section: 'Document — no menu row yet',
     note: 'Layar lengkap secara kontrak tapi belum punya baris menu (PROB-SERVICE-356 / -407). Verifikasi publik memang tanpa menu (DOC-80).',
     children: [
-      { label: 'Letter Issuance', icon: 'mail-plus', path: '/documents/letter-issuance', source: 'document-letter-issuance.html', status: 'todo' },
+      { label: 'Letter Issuance', icon: 'mail-plus', path: '/documents/letter-issuance', source: 'document-letter-issuance.html', status: 'done' },
       {
         label: 'Category Settings',
         icon: 'sliders-horizontal',
         path: '/documents/categories',
         source: 'document-categories.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Document Access Trail',
         icon: 'scroll-text',
         path: '/documents/access-trail',
         source: 'document-access-log.html',
-        status: 'todo',
+        status: 'done',
       },
-      { label: 'Public Letter Verification', icon: 'badge-check', path: '/verify', source: 'document-verify.html', status: 'todo' },
+      { label: 'Public Letter Verification', icon: 'badge-check', path: '/verify', source: 'document-verify.html', status: 'done' },
     ],
   },
 

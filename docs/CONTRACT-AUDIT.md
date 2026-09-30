@@ -575,3 +575,42 @@ Manager · Lukman HR Staff · Fajar · Nadia Health Data Officer).
   baris Timesheet Agustus–September ditambahkan agar alur koreksi/pengajuan dapat dicoba di dalam jendela.
 - **Belum:** "Document Templates" di grup Productivity tetap tanpa layar (PROB-FRONTEND-019, milik company-service);
   master jenis kegiatan (TS-01) dan audit jejak akses (F5.01) tidak punya layar di FSD — hanya dipakai sebagai data.
+
+## 21. Document — Letter Issuance, Category Settings, Access Trail, Malware Alerts, Public Verification — FSD-DOCUMENT 0.8 / UIC-DOCUMENT 0.6 (30 September 2026)
+
+Empat baris di bagian nav "Document — no menu row yet" kini berlayar penuh, ditambah Malware Alerts (route
+`/company-management/files/malware-alerts`, tanpa baris menu — lihat catatan di bawah). State berbagi satu service
+(`document.service.ts`) dengan katalog Files, sehingga surat yang terbit langsung masuk Employee Files dan pembukaan
+berkas langsung muncul di jejak akses.
+
+- **Letter Issuance (§5, `A10`–`A15`):** tab Surat satuan & Penerbitan massal. `A10` jalur petugas (HR Staff/HR Manager;
+  Super Admin tidak menerbitkan): PERORANGAN wajib karyawan, EDARAN tanpa karyawan + cabang opsional; gerbang efektif
+  (kategori PERMANENT atau `requires_approval`) ⇒ `201` MENUNGGU tanpa nomor/berkas, selain itu `201` TERBIT + nomor
+  `NNN/HRD/<bulan romawi>/<tahun>` + kode periksa + berkas di katalog. Kartu "Waiting for approval" memuat surat bergerbang
+  untuk diputus (`A11`, penyetuju ≠ pengaju; tolak beralasan 1–100) — **penyimpangan kecil:** FSD menyebut `A11` dieksekusi
+  dari `A4`, tetapi surat bergerbang belum punya berkas sehingga tak terjangkau dari detail dokumen; daftar kerja ini
+  bukan grid pencarian surat. `A12` batal dijalankan dari detail dokumen Files (tombol "Cancel letter", status + alasan
+  tampil di A4). Massal: `A13a` ≥2 penerima unik, templat perorangan; `A14` penyetuju ≠ pengaju; setuju ⇒ tugas dijalankan
+  (mock seketika) dengan gagal per orang ("jabatan formal belum ditetapkan", skenario `BATCH-1`); `A13b` laporan 3 angka +
+  tugas per penerima tetap dapat dibuka.
+- **Category Settings (§7, `A6a`–`A6d`, `A7`):** HR Manager membuat (kode unik 409, SVG/arsip ditolak, asal PERUSAHAAN +
+  kelas BIASA dipaksa) dan mengubah; MENGETAT (menonaktifkan, memperpanjang simpan, mempersempit) berlaku seketika;
+  MELONGGARKAN menjadi usulan yang wajib mengakui angka dokumen terdampak — respons tetap nilai lama + penanda "Awaiting
+  approval"; usulan kedua 409. Pembaca peran = penggantian seluruh daftar dari 10 peran kanonik, kategori SENSITIF 403.
+  Super Admin memutus (berbeda orang dari pengusul, angka dampak wajib sama, tolak beralasan).
+- **Access Trail (§8, `A5`):** tepat HR Manager & Super Admin (Health Data Officer 403); dua bentuk baris (per pembukaan
+  nama+versi / per permintaan "N files") tidak diratakan; penanda "Unreasonable"; kolom alamat dilabeli alamat gerbang,
+  bukan alamat pengakses (PROB-INFRA-047); catatan pengawasan saling-mengawasi ditampilkan.
+- **Malware Alerts (§8A, `A17`/`A18`):** kalimat peringatan kontrak tampil dua kali (kepala grid & modal); nol nama berkas
+  (penunjuk saja); tombol "Delete file & mark handled" hanya pada baris belum-ditangani; catatan tindakan wajib 1–1000;
+  hapus objek dulu lalu tandai — gagal hapus ⇒ 500, baris tetap AKTIF; kirim ulang atas baris DITANGANI = 200 apa adanya;
+  nol orang kedua. **Rumah menu:** FSD 0.8 menyatakan baris `Company Management › Files › Malware Alerts` sudah aktif
+  (menu_order 7), tetapi pohon sidebar di repo dikunci empat baris Files — route dipasang tanpa baris menu, menunggu izin.
+- **Public verification (§9, `C2a`–`C2c`):** `/verify` (nomor surat) dan `/verify/:code` (dari QR, kode terkunci), tanpa
+  login dan tanpa menu; jawaban hanya cocok/tidak cocok; lima sebab gagal satu bentuk; surat dibatalkan tampil dengan
+  tanggal batal tanpa alasan; nama tidak disimpan. Pembatasan laju (§7.4) belum diterapkan — dokumen menandainya
+  rancangan yang belum diuji (PROB-SERVICE-437).
+- **Asumsi:** templat tambahan "Surat Tugas Dinas" (bergerbang) dan "Surat Edaran Libur Nasional" untuk mencoba kedua
+  cabang; atribut kelola kategori (kode, batas ukuran, jenis berkas, peran pembaca) dan NIK persona di luar dataset
+  dikarang; angka dampak = cacah dokumen di katalog contoh; pemetaan peran pembaca belum memengaruhi penyaring katalog
+  Files (penyaring baca tetap aturan kelas yang ada).

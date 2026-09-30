@@ -44,6 +44,9 @@ import {
   OtherFilesPage,
 } from '@/features/documents/pages/FilesPages';
 import { DocumentTemplatesPage } from '@/features/documents/pages/DocumentTemplatesPage';
+import { LetterIssuancePage } from '@/features/documents/pages/LetterIssuancePage';
+import { AccessTrailPage, CategorySettingsPage, MalwareAlertsPage } from '@/features/documents/pages/GovernancePages';
+import { PublicVerifyPage } from '@/features/documents/pages/PublicVerifyPage';
 import { SettingsConfigurationPage } from '@/features/settings/pages/SettingsConfigurationPage';
 import { SettingsChangeHistoryPage } from '@/features/settings/pages/SettingsChangeHistoryPage';
 import { ErasureRequestsPage } from '@/features/settings/pages/ErasureRequestsPage';
@@ -166,6 +169,11 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'company-management/files/employee', element: <EmployeeFilesPage /> },
   { path: 'company-management/files/other', element: <OtherFilesPage /> },
   { path: 'company-management/files/templates', element: <DocumentTemplatesPage /> },
+  /* Tiga layar Document tanpa baris menu (PROB-SERVICE-356/-407) + Malware Alerts (baris menu belum ada di sidebar terkunci). */
+  { path: 'documents/letter-issuance', element: <LetterIssuancePage /> },
+  { path: 'documents/categories', element: <CategorySettingsPage /> },
+  { path: 'documents/access-trail', element: <AccessTrailPage /> },
+  { path: 'company-management/files/malware-alerts', element: <MalwareAlertsPage /> },
   { path: 'me/files', element: <EssFilesPage /> },
   { path: 'settings/configuration/time', element: <SettingsConfigurationPage key="time" menu="time" /> },
   { path: 'settings/configuration/finance', element: <SettingsConfigurationPage key="finance" menu="finance" /> },
@@ -275,6 +283,10 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company-management/files/employee',
   '/company-management/files/other',
   '/company-management/files/templates',
+  '/documents/letter-issuance',
+  '/documents/categories',
+  '/documents/access-trail',
+  '/company-management/files/malware-alerts',
   '/me/files',
   '/settings/configuration/time',
   '/settings/configuration/finance',
@@ -347,13 +359,7 @@ export const routes: RouteObject[] = [
     children: [...IMPLEMENTED, ...PLACEHOLDERS],
   },
   /* Verifikasi surat publik — tanpa login dan memang tanpa baris menu (DOC-80). */
-  {
-    path: '/verify',
-    element: (
-      <div className="mx-auto w-full max-w-3xl px-6 py-10">
-        <PlaceholderPage />
-      </div>
-    ),
-  },
+  { path: '/verify', element: <PublicVerifyPage /> },
+  { path: '/verify/:code', element: <PublicVerifyPage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ];

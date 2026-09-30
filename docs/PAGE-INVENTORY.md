@@ -130,10 +130,10 @@ Prototype: 88 file HTML · Route bernav: 93
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/documents/access-trail` | Document Access Trail | `document-access-log.html` | todo |
-| `/documents/categories` | Category Settings | `document-categories.html` | todo |
-| `/documents/letter-issuance` | Letter Issuance | `document-letter-issuance.html` | todo |
-| `/verify` | Public Letter Verification | `document-verify.html` | todo |
+| `/documents/access-trail` | Document Access Trail | `document-access-log.html` | done |
+| `/documents/categories` | Category Settings | `document-categories.html` | done |
+| `/documents/letter-issuance` | Letter Issuance | `document-letter-issuance.html` | done |
+| `/verify` | Public Letter Verification | `document-verify.html` | done |
 
 ## System & Settings
 
@@ -200,3 +200,4 @@ layar di sini tanpa keputusan kontrak.
 | — (layar baru) | Announcement `/company-management/announcements` (+ detail `/company-management/announcements/detail?id=…`, dibuka dari baris daftar) — mengisi baris menu Company Management › Announcement; dari FSD-001-COMPANY §11 · UIC-001-COMPANY §3C. |
 | `index.html` › versi lama (`/dashboard/classic`) | Dashboard sebelum renovasi 24 September 2026, dipertahankan sebagai pembanding tanpa baris menu; beranda `/` kini `DashboardHomePage`. |
 | — (layar baru) | Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard. |
+| — (layar baru) | Malware Alerts `/company-management/files/malware-alerts` — FSD-001-DOCUMENT 0.8 §8A menyatakan baris menunya sudah aktif (Company Management › Files, urutan 7), tetapi pohon sidebar repo dikunci empat baris Files; route dipasang tanpa baris menu sampai ada izin. |

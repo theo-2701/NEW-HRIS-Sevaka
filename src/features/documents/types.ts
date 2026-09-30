@@ -215,3 +215,217 @@ export interface AccessLogRow {
   accessGranularity: 'PER_PEMBUKAAN' | 'PER_PERMINTAAN';
   accessedAt: string;
 }
+
+// ---------- Penerbitan surat (Letter Issuance, A10–A14) ----------
+
+export type LetterState = 'BERLAKU' | 'DIBATALKAN';
+export type BatchState = 'MENUNGGU_PERSETUJUAN' | 'DISETUJUI' | 'BERJALAN' | 'SELESAI' | 'DITOLAK';
+export type BatchItemState = 'MENUNGGU' | 'BERHASIL' | 'GAGAL';
+
+export const ISSUANCE_LABEL: Record<LetterIssuanceState, string> = {
+  MENUNGGU_PERSETUJUAN: 'Awaiting approval',
+  TERBIT: 'Issued',
+  DITOLAK: 'Rejected',
+};
+export const BATCH_STATE_LABEL: Record<BatchState, string> = {
+  MENUNGGU_PERSETUJUAN: 'Awaiting approval',
+  DISETUJUI: 'Approved',
+  BERJALAN: 'Running',
+  SELESAI: 'Finished',
+  DITOLAK: 'Rejected',
+};
+export const BATCH_ITEM_LABEL: Record<BatchItemState, string> = {
+  MENUNGGU: 'Waiting',
+  BERHASIL: 'Succeeded',
+  GAGAL: 'Failed',
+};
+
+/** Respons Letter (`A10`/`A11`/`A12`) — dua bentuk: bergerbang (nomor & berkas null) vs terbit. */
+export interface Letter {
+  letterId: string;
+  templateId: string;
+  templateName: string;
+  templateVersionNo: number;
+  categoryId: string;
+  letterTarget: LetterTarget;
+  letterIssuanceState: LetterIssuanceState;
+  letterState: LetterState | null;
+  subjectEmployeeId: string | null;
+  branchId: string | null;
+  letterNo: string | null;
+  verificationCode: string | null;
+  issuedAt: string | null;
+  documentId: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  createdBy: PersonSnapshot;
+  createdAt: string;
+}
+
+export interface LetterDraft {
+  templateId: string;
+  subjectEmployeeId: string;
+  branchId: string;
+  reissueOfLetterId: string;
+}
+
+export interface LetterBatch {
+  id: string;
+  code: string;
+  templateId: string;
+  templateName: string;
+  templateVersionNo: number;
+  batchState: BatchState;
+  recipientCount: number;
+  submittedAt: string;
+  createdBy: PersonSnapshot;
+  approvedAt: string | null;
+  approvedBy: PersonSnapshot | null;
+  finishedAt: string | null;
+}
+
+export interface LetterBatchItem {
+  subjectEmployeeId: string;
+  batchItemState: BatchItemState;
+  letterId: string | null;
+  failureReason: string | null;
+}
+
+export interface LetterBatchReport extends LetterBatch {
+  summary: { waiting: number; succeeded: number; failed: number };
+  items: LetterBatchItem[];
+}
+
+export interface BatchSearch {
+  batchState?: BatchState;
+  templateId?: string;
+  submittedByEmployeeId?: string;
+}
+
+// ---------- Pengaturan Kategori (A6a–A6d, A7) ----------
+
+export type CategoryOrigin = 'INDUK' | 'PERUSAHAAN';
+
+/** Sepuluh peran kanonik registry `STD` — daftar centang pemetaan pembaca. */
+export const CANONICAL_ROLES: string[] = [
+  'ROLE_SUPER_ADMIN',
+  'ROLE_SYSTEM_ADMIN',
+  'ROLE_HR_MANAGER',
+  'ROLE_HR_STAFF',
+  'ROLE_DEPARTMENT_MANAGER',
+  'ROLE_FINANCE_OFFICER',
+  'ROLE_PAYROLL_OFFICER',
+  'ROLE_GA_STAFF',
+  'ROLE_HEALTH_DATA_OFFICER',
+  'ROLE_EMPLOYEE',
+];
+
+export interface CategoryAttributes {
+  categoryName: string;
+  retentionDays: number | null;
+  maxFileSizeBytes: number;
+  allowedMimeTypes: string[];
+  isReplaceable: boolean;
+  isRegenerable: boolean;
+  shownInSelfService: boolean;
+  isActive: boolean;
+}
+
+export interface PendingCategoryChange {
+  kind: 'ATTRIBUTES' | 'READERS';
+  changes: Partial<CategoryAttributes>;
+  readerRoles: string[] | null;
+  acknowledgedImpactCount: number;
+  proposedBy: PersonSnapshot;
+  proposedAt: string;
+}
+
+/** Baris `A6a` + ringkasan usulan tertahan (untuk layar penyetuju) + cacah dokumen terdampak (hitungan server). */
+export interface CategoryAdmin extends CategoryAttributes {
+  id: string;
+  categoryCode: string;
+  categoryOrigin: CategoryOrigin;
+  confidentialityClass: ConfidentialityClass;
+  retentionRegime: RetentionRegime;
+  hasPendingChange: boolean;
+  readerRoles: string[];
+  pending: PendingCategoryChange | null;
+  impactCount: number;
+}
+
+export interface CategoryDraft {
+  categoryCode: string;
+  categoryName: string;
+  retentionRegime: RetentionRegime;
+  retentionDays: string;
+  maxFileSizeMb: string;
+  allowedMimeTypes: string[];
+  isReplaceable: boolean;
+  isRegenerable: boolean;
+  shownInSelfService: boolean;
+}
+
+// ---------- Jejak Akses Dokumen (A5) ----------
+
+export type AccessGranularity = 'PER_PEMBUKAAN' | 'PER_PERMINTAAN';
+
+export interface AccessTrailRow {
+  id: string;
+  accessGranularity: AccessGranularity;
+  documentId: string | null;
+  versionId: string | null;
+  documentIds: { documentId: string; versionId: string }[];
+  documentCount: number;
+  accessedAt: string;
+  accessedAtTimezone: string;
+  sourceIp: string;
+  flaggedUnreasonable: boolean;
+  accessedBy: PersonSnapshot;
+}
+
+export interface AccessTrailSearch {
+  actorEmployeeId?: string;
+  accessGranularity?: AccessGranularity;
+  flaggedUnreasonable?: boolean;
+  startDate?: string;
+  endDate?: string;
+}
+
+// ---------- Malware Alerts (A17/A18) ----------
+
+export type MalwareAlertState = 'AKTIF' | 'DITANGANI';
+
+/** Nol nama berkas dalam bentuk apa pun — penunjuk saja (FSD §8A.5). */
+export interface MalwareAlert {
+  id: string;
+  documentId: string;
+  versionId: string | null;
+  uploaderEmployeeId: string;
+  detectedAt: string;
+  detectedAtTimezone: string;
+  malwareAlertState: MalwareAlertState;
+  handledAt: string | null;
+  handlingNote: string | null;
+  handledBy: PersonSnapshot | null;
+}
+
+export interface MalwareSearch {
+  malwareAlertState?: MalwareAlertState;
+  uploaderEmployeeId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+// ---------- Pemeriksaan keaslian publik (C2a–C2c) ----------
+
+export type VerifyResult =
+  | { matched: false }
+  | {
+      matched: true;
+      letterType: string;
+      issuedAt: string;
+      issuedAtTimezone: string;
+      letterState: LetterState;
+      cancelledAt?: string;
+      cancelledAtTimezone?: string;
+    };

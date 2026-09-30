@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Modal } from '@/components/Modal';
 import { DataTable } from '@/components/DataTable';
 import { RowButton } from '@/components/RowActions';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { ClassBadge, OriginBadge, ScanBadge, StorageBadge } from '@/features/documents/components/DocBits';
 import type { ViewerTarget } from '@/features/documents/components/DocumentViewer';
+import { CancelLetterModal } from '@/features/documents/components/LetterModals';
 import { useDocumentDetail } from '@/features/documents/hooks/useDocuments';
+import { useLetter } from '@/features/documents/hooks/useGovernance';
 import { formatBytes, isRetrievable } from '@/features/documents/rules';
 import { OBJECT_KIND_LABEL, TARGET_LABEL } from '@/features/documents/types';
 import type { DocActor, DocVersion, OwnerType } from '@/features/documents/types';
@@ -45,9 +49,13 @@ export function DocumentDetailModal({
 }) {
   const detail = useDocumentDetail(actor, documentId);
   const row = detail.data;
+  const letter = useLetter(row?.letter?.letterId ?? null);
+  const [cancelling, setCancelling] = useState(false);
   if (!documentId) return null;
 
   const active = row?.versions.find((ver) => ver.versionId === row.activeVersionId);
+  const officer = actor.role === 'ROLE_HR_STAFF' || actor.role === 'ROLE_HR_MANAGER';
+  const cancellable = officer && row?.letter?.letterIssuanceState === 'TERBIT' && row.letter.letterState === 'BERLAKU';
 
   return (
     <Modal
@@ -58,6 +66,11 @@ export function DocumentDetailModal({
       size="wide"
       footer={
         <>
+          {cancellable && (
+            <Button variant="danger" onClick={() => setCancelling(true)}>
+              Cancel letter
+            </Button>
+          )}
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
@@ -96,6 +109,19 @@ export function DocumentDetailModal({
                 <Locked label="Letter number">{row.letter.letterNo ?? '—'}</Locked>
                 <Locked label="Letter target">{TARGET_LABEL[row.letter.letterTarget]}</Locked>
                 <Locked label="Issued at">{row.letter.issuedAt ? formatDateTime(row.letter.issuedAt) : '—'}</Locked>
+                <Locked label="Letter status">
+                  <StatusBadge tone={row.letter.letterState === 'DIBATALKAN' ? 'err' : 'ok'}>
+                    {row.letter.letterState === 'DIBATALKAN' ? 'Cancelled' : 'Valid'}
+                  </StatusBadge>
+                </Locked>
+                {letter.data?.cancelReason && (
+                  <div className="col-span-2 md:col-span-4">
+                    <Locked label="Cancellation">
+                      {letter.data.cancelledAt ? `${formatDateTime(letter.data.cancelledAt)} — ` : ''}
+                      {letter.data.cancelReason}
+                    </Locked>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -151,6 +177,14 @@ export function DocumentDetailModal({
             }
           />
         </div>
+      )}
+      {cancelling && row?.letter && (
+        <CancelLetterModal
+          actor={actor}
+          letterId={row.letter.letterId}
+          letterNo={row.letter.letterNo}
+          onClose={() => setCancelling(false)}
+        />
       )}
     </Modal>
   );
