@@ -49,6 +49,11 @@ import { SettingsChangeHistoryPage } from '@/features/settings/pages/SettingsCha
 import { ErasureRequestsPage } from '@/features/settings/pages/ErasureRequestsPage';
 import { ProjectsPage } from '@/features/productivity/pages/ProjectsPage';
 import { TasksPage } from '@/features/productivity/pages/TasksPage';
+import { TimeTrackerPage } from '@/features/productivity/pages/TimeTrackerPage';
+import { ActivitiesPage } from '@/features/productivity/pages/ActivitiesPage';
+import { SummaryPage } from '@/features/productivity/pages/SummaryPage';
+import { TrackerReportPage } from '@/features/productivity/pages/TrackerReportPage';
+import { GroupListPage, TaskListPage } from '@/features/productivity/pages/PayrollGroupPages';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -184,6 +189,12 @@ const IMPLEMENTED: RouteObject[] = [
   /* Archive = sisi ARSIP dari page-pair Project; URL sendiri, tanpa baris menu (sidebar hanya 'Project'). */
   { path: 'productivity/projects/archive', element: <ProjectsPage key="archive" state="ARSIP" /> },
   { path: 'productivity/tasks', element: <TasksPage /> },
+  { path: 'productivity/timesheet/tracker', element: <TimeTrackerPage /> },
+  { path: 'productivity/timesheet/activities', element: <ActivitiesPage /> },
+  { path: 'productivity/timesheet/summary', element: <SummaryPage /> },
+  { path: 'productivity/timesheet/report', element: <TrackerReportPage /> },
+  { path: 'productivity/payroll-group/tasks', element: <TaskListPage /> },
+  { path: 'productivity/payroll-group/groups', element: <GroupListPage /> },
   { path: 'company-management/announcements', element: <AnnouncementListPage /> },
   /* Detail pengumuman tidak punya baris menu — dibuka dari baris daftar Announcement. */
   { path: 'company-management/announcements/detail', element: <AnnouncementDetailPage /> },
@@ -275,6 +286,12 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/productivity/projects',
   '/productivity/projects/archive',
   '/productivity/tasks',
+  '/productivity/timesheet/tracker',
+  '/productivity/timesheet/activities',
+  '/productivity/timesheet/summary',
+  '/productivity/timesheet/report',
+  '/productivity/payroll-group/tasks',
+  '/productivity/payroll-group/groups',
   '/company-management/announcements',
   '/company-management/announcements/detail',
   '/me/announcements',

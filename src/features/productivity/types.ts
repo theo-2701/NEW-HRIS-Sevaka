@@ -133,3 +133,133 @@ export interface TaskCategory {
   /** Pernah dipakai `emp_task` (termasuk task lama) — hapus permanen ditolak 409. */
   inUse: boolean;
 }
+
+/* ── Timesheet (`FT2`) + Group for Payroll (`FT3`) ──────────────────────────────────────────── */
+
+export interface ActivityType {
+  id: string;
+  activityName: string;
+  isActive: boolean;
+}
+
+export type WorklogOrigin = 'DIUKUR_MESIN' | 'DIKETIK_MANUSIA' | 'DIHENTIKAN_SISTEM';
+export type CorrectionMode = 'DIKOREKSI_PEMILIK' | 'DITERIMA_ATASAN';
+
+export interface Worklog {
+  id: string;
+  code: string;
+  employeeId: string;
+  taskId: string;
+  activityTypeId: string | null;
+  origin: WorklogOrigin;
+  /** Mesin selalu berjam; manual SELALU null keduanya (PD-26). */
+  startedAt: string | null;
+  stoppedAt: string | null;
+  workDate: string;
+  /** null selama penghitung masih berjalan. */
+  durationMinutes: number | null;
+  notes: string | null;
+  isCorrected: boolean;
+  correctionMode: CorrectionMode | null;
+  /** Dibekukan saat pencatatan dari pemetaan kategori → kelompok berbayar; null = tak berbayar (fail-closed). */
+  paidWorkGroupIdSnapshot: string | null;
+  createdAt: string;
+}
+
+export interface WorklogChange {
+  id: string;
+  worklogId: string;
+  changedField: string;
+  oldValue: string | null;
+  newValue: string | null;
+  activity: 'U' | 'D';
+  createdBy: AuditRef;
+  createdAt: string;
+}
+
+export interface SystemStopAcceptance {
+  id: string;
+  worklogId: string;
+  createdBy: AuditRef;
+  createdAt: string;
+}
+
+export interface WorklogSearch {
+  employeeId?: string;
+  taskId?: string;
+  origin?: WorklogOrigin;
+  activityTypeId?: string;
+  workDateStart?: string;
+  workDateEnd?: string;
+}
+
+export interface WorklogPatch {
+  durationMinutes?: number;
+  activityTypeId?: string | null;
+  taskId?: string;
+  workDate?: string;
+  notes?: string | null;
+}
+
+export interface ManualWorklogDraft {
+  taskId: string;
+  activityTypeId: string;
+  workDate: string;
+  durationMinutes: number;
+  notes: string;
+}
+
+export interface TimerStartResult {
+  worklog: Worklog;
+  autoStoppedPreviousTimer: { id: string; code: string; durationMinutes: number } | null;
+}
+
+export interface WindowGrant {
+  id: string;
+  targetEmployeeId: string;
+  windowStartDate: string;
+  windowEndDate: string;
+  grantReason: string;
+  grantedBy: AuditRef;
+  createdAt: string;
+}
+
+export type TimesheetPeriodState = 'BELUM_DIAJUKAN' | 'MENUNGGU_PENGESAHAN' | 'DIKEMBALIKAN' | 'DISAHKAN';
+
+export interface TimesheetPeriod {
+  id: string;
+  employeeId: string;
+  periodStart: string;
+  periodEnd: string;
+  state: TimesheetPeriodState;
+  totalMinutes: number;
+  breakdownByTask: { taskId: string; taskName: string; totalMinutes: number }[];
+  cancelledTaskMinutes: number;
+  originComposition: Record<WorklogOrigin, number>;
+  pendingSystemStopCount: number;
+  nearDailyLimitFlags: string[];
+  submittedAt: string | null;
+  approvedAt: string | null;
+  payrollConfirmedAt: string | null;
+  reopenReason: string | null;
+}
+
+export interface PaidWorkGroup {
+  id: string;
+  code: string;
+  groupName: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CategoryMapping {
+  id: string;
+  taskCategoryId: string;
+  taskCategoryName: string;
+  paidWorkGroupId: string;
+  paidWorkGroupName: string;
+  isActive: boolean;
+  deactivationReason: string | null;
+  createdAt: string;
+  deactivatedAt: string | null;
+}

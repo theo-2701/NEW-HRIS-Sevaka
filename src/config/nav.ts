@@ -275,22 +275,22 @@ export const NAV: NavSection[] = [
           {
             label: 'Timesheet',
             children: [
-              { label: 'Time Tracker', path: '/productivity/timesheet/tracker', source: 'productivity-time-tracker.html', status: 'todo' },
-              { label: 'Activities', path: '/productivity/timesheet/activities', source: 'productivity-activities.html', status: 'todo' },
-              { label: 'Summary', path: '/productivity/timesheet/summary', source: 'productivity-summary.html', status: 'todo' },
+              { label: 'Time Tracker', path: '/productivity/timesheet/tracker', source: 'productivity-time-tracker.html', status: 'done' },
+              { label: 'Activities', path: '/productivity/timesheet/activities', source: 'productivity-activities.html', status: 'done' },
+              { label: 'Summary', path: '/productivity/timesheet/summary', source: 'productivity-summary.html', status: 'done' },
               {
                 label: 'Tracker Report',
                 path: '/productivity/timesheet/report',
                 source: 'productivity-tracker-report.html',
-                status: 'todo',
+                status: 'done',
               },
             ],
           },
           {
             label: 'Group for Payroll',
             children: [
-              { label: 'Task List', path: '/productivity/payroll-group/tasks', source: 'productivity-task-list.html', status: 'todo' },
-              { label: 'Group List', path: '/productivity/payroll-group/groups', source: 'productivity-group-list.html', status: 'todo' },
+              { label: 'Task List', path: '/productivity/payroll-group/tasks', source: 'productivity-task-list.html', status: 'done' },
+              { label: 'Group List', path: '/productivity/payroll-group/groups', source: 'productivity-group-list.html', status: 'done' },
             ],
           },
         ],

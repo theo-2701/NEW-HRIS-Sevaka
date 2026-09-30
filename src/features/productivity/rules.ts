@@ -1,5 +1,14 @@
 import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
-import type { ProdActor, ProdRole, TaskOrigin, TaskPriority, TaskStatus } from '@/features/productivity/types';
+import type {
+  CorrectionMode,
+  ProdActor,
+  ProdRole,
+  TaskOrigin,
+  TaskPriority,
+  TaskStatus,
+  TimesheetPeriodState,
+  WorklogOrigin,
+} from '@/features/productivity/types';
 
 export const employeeOf = (employeeId: string | null | undefined) =>
   PROD_EMPLOYEES.find((row) => row.employeeId === employeeId);
@@ -85,3 +94,40 @@ export function canAssignTo(actor: ProdActor, assigneeId: string, projectOwnerId
   if (isSupervisorOf(actor.employeeId, assigneeId)) return true;
   return Boolean(projectOwnerId && projectOwnerId === actor.employeeId);
 }
+
+type Tone = 'mute' | 'info' | 'warn' | 'ok' | 'err' | 'brand';
+
+/** Tiga nilai `worklog_origin` — tiga warna, nol flatten (G3). */
+export const ORIGIN_META: Record<WorklogOrigin, { label: string; tone: Tone }> = {
+  DIUKUR_MESIN: { label: 'Timer', tone: 'info' },
+  DIKETIK_MANUSIA: { label: 'Typed', tone: 'brand' },
+  DIHENTIKAN_SISTEM: { label: 'Stopped by system', tone: 'err' },
+};
+
+export const CORRECTION_META: Record<CorrectionMode, { label: string; tone: Tone }> = {
+  DIKOREKSI_PEMILIK: { label: 'Corrected by owner', tone: 'ok' },
+  DITERIMA_ATASAN: { label: 'Accepted by supervisor', tone: 'brand' },
+};
+
+export const PERIOD_STATE_META: Record<TimesheetPeriodState, { label: string; tone: Tone; meaning: string }> = {
+  BELUM_DIAJUKAN: {
+    label: 'Not submitted',
+    tone: 'mute',
+    meaning: 'Hours are recorded but not submitted yet. Entries follow the normal entry window.',
+  },
+  MENUNGGU_PENGESAHAN: {
+    label: 'Awaiting approval',
+    tone: 'warn',
+    meaning: 'Submitted and frozen while the approval process runs. Only the approval result can move it on.',
+  },
+  DIKEMBALIKAN: {
+    label: 'Returned',
+    tone: 'err',
+    meaning: 'Rejected, or reopened by the direct supervisor or HR. The owner can fix entries and submit again.',
+  },
+  DISAHKAN: {
+    label: 'Approved',
+    tone: 'ok',
+    meaning: 'Approved. It becomes permanent once payroll confirms it has used the hours.',
+  },
+};

@@ -19,6 +19,7 @@ import {
   TASK_TRANSITIONS,
   withinWindow,
 } from '@/features/productivity/rules';
+import { prodClock } from '@/features/productivity/services/clock';
 import { camelize, newIdempotencyKey, snakeize } from '@/features/productivity/services/wire';
 import type { WirePage } from '@/features/productivity/services/wire';
 import type {
@@ -68,7 +69,7 @@ const fail = (status: number, code: string, message: string): never => {
   throw new ApiError(message, status, code);
 };
 const pad = (n: number) => String(n).padStart(4, '0');
-const nowIso = () => new Date().toISOString();
+const nowIso = () => prodClock.now().toISOString();
 const entryWindowDays = () => settingsService.numberValue('productivity.entry_window_days', 7);
 
 const withCounts = (row: StoredProject): Project => {
@@ -476,7 +477,7 @@ export const projectService = {
         }
         if (
           isFinalStatus(task.status) &&
-          !withinWindow(task.closedAt ?? task.updatedAt ?? task.createdAt, entryWindowDays())
+          !withinWindow(task.closedAt ?? task.updatedAt ?? task.createdAt, entryWindowDays(), prodClock.now())
         )
           fail(
             422,

@@ -3,9 +3,22 @@ import { CircleAlert, Info } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PROD_ACTORS } from '@/features/productivity/mock-data';
-import { employeeOf, PRIORITY_META, STATUS_META } from '@/features/productivity/rules';
+import {
+  CORRECTION_META,
+  employeeOf,
+  ORIGIN_META,
+  PERIOD_STATE_META,
+  PRIORITY_META,
+  STATUS_META,
+} from '@/features/productivity/rules';
 import { useProdActor } from '@/features/productivity/store/prodActor.store';
-import type { TaskPriority, TaskStatus } from '@/features/productivity/types';
+import type {
+  CorrectionMode,
+  TaskPriority,
+  TaskStatus,
+  TimesheetPeriodState,
+  WorklogOrigin,
+} from '@/features/productivity/types';
 import { ApiError } from '@/services/api';
 import { cn } from '@/lib/utils';
 
@@ -91,3 +104,14 @@ export function PersonCell({ employeeId, caption }: { employeeId: string | null;
     </span>
   );
 }
+
+export const OriginBadge = ({ value }: { value: WorklogOrigin }) => (
+  <StatusBadge tone={ORIGIN_META[value].tone}>{ORIGIN_META[value].label}</StatusBadge>
+);
+
+export const CorrectionBadge = ({ value }: { value: CorrectionMode | null }) =>
+  value ? <StatusBadge tone={CORRECTION_META[value].tone}>{CORRECTION_META[value].label}</StatusBadge> : null;
+
+export const PeriodStateBadge = ({ value }: { value: TimesheetPeriodState }) => (
+  <StatusBadge tone={PERIOD_STATE_META[value].tone}>{PERIOD_STATE_META[value].label}</StatusBadge>
+);
