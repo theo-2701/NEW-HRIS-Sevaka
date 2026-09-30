@@ -250,6 +250,15 @@ const line = (row: Partial<SheetItemSeed> & Pick<SheetItemSeed, 'id' | 'origin' 
 
 const RINA = { employeeId: 'emp-rina-amelia', name: 'Rina Amelia' };
 
+/**
+ * Rata-rata sebaran nilai penilai per lembar — milik Menu 6 (`PF-25`), dikutip apa adanya oleh antrean
+ * persetujuan. Lembar tanpa angka di sini tampil "—" (formula tidak dihitung ulang di layar persetujuan).
+ */
+export const ASSESSOR_AVERAGE: Record<string, number> = {
+  'rs-0002': 4.2,
+  'rs-0004': 3.4,
+};
+
 /** Dataset UIC-001-PERFORMANCE §4 (`RS-0001`–`RS-0004`), seluruhnya periode Semester 1 2026. */
 export const SHEET_SEED: SheetSeed[] = [
   {

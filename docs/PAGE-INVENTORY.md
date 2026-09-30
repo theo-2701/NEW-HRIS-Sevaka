@@ -160,7 +160,7 @@ Prototype: 88 file HTML · Route bernav: 92
 
 | Route | Layar | Prototype | Status |
 |---|---|---|---|
-| `/performance/approvals` | Score Approvals | `performance-approvals.html` | todo |
+| `/performance/approvals` | Score Approvals | `performance-approvals.html` | done |
 | `/performance/cycles` | Cycles & Settings | `performance-cycles.html` | done |
 | `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | done |
 | `/performance/objections` | Objections | `performance-objections.html` | todo |

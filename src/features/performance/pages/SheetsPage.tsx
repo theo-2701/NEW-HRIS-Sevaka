@@ -12,7 +12,9 @@ import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Banner, NoAccess, OriginBadge, PerfActorPicker, PeriodLabel, SheetStatusBadge } from '@/features/performance/components/PerfBits';
+import { RoundsTable } from '@/features/performance/components/ApprovalModals';
 import { ObjectionNoteModal, ReadMarkDialog, SelfAssessmentModal } from '@/features/performance/components/SheetModals';
+import { useApprovalRounds } from '@/features/performance/hooks/useApprovals';
 import { usePeriods } from '@/features/performance/hooks/usePeriods';
 import { useMySheetId, useSelfAssessment, useSheet, useSheets } from '@/features/performance/hooks/useSheets';
 import { canListSheets, canScopeAllSheets, hasOwnSheetSurface } from '@/features/performance/rules';
@@ -30,6 +32,7 @@ function MySheetPanel({ actor, sheetId }: { actor: PerfActor; sheetId: string | 
   const id = sheetId ?? mine.data ?? null;
   const sheet = useSheet(actor, id);
   const self = useSelfAssessment(actor, id ?? undefined, Boolean(id));
+  const rounds = useApprovalRounds(actor, id ?? undefined, Boolean(sheet.data));
   const [writing, setWriting] = useState(false);
   const [reading, setReading] = useState<SheetItem | null>(null);
   const [noting, setNoting] = useState<SheetItem | null>(null);
@@ -126,6 +129,13 @@ function MySheetPanel({ actor, sheetId }: { actor: PerfActor; sheetId: string | 
           }}
         />
       </Card>
+
+      {rounds.data && rounds.data.length > 0 && (
+        <Card>
+          <CardHead title="Riwayat persetujuan" sub="Putaran persetujuan lembar Anda" />
+          <RoundsTable rows={rounds.data} />
+        </Card>
+      )}
 
       <SelfAssessmentModal open={writing} sheetId={data.id} current={content} onClose={() => setWriting(false)} />
       <ReadMarkDialog sheetId={data.id} item={reading} onClose={() => setReading(null)} />

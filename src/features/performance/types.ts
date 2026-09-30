@@ -6,6 +6,7 @@ export const PERF_PATHS = {
   kpiItems: '/performance/kpi-items',
   sheets: '/performance/sheets',
   sheetDetail: (id: string) => `/performance/sheets/detail?id=${id}`,
+  approvals: '/performance/approvals',
 };
 
 export type PerfRole =
@@ -269,6 +270,41 @@ export interface ApprovalRound {
   decisionReason: string | null;
   decidedAt: string | null;
   createdAt: string;
+}
+
+export const OUTCOME_LABEL: Record<RoundOutcome, string> = {
+  APPROVED: 'Disetujui',
+  RETURNED: 'Dikembalikan',
+  REJECTED_FINAL: 'Ditolak final',
+};
+
+/** Dikutip dari Menu 6 (`PF-25`) — layar persetujuan hanya menampilkan, tidak menghitung. */
+export interface ScoreDistribution {
+  ratedCount: number;
+  totalCount: number;
+  averageScore: number | null;
+}
+
+/** Satu baris `P4.04` — identitas penyetuju dari token, nol parameter identitas. */
+export interface PendingApproval {
+  approvalRoundId: string;
+  reviewSheetId: string;
+  employee: NamedEmployee;
+  cycleNo: number;
+  roundNo: number;
+  assessorScoreDistribution: ScoreDistribution;
+  submittedAt: string;
+}
+
+export interface DecisionDraft {
+  decision: RoundOutcome;
+  decisionReason?: string;
+}
+
+/** Respons `202` `P4.02` — outcome & status lembar BELUM berubah (pola `K9`). */
+export interface DecisionForwarded {
+  status: 'FORWARDED';
+  message: string;
 }
 
 /** Respons `200` `P4.01` — instans alur kerja sudah terisi karena dimulai sinkron. */

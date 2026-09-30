@@ -697,3 +697,29 @@ menyimpan putaran persetujuan supaya Menu 4 membaca data yang sama.
   Pencatatan `access_log` tiap pembacaan belum dipasang — menyusul bersama Jejak Akses (Menu 6).
 
 14 pengujian baru di `performance/sheet.test.ts`.
+
+## 25. Performance › Menu 4 Persetujuan Nilai — FSD-001-PERFORMANCE 0.11 §4 / UIC-001-PERFORMANCE 0.12 §5 (30 September 2026)
+
+`/performance/approvals` — tab **Antrean persetujuan** (`F1`) dan **Riwayat putaran** (`F4`–`F6`). Riwayat juga tampil
+sebagai tab di detail lembar dan kartu di "Lembar saya" (`#29` untuk HRS/EMP dibuka dari lembar, bukan dari menu).
+
+- **Peran:** antrean + putuskan (`#30`/`#28`) DM · HRM · SA; HRS & EMP melihat NoAccess yang menunjuk ke detail
+  lembar. Riwayat (`#29`): HR seluruh company, penilai/penyetuju terlibat, karyawan hanya lembarnya — service yang
+  memutuskan, tab di detail lembar hanya muncul bila server mengizinkan.
+- **`F1`:** kolom Karyawan dinilai / Siklus · Putaran / Sebaran nilai penilai / Diajukan (urut terlama, bisa dibalik);
+  satu aksi "Putuskan". Sebaran nilai **dikutip** — rata-rata dari data Menu 6 bila ada, selain itu "—" (tidak
+  dihitung ulang di layar ini).
+- **`F2`/`F3`:** modal dengan RadioBranch Setujui / Kembalikan / Tolak final; field alasan tidak dirender untuk Setujui,
+  wajib untuk dua lainnya. Pill jatah amber "Sisa jatah kembalikan: n dari q" vs merah "Jatah kembalikan habis";
+  saat habis opsi Kembalikan mati dengan alasannya. Kuota dibaca dari `performance.return_quota` (Settings).
+- **Pola `K9`:** `decide` menjawab `202 FORWARDED` tanpa mengubah status; mode dummy menyelesaikan "alur kerja"
+  1,5 detik kemudian (outcome putaran + status lembar), baris antrean tampil "Diteruskan" sampai itu terjadi, lalu
+  antrean dibaca ulang. Gerbang lokal: alasan wajib (`422 VALIDATION_ERROR`), jatah (`422 RETURN_QUOTA_EXCEEDED`),
+  assignee = principal (`403`).
+- **Deviasi kontrak yang dicatat:** UIC menulis jatah habis bila "`round_no` berjalan ≥ `return_quota`", tetapi
+  dataset `RS-0004` (kuota 1) dikembalikan di putaran 1. Yang dipakai FSD §4.3 F3: jumlah putaran `RETURNED` pada
+  siklus berjalan ≥ kuota — cocok dengan dataset. Perlu dikonfirmasi ke pemilik UIC.
+- **Catatan dev server:** setelah banyak edit HMR, Vite sempat memuat dua instans `sheet.service` (antrean kosong
+  padahal lembar sudah diajukan). Restart `npm run dev` membereskannya; build produksi tidak terdampak.
+
+6 pengujian baru di `performance/approval.test.ts`.

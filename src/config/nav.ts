@@ -493,7 +493,7 @@ export const NAV_PERFORMANCE: NavSection[] = [
         icon: 'check-check',
         path: '/performance/approvals',
         source: 'performance-approvals.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Objections',

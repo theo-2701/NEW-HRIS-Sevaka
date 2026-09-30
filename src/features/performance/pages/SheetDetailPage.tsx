@@ -24,6 +24,8 @@ import {
   ValueModal,
 } from '@/features/performance/components/SheetModals';
 import { formatWeight, shortId } from '@/features/performance/format';
+import { RoundsTable } from '@/features/performance/components/ApprovalModals';
+import { useApprovalRounds } from '@/features/performance/hooks/useApprovals';
 import { useSelfAssessment, useSheet, useSupervisorHistory } from '@/features/performance/hooks/useSheets';
 import { canReadHistoryAsHr, selfAssessmentOpen } from '@/features/performance/rules';
 import { usePerfActor } from '@/features/performance/store/perfActor.store';
@@ -35,7 +37,7 @@ import {
 } from '@/features/performance/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 
-type Tab = 'lines' | 'history';
+type Tab = 'lines' | 'history' | 'approvals';
 
 const percent = (value: number) => `${formatWeight(value)}%`;
 
@@ -60,6 +62,8 @@ export function SheetDetailPage() {
   const holder = Boolean(sheet) && sheet!.assessorId === actor.employeeId;
   const canHistory = actor.role === 'ROLE_SUPER_ADMIN' || canReadHistoryAsHr(actor.role) || holder;
   const history = useSupervisorHistory(actor, id, canHistory && Boolean(sheet));
+  /* `P4.03` menentukan sendiri siapa yang terlibat — tab tampil hanya bila server mengizinkan. */
+  const rounds = useApprovalRounds(actor, id, Boolean(sheet) && sheet!.employeeId !== actor.employeeId);
   const open = sheet ? selfAssessmentOpen(sheet.items) : false;
   const self = useSelfAssessment(actor, id, holder && open);
 
@@ -205,6 +209,7 @@ export function SheetDetailPage() {
             items={[
               { value: 'lines', label: 'Baris nilai', count: sheet.items.length },
               ...(canHistory ? [{ value: 'history' as const, label: 'Riwayat penilai', count: history.data?.length }] : []),
+              ...(rounds.data ? [{ value: 'approvals' as const, label: 'Riwayat persetujuan', count: rounds.data.length }] : []),
             ]}
           />
 
@@ -282,6 +287,13 @@ export function SheetDetailPage() {
                   Porsi beku terisi permanen saat lembar diajukan; sejak itu bobot tidak dapat diubah.
                 </p>
               )}
+            </Card>
+          )}
+
+          {tab === 'approvals' && rounds.data && (
+            <Card>
+              <CardHead title="Riwayat persetujuan" sub="Seluruh putaran persetujuan lembar ini, urut waktu pengajuan" />
+              <RoundsTable rows={rounds.data} />
             </Card>
           )}
 
