@@ -165,7 +165,7 @@ Prototype: 88 file HTML · Route bernav: 92
 | `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | done |
 | `/performance/objections` | Objections | `performance-objections.html` | todo |
 | `/performance/reports` | Monitor & Reports | `performance-reports.html` | todo |
-| `/performance/sheets` | Review Sheets | `performance-sheets.html` | todo |
+| `/performance/sheets` | Review Sheets | `performance-sheets.html` | done |
 
 ## Belum masuk peta nav
 
@@ -199,3 +199,4 @@ layar di sini tanpa keputusan kontrak.
 | `index.html` › versi lama (`/dashboard/classic`) | Dashboard sebelum renovasi 24 September 2026, dipertahankan sebagai pembanding tanpa baris menu; beranda `/` kini `DashboardHomePage`. |
 | — (layar baru) | Announcement ESS `/me/announcements` — FSD-001-COMPANY §11.8 memutuskan baris menu `Employee Self-Service › Announcement`, tetapi sidebar belum ditambah (menunggu persetujuan); sementara dibuka dari tab Announcement di Dashboard. |
 | `performance-cycles.html` › detail (`/performance/cycles/detail?id=…`) | Detail periode penilaian (B1–B5) — dibuka dari baris daftar Cycles & Settings; tab ketidaklayakan hanya untuk HR. |
+| `performance-sheets.html` › detail (`/performance/sheets/detail?id=…`) | Detail lembar penilaian (E2–E6) — dibuka dari Antrean lembar; aksi tulis hanya untuk penilai pemegang kursi. |

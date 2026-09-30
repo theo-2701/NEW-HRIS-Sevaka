@@ -486,7 +486,7 @@ export const NAV_PERFORMANCE: NavSection[] = [
         icon: 'clipboard-list',
         path: '/performance/sheets',
         source: 'performance-sheets.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Score Approvals',

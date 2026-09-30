@@ -2,6 +2,7 @@ import { ApiError, api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { companyService } from '@/features/company/services/company.service';
 import { KPI_SEED, KPI_USAGE } from '@/features/performance/mock-data';
+import { delay, uuidV7 } from '@/features/performance/services/ids';
 import { canReadKpi, canWriteKpi } from '@/features/performance/rules';
 import type {
   JobGradeOption,
@@ -18,8 +19,6 @@ import type {
  * Idempotency-Key wajib hanya pada create. Satu endpoint search melayani grid HR dan Browsing atasan.
  */
 
-const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
-
 interface StoredKpi extends KpiItem {
   deletedBy: { id: string; name: string } | null;
   deletedAt: string | null;
@@ -33,13 +32,6 @@ export function resetKpiMocks() {
   usedKeys = new Set();
 }
 resetKpiMocks();
-
-/** Bentuk uuid v7: 48 bit awal = epoch ms, jadi potongan 8 karakter di grid berbeda antar baris. */
-function uuidV7() {
-  const time = Date.now().toString(16).padStart(12, '0');
-  const rand = crypto.randomUUID().replace(/-/g, '');
-  return `${time.slice(0, 8)}-${time.slice(8)}-7${rand.slice(0, 3)}-8${rand.slice(3, 6)}-${rand.slice(6, 18)}`;
-}
 
 const forbidden = () => new ApiError('Hanya HR Manager yang boleh mengubah daftar induk.', 403, 'FORBIDDEN');
 const TARGET_TYPES: TargetType[] = ['NUMERIC', 'NARRATIVE'];

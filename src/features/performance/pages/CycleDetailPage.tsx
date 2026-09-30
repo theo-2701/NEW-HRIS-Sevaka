@@ -8,7 +8,7 @@ import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TabMenu } from '@/components/TabMenu';
 import { Button } from '@/components/ui/button';
-import { NoAccess, PerfActorPicker, PhaseBadge } from '@/features/performance/components/PerfBits';
+import { Field, NoAccess, PerfActorPicker, PhaseBadge } from '@/features/performance/components/PerfBits';
 import {
   useClosePeriod,
   useEligibilityGaps,
@@ -28,15 +28,6 @@ import { formatDate, formatDateTime } from '@/lib/format';
 
 type Tab = 'detail' | 'not-assessable' | 'out-of-assessment';
 type Entry = EligibilityEntry<NotAssessableReason | OutOfAssessmentReason>;
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <>
-      <dt className="font-body text-[13px] font-medium text-fg-3">{label}</dt>
-      <dd className="m-0 font-body text-[13px] font-semibold text-fg-1">{children}</dd>
-    </>
-  );
-}
 
 function GapTable({ rows, empty }: { rows: Entry[]; empty: string }) {
   return (

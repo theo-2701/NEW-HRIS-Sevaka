@@ -110,6 +110,10 @@ const EXTRA_ROWS = [
     '`performance-cycles.html` › detail (`/performance/cycles/detail?id=…`)',
     'Detail periode penilaian (B1–B5) — dibuka dari baris daftar Cycles & Settings; tab ketidaklayakan hanya untuk HR.',
   ],
+  [
+    '`performance-sheets.html` › detail (`/performance/sheets/detail?id=…`)',
+    'Detail lembar penilaian (E2–E6) — dibuka dari Antrean lembar; aksi tulis hanya untuk penilai pemegang kursi.',
+  ],
 ];
 for (const [screen, note] of EXTRA_ROWS) {
   out += `| ${screen} | ${note} |\n`;

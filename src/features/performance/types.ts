@@ -4,6 +4,8 @@ export const PERF_PATHS = {
   cycles: '/performance/cycles',
   cycleDetail: (id: string) => `/performance/cycles/detail?id=${id}`,
   kpiItems: '/performance/kpi-items',
+  sheets: '/performance/sheets',
+  sheetDetail: (id: string) => `/performance/sheets/detail?id=${id}`,
 };
 
 export type PerfRole =
@@ -153,4 +155,129 @@ export interface KpiDraft {
 export interface JobGradeOption {
   id: string;
   name: string;
+}
+
+// ---------- Menu 3 — Lembar Penilaian ----------
+
+export type SheetStatus = 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'RETURNED_TO_ASSESSOR' | 'APPROVED' | 'REJECTED_FINAL';
+
+export const SHEET_STATUS_LABEL: Record<SheetStatus, string> = {
+  IN_PROGRESS: 'Sedang diisi',
+  PENDING_APPROVAL: 'Menunggu persetujuan',
+  RETURNED_TO_ASSESSOR: 'Dikembalikan',
+  APPROVED: 'Disetujui',
+  REJECTED_FINAL: 'Ditolak final',
+};
+
+/** Status yang masih boleh diisi/disesuaikan atasan dan diajukan (UIC `P3.14`, `P4.01`). */
+export const SHEET_EDITABLE: SheetStatus[] = ['IN_PROGRESS', 'RETURNED_TO_ASSESSOR'];
+
+export type ItemOrigin = 'MASTER' | 'ADDITIONAL';
+
+export const ORIGIN_LABEL: Record<ItemOrigin, string> = {
+  MASTER: 'Master',
+  ADDITIONAL: 'Tambahan',
+};
+
+/** Satu baris grid `P3.02`. */
+export interface SheetRow {
+  id: string;
+  employeeId: string;
+  employeeNameDisplay: string;
+  reviewPeriodId: string;
+  status: SheetStatus;
+  assessorId: string;
+  hasRevision: boolean;
+}
+
+/**
+ * Baris nilai `P3.03`. `initialValue`/`submittedValue` tidak pernah dikirim ke karyawan (G5) —
+ * yang tersisa hanya stempel waktu pengisian nilai awal, cukup untuk mengunci isian diri.
+ */
+export interface SheetItem {
+  id: string;
+  origin: ItemOrigin;
+  itemNameSnapshot: string;
+  targetTypeSnapshot: TargetType;
+  rawWeight: number;
+  /** NULL sampai lembar diajukan; ditulis sekali saat submit. */
+  frozenWeightRatio: number | null;
+  target: string;
+  employeeReadAt: string | null;
+  employeeReadResetCount: number;
+  employeeObjectionNote: string | null;
+  initialValueRecordedAt: string | null;
+  initialValue?: string | null;
+  submittedValue?: string | null;
+}
+
+export interface SheetDetail extends SheetRow {
+  processInstanceId: string | null;
+  selfAssessmentFilled: boolean;
+  supervisorTransferred: boolean;
+  items: SheetItem[];
+}
+
+export type SheetScope = 'ASSESSOR' | 'ALL';
+
+export interface SheetSearch {
+  reviewPeriodId?: string;
+  dataScope: SheetScope;
+  page: number;
+  size: number;
+  sortBy?: 'created_at' | 'review_period_id' | 'status';
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export interface SelfAssessment {
+  content: string;
+  submittedAt: string;
+}
+
+export interface SupervisorHistoryRow {
+  supervisorEmployeeId: string;
+  supervisorNameDisplay: string;
+  validFrom: string;
+  validUntil: string | null;
+  handoverNote: string | null;
+}
+
+export type ItemDraft =
+  | { origin: 'MASTER'; masterItemId: string; target: string }
+  | { origin: 'ADDITIONAL'; itemNameSnapshot: string; targetTypeSnapshot: TargetType; rawWeight: number; target: string };
+
+export interface ItemPatch {
+  target?: string;
+  rawWeight?: number;
+}
+
+// ---------- Menu 4 — Persetujuan Nilai ----------
+
+export type RoundOutcome = 'APPROVED' | 'RETURNED' | 'REJECTED_FINAL';
+
+export interface NamedEmployee {
+  employeeId: string;
+  name: string;
+}
+
+export interface ApprovalRound {
+  id: string;
+  cycleNo: number;
+  roundNo: number;
+  approver: NamedEmployee;
+  outcome: RoundOutcome | null;
+  decisionReason: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+}
+
+/** Respons `200` `P4.01` — instans alur kerja sudah terisi karena dimulai sinkron. */
+export interface SubmitResult {
+  reviewSheetId: string;
+  status: SheetStatus;
+  approvalRoundId: string;
+  cycleNo: number;
+  roundNo: number;
+  workflowProcessInstanceId: string;
+  approver: NamedEmployee;
 }

@@ -663,3 +663,37 @@ mode/filter di List yang sama, bukan layar terpisah). DM masuk langsung ke tab B
   (awalan timestamp) supaya potongan 8 karakter tidak kembar.
 
 7 pengujian baru di `performance/kpi.test.ts`.
+
+## 24. Performance › Menu 3 Lembar Penilaian — FSD-001-PERFORMANCE 0.11 §3 / UIC-001-PERFORMANCE 0.12 §4 (30 September 2026)
+
+`/performance/sheets` (tab **Lembar saya** `D1` untuk EMP, **Antrean lembar** `E1` untuk DM/HR; Super Admin melihat
+keduanya) + `/performance/sheets/detail?id=` (`E2`–`E6`). Store lembar (`sheet.service.ts` → `sheetStore`) sekaligus
+menyimpan putaran persetujuan supaya Menu 4 membaca data yang sama.
+
+- **Rezim baca `PF-10`:** grid DM dipaksa `ASSESSOR`; HR memilih `ALL`/`ASSESSOR` (Segmented) + filter periode (grid
+  periode hanya HR). Detail: HR, pemegang kursi, dan rantai di atas penilai; lainnya `404` anti-enumerasi. EMP tanpa
+  route daftar — mode dummy meniru tautan notifikasi dengan mencari lembar terbaru miliknya (`resolveMine`); pada API
+  sungguhan `D1` dibuka lewat `?id=`. Kolom grid mengikuti FSD (Karyawan/Periode/Status) + `has_revision`; kolom
+  Penilai di prototipe tidak dipasang karena `P3.02` tidak mengirim nama penilai.
+- **G5:** karyawan pemilik tidak pernah menerima `initial_value`/`submitted_value` — field dibuang di service, bukan
+  kolom tersembunyi. Yang tersisa hanya stempel `initial_value_recorded_at` untuk mengunci tombol "Ubah isian".
+- **Gerbang `PF-37`:** banner amber TERKUNCI (n/m nilai awal) vs hijau TERBUKA; `GET self-assessment` ditolak
+  `403 INITIAL_VALUE_LOCKED` sampai SELURUH baris terisi, lalu terbuka tanpa tombol. Nilai awal tidak dapat ditimpa;
+  isian diri terkunci begitu satu nilai awal tercatat. HR tidak membaca isian diri (`#24` DM · SA).
+- **CRUD `E4`/`E4a`/`E4b`:** dua modal berbeda. MASTER: golongan dipilih manual (sama seperti `KPM-5`), item aktif,
+  target — nama/jenis/bobot disalin sistem, bobot terkunci (`403 MASTER_WEIGHT_LOCKED`). ADDITIONAL: form bebas,
+  porsi dihitung termasuk baris baru terhadap `performance.additional_item_max_ratio` dari modul Settings
+  (`422 ADDITIONAL_ITEM_QUOTA_EXCEEDED`). Tombol hapus baris MASTER tidak dirender. Tambah/ubah baris mereset tanda
+  baca seluruh baris (`employee_read_reset_count`).
+- **Karyawan `D1`:** "Tandai dibaca" lewat konfirmasi yang menyebut "bukan persetujuan" (`PF-21 k6`); catatan keberatan
+  menyebut tidak menahan apa pun dan merujuk menu Objections.
+- **`E6` / `P4.01`:** tombol Ajukan / Ajukan ulang untuk pemegang kursi (termasuk HR Manager yang menjadi penilai,
+  `PF-19`); `WEIGHT_SUM_ZERO` sebelum resolusi rantai; penyetuju = atasan penilai, penadah terakhir HR Manager;
+  porsi beku ditulis sekali; siklus/putaran naik untuk lembar dikembalikan. Tiga "kartu narasi respons" prototipe
+  diganti toast hasil sungguhan.
+- **Asumsi / deviasi:** status lembar lima warna (`IN_PROGRESS` info, `PENDING_APPROVAL` brand,
+  `RETURNED_TO_ASSESSOR` warn, `APPROVED` ok, `REJECTED_FINAL` err) — tidak ada token oranye; badge asal `ADDITIONAL`
+  memakai tone `brand` seperti `NARRATIVE`. `P3.01` (HR memasukkan karyawan susulan) tidak punya layar (kontrak).
+  Pencatatan `access_log` tiap pembacaan belum dipasang — menyusul bersama Jejak Akses (Menu 6).
+
+14 pengujian baru di `performance/sheet.test.ts`.
