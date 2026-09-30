@@ -162,7 +162,7 @@ Prototype: 88 file HTML · Route bernav: 92
 |---|---|---|---|
 | `/performance/approvals` | Score Approvals | `performance-approvals.html` | todo |
 | `/performance/cycles` | Cycles & Settings | `performance-cycles.html` | done |
-| `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | todo |
+| `/performance/kpi-items` | KPI Master & Weight | `performance-kpi-items.html` | done |
 | `/performance/objections` | Objections | `performance-objections.html` | todo |
 | `/performance/reports` | Monitor & Reports | `performance-reports.html` | todo |
 | `/performance/sheets` | Review Sheets | `performance-sheets.html` | todo |

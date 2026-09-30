@@ -479,7 +479,7 @@ export const NAV_PERFORMANCE: NavSection[] = [
         icon: 'list-checks',
         path: '/performance/kpi-items',
         source: 'performance-kpi-items.html',
-        status: 'todo',
+        status: 'done',
       },
       {
         label: 'Review Sheets',

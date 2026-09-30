@@ -1,6 +1,7 @@
 import type {
   AuditActor,
   EligibilityEntry,
+  KpiItem,
   NotAssessableReason,
   OutOfAssessmentReason,
   PerfActor,
@@ -86,6 +87,101 @@ export const NOT_ASSESSABLE: EligibilityEntry<NotAssessableReason>[] = [
 export const CHAIN_EXHAUSTED: EligibilityEntry<OutOfAssessmentReason>[] = [
   { employeeId: 'emp-wayan', employeeNameSnapshot: 'Wayan Sudira', reason: 'APPROVER_CHAIN_EXHAUSTED' },
 ];
+
+const HESTI_SHORT = { id: 'emp-hesti', name: 'Hesti Wulandari' };
+
+/**
+ * Daftar induk dataset §3 — golongan memakai data Company (`Staff 2` sebagai padanan "Staff Grade 3").
+ * Nama golongan di sini adalah snapshot saat baris ditetapkan, bukan cermin hidup.
+ */
+export const KPI_SEED: KpiItem[] = [
+  {
+    id: '019ba5a1-c100-73f1-a3f1-4e2c015a91b7',
+    itemName: 'Menyelesaikan tiket dukungan',
+    jobGradeId: 'jg-staff-2',
+    jobGradeNameSnapshot: 'Staff 2',
+    targetType: 'NUMERIC',
+    rawWeight: 40,
+    isActive: true,
+    createdBy: HESTI_SHORT,
+    createdAt: '2026-01-10T09:00:00+07:00',
+    updatedBy: null,
+    updatedAt: null,
+  },
+  {
+    id: '019ba5a6-54e0-77c2-b7c2-4e2c025a91b7',
+    itemName: 'Kolaborasi tim',
+    jobGradeId: 'jg-staff-2',
+    jobGradeNameSnapshot: 'Staff 2',
+    targetType: 'NARRATIVE',
+    rawWeight: 30,
+    isActive: true,
+    createdBy: HESTI_SHORT,
+    createdAt: '2026-01-10T09:05:00+07:00',
+    updatedBy: null,
+    updatedAt: null,
+  },
+  {
+    id: '019ba5aa-e8c0-7d40-8d40-4e2c035a91b7',
+    itemName: 'Ketepatan waktu pelaporan',
+    jobGradeId: 'jg-staff-2',
+    jobGradeNameSnapshot: 'Staff 2',
+    targetType: 'NUMERIC',
+    rawWeight: 20,
+    isActive: true,
+    createdBy: HESTI_SHORT,
+    createdAt: '2026-01-10T09:10:00+07:00',
+    updatedBy: null,
+    updatedAt: null,
+  },
+  {
+    id: '019ba5af-7ca0-7e15-9e15-4e2c045a91b7',
+    itemName: 'Kepatuhan SOP lama',
+    jobGradeId: 'jg-staff-2',
+    jobGradeNameSnapshot: 'Staff 2',
+    targetType: 'NARRATIVE',
+    rawWeight: 10,
+    isActive: false,
+    createdBy: HESTI_SHORT,
+    createdAt: '2026-01-10T09:15:00+07:00',
+    updatedBy: null,
+    updatedAt: null,
+  },
+  {
+    id: '019baaff-0b80-702b-a02b-4e2c065a91b7',
+    itemName: 'Pencapaian target tim',
+    jobGradeId: 'jg-manager-1',
+    jobGradeNameSnapshot: 'Manager 1',
+    targetType: 'NUMERIC',
+    rawWeight: 50,
+    isActive: true,
+    createdBy: HESTI_SHORT,
+    createdAt: '2026-01-11T10:00:00+07:00',
+    updatedBy: null,
+    updatedAt: null,
+  },
+  {
+    id: '019bab03-9f60-79d6-b9d6-4e2c075a91b7',
+    itemName: 'Pengembangan anggota tim',
+    jobGradeId: 'jg-manager-1',
+    jobGradeNameSnapshot: 'Manager 1',
+    targetType: 'NARRATIVE',
+    rawWeight: 30,
+    isActive: true,
+    createdBy: HESTI_SHORT,
+    createdAt: '2026-01-11T10:05:00+07:00',
+    updatedBy: null,
+    updatedAt: null,
+  },
+];
+
+/** Pemakaian baris daftar induk di lembar berjalan (`review_sheet_item.master_item_id`). */
+export const KPI_USAGE: Record<string, number> = {
+  '019ba5a1-c100-73f1-a3f1-4e2c015a91b7': 3,
+  '019ba5a6-54e0-77c2-b7c2-4e2c025a91b7': 3,
+  '019ba5aa-e8c0-7d40-8d40-4e2c035a91b7': 2,
+  '019baaff-0b80-702b-a02b-4e2c065a91b7': 1,
+};
 
 /** Karyawan yang bergabung setelah periode dibuka dan belum dimasukkan HR. */
 export const LATE_JOINERS: { employeeId: string; employeeNameSnapshot: string; joinDate: string }[] = [

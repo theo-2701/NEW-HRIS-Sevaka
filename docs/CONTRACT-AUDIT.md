@@ -638,3 +638,28 @@ halaman `/performance/*`; label produk di Topnav ikut diturunkan dari URL. Pohon
   data Company); Lukman Hakim (HR Staff) dan akun Administrator (Super Admin) melengkapi aktor dataset kontrak.
 
 10 pengujian baru di `performance/period.test.ts`.
+
+## 23. Performance › Menu 2 Daftar Induk & Bobot — FSD-001-PERFORMANCE 0.11 §2 / UIC-001-PERFORMANCE 0.12 §3 (30 September 2026)
+
+Satu halaman `/performance/kpi-items`, dua tab: **Kelola daftar induk** (`KPM-1`) dan **Browsing atasan** (`KPM-5` —
+mode/filter di List yang sama, bukan layar terpisah). DM masuk langsung ke tab Browsing; Employee nol akses.
+
+- **Peran:** baca (`#11`/`#12`/lookup golongan) HRM · HRS · DM · SA; buat · ubah · nonaktifkan (`#8`–`#10`) HRM · SA.
+  HR Staff melihat grid tanpa kolom aksi dan tanpa tombol "Buat item".
+- **`KPM-1`:** kolom ID (chip 8 karakter, tooltip uuid penuh), Nama Item, Golongan (`job_grade_name_snapshot`, bukan
+  cermin hidup), Jenis Target, Bobot (kanan, dua desimal), Status. Tiga filter (golongan/jenis/status) → tombol
+  "Filter" + modal sesuai standar rumah; dua aksi baris → "Action ▾" (kontrak menyebut ikon per baris). Nol kolom
+  `used_in_sheet_count` di grid — angka itu hanya di modal Ubah/Nonaktifkan (`P2.04`).
+- **`KPM-2`/`KPM-3`:** `Idempotency-Key` baru per pembukaan modal (kunci terpakai ulang → `409 DUPLICATE_CONFLICT`);
+  bobot `numeric(6,2)` 0–9999,99, bebas (tidak wajib berjumlah 100). Ubah = parsial: hanya field yang berubah
+  dikirim, tombol simpan mati selama form belum berubah (payload kosong → `422`); snapshot golongan ditulis ulang
+  hanya bila golongan ikut dikirim.
+- **`KPM-4`:** soft-delete (`deleted_at`), **tidak** menyentuh `is_active`; pemakaian di lembar informasional, tombol
+  tetap aktif; baris keluar dari grid, hapus dobel → `404`. Teks dialog membedakannya dari status Nonaktif.
+- **`KPM-5`:** golongan wajib dipilih manual (belum terisi otomatis dari profil bawahan), pill "Status terkunci:
+  aktif", kolom Status tidak tampil. Menyalin baris ke lembar = cakupan Menu 3.
+- **Asumsi / deviasi:** badge `NARRATIVE` memakai tone `brand` — design system tidak punya token ungu; daftar
+  golongan diambil dari modul Company (`companyService.jobGrades()`), diurutkan per nama; ID mock berbentuk uuid v7
+  (awalan timestamp) supaya potongan 8 karakter tidak kembar.
+
+7 pengujian baru di `performance/kpi.test.ts`.

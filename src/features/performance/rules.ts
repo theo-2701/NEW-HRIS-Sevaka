@@ -15,3 +15,9 @@ export const canManagePeriods = allow('ROLE_HR_MANAGER');
 export const canViewPeriod = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF', 'ROLE_DEPT_MANAGER');
 /** `#4`/`#5` daftar ketidaklayakan. */
 export const canViewEligibility = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
+
+// Menu 2 — Daftar Induk & Bobot
+/** `#12` grid Kelola & Browsing (+ `#11` detail) — HRS & DM baca saja. */
+export const canReadKpi = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF', 'ROLE_DEPT_MANAGER');
+/** `#8`/`#9`/`#10` buat · ubah · nonaktifkan. */
+export const canWriteKpi = allow('ROLE_HR_MANAGER');

@@ -60,6 +60,7 @@ import { GroupListPage, TaskListPage } from '@/features/productivity/pages/Payro
 import { FormsPage, MySubmissionsPage } from '@/features/productivity/pages/FormsPages';
 import { CyclesPage } from '@/features/performance/pages/CyclesPage';
 import { CycleDetailPage } from '@/features/performance/pages/CycleDetailPage';
+import { KpiItemsPage } from '@/features/performance/pages/KpiItemsPage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -200,6 +201,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'performance/cycles', element: <CyclesPage /> },
   /* Detail periode tidak punya baris menu — dibuka dari baris daftar periode. */
   { path: 'performance/cycles/detail', element: <CycleDetailPage /> },
+  { path: 'performance/kpi-items', element: <KpiItemsPage /> },
   /* Archive = sisi ARSIP dari page-pair Project; URL sendiri, tanpa baris menu (sidebar hanya 'Project'). */
   { path: 'productivity/projects/archive', element: <ProjectsPage key="archive" state="ARSIP" /> },
   { path: 'productivity/tasks', element: <TasksPage /> },
@@ -306,6 +308,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/productivity/projects',
   '/performance/cycles',
   '/performance/cycles/detail',
+  '/performance/kpi-items',
   '/productivity/projects/archive',
   '/productivity/tasks',
   '/productivity/timesheet/tracker',

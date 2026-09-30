@@ -3,6 +3,7 @@
 export const PERF_PATHS = {
   cycles: '/performance/cycles',
   cycleDetail: (id: string) => `/performance/cycles/detail?id=${id}`,
+  kpiItems: '/performance/kpi-items',
 };
 
 export type PerfRole =
@@ -94,3 +95,62 @@ export const ELIGIBILITY_REASON_LABEL: Record<NotAssessableReason | OutOfAssessm
   APPROVER_CHAIN_EXHAUSTED: 'Rantai penyetuju habis (puncak struktur)',
   NOT_INCLUDED_MID_PERIOD: 'Bergabung setelah periode dibuka',
 };
+
+// ---------- Menu 2 — Daftar Induk & Bobot ----------
+
+export type TargetType = 'NUMERIC' | 'NARRATIVE';
+
+export const TARGET_TYPE_LABEL: Record<TargetType, string> = {
+  NUMERIC: 'Numeric',
+  NARRATIVE: 'Narrative',
+};
+
+/** Audit ringkas `{id, name}` — bentuk lokal Menu 2 (UIC §3). */
+export interface ShortActor {
+  id: string;
+  name: string;
+}
+
+export interface KpiItem {
+  id: string;
+  itemName: string;
+  jobGradeId: string;
+  /** Salinan nama saat baris terakhir ditetapkan golongannya — bukan cermin hidup. */
+  jobGradeNameSnapshot: string;
+  targetType: TargetType;
+  /** `numeric(6,2)` — angka positif bebas, tidak wajib berjumlah 100. */
+  rawWeight: number;
+  isActive: boolean;
+  createdBy: ShortActor;
+  createdAt: string;
+  updatedBy: ShortActor | null;
+  updatedAt: string | null;
+}
+
+/** `P2.04` — satu-satunya bentuk yang membawa `used_in_sheet_count` (dihitung live). */
+export interface KpiItemDetail extends KpiItem {
+  usedInSheetCount: number;
+}
+
+export interface KpiSearch {
+  jobGradeId?: string;
+  targetType?: TargetType;
+  isActive?: boolean;
+  page: number;
+  size: number;
+  sortBy?: 'created_at' | 'job_grade_id' | 'is_active';
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export interface KpiDraft {
+  itemName: string;
+  jobGradeId: string;
+  targetType: TargetType;
+  rawWeight: number;
+  isActive: boolean;
+}
+
+export interface JobGradeOption {
+  id: string;
+  name: string;
+}
