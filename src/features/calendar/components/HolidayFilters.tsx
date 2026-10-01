@@ -1,5 +1,5 @@
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { APPROVAL_STATUS_LABEL, HOLIDAY_TYPE_LABEL } from '@/features/calendar/types';
 import type { ApprovalStatus, HolidayType } from '@/features/calendar/types';
@@ -17,10 +17,7 @@ export function HolidayFilterFields({
     <>
       <div className="flex flex-col gap-1">
         <Label>Status</Label>
-        <Select
-          value={value.approvalStatus}
-          onValueChange={(approvalStatus) => onChange({ ...value, approvalStatus })}
-        >
+        <Select value={value.approvalStatus} onValueChange={(approvalStatus) => onChange({ ...value, approvalStatus })}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -52,15 +49,12 @@ export function HolidayFilterFields({
         </Select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <Label>Tanggal dari</Label>
-          <DatePicker value={value.from} max={value.to || undefined} onChange={(from) => onChange({ ...value, from })} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Label>Tanggal sampai</Label>
-          <DatePicker value={value.to} min={value.from || undefined} onChange={(to) => onChange({ ...value, to })} />
-        </div>
+      <div className="flex flex-col gap-1">
+        <Label>Tanggal</Label>
+        <DateRangePicker
+          value={{ from: value.from, to: value.to }}
+          onChange={(range) => onChange({ ...value, ...range })}
+        />
       </div>
     </>
   );

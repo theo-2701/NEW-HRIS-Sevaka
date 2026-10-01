@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
@@ -111,7 +111,15 @@ export function PlaceHoldModal({ actor, open, onClose }: { actor: Actor; open: b
 }
 
 /** KM-B3 — cabut hold; satu medan teks bebas wajib. */
-export function ReleaseHoldModal({ actor, hold, onClose }: { actor: Actor; hold: DisputeHoldRow | null; onClose: () => void }) {
+export function ReleaseHoldModal({
+  actor,
+  hold,
+  onClose,
+}: {
+  actor: Actor;
+  hold: DisputeHoldRow | null;
+  onClose: () => void;
+}) {
   const release = useReleaseHold();
   const [note, setNote] = useState('');
 
@@ -259,19 +267,17 @@ export function NewExportModal({ actor, open, onClose }: { actor: Actor; open: b
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <Label>
-              Start date<em>*</em>
-            </Label>
-            <DatePicker value={startDate} max={endDate || undefined} onChange={setStartDate} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label>
-              End date<em>*</em>
-            </Label>
-            <DatePicker value={endDate} min={startDate || undefined} onChange={setEndDate} />
-          </div>
+        <div className="flex flex-col gap-1">
+          <Label>
+            Date range<em>*</em>
+          </Label>
+          <DateRangePicker
+            value={{ from: startDate, to: endDate }}
+            onChange={(range) => {
+              setStartDate(range.from);
+              setEndDate(range.to);
+            }}
+          />
         </div>
         <Note icon={<Info />}>
           Isi berkas dibaca dari data modul sumber (klaim, pinjaman, uang muka, atau penanda pencairan) dengan medan
@@ -290,16 +296,35 @@ interface ReferenceRow {
   right: string;
 }
 
-const REFERENCE: Record<ReferenceKind, { title: string; description: string; headers: [string, string, string]; rows: ReferenceRow[] }> = {
+const REFERENCE: Record<
+  ReferenceKind,
+  { title: string; description: string; headers: [string, string, string]; rows: ReferenceRow[] }
+> = {
   asymmetry: {
     title: 'Place versus release — a deliberate asymmetry',
     description: 'Mengapa memasang hold tanpa sebab, sedangkan mencabutnya selalu bersebab.',
     headers: ['Aspect', 'Place', 'Release'],
     rows: [
-      { aspect: 'Reason required', left: 'Tidak — tidak ada field alasan', right: 'Ya — satu catatan pelepasan teks bebas, kosong ditolak' },
-      { aspect: 'Who may act', left: 'Finance Officer · HR Manager · Super Admin', right: 'Sama persis, termasuk lintas peran' },
-      { aspect: 'Notification', left: 'Tidak wajib', right: 'Pelepas Finance Officer ⇒ HR Manager dikabari, bukan diminta persetujuan' },
-      { aspect: 'Why', left: 'Tindakan protektif berisiko rendah — sebab wajib hanya memperlambat respons', right: 'Membuka kembali baris ke sapuan retensi — keputusan berdampak, wajib berjejak' },
+      {
+        aspect: 'Reason required',
+        left: 'Tidak — tidak ada field alasan',
+        right: 'Ya — satu catatan pelepasan teks bebas, kosong ditolak',
+      },
+      {
+        aspect: 'Who may act',
+        left: 'Finance Officer · HR Manager · Super Admin',
+        right: 'Sama persis, termasuk lintas peran',
+      },
+      {
+        aspect: 'Notification',
+        left: 'Tidak wajib',
+        right: 'Pelepas Finance Officer ⇒ HR Manager dikabari, bukan diminta persetujuan',
+      },
+      {
+        aspect: 'Why',
+        left: 'Tindakan protektif berisiko rendah — sebab wajib hanya memperlambat respons',
+        right: 'Membuka kembali baris ke sapuan retensi — keputusan berdampak, wajib berjejak',
+      },
     ],
   },
   duties: {

@@ -4,9 +4,8 @@ import { Card, CardHead } from '@/components/Card';
 import { DataTable, type Column } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker, type DateRange } from '@/components/DatePicker';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useActivityLog } from '@/features/activity-log/hooks/useActivityLog';
@@ -94,20 +93,18 @@ function FamilyTable({ family, rows, loading }: { family: ActivityFamily; rows: 
  */
 export function ActivityLogPage() {
   const [family, setFamily] = useState<ActivityFamily>('login-attempts');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [range, setRange] = useState<DateRange>({ from: '', to: '' });
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
 
   const { data, isLoading } = useActivityLog(family, {
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
+    startDate: range.from || undefined,
+    endDate: range.to || undefined,
     page,
     size,
   });
 
   const familyLabel = ACTIVITY_FAMILY_OPTIONS.find((option) => option.value === family)?.label ?? '';
-  const hasDateFilter = Boolean(startDate || endDate);
 
   const changeFilter = (apply: () => void) => {
     apply();
@@ -145,37 +142,10 @@ export function ActivityLogPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex w-[180px] flex-col gap-1">
-                  <Label>Dari Tanggal</Label>
-                  <DatePicker
-                    value={startDate}
-                    max={endDate || undefined}
-                    placeholder="Tanggal awal"
-                    onChange={(value) => changeFilter(() => setStartDate(value))}
-                  />
+                <div className="flex w-[260px] flex-col gap-1">
+                  <Label>Tanggal</Label>
+                  <DateRangePicker value={range} onChange={(value) => changeFilter(() => setRange(value))} />
                 </div>
-                <div className="flex w-[180px] flex-col gap-1">
-                  <Label>Sampai Tanggal</Label>
-                  <DatePicker
-                    value={endDate}
-                    min={startDate || undefined}
-                    placeholder="Tanggal akhir"
-                    onChange={(value) => changeFilter(() => setEndDate(value))}
-                  />
-                </div>
-                {hasDateFilter && (
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      changeFilter(() => {
-                        setStartDate('');
-                        setEndDate('');
-                      })
-                    }
-                  >
-                    Reset
-                  </Button>
-                )}
               </div>
             }
           />

@@ -8,13 +8,20 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { StatusBadge } from '@/components/StatusBadge';
 import { DateField } from '@/components/form/DateField';
+import { DateRangeField } from '@/components/form/DateRangeField';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
 import { TmFlag } from '@/features/attendance/components/AttendanceBits';
 import { BRANCHES, ME, UNITS, employeeName, scopeName } from '@/features/calendar/mock-data';
-import { useDecideHoliday, useDeleteHoliday, useDeleteWorkCalendar, useSaveHoliday, useSaveWorkCalendar } from '@/features/calendar/hooks/useCalendar';
+import {
+  useDecideHoliday,
+  useDeleteHoliday,
+  useDeleteWorkCalendar,
+  useSaveHoliday,
+  useSaveWorkCalendar,
+} from '@/features/calendar/hooks/useCalendar';
 import {
   APPROVAL_STATUS_LABEL,
   HOLIDAY_TYPE_LABEL,
@@ -33,12 +40,7 @@ import type {
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const APPROVAL_TONE = {
-  DRAFT: 'mute',
-  PENDING_APPROVAL: 'warn',
-  APPROVED: 'ok',
-  REJECTED: 'err',
-} as const;
+const APPROVAL_TONE = { DRAFT: 'mute', PENDING_APPROVAL: 'warn', APPROVED: 'ok', REJECTED: 'err' } as const;
 
 export function ApprovalBadge({ status }: { status: CalendarHoliday['approvalStatus'] }) {
   return <StatusBadge tone={APPROVAL_TONE[status]}>{APPROVAL_STATUS_LABEL[status]}</StatusBadge>;
@@ -76,10 +78,7 @@ function ScopeFields({ locked }: { locked: boolean }) {
   const { values, setFieldValue } = useFormikContext<HolidayDraft>();
   if (values.holidayType !== 'REGIONAL') return null;
 
-  const options = (values.scopeLevel === 'UNIT' ? UNITS : BRANCHES).map((row) => ({
-    value: row.id,
-    label: row.name,
-  }));
+  const options = (values.scopeLevel === 'UNIT' ? UNITS : BRANCHES).map((row) => ({ value: row.id, label: row.name }));
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -248,8 +247,8 @@ export function HolidayFormModal({
             <Form className="flex flex-col gap-4">
               {locked && (
                 <Note icon={<Lock />}>
-                  Tanggal, tipe, dan scope beku setelah baris tersimpan — mengubahnya berarti membuat baris baru,
-                  supaya slot yang sudah dipegang tidak berpindah diam-diam.
+                  Tanggal, tipe, dan scope beku setelah baris tersimpan — mengubahnya berarti membuat baris baru, supaya
+                  slot yang sudah dipegang tidak berpindah diam-diam.
                 </Note>
               )}
 
@@ -267,7 +266,13 @@ export function HolidayFormModal({
 
               <ScopeFields locked={locked} />
 
-              <TextField name="holidayName" label="Holiday name" required maxLength={150} placeholder="Input text here" />
+              <TextField
+                name="holidayName"
+                label="Holiday name"
+                required
+                maxLength={150}
+                placeholder="Input text here"
+              />
               <TextAreaField
                 name="source"
                 label="Source"
@@ -285,13 +290,7 @@ export function HolidayFormModal({
   );
 }
 
-export function HolidayDecisionModal({
-  row,
-  onClose,
-}: {
-  row: CalendarHoliday | null;
-  onClose: () => void;
-}) {
+export function HolidayDecisionModal({ row, onClose }: { row: CalendarHoliday | null; onClose: () => void }) {
   const decide = useDecideHoliday();
   const [note, setNote] = useState('');
   const sod = Boolean(row && row.createdBy === ME);
@@ -488,11 +487,17 @@ const patternSchema = Yup.object({
 function PatternScopeRef({ locked }: { locked: boolean }) {
   const { values } = useFormikContext<WorkCalendarDraft>();
   if (values.scopeLevel === 'COMPANY' || !values.scopeLevel) return null;
-  const options = (values.scopeLevel === 'UNIT' ? UNITS : BRANCHES).map((row) => ({
-    value: row.id,
-    label: row.name,
-  }));
-  return <SelectField name="scopeRef" label="Scope" required placeholder="Select scope" options={options} disabled={locked} />;
+  const options = (values.scopeLevel === 'UNIT' ? UNITS : BRANCHES).map((row) => ({ value: row.id, label: row.name }));
+  return (
+    <SelectField
+      name="scopeRef"
+      label="Scope"
+      required
+      placeholder="Select scope"
+      options={options}
+      disabled={locked}
+    />
+  );
 }
 
 export function WorkCalendarFormModal({
@@ -575,12 +580,18 @@ export function WorkCalendarFormModal({
             <Form className="flex flex-col gap-4">
               {locked && lastCompanyPattern && (
                 <Note tone="warn" icon={<TriangleAlert />}>
-                  Ini pola company aktif terakhir — ia tidak bisa diakhiri tanpa penggantinya, karena tidak akan ada
-                  apa pun yang tersisa untuk menyelesaikan hari kerja.
+                  Ini pola company aktif terakhir — ia tidak bisa diakhiri tanpa penggantinya, karena tidak akan ada apa
+                  pun yang tersisa untuk menyelesaikan hari kerja.
                 </Note>
               )}
 
-              <TextField name="calendarName" label="Pattern name" required maxLength={150} placeholder="Input text here" />
+              <TextField
+                name="calendarName"
+                label="Pattern name"
+                required
+                maxLength={150}
+                placeholder="Input text here"
+              />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <SelectField
@@ -600,14 +611,15 @@ export function WorkCalendarFormModal({
                 onToggle={(key, next) => setDays((prev) => ({ ...prev, [key]: next }))}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="effectiveFrom" label="Effective from" required disabled={locked} />
-                <DateField
-                  name="effectiveUntil"
-                  label="Effective until"
-                  hint="Kosongkan untuk pola terbuka yang berlaku sampai ada penggantinya."
-                />
-              </div>
+              <DateRangeField
+                fromName="effectiveFrom"
+                toName="effectiveUntil"
+                label="Effective period"
+                required
+                openEnd
+                lockFrom={locked}
+                hint={`Tanggal akhir boleh kosong — pola terbuka berlaku sampai ada penggantinya.${locked ? ' Tanggal mulai terkunci karena pola sudah berlaku.' : ''}`}
+              />
             </Form>
           </Modal>
         );
@@ -616,13 +628,7 @@ export function WorkCalendarFormModal({
   );
 }
 
-export function WorkCalendarDeleteModal({
-  row,
-  onClose,
-}: {
-  row: WorkCalendar | null;
-  onClose: () => void;
-}) {
+export function WorkCalendarDeleteModal({ row, onClose }: { row: WorkCalendar | null; onClose: () => void }) {
   const remove = useDeleteWorkCalendar();
   return (
     <Modal

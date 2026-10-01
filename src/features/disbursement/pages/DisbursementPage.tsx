@@ -3,11 +3,11 @@ import { Info, ShieldAlert, TriangleAlert } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
-import { DataTable, CellIdentity } from '@/components/DataTable';
+import { DataTable, CellIdentity, SelectionBar } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { FilterModal } from '@/components/FilterModal';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -62,7 +62,9 @@ import { formatDate } from '@/lib/format';
 type Tab = 'disbursement' | 'outstanding';
 
 function toggleSort<K extends string>(prev: { by: K; dir: SortDirection }, key: K) {
-  return prev.by === key ? { by: key, dir: prev.dir === 'ASC' ? ('DESC' as const) : ('ASC' as const) } : { by: key, dir: 'DESC' as const };
+  return prev.by === key
+    ? { by: key, dir: prev.dir === 'ASC' ? ('DESC' as const) : ('ASC' as const) }
+    : { by: key, dir: 'DESC' as const };
 }
 
 /**
@@ -84,7 +86,10 @@ export function DisbursementPage() {
   const [payableFilter, setPayableFilter] = useState<PayableFilterState>(EMPTY_PAYABLE_FILTER);
   const [payableFilterOpen, setPayableFilterOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [payableSort, setPayableSort] = useState<{ by: PayableSortBy; dir: SortDirection }>({ by: 'created_at', dir: 'DESC' });
+  const [payableSort, setPayableSort] = useState<{ by: PayableSortBy; dir: SortDirection }>({
+    by: 'created_at',
+    dir: 'DESC',
+  });
   const [picked, setPicked] = useState<string[]>([]);
 
   const [clearanceFilter, setClearanceFilter] = useState<ClearanceFilterState>(EMPTY_CLEARANCE_FILTER);
@@ -134,7 +139,9 @@ export function DisbursementPage() {
   const pagedPayables = usePagedRows(payableRows);
   const pagedClearances = usePagedRows(clearances.data ?? []);
 
-  const pickedRows = payableRows.filter((row) => row.markStatus === 'UNMARKED' && picked.includes(keyOf(row)));
+  const selectable = writable ? payableRows.filter((row) => row.markStatus === 'UNMARKED') : [];
+  const pickedRows = selectable.filter((row) => picked.includes(keyOf(row)));
+  const toggleAll = () => setPicked(pickedRows.length === selectable.length ? [] : selectable.map((row) => keyOf(row)));
 
   const resetPicked = () => {
     setPicked([]);
@@ -143,7 +150,8 @@ export function DisbursementPage() {
 
   const payableActions = (row: PayableRow) => {
     const actions: RowAction[] = [];
-    if (writable && row.markStatus === 'UNMARKED') actions.push({ label: 'Mark as paid', onSelect: () => setMarking([row]) });
+    if (writable && row.markStatus === 'UNMARKED')
+      actions.push({ label: 'Mark as paid', onSelect: () => setMarking([row]) });
     // Tanda CLIENT_SYSTEM tampil baca saja — tidak diwire dari layar ini (FSD §5.3.1).
     if (writable && row.mark?.markSource === 'MANUAL') {
       actions.push({ label: 'Reverse mark', danger: true, onSelect: () => setReversing(row) });
@@ -243,11 +251,6 @@ export function DisbursementPage() {
                       },
                       placeholder: 'Search request no.',
                     }}
-                    actions={
-                      writable && pickedRows.length > 0 ? (
-                        <Button onClick={() => setMarking(pickedRows)}>Mark selected as paid ({pickedRows.length})</Button>
-                      ) : null
-                    }
                   />
 
                   {payables.error && (
@@ -263,6 +266,16 @@ export function DisbursementPage() {
                     empty="No payable matches the current filter."
                     sort={payableSort}
                     onSortChange={(key) => setPayableSort((prev) => toggleSort(prev, key as PayableSortBy))}
+                    selectionBar={
+                      pickedRows.length > 0 ? (
+                        <SelectionBar count={pickedRows.length} total={selectable.length} onToggleAll={toggleAll}>
+                          <Button variant="secondary" onClick={() => setPicked([])}>
+                            Clear selection
+                          </Button>
+                          <Button onClick={() => setMarking(pickedRows)}>Mark as paid</Button>
+                        </SelectionBar>
+                      ) : null
+                    }
                     columns={[
                       {
                         key: 'no',
@@ -278,7 +291,9 @@ export function DisbursementPage() {
                                 checked={picked.includes(keyOf(row))}
                                 onCheckedChange={() =>
                                   setPicked((prev) =>
-                                    prev.includes(keyOf(row)) ? prev.filter((item) => item !== keyOf(row)) : [...prev, keyOf(row)],
+                                    prev.includes(keyOf(row))
+                                      ? prev.filter((item) => item !== keyOf(row))
+                                      : [...prev, keyOf(row)],
                                   )
                                 }
                               />
@@ -317,7 +332,11 @@ export function DisbursementPage() {
                         sortKey: 'created_at',
                         render: (row) => formatDate(row.submittedAt),
                       },
-                      { key: 'mark', header: 'Mark Status', render: (row) => <MarkStatusBadge status={row.markStatus} /> },
+                      {
+                        key: 'mark',
+                        header: 'Mark Status',
+                        render: (row) => <MarkStatusBadge status={row.markStatus} />,
+                      },
                       {
                         key: 'method',
                         header: 'Method / Source',
@@ -423,11 +442,17 @@ export function DisbursementPage() {
                         render: (row) => (
                           <span className="flex flex-col items-end gap-0.5">
                             <Money value={row.outstandingAmount} />
-                            <span className="font-body text-[11px] font-medium text-fg-3">loan + cash advance combined</span>
+                            <span className="font-body text-[11px] font-medium text-fg-3">
+                              loan + cash advance combined
+                            </span>
                           </span>
                         ),
                       },
-                      { key: 'status', header: 'Status', render: (row) => <ClearanceStatusBadge status={row.status} /> },
+                      {
+                        key: 'status',
+                        header: 'Status',
+                        render: (row) => <ClearanceStatusBadge status={row.status} />,
+                      },
                       {
                         key: 'recorded',
                         header: 'Recorded',
@@ -460,7 +485,8 @@ export function DisbursementPage() {
               )}
 
               <Note icon={<Info />}>
-                Outstanding amount adalah <strong>satu angka gabungan</strong> pinjaman dan uang muka, dicatat saat karyawan keluar dan tidak berubah sesudahnya.
+                Outstanding amount adalah <strong>satu angka gabungan</strong> pinjaman dan uang muka, dicatat saat
+                karyawan keluar dan tidak berubah sesudahnya.
               </Note>
             </Card>
           )}
@@ -520,29 +546,15 @@ export function DisbursementPage() {
               </label>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <Label>From</Label>
-              <DatePicker
-                value={payableFilter.startDate}
-                max={payableFilter.endDate || undefined}
-                onChange={(startDate) => {
-                  setPayableFilter((prev) => ({ ...prev, startDate }));
-                  resetPicked();
-                }}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Label>To</Label>
-              <DatePicker
-                value={payableFilter.endDate}
-                min={payableFilter.startDate || undefined}
-                onChange={(endDate) => {
-                  setPayableFilter((prev) => ({ ...prev, endDate }));
-                  resetPicked();
-                }}
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <Label>Date range</Label>
+            <DateRangePicker
+              value={{ from: payableFilter.startDate, to: payableFilter.endDate }}
+              onChange={(range) => {
+                setPayableFilter((prev) => ({ ...prev, startDate: range.from, endDate: range.to }));
+                resetPicked();
+              }}
+            />
           </div>
         </div>
       </FilterModal>
@@ -602,23 +614,14 @@ export function DisbursementPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <Label>From</Label>
-              <DatePicker
-                value={clearanceFilter.startDate}
-                max={clearanceFilter.endDate || undefined}
-                onChange={(startDate) => setClearanceFilter((prev) => ({ ...prev, startDate }))}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Label>To</Label>
-              <DatePicker
-                value={clearanceFilter.endDate}
-                min={clearanceFilter.startDate || undefined}
-                onChange={(endDate) => setClearanceFilter((prev) => ({ ...prev, endDate }))}
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <Label>Date range</Label>
+            <DateRangePicker
+              value={{ from: clearanceFilter.startDate, to: clearanceFilter.endDate }}
+              onChange={(range) =>
+                setClearanceFilter((prev) => ({ ...prev, startDate: range.from, endDate: range.to }))
+              }
+            />
           </div>
         </div>
       </FilterModal>

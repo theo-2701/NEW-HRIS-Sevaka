@@ -4,20 +4,7 @@
  * jangan format manual di komponen.
  */
 
-const MONTHS_SHORT = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'Mei',
-  'Jun',
-  'Jul',
-  'Agu',
-  'Sep',
-  'Okt',
-  'Nov',
-  'Des',
-];
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
 const MONTHS_LONG = [
   'Januari',
@@ -55,6 +42,19 @@ export function formatDate(value?: string | number | Date | null): string {
   const d = toDate(value);
   if (Number.isNaN(d.getTime())) return '—';
   return `${String(d.getDate()).padStart(2, '0')} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/**
+ * Rentang tanggal ringkas: `12 – 20 Agu 2026` (bulan sama), `12 Agu – 03 Sep 2026` (tahun sama),
+ * `28 Des 2025 – 03 Jan 2026`; satu hari = satu tanggal; ujung kosong = `—`.
+ */
+export function formatDateRange(from?: string | null, to?: string | null): string {
+  if (!from && !to) return '—';
+  if (!from || !to || from === to) return `${formatDate(from || to)}`;
+  const [a, b] = [formatDate(from).split(' '), formatDate(to).split(' ')];
+  if (a[2] !== b[2]) return `${a.join(' ')} – ${b.join(' ')}`;
+  if (a[1] !== b[1]) return `${a[0]} ${a[1]} – ${b.join(' ')}`;
+  return `${a[0]} – ${b.join(' ')}`;
 }
 
 /** `12 Agustus 2026` — untuk header/hero. */

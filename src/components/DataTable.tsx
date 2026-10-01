@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronsUpDown } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 export interface Column<T> {
@@ -44,14 +45,17 @@ interface DataTableProps<T> {
    * `stopPropagation` supaya tidak ikut memicu aksi baris.
    */
   onRowClick?: (row: T, index: number) => void;
+  /**
+   * Bilah seleksi massal. Selama berisi (ada baris terpilih), baris header berubah menjadi bilah
+   * putih berisi jumlah terpilih + tombol aksi massal — aksi duduk tepat di atas baris yang
+   * dikenainya, bukan di toolbar. Header aslinya tetap dirender di bawahnya supaya lebar kolom tidak
+   * melompat. Pakai `<SelectionBar>`.
+   */
+  selectionBar?: ReactNode;
   className?: string;
 }
 
-const alignClass = {
-  left: 'text-left',
-  center: 'text-center',
-  right: 'text-right',
-} as const;
+const alignClass = { left: 'text-left', center: 'text-center', right: 'text-right' } as const;
 
 /**
  * Tabel data standar SEVAKA — port `.dtable` (`_prototype/css/employee-flows.css`)
@@ -73,120 +77,164 @@ export function DataTable<T>({
   sort,
   onSortChange,
   onRowClick,
+  selectionBar,
   className,
 }: DataTableProps<T>) {
   const frozen = Boolean(actions);
   const colSpan = columns.length + (actions ? 1 : 0);
+  const headRef = useRef<HTMLTableSectionElement>(null);
+  const [headHeight, setHeadHeight] = useState(43);
+  useLayoutEffect(() => {
+    if (selectionBar && headRef.current) setHeadHeight(headRef.current.offsetHeight);
+  }, [selectionBar]);
 
   // Selalu bisa digulir mendatar: kolom memakai lebar aslinya (`w-max`) dan
   // melar sampai minimal selebar kontainer (`min-w-full`). Sebelumnya tabel
   // tanpa kolom Action memakai `overflow-hidden`, jadi isi yang melewati lebar
   // kontainer terpotong dan tidak pernah bisa dicapai.
   return (
-    <div
-      className={cn('scroll-thin overflow-x-auto rounded-lg border border-border-1 bg-bg-surface', className)}
-    >
-      <table className="w-max min-w-full border-collapse">
-        <thead>
-          <tr>
-            {columns.map((col, i) => (
-              <th
-                key={col.key}
-                scope="col"
-                className={cn(
-                  'z-[5] whitespace-nowrap bg-[linear-gradient(180deg,#9bd5ef_0%,#8ccbe9_100%)] px-4 py-[13px] font-body text-sm font-bold leading-[1.2] text-white',
-                  alignClass[col.align ?? 'left'],
-                  col.width,
-                  frozen && i === 0 && 'sticky left-0 z-[7] shadow-[inset_-1px_0_0_rgba(255,255,255,.4)]',
-                  col.className,
-                )}
-                aria-sort={
-                  col.sortKey && sort?.by === col.sortKey
-                    ? sort.dir === 'ASC'
-                      ? 'ascending'
-                      : 'descending'
-                    : undefined
-                }
-              >
-                {col.sortKey && onSortChange ? (
-                  <button
-                    type="button"
-                    onClick={() => onSortChange(col.sortKey!)}
-                    className="inline-flex items-center gap-1.5 font-[inherit] tracking-[inherit] text-inherit"
-                  >
-                    {col.header}
-                    <ChevronsUpDown
-                      className={cn('size-3.5', sort?.by === col.sortKey ? 'opacity-100' : 'opacity-60')}
-                    />
-                  </button>
-                ) : (
-                  col.header
-                )}
-              </th>
-            ))}
-            {actions && (
-              /* Header kolom Action sengaja dikosongkan (standar rumah). */
-              <th
-                scope="col"
-                className="sticky right-0 z-[7] w-px whitespace-nowrap bg-[linear-gradient(180deg,#9bd5ef_0%,#8ccbe9_100%)] px-4 py-[13px] shadow-[inset_1px_0_0_rgba(255,255,255,.4)]"
-              >
-                <span className="sr-only">Aksi</span>
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {loading && (
+    <div className="relative">
+      {selectionBar && (
+        /* Di luar wadah gulir supaya tetap diam saat tabel digulir mendatar. */
+        <div
+          style={{ height: headHeight }}
+          className="absolute inset-x-px top-px z-[8] flex items-center gap-3 rounded-t-[11px] border-b border-border-1 bg-white px-4"
+        >
+          {selectionBar}
+        </div>
+      )}
+      <div className={cn('scroll-thin overflow-x-auto rounded-lg border border-border-1 bg-bg-surface', className)}>
+        <table className="w-max min-w-full border-collapse">
+          <thead ref={headRef}>
             <tr>
-              <td colSpan={colSpan} className="px-4 py-10 text-center font-body text-[13px] font-medium text-fg-3">
-                Memuat data…
-              </td>
+              {columns.map((col, i) => (
+                <th
+                  key={col.key}
+                  scope="col"
+                  className={cn(
+                    'z-[5] whitespace-nowrap bg-[linear-gradient(180deg,#9bd5ef_0%,#8ccbe9_100%)] px-4 py-[13px] font-body text-sm font-bold leading-[1.2] text-white',
+                    alignClass[col.align ?? 'left'],
+                    col.width,
+                    frozen && i === 0 && 'sticky left-0 z-[7] shadow-[inset_-1px_0_0_rgba(255,255,255,.4)]',
+                    col.className,
+                  )}
+                  aria-sort={
+                    col.sortKey && sort?.by === col.sortKey
+                      ? sort.dir === 'ASC'
+                        ? 'ascending'
+                        : 'descending'
+                      : undefined
+                  }
+                >
+                  {col.sortKey && onSortChange ? (
+                    <button
+                      type="button"
+                      onClick={() => onSortChange(col.sortKey!)}
+                      className="inline-flex items-center gap-1.5 font-[inherit] tracking-[inherit] text-inherit"
+                    >
+                      {col.header}
+                      <ChevronsUpDown
+                        className={cn('size-3.5', sort?.by === col.sortKey ? 'opacity-100' : 'opacity-60')}
+                      />
+                    </button>
+                  ) : (
+                    col.header
+                  )}
+                </th>
+              ))}
+              {actions && (
+                /* Header kolom Action sengaja dikosongkan (standar rumah). */
+                <th
+                  scope="col"
+                  className="sticky right-0 z-[7] w-px whitespace-nowrap bg-[linear-gradient(180deg,#9bd5ef_0%,#8ccbe9_100%)] px-4 py-[13px] shadow-[inset_1px_0_0_rgba(255,255,255,.4)]"
+                >
+                  <span className="sr-only">Aksi</span>
+                </th>
+              )}
             </tr>
-          )}
-
-          {!loading && rows.length === 0 && (
-            <tr>
-              <td colSpan={colSpan} className="px-4 py-10 text-center font-body text-[13px] font-medium text-fg-3">
-                {empty}
-              </td>
-            </tr>
-          )}
-
-          {!loading &&
-            rows.map((row, index) => (
-              <tr
-                key={rowKey(row, index)}
-                className={cn('group last:[&>td]:border-b-0', onRowClick && 'cursor-pointer')}
-                onClick={onRowClick ? () => onRowClick(row, index) : undefined}
-              >
-                {columns.map((col, i) => (
-                  <td
-                    key={col.key}
-                    className={cn(
-                      'border-b border-vapor px-4 py-[13px] align-middle font-body text-[13px] font-medium leading-[1.4] text-fg-1 transition-colors group-hover:bg-mist',
-                      alignClass[col.align ?? 'left'],
-                      col.muted && 'text-fg-3',
-                      col.strong && 'font-bold',
-                      (col.nowrap || frozen) && 'whitespace-nowrap',
-                      col.className,
-                      frozen &&
-                        i === 0 &&
-                        'sticky left-0 z-[4] bg-primary-50 shadow-[inset_-1px_0_0_var(--color-border-1)] group-hover:bg-primary-100',
-                    )}
-                  >
-                    {col.render(row, index)}
-                  </td>
-                ))}
-                {actions && (
-                  <td className="sticky right-0 z-[4] whitespace-nowrap border-b border-vapor bg-primary-50 px-4 py-[13px] align-middle shadow-[inset_1px_0_0_var(--color-border-1)] transition-colors group-hover:bg-primary-100">
-                    <div className="flex items-center justify-end gap-1.5">{actions(row, index)}</div>
-                  </td>
-                )}
+          </thead>
+          <tbody>
+            {loading && (
+              <tr>
+                <td colSpan={colSpan} className="px-4 py-10 text-center font-body text-[13px] font-medium text-fg-3">
+                  Memuat data…
+                </td>
               </tr>
-            ))}
-        </tbody>
-      </table>
+            )}
+
+            {!loading && rows.length === 0 && (
+              <tr>
+                <td colSpan={colSpan} className="px-4 py-10 text-center font-body text-[13px] font-medium text-fg-3">
+                  {empty}
+                </td>
+              </tr>
+            )}
+
+            {!loading &&
+              rows.map((row, index) => (
+                <tr
+                  key={rowKey(row, index)}
+                  className={cn('group last:[&>td]:border-b-0', onRowClick && 'cursor-pointer')}
+                  onClick={onRowClick ? () => onRowClick(row, index) : undefined}
+                >
+                  {columns.map((col, i) => (
+                    <td
+                      key={col.key}
+                      className={cn(
+                        'border-b border-vapor px-4 py-[13px] align-middle font-body text-[13px] font-medium leading-[1.4] text-fg-1 transition-colors group-hover:bg-mist',
+                        alignClass[col.align ?? 'left'],
+                        col.muted && 'text-fg-3',
+                        col.strong && 'font-bold',
+                        (col.nowrap || frozen) && 'whitespace-nowrap',
+                        col.className,
+                        frozen &&
+                          i === 0 &&
+                          'sticky left-0 z-[4] bg-primary-50 shadow-[inset_-1px_0_0_var(--color-border-1)] group-hover:bg-primary-100',
+                      )}
+                    >
+                      {col.render(row, index)}
+                    </td>
+                  ))}
+                  {actions && (
+                    <td className="sticky right-0 z-[4] whitespace-nowrap border-b border-vapor bg-primary-50 px-4 py-[13px] align-middle shadow-[inset_1px_0_0_var(--color-border-1)] transition-colors group-hover:bg-primary-100">
+                      <div className="flex items-center justify-end gap-1.5">{actions(row, index)}</div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
     </div>
+  );
+}
+
+/**
+ * Isi `selectionBar` standar: checkbox pilih-semua (indeterminate saat sebagian) + "N selected" di
+ * kiri, aksi massal di kanan (sekunder dulu, primer paling kanan).
+ */
+export function SelectionBar({
+  count,
+  total,
+  onToggleAll,
+  children,
+}: {
+  count: number;
+  /** Jumlah baris yang bisa dipilih — menentukan keadaan checkbox pilih-semua. */
+  total: number;
+  onToggleAll: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <Checkbox
+        aria-label="Pilih semua"
+        checked={count >= total ? true : 'indeterminate'}
+        onCheckedChange={onToggleAll}
+      />
+      <span className="font-body text-sm font-bold text-fg-1">{count} selected</span>
+      <div className="ml-auto flex items-center gap-2">{children}</div>
+    </>
   );
 }
 
@@ -206,11 +254,7 @@ export function CellIdentity({ name, sub, leading }: { name: ReactNode; sub?: Re
 /** Tautan identifier di dalam sel — port `.co-link` (Ocean 700, underline saat hover). */
 export function CellLink({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="font-body text-[13px] font-bold text-fg-link hover:underline"
-    >
+    <button type="button" onClick={onClick} className="font-body text-[13px] font-bold text-fg-link hover:underline">
       {children}
     </button>
   );

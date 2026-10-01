@@ -7,7 +7,7 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { FilterModal } from '@/components/FilterModal';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { StatusBadge } from '@/components/StatusBadge';
 import { RowButton } from '@/components/RowActions';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,7 @@ import {
   ReleaseHoldModal,
 } from '@/features/finance-security/components/SecurityModals';
 import type { ReferenceKind } from '@/features/finance-security/components/SecurityModals';
-import {
-  useExportLogs,
-  useHolds,
-  useMedicalLogs,
-} from '@/features/finance-security/hooks/useFinanceSecurity';
+import { useExportLogs, useHolds, useMedicalLogs } from '@/features/finance-security/hooks/useFinanceSecurity';
 import { EMPLOYEES, ROLE_OF, VIEWERS, employeeName } from '@/features/finance-security/mock-data';
 import { HOLD_TARGET_TYPES, canExport, canManageHolds, describeCriteria } from '@/features/finance-security/rules';
 import { EXPORT_SCOPE_LABEL, HOLD_TARGET_LABEL, ROLE_LABEL } from '@/features/finance-security/types';
@@ -168,7 +164,10 @@ export function FinanceSecurityPage() {
 
           {tab === 'holds' && (
             <Card>
-              <CardHead title="Dispute holds" sub="Daftar kerja bawaan hanya hold aktif — baris yang dicabut tetap sebagai riwayat" />
+              <CardHead
+                title="Dispute holds"
+                sub="Daftar kerja bawaan hanya hold aktif — baris yang dicabut tetap sebagai riwayat"
+              />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -244,11 +243,21 @@ export function FinanceSecurityPage() {
                       key: 'status',
                       header: 'Status',
                       render: (row) => (
-                        <StatusBadge tone={row.isActive ? 'warn' : 'mute'}>{row.isActive ? 'On hold' : 'Released'}</StatusBadge>
+                        <StatusBadge tone={row.isActive ? 'warn' : 'mute'}>
+                          {row.isActive ? 'On hold' : 'Released'}
+                        </StatusBadge>
                       ),
                     },
-                    { key: 'placed', header: 'Placed By', render: (row) => <Person id={row.createdBy} stamp={row.createdAt} /> },
-                    { key: 'released', header: 'Released By', render: (row) => <Person id={row.releasedBy} stamp={row.releasedAt} /> },
+                    {
+                      key: 'placed',
+                      header: 'Placed By',
+                      render: (row) => <Person id={row.createdBy} stamp={row.createdAt} />,
+                    },
+                    {
+                      key: 'released',
+                      header: 'Released By',
+                      render: (row) => <Person id={row.releasedBy} stamp={row.releasedAt} />,
+                    },
                   ]}
                   actions={(row) =>
                     row.isActive && holdWriter ? (
@@ -270,7 +279,9 @@ export function FinanceSecurityPage() {
               </div>
 
               <Note icon={<Info />}>
-                Hold aktif menahan pencairan: baris itu tidak bisa ditandai dibayar di Pencairan & Piutang, dan penandanya tampil di Benefit Reimbursement serta modal keputusan Loan. Satu target hanya bisa punya satu hold aktif.
+                Hold aktif menahan pencairan: baris itu tidak bisa ditandai dibayar di Pencairan & Piutang, dan
+                penandanya tampil di Benefit Reimbursement serta modal keputusan Loan. Satu target hanya bisa punya satu
+                hold aktif.
               </Note>
             </Card>
           )}
@@ -282,28 +293,16 @@ export function FinanceSecurityPage() {
               <div className="flex flex-col">
                 <TableToolbar
                   filters={
-                    <>
-                      <DatePicker
-                        className="w-[180px]"
-                        placeholder="Downloaded from"
-                        value={exportFrom}
-                        max={exportTo || undefined}
-                        onChange={(value) => {
-                          setExportFrom(value);
-                          pagedExports.resetPage();
-                        }}
-                      />
-                      <DatePicker
-                        className="w-[180px]"
-                        placeholder="Downloaded until"
-                        value={exportTo}
-                        min={exportFrom || undefined}
-                        onChange={(value) => {
-                          setExportTo(value);
-                          pagedExports.resetPage();
-                        }}
-                      />
-                    </>
+                    <DateRangePicker
+                      className="h-10 w-[260px]"
+                      placeholder="Downloaded between"
+                      value={{ from: exportFrom, to: exportTo }}
+                      onChange={(range) => {
+                        setExportFrom(range.from);
+                        setExportTo(range.to);
+                        pagedExports.resetPage();
+                      }}
+                    />
                   }
                   actions={
                     canExport(actor.role) ? (
@@ -338,10 +337,23 @@ export function FinanceSecurityPage() {
                     {
                       key: 'criteria',
                       header: 'Filter Criteria',
-                      render: (row) => <span className="font-mono text-xs">{describeCriteria(row.filterCriteria)}</span>,
+                      render: (row) => (
+                        <span className="font-mono text-xs">{describeCriteria(row.filterCriteria)}</span>
+                      ),
                     },
-                    { key: 'rows', header: 'Rows', align: 'right', render: (row) => row.rowCount.toLocaleString('id-ID') },
-                    { key: 'at', header: 'Downloaded At', nowrap: true, muted: true, render: (row) => formatDateTime(row.downloadedAt) },
+                    {
+                      key: 'rows',
+                      header: 'Rows',
+                      align: 'right',
+                      render: (row) => row.rowCount.toLocaleString('id-ID'),
+                    },
+                    {
+                      key: 'at',
+                      header: 'Downloaded At',
+                      nowrap: true,
+                      muted: true,
+                      render: (row) => formatDateTime(row.downloadedAt),
+                    },
                     { key: 'by', header: 'By', render: (row) => <Person id={row.createdBy} /> },
                   ]}
                 />
@@ -364,7 +376,10 @@ export function FinanceSecurityPage() {
 
           {tab === 'medical' && (
             <Card>
-              <CardHead title="Medical document access log" sub="Metadata jejak saja — isi lampiran tidak pernah dibuka dari layar ini" />
+              <CardHead
+                title="Medical document access log"
+                sub="Metadata jejak saja — isi lampiran tidak pernah dibuka dari layar ini"
+              />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -400,9 +415,23 @@ export function FinanceSecurityPage() {
                       render: (row) => <span className="font-mono text-xs">{row.claimRequestNo ?? '—'}</span>,
                     },
                     { key: 'subject', header: 'Subject Employee', render: (row) => employeeName(row.employeeId) },
-                    { key: 'item', header: 'Claim Item', render: (row) => <span className="font-mono text-xs">{row.claimItemId}</span> },
-                    { key: 'doc', header: 'Document', render: (row) => <span className="font-mono text-xs">{row.documentId}</span> },
-                    { key: 'at', header: 'Accessed At', nowrap: true, muted: true, render: (row) => formatDateTime(row.accessedAt) },
+                    {
+                      key: 'item',
+                      header: 'Claim Item',
+                      render: (row) => <span className="font-mono text-xs">{row.claimItemId}</span>,
+                    },
+                    {
+                      key: 'doc',
+                      header: 'Document',
+                      render: (row) => <span className="font-mono text-xs">{row.documentId}</span>,
+                    },
+                    {
+                      key: 'at',
+                      header: 'Accessed At',
+                      nowrap: true,
+                      muted: true,
+                      render: (row) => formatDateTime(row.accessedAt),
+                    },
                     { key: 'by', header: 'Opened By', render: (row) => <Person id={row.createdBy} /> },
                   ]}
                 />
@@ -418,7 +447,8 @@ export function FinanceSecurityPage() {
               </div>
 
               <Note icon={<Info />}>
-                Ditinjau HR Manager dan Super Admin. Kolom <strong>Opened By</strong> adalah orang yang membuka lampiran, berbeda dari karyawan pemilik klaim.
+                Ditinjau HR Manager dan Super Admin. Kolom <strong>Opened By</strong> adalah orang yang membuka
+                lampiran, berbeda dari karyawan pemilik klaim.
               </Note>
             </Card>
           )}
@@ -464,23 +494,12 @@ export function FinanceSecurityPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <Label>Accessed from</Label>
-              <DatePicker
-                value={medicalFilter.startDate}
-                max={medicalFilter.endDate || undefined}
-                onChange={(startDate) => setMedicalFilter((prev) => ({ ...prev, startDate }))}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Label>Accessed until</Label>
-              <DatePicker
-                value={medicalFilter.endDate}
-                min={medicalFilter.startDate || undefined}
-                onChange={(endDate) => setMedicalFilter((prev) => ({ ...prev, endDate }))}
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <Label>Accessed</Label>
+            <DateRangePicker
+              value={{ from: medicalFilter.startDate, to: medicalFilter.endDate }}
+              onChange={(range) => setMedicalFilter((prev) => ({ ...prev, startDate: range.from, endDate: range.to }))}
+            />
           </div>
         </div>
       </FilterModal>

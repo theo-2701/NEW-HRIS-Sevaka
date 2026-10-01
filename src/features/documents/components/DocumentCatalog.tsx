@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import type { Column } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
 import { Pagination } from '@/components/Pagination';
 import { RowActions, RowButton } from '@/components/RowActions';
@@ -238,18 +238,15 @@ export function DocumentCatalog({
             options={(Object.keys(ORIGIN_LABEL) as Origin[]).map((value) => ({ value, label: ORIGIN_LABEL[value] }))}
           />
         )}
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Created from">
-            <DatePicker value={filters.startDate} onChange={(value) => setFilter('startDate', value)} />
-          </Field>
-          <Field label="Created to">
-            <DatePicker
-              value={filters.endDate}
-              min={filters.startDate || undefined}
-              onChange={(value) => setFilter('endDate', value)}
-            />
-          </Field>
-        </div>
+        <Field label="Created">
+          <DateRangePicker
+            value={{ from: filters.startDate, to: filters.endDate }}
+            onChange={(range) => {
+              setFilters((prev) => ({ ...prev, startDate: range.from, endDate: range.to }));
+              paged.resetPage();
+            }}
+          />
+        </Field>
       </FilterModal>
 
       <DocumentDetailModal

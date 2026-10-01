@@ -4,7 +4,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
@@ -23,7 +23,13 @@ import { formatCurrency, formatDate } from '@/lib/format';
 
 type Door = 'SELF' | 'ON_BEHALF';
 
-const BLANK: AdvanceDraft = { recipientEmployeeId: '', purposeTypeId: '', amount: '', travelStartDate: '', travelEndDate: '' };
+const BLANK: AdvanceDraft = {
+  recipientEmployeeId: '',
+  purposeTypeId: '',
+  amount: '',
+  travelStartDate: '',
+  travelEndDate: '',
+};
 
 /**
  * Form ajukan uang muka (CA-A3). Satu form untuk dua pintu — pintu atas nama
@@ -107,7 +113,10 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
             <Label>
               Recipient<em>*</em>
             </Label>
-            <Select value={draft.recipientEmployeeId} onValueChange={(recipientEmployeeId) => patch({ recipientEmployeeId })}>
+            <Select
+              value={draft.recipientEmployeeId}
+              onValueChange={(recipientEmployeeId) => patch({ recipientEmployeeId })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
@@ -154,7 +163,13 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
             <Input
               id="advMax"
               disabled
-              value={!purpose ? '—' : purpose.maxAmount === null ? 'No maximum (acknowledged)' : formatCurrency(purpose.maxAmount)}
+              value={
+                !purpose
+                  ? '—'
+                  : purpose.maxAmount === null
+                    ? 'No maximum (acknowledged)'
+                    : formatCurrency(purpose.maxAmount)
+              }
             />
           </div>
         </div>
@@ -178,23 +193,14 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
         </div>
 
         {purpose?.isOfficialTravel && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <Label>
-                Travel start<em>*</em>
-              </Label>
-              <DatePicker value={draft.travelStartDate} onChange={(travelStartDate) => patch({ travelStartDate })} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Label>
-                Travel end<em>*</em>
-              </Label>
-              <DatePicker
-                value={draft.travelEndDate}
-                min={draft.travelStartDate || undefined}
-                onChange={(travelEndDate) => patch({ travelEndDate })}
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <Label>
+              Travel period<em>*</em>
+            </Label>
+            <DateRangePicker
+              value={{ from: draft.travelStartDate, to: draft.travelEndDate }}
+              onChange={(range) => patch({ travelStartDate: range.from, travelEndDate: range.to })}
+            />
           </div>
         )}
       </div>
@@ -261,9 +267,7 @@ export function AdvanceDetailModal({
             {advance.bankAccountSnapshot.bankCode} {advance.bankAccountSnapshot.accountNumber} ·{' '}
             {advance.bankAccountSnapshot.accountHolderName}
           </KeyValueRow>
-          <KeyValueRow label="Cost center">
-            {advance.costCenterIdSnapshot ?? '—'}
-          </KeyValueRow>
+          <KeyValueRow label="Cost center">{advance.costCenterIdSnapshot ?? '—'}</KeyValueRow>
           <KeyValueRow label="Created">{formatDate(advance.createdAt)}</KeyValueRow>
           <KeyValueRow label="Settlement stages">
             {stages.length
@@ -278,7 +282,10 @@ export function AdvanceDetailModal({
 
 export type ExitMode = 'cancel' | 'repudiate' | 'travel';
 
-const EXIT_COPY: Record<ExitMode, { title: string; description: string; confirm: string; reason: 'optional' | 'required' }> = {
+const EXIT_COPY: Record<
+  ExitMode,
+  { title: string; description: string; confirm: string; reason: 'optional' | 'required' }
+> = {
   cancel: {
     title: 'Cancel request',
     description: 'Hanya bisa dibatalkan selagi masih SUBMITTED dan belum ada persetujuan yang selesai.',
@@ -287,13 +294,15 @@ const EXIT_COPY: Record<ExitMode, { title: string; description: string; confirm:
   },
   repudiate: {
     title: 'Repudiate request',
-    description: 'Pernyataan "saya tidak mengajukan ini" atas pengajuan yang dibuatkan orang lain, selama belum ditandai cair.',
+    description:
+      'Pernyataan "saya tidak mengajukan ini" atas pengajuan yang dibuatkan orang lain, selama belum ditandai cair.',
     confirm: 'Repudiate',
     reason: 'optional',
   },
   travel: {
     title: 'Cancel travel',
-    description: 'Dinas batal setelah disetujui — tanpa gerbang persetujuan. Seluruh nominal menjadi sisa di tahap penutup.',
+    description:
+      'Dinas batal setelah disetujui — tanpa gerbang persetujuan. Seluruh nominal menjadi sisa di tahap penutup.',
     confirm: 'Cancel travel',
     reason: 'required',
   },
@@ -355,7 +364,8 @@ export function AdvanceExitModal({
             </Note>
           ) : mode === 'travel' ? (
             <Note tone="warn" icon={<TriangleAlert />}>
-              Tenggat pertanggungjawaban berhenti bergantung pada tanggal pulang dan beralih ke tenggat pengembalian sisa.
+              Tenggat pertanggungjawaban berhenti bergantung pada tanggal pulang dan beralih ke tenggat pengembalian
+              sisa.
             </Note>
           ) : (
             <Note icon={<Info />}>Reservasi jatah uang muka terbuka dilepas begitu pembatalan tersimpan.</Note>
@@ -372,9 +382,19 @@ export function AdvanceExitModal({
           <div className="flex flex-col gap-1">
             <Label htmlFor="exitNote">
               {mode === 'travel' ? 'Reason' : 'Note'}
-              {copy.reason === 'required' ? <em>*</em> : <span className="ml-1.5 font-medium text-fg-4">(optional)</span>}
+              {copy.reason === 'required' ? (
+                <em>*</em>
+              ) : (
+                <span className="ml-1.5 font-medium text-fg-4">(optional)</span>
+              )}
             </Label>
-            <Textarea id="exitNote" rows={3} value={note} placeholder="Input text here" onChange={(event) => setNote(event.target.value)} />
+            <Textarea
+              id="exitNote"
+              rows={3}
+              value={note}
+              placeholder="Input text here"
+              onChange={(event) => setNote(event.target.value)}
+            />
           </div>
         </div>
       )}

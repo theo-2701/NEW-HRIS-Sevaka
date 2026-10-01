@@ -8,38 +8,21 @@ import { DataTable, CellIdentity } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { FilterModal } from '@/components/FilterModal';
+import { InfoButton } from '@/components/InfoButton';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowActions, RowButton } from '@/components/RowActions';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
-import {
-  LoanStatusBadge,
-  Money,
-  ReservationCell,
-  RoomCards,
-} from '@/features/loan/components/LoanBits';
+import { LoanStatusBadge, Money, ReservationCell, RoomCards } from '@/features/loan/components/LoanBits';
 import { LoanFormModal } from '@/features/loan/components/LoanFormModal';
-import {
-  LoanDecisionModal,
-  LoanExitModal,
-  LoanRejectModal,
-} from '@/features/loan/components/LoanDecisionModals';
+import { LoanDecisionModal, LoanExitModal, LoanRejectModal } from '@/features/loan/components/LoanDecisionModals';
 import { LoanAckModal, LoanStatusReferenceModal } from '@/features/loan/components/LoanAckModal';
-import {
-  useLoanConfig,
-  useLoanExposure,
-  useLoans,
-} from '@/features/loan/hooks/useLoan';
+import { useLoanConfig, useLoanExposure, useLoans } from '@/features/loan/hooks/useLoan';
 import { ME, MGR, employeeOf, gradeName } from '@/features/loan/mock-data';
 import { activeLoans, approvalQueue, offerTotal, roomOf } from '@/features/loan/rules';
-import {
-  EMPTY_LOAN_FILTER,
-  countActive,
-  summarizeLoanFilter,
-  toggleStatus,
-} from '@/features/loan/loanFilters';
+import { EMPTY_LOAN_FILTER, countActive, summarizeLoanFilter, toggleStatus } from '@/features/loan/loanFilters';
 import { LOAN_STATUS_LABEL, SCHEDULE_SOURCE_LABEL } from '@/features/loan/types';
 import type { Loan, LoanStatus } from '@/features/loan/types';
 import type { LoanFilterState } from '@/features/loan/loanFilters';
@@ -85,10 +68,7 @@ export function LoanPage() {
   }, [loans, filter, search]);
 
   const mine = useMemo(() => loans.filter((row) => row.employeeId === ME), [loans]);
-  const ackRows = useMemo(
-    () => mine.filter((row) => row.status === 'AWAITING_ACKNOWLEDGEMENT'),
-    [mine],
-  );
+  const ackRows = useMemo(() => mine.filter((row) => row.status === 'AWAITING_ACKNOWLEDGEMENT'), [mine]);
   const queue = useMemo(() => approvalQueue(loans, MGR), [loans]);
 
   const pagedMine = usePagedRows(mine);
@@ -193,7 +173,8 @@ export function LoanPage() {
 
               {config && (
                 <Note icon={<Info />}>
-                  Pinjaman di perusahaan ini berbunga; tenor maksimal {config.tenorMax} bulan. Bunga dihitung oleh pihak pemberi dana, bukan HRIS.
+                  Pinjaman di perusahaan ini berbunga; tenor maksimal {config.tenorMax} bulan. Bunga dihitung oleh pihak
+                  pemberi dana, bukan HRIS.
                 </Note>
               )}
 
@@ -262,9 +243,7 @@ export function LoanPage() {
             <Card>
               <CardHead title="Approval queue" sub="Menunggu keputusan Anda" />
 
-              <Note icon={<Users />}>
-                Permintaan pinjaman dari bawahan langsung yang menunggu keputusan Anda.
-              </Note>
+              <Note icon={<Users />}>Permintaan pinjaman dari bawahan langsung yang menunggu keputusan Anda.</Note>
 
               <div className="flex flex-col">
                 <DataTable<Loan>
@@ -333,13 +312,11 @@ export function LoanPage() {
 
           {tab === 'ack' && (
             <Card>
-              <CardHead
-                title="Schedule acknowledgement"
-                sub="ACK menyetujui pinjaman, DECLINE melepas reservasinya"
-              />
+              <CardHead title="Schedule acknowledgement" sub="ACK menyetujui pinjaman, DECLINE melepas reservasinya" />
 
               <Note tone="warn" icon={<TriangleAlert />}>
-                Setiap pengakuan menambah baris baru. DECLINE melepas reservasi dan Anda boleh mengajukan permintaan baru.
+                Setiap pengakuan menambah baris baru. DECLINE melepas reservasi dan Anda boleh mengajukan permintaan
+                baru.
               </Note>
 
               {ackRows.length ? (
@@ -383,15 +360,7 @@ export function LoanPage() {
 
           {tab === 'admin' && (
             <Card>
-              <CardHead
-                title="Loan administration"
-                sub="Seluruh company — baca saja"
-                action={
-                  <Button variant="secondary" onClick={() => setLegendOpen(true)}>
-                    Status reference
-                  </Button>
-                }
-              />
+              <CardHead title="Loan administration" sub="Seluruh company — baca saja" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -409,6 +378,7 @@ export function LoanPage() {
                     },
                     placeholder: 'Search request no.',
                   }}
+                  actions={<InfoButton label="Status reference" onClick={() => setLegendOpen(true)} />}
                 />
 
                 <DataTable<Loan>
@@ -542,5 +512,3 @@ export function LoanPage() {
     </>
   );
 }
-
-

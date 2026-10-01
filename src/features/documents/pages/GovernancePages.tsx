@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
 import { Modal } from '@/components/Modal';
 import { AddButton, RowActions, RowButton } from '@/components/RowActions';
@@ -330,18 +330,12 @@ export function AccessTrailPage() {
           />
           Only rows flagged unreasonable
         </label>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="From">
-            <DatePicker value={filters.from} onChange={(value) => setFilters((prev) => ({ ...prev, from: value }))} />
-          </Field>
-          <Field label="To">
-            <DatePicker
-              value={filters.to}
-              min={filters.from || undefined}
-              onChange={(value) => setFilters((prev) => ({ ...prev, to: value }))}
-            />
-          </Field>
-        </div>
+        <Field label="Date range">
+          <DateRangePicker
+            value={{ from: filters.from, to: filters.to }}
+            onChange={(range) => setFilters((prev) => ({ ...prev, ...range }))}
+          />
+        </Field>
       </FilterModal>
     </PageShell>
   );
@@ -493,14 +487,15 @@ export function MalwareAlertsPage() {
             { value: 'DITANGANI', label: 'Handled' },
           ]}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Detected from">
-            <DatePicker value={from} onChange={setFrom} />
-          </Field>
-          <Field label="Detected to">
-            <DatePicker value={to} min={from || undefined} onChange={setTo} />
-          </Field>
-        </div>
+        <Field label="Detected">
+          <DateRangePicker
+            value={{ from, to }}
+            onChange={(range) => {
+              setFrom(range.from);
+              setTo(range.to);
+            }}
+          />
+        </Field>
       </FilterModal>
 
       <Modal
