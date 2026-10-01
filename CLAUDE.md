@@ -18,7 +18,9 @@ Zustand).
 | Kesesuaian modul vs dokumen kontrak (FSD/UIC/TSD/ERD) | `docs/CONTRACT-AUDIT.md` |
 
 Workflow: `@[/feature]` (modul baru), `@[/fixing]` (bug), `@[/test]` (pengujian).
-Skill: `scaffold feature <nama>`, `caveman mode`.
+Skill: `scaffold feature <nama>`, `caveman mode`, `ponytail` (aktif di setiap tugas koding — solusi
+paling sederhana yang jalan; matikan dengan `stop ponytail`), `ponytail-review`, `ponytail-audit`,
+`ponytail-debt`. Semua di `.agents/skills/`.
 
 ## Konteks singkat
 
