@@ -3,8 +3,9 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { AddButton, RemoveRowButton } from '@/components/RowActions';
 import { TextField } from '@/components/form/TextField';
-import { DateField } from '@/components/form/DateField';
+import { DateRangeField } from '@/components/form/DateRangeField';
 import { SelectField } from '@/components/form/SelectField';
+import { Label } from '@/components/ui/label';
 import { useCreatePlan } from '@/features/manpower/hooks/useManpower';
 import { planSchema } from '@/features/manpower/validation';
 import { UNIT_OPTIONS } from '@/features/manpower/types';
@@ -32,7 +33,9 @@ function TargetLines() {
           <h3 className="m-0 font-body text-sm font-bold text-fg-1">Baris target</h3>
 
           {values.lines.map((_line, index) => (
-            <div key={index} className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-end">
+            /* `items-start`: galat di bawah Unit tidak mendorong Target dan tombol hapus keluar
+               dari garis kotak input — galatnya tetap menempel di bawah field-nya sendiri. */
+            <div key={index} className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-start">
               <SelectField
                 name={`lines.${index}.unitId`}
                 label={index === 0 ? 'Unit' : undefined}
@@ -47,18 +50,30 @@ function TargetLines() {
                 label={index === 0 ? 'Target' : undefined}
                 required={index === 0}
               />
-              <RemoveRowButton
-                aria-label="Hapus baris target"
-                disabled={values.lines.length === 1}
-                onClick={() => remove(index)}
-              />
+              <div className="flex flex-col gap-1">
+                {/* Label bayangan di baris pertama supaya tombol hapus sejajar kotak input, bukan label. */}
+                {index === 0 && (
+                  <Label aria-hidden className="invisible hidden md:block">
+                    &nbsp;
+                  </Label>
+                )}
+                <div className="flex h-9 items-center">
+                  <RemoveRowButton
+                    aria-label="Hapus baris target"
+                    disabled={values.lines.length === 1}
+                    onClick={() => remove(index)}
+                  />
+                </div>
+              </div>
             </div>
           ))}
 
           {listError && <span className="font-body text-xs font-medium text-error-600">{listError}</span>}
 
-          {/* Tombol "Add …" di dalam form — satu-satunya tombol yang boleh berikon. */}
-          <AddButton onClick={() => push({ unitId: '', target: 0 })}>Add unit</AddButton>
+          {/* Tombol "Add …" di dalam form — satu-satunya tombol yang boleh berikon. Selebar isinya. */}
+          <AddButton className="self-start" onClick={() => push({ unitId: '', target: 0 })}>
+            Add unit
+          </AddButton>
         </section>
       )}
     </FieldArray>
@@ -118,15 +133,7 @@ export function CreatePlanModal({ open, onClose }: { open: boolean; onClose: () 
                 placeholder="mis. Rencana Headcount 2027"
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="periodStart" label="Awal periode" required />
-                <DateField
-                  name="periodEnd"
-                  label="Akhir periode"
-                  required
-                  hint="Harus sama atau setelah awal periode."
-                />
-              </div>
+              <DateRangeField fromName="periodStart" toName="periodEnd" label="Periode" required />
 
               <TargetLines />
             </Form>

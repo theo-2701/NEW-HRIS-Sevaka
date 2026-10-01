@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DatePicker } from '@/components/DatePicker';
+import { DatePicker, DateRangePicker } from '@/components/DatePicker';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -300,21 +300,14 @@ export function GrantWindowModal({ actor, open, onClose }: { actor: ProdActor; o
           onChange={(value) => setForm((prev) => ({ ...prev, targetEmployeeId: value }))}
           options={targets.map((row) => ({ value: row.employeeId, label: `${row.name} · ${row.positionName}` }))}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="From" required>
-            <DatePicker
-              value={form.windowStartDate}
-              onChange={(value) => setForm((prev) => ({ ...prev, windowStartDate: value }))}
-            />
-          </Field>
-          <Field label="To" required>
-            <DatePicker
-              value={form.windowEndDate}
-              min={form.windowStartDate || undefined}
-              onChange={(value) => setForm((prev) => ({ ...prev, windowEndDate: value }))}
-            />
-          </Field>
-        </div>
+        <Field label="Window period" required>
+          <DateRangePicker
+            value={{ from: form.windowStartDate, to: form.windowEndDate }}
+            onChange={(range) =>
+              setForm((prev) => ({ ...prev, windowStartDate: range.from, windowEndDate: range.to }))
+            }
+          />
+        </Field>
         <Field label="Reason" required>
           <Textarea
             rows={2}

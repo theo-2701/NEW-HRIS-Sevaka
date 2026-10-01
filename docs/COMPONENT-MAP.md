@@ -121,7 +121,7 @@ kartu contoh design system:
 
 | Prototype | React |
 |---|---|
-| `.srch` criteria search (`POST /employees/search`) | `features/employees/components/EmployeeCriteriaForm.tsx` |
+| `.srch` criteria search (`POST /employees/search`) | `features/employees/components/EmployeeFilterBar.tsx` (toolbar inline: status multi-select, unit, date range; search kanan) |
 | `.stat-chips` multi-select status | `StatusChips` (di file yang sama) |
 | `.scope-bar` actor data-scope | `features/employees/components/ScopeBar.tsx` |
 | `.badge b-*` (6 employment_status) | `EmploymentStatusBadge` |

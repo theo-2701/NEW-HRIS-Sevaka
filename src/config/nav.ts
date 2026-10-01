@@ -30,6 +30,11 @@ export interface NavLeaf {
 export interface NavSection {
   section: string;
   note?: string;
+  /**
+   * Produk satu-section: menu tampil langsung tanpa judul section yang bisa dilipat. Pohon
+   * menunya tetap sama — hanya judulnya yang tidak dirender (disetujui Theo, 1 Okt 2026).
+   */
+  flat?: boolean;
   children: NavLeaf[];
 }
 
@@ -466,6 +471,7 @@ export const NAV_RECRUITMENT: NavSection[] = [
 export const NAV_PERFORMANCE: NavSection[] = [
   {
     section: 'Performance Management',
+    flat: true,
     children: [
       {
         label: 'Cycles & Settings',

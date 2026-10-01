@@ -4,7 +4,7 @@ import { Lock, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/StatusBadge';
-import { DateField } from '@/components/form/DateField';
+import { DateRangeField } from '@/components/form/DateRangeField';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
@@ -167,13 +167,16 @@ export function OncallFormModal({
                 disabled={Boolean(editing)}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="startDate" label="Standby start date" required />
-                <TextField name="startTime" type="time" label="Standby start time" required />
-              </div>
+              <DateRangeField
+                fromName="startDate"
+                toName="endDate"
+                label="Standby period"
+                required
+                hint="Pilih satu tanggal saja bila siaga mulai dan selesai di hari yang sama."
+              />
 
               <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="endDate" label="Standby end date" required />
+                <TextField name="startTime" type="time" label="Standby start time" required />
                 <TextField name="endTime" type="time" label="Standby end time" required />
               </div>
 

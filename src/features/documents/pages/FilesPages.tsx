@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
@@ -14,6 +15,8 @@ import { OBJECT_KIND_LABEL } from '@/features/documents/types';
 import type { DocActor, OwnerObjectKind } from '@/features/documents/types';
 
 const CRUMBS = [{ label: 'Company Management' }, { label: 'Files' }];
+/** Sama dengan `path` Employee Files di `config/nav.ts`. */
+const EMPLOYEE_FILES_PATH = '/company-management/files/employee';
 
 function NoAccess() {
   return (
@@ -56,12 +59,20 @@ export function CompanyFilesPage() {
  */
 export function EmployeeFilesPage() {
   const [actor, setActor] = useState<DocActor>(VIEWERS.employee[0]);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  /* Karyawan terpilih di URL (`?employee=`) — supaya breadcrumb "Employee Files" bisa membawa
+     kembali ke daftar pilih karyawan, dan tombol Back peramban ikut bekerja. */
+  const [params, setParams] = useSearchParams();
+  const employeeId = params.get('employee');
+  const setEmployeeId = (id: string | null) => setParams(id ? { employee: id } : {});
   const person = EMPLOYEE_PICKER.find((row) => row.employeeId === employeeId);
 
   return (
     <PageShell
-      crumbs={[...CRUMBS, { label: 'Employee Files' }]}
+      crumbs={
+        person
+          ? [...CRUMBS, { label: 'Employee Files', to: EMPLOYEE_FILES_PATH }, { label: person.nama }]
+          : [...CRUMBS, { label: 'Employee Files' }]
+      }
       title="Employee Files"
       description="Files owned by an employee. Pick an employee first; sensitive files open only inside the app."
       actions={<ActorSelect actors={VIEWERS.employee} value={actor} onChange={setActor} />}

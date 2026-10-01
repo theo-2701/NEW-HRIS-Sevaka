@@ -6,6 +6,7 @@ import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PanelActions, type RowAction } from '@/components/RowActions';
 import { Button } from '@/components/ui/button';
 import { AssetActorPicker } from '@/features/assets/components/AssetActorPicker';
 import { useAssetActor } from '@/features/assets/store/assetActor.store';
@@ -68,6 +69,19 @@ export function AssetDetailPage() {
 
   const blockers = row ? blockerReasons(row) : [];
 
+  /** Aksi lifecycle yang sah untuk status aset ini — aturan tampilnya sama dengan tombol sebelumnya. */
+  const lifecycleActions: RowAction[] = [];
+  if (row) {
+    const open = !isTerminal(row.lastAssetStatus);
+    if (canAssign(row)) lifecycleActions.push({ label: 'Serahkan', onSelect: () => setAction('assign') });
+    if (canReturn(row)) lifecycleActions.push({ label: 'Terima kembali', onSelect: () => setAction('return') });
+    if (canTransfer(row)) lifecycleActions.push({ label: 'Pindahkan', onSelect: () => setAction('transfer') });
+    if (open) lifecycleActions.push({ label: 'Maintenance', onSelect: () => setAction('maintain') });
+    if (canLease(row)) lifecycleActions.push({ label: 'Sewa', onSelect: () => setAction('lease') });
+    if (open) lifecycleActions.push({ label: 'Nilai residu', onSelect: () => setAction('residual') });
+    if (canDispose(row)) lifecycleActions.push({ label: 'Lepas aset', danger: true, onSelect: () => setDisposing(true) });
+  }
+
   return (
     <PageShell
       crumbs={[
@@ -81,37 +95,7 @@ export function AssetDetailPage() {
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <AssetActorPicker />
-          {row && writable && (
-            <>
-              {canAssign(row) && <Button onClick={() => setAction('assign')}>Serahkan</Button>}
-              {canReturn(row) && <Button onClick={() => setAction('return')}>Terima kembali</Button>}
-              {canTransfer(row) && (
-                <Button variant="secondary" onClick={() => setAction('transfer')}>
-                  Pindahkan
-                </Button>
-              )}
-              {!isTerminal(row.lastAssetStatus) && (
-                <Button variant="secondary" onClick={() => setAction('maintain')}>
-                  Maintenance
-                </Button>
-              )}
-              {canLease(row) && (
-                <Button variant="secondary" onClick={() => setAction('lease')}>
-                  Sewa
-                </Button>
-              )}
-              {!isTerminal(row.lastAssetStatus) && (
-                <Button variant="secondary" onClick={() => setAction('residual')}>
-                  Nilai residu
-                </Button>
-              )}
-              {canDispose(row) && (
-                <Button variant="secondary" onClick={() => setDisposing(true)}>
-                  Lepas aset
-                </Button>
-              )}
-            </>
-          )}
+          {row && writable && <PanelActions actions={lifecycleActions} />}
         </div>
       }
     >

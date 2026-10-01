@@ -4,6 +4,7 @@ import { PageShell } from '@/components/PageShell';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { DatePicker } from '@/components/DatePicker';
+import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
@@ -64,6 +65,7 @@ export function TimeTrackerPage() {
   const [timerTask, setTimerTask] = useState('');
   const [timerActivity, setTimerActivity] = useState('');
   const [autoStopped, setAutoStopped] = useState<TimerStartResult['autoStoppedPreviousTimer']>(null);
+  const [manualOpen, setManualOpen] = useState(false);
   const [form, setForm] = useState({
     taskId: '',
     activityTypeId: '',
@@ -71,6 +73,10 @@ export function TimeTrackerPage() {
     duration: '',
     notes: '',
   });
+  const closeManual = () => {
+    setManualOpen(false);
+    manual.reset();
+  };
 
   useEffect(() => {
     setAutoStopped(null);
@@ -100,11 +106,17 @@ export function TimeTrackerPage() {
       ]}
       title="Time Tracker"
       description="Record working time with the timer or by typing the duration. Edit or delete entries in Activities."
-      actions={<ProdActorPicker />}
+      actions={
+        <div className="flex flex-wrap items-center gap-2.5">
+          <ProdActorPicker />
+          <Button variant="secondary" onClick={() => setManualOpen(true)}>
+            Log time manually
+          </Button>
+        </div>
+      }
     >
       <div className="flex flex-col gap-5">
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-          <Card>
+        <Card>
             <CardHead
               title="Timer"
               sub="Measured hours keep their start and stop time. Minutes are stored as measured — no rounding."
@@ -175,85 +187,6 @@ export function TimeTrackerPage() {
             </div>
           </Card>
 
-          <Card>
-            <CardHead
-              title="Log time manually"
-              sub="Typed entries have no start or stop time — only the date and the duration."
-            />
-            <div className="flex flex-col gap-4">
-              <ErrorBanner error={manual.error} />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <SelectRow
-                  label="Task"
-                  required
-                  placeholder="Choose task…"
-                  value={form.taskId}
-                  onChange={(value) => setForm((prev) => ({ ...prev, taskId: value }))}
-                  options={taskOptions}
-                />
-                <SelectRow
-                  label="Activity type"
-                  allowEmpty
-                  emptyLabel="Not set"
-                  value={form.activityTypeId}
-                  onChange={(value) => setForm((prev) => ({ ...prev, activityTypeId: value }))}
-                  options={activityOptions}
-                />
-                <Field label="Work date" required hint={`Up to ${windowDays} days back (Settings › Productivity).`}>
-                  <DatePicker
-                    value={form.workDate}
-                    min={earliest}
-                    clearable={false}
-                    onChange={(value) => setForm((prev) => ({ ...prev, workDate: value }))}
-                  />
-                </Field>
-                <Field
-                  label="Duration (minutes)"
-                  required
-                  hint="All entries of one day together may not exceed 1,440 minutes."
-                >
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    value={form.duration}
-                    onChange={(event) => setForm((prev) => ({ ...prev, duration: event.target.value }))}
-                  />
-                </Field>
-                <div className="md:col-span-2">
-                  <TextRow
-                    label="Notes"
-                    value={form.notes}
-                    onChange={(value) => setForm((prev) => ({ ...prev, notes: value }))}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  disabled={!form.taskId || !form.workDate || form.duration === '' || manual.isPending}
-                  onClick={() =>
-                    manual.mutate(
-                      {
-                        actor,
-                        draft: {
-                          taskId: form.taskId,
-                          activityTypeId: form.activityTypeId,
-                          workDate: form.workDate,
-                          durationMinutes: Number(form.duration),
-                          notes: form.notes,
-                        },
-                      },
-                      { onSuccess: () => setForm((prev) => ({ ...prev, duration: '', notes: '' })) },
-                    )
-                  }
-                >
-                  {manual.isPending ? 'Saving…' : 'Save entry'}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-
         <Card>
           <CardHead
             title="My entries — last 14 days"
@@ -298,6 +231,92 @@ export function TimeTrackerPage() {
           />
         </Card>
       </div>
+
+      <Modal
+        open={manualOpen}
+        onOpenChange={(next) => !next && closeManual()}
+        size="wide"
+        title="Log time manually"
+        description="Typed entries have no start or stop time — only the date and the duration."
+        footer={
+          <>
+            <Button variant="secondary" onClick={closeManual}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!form.taskId || !form.workDate || form.duration === '' || manual.isPending}
+              onClick={() =>
+                manual.mutate(
+                  {
+                    actor,
+                    draft: {
+                      taskId: form.taskId,
+                      activityTypeId: form.activityTypeId,
+                      workDate: form.workDate,
+                      durationMinutes: Number(form.duration),
+                      notes: form.notes,
+                    },
+                  },
+                  {
+                    onSuccess: () => {
+                      setForm((prev) => ({ ...prev, duration: '', notes: '' }));
+                      setManualOpen(false);
+                    },
+                  },
+                )
+              }
+            >
+              {manual.isPending ? 'Saving…' : 'Save entry'}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <ErrorBanner error={manual.error} />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <SelectRow
+              label="Task"
+              required
+              placeholder="Choose task…"
+              value={form.taskId}
+              onChange={(value) => setForm((prev) => ({ ...prev, taskId: value }))}
+              options={taskOptions}
+            />
+            <SelectRow
+              label="Activity type"
+              allowEmpty
+              emptyLabel="Not set"
+              value={form.activityTypeId}
+              onChange={(value) => setForm((prev) => ({ ...prev, activityTypeId: value }))}
+              options={activityOptions}
+            />
+            <Field label="Work date" required hint={`Up to ${windowDays} days back (Settings › Productivity).`}>
+              <DatePicker
+                value={form.workDate}
+                min={earliest}
+                clearable={false}
+                onChange={(value) => setForm((prev) => ({ ...prev, workDate: value }))}
+              />
+            </Field>
+            <Field label="Duration (minutes)" required hint="All entries of one day together may not exceed 1,440 minutes.">
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={form.duration}
+                onChange={(event) => setForm((prev) => ({ ...prev, duration: event.target.value }))}
+              />
+            </Field>
+            <div className="md:col-span-2">
+              <TextRow
+                label="Notes"
+                value={form.notes}
+                onChange={(value) => setForm((prev) => ({ ...prev, notes: value }))}
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </PageShell>
   );
 }

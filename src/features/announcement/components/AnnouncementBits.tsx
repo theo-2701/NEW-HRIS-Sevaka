@@ -46,6 +46,7 @@ export function PublishDialog({ announcement, onClose }: { announcement: Announc
       title="Terbitkan pengumuman?"
       description="Tidak dapat ditarik. Judul, isi, kategori, dan peran penerima akan beku, dan surel terkirim ke seluruh pemegang peran sasaran."
       confirmLabel="Terbitkan"
+      tone="primary"
       loading={publish.isPending}
       onOpenChange={(open) => !open && onClose()}
       onConfirm={() => announcement && publish.mutate(announcement.id, { onSuccess: onClose })}

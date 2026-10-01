@@ -6,6 +6,7 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { Modal } from '@/components/Modal';
 import { RowActions, RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -379,87 +380,6 @@ export function SalarySettingsPage() {
                   }}
                 />
               </Card>
-
-              {selectedBatch && (
-                <Card>
-                  <CardHead
-                    title={selectedBatch.batchName}
-                    sub={
-                      selectedBatch.status === 'DRAFT'
-                        ? 'Masih draft — anggotanya masih bisa diubah'
-                        : 'Sudah dikunci; ringkasan dampaknya dibekukan saat diajukan'
-                    }
-                    action={
-                      maker && canEditBatch(selectedBatch) ? (
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <Button variant="secondary" onClick={() => setAddingMemberTo(selectedBatch)}>
-                            Add member
-                          </Button>
-                          <Button onClick={() => setSubmittingBatch(selectedBatch)}>Lock &amp; submit</Button>
-                        </div>
-                      ) : undefined
-                    }
-                  />
-
-                  {selectedBatch.impactSummary && (
-                    <KeyValueList>
-                      <KeyValueRow label="Affected">{selectedBatch.impactSummary.affectedCount} karyawan</KeyValueRow>
-                      <KeyValueRow label="Net cost shift">
-                        {formatCurrency(selectedBatch.impactSummary.netCostShiftAmount)} / bulan
-                      </KeyValueRow>
-                      <KeyValueRow label="Gaji turun">
-                        {selectedBatch.impactSummary.salaryDecreaseList.join(', ') || 'Tidak ada'}
-                      </KeyValueRow>
-                      <KeyValueRow label="Di bawah UMP setelah perubahan">
-                        {selectedBatch.impactSummary.belowUmpAfterChangeList.join(', ') || 'Tidak ada'}
-                      </KeyValueRow>
-                      <KeyValueRow label="Tanpa cost center / SBU">
-                        {selectedBatch.impactSummary.missingCostCenterOrSbuList.join(', ') || 'Tidak ada'}
-                      </KeyValueRow>
-                    </KeyValueList>
-                  )}
-
-                  <DataTable<BatchItem>
-                    rows={selectedBatch.items}
-                    rowKey={(row) => `${row.employeeId}-${row.salaryComponentId}`}
-                    empty="Kumpulan ini belum punya anggota."
-                    columns={[
-                      { key: 'employee', header: 'Employee', strong: true, render: (row) => employeeName(row.employeeId) },
-                      {
-                        key: 'component',
-                        header: 'Component',
-                        render: (row) => <span className="font-mono text-xs">{row.salaryComponentId}</span>,
-                      },
-                      {
-                        key: 'delta',
-                        header: 'Monthly Change',
-                        align: 'right',
-                        render: (row) => <span className="tabular-nums">{formatCurrency(row.amountDelta)}</span>,
-                      },
-                    ]}
-                    actions={
-                      maker && canEditBatch(selectedBatch)
-                        ? (row) => (
-                            <RowButton
-                              variant="danger"
-                              disabled={removeItem.isPending}
-                              onClick={() =>
-                                removeItem.mutate({
-                                  actor,
-                                  id: selectedBatch.id,
-                                  employeeId: row.employeeId,
-                                  componentId: row.salaryComponentId,
-                                })
-                              }
-                            >
-                              Remove
-                            </RowButton>
-                          )
-                        : undefined
-                    }
-                  />
-                </Card>
-              )}
             </div>
           )}
 
@@ -587,6 +507,96 @@ export function SalarySettingsPage() {
       />
 
       <BatchFormModal actor={actor} open={batchForm} onClose={() => setBatchForm(false)} />
+      {/* Detail kumpulan — dulu kartu di bawah tabel. Dipasang SEBELUM modal tambah anggota & kunci
+          supaya keduanya menumpuk di atasnya. */}
+      <Modal
+        open={Boolean(selectedBatch)}
+        onOpenChange={(next) => !next && setSelectedBatchId(null)}
+        size="wide"
+        title={selectedBatch?.batchName ?? 'Bulk change'}
+        description={
+          selectedBatch?.status === 'DRAFT'
+            ? 'Masih draft — anggotanya masih bisa diubah.'
+            : 'Sudah dikunci; ringkasan dampaknya dibekukan saat diajukan.'
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setSelectedBatchId(null)}>
+              Close
+            </Button>
+            {selectedBatch && maker && canEditBatch(selectedBatch) && (
+              <>
+                <Button variant="secondary" onClick={() => setAddingMemberTo(selectedBatch)}>
+                  Add member
+                </Button>
+                <Button onClick={() => setSubmittingBatch(selectedBatch)}>Lock &amp; submit</Button>
+              </>
+            )}
+          </>
+        }
+      >
+        {selectedBatch && (
+          <div className="flex flex-col gap-4">
+            {selectedBatch.impactSummary && (
+              <KeyValueList>
+                <KeyValueRow label="Affected">{selectedBatch.impactSummary.affectedCount} karyawan</KeyValueRow>
+                <KeyValueRow label="Net cost shift">
+                  {formatCurrency(selectedBatch.impactSummary.netCostShiftAmount)} / bulan
+                </KeyValueRow>
+                <KeyValueRow label="Gaji turun">
+                  {selectedBatch.impactSummary.salaryDecreaseList.join(', ') || 'Tidak ada'}
+                </KeyValueRow>
+                <KeyValueRow label="Di bawah UMP setelah perubahan">
+                  {selectedBatch.impactSummary.belowUmpAfterChangeList.join(', ') || 'Tidak ada'}
+                </KeyValueRow>
+                <KeyValueRow label="Tanpa cost center / SBU">
+                  {selectedBatch.impactSummary.missingCostCenterOrSbuList.join(', ') || 'Tidak ada'}
+                </KeyValueRow>
+              </KeyValueList>
+            )}
+
+            <DataTable<BatchItem>
+              rows={selectedBatch.items}
+              rowKey={(row) => `${row.employeeId}-${row.salaryComponentId}`}
+              empty="Kumpulan ini belum punya anggota."
+              columns={[
+                { key: 'employee', header: 'Employee', strong: true, render: (row) => employeeName(row.employeeId) },
+                {
+                  key: 'component',
+                  header: 'Component',
+                  render: (row) => <span className="font-mono text-xs">{row.salaryComponentId}</span>,
+                },
+                {
+                  key: 'delta',
+                  header: 'Monthly Change',
+                  align: 'right',
+                  render: (row) => <span className="tabular-nums">{formatCurrency(row.amountDelta)}</span>,
+                },
+              ]}
+              actions={
+                maker && canEditBatch(selectedBatch)
+                  ? (row) => (
+                      <RowButton
+                        variant="danger"
+                        disabled={removeItem.isPending}
+                        onClick={() =>
+                          removeItem.mutate({
+                            actor,
+                            id: selectedBatch.id,
+                            employeeId: row.employeeId,
+                            componentId: row.salaryComponentId,
+                          })
+                        }
+                      >
+                        Remove
+                      </RowButton>
+                    )
+                  : undefined
+              }
+            />
+          </div>
+        )}
+      </Modal>
       <BatchItemModal
         actor={actor}
         batch={addingMemberTo}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
 import { Pagination } from '@/components/Pagination';
 import { AddButton } from '@/components/RowActions';
@@ -209,14 +209,15 @@ export function ErasureRequestsPage() {
           onChange={(value) => touch(setStatus)(value as '' | ErasureStatus)}
           options={STATUSES.map((value) => ({ value, label: value }))}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Letter date from">
-            <DatePicker value={from} max={to || undefined} onChange={touch(setFrom)} />
-          </Field>
-          <Field label="Letter date to">
-            <DatePicker value={to} min={from || undefined} onChange={touch(setTo)} />
-          </Field>
-        </div>
+        <Field label="Letter date">
+          <DateRangePicker
+            value={{ from, to }}
+            onChange={touch((range: { from: string; to: string }) => {
+              setFrom(range.from);
+              setTo(range.to);
+            })}
+          />
+        </Field>
         <SelectRow
           label="Subject"
           allowEmpty

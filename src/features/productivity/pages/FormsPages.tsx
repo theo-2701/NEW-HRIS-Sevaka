@@ -4,6 +4,7 @@ import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { AddButton, RowButton } from '@/components/RowActions';
+import { Segmented } from '@/components/Segmented';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableToolbar } from '@/components/TableToolbar';
 import { usePagedRows } from '@/hooks/usePagedRows';
@@ -17,6 +18,8 @@ import { formatDate } from '@/lib/format';
 import { ApiError } from '@/services/api';
 
 const CRUMBS = [{ label: 'Productivity' }, { label: 'Forms & Survey' }];
+
+type SubmissionView = 'NAMED' | 'ANONYMOUS';
 
 /**
  * Productivity › Forms & Survey › Forms — FSD-001-PRODUCTIVITY-0.2 §10. HR Manager menyusun; HR membaca jawaban
@@ -160,6 +163,7 @@ export function MySubmissionsPage() {
   const { actor } = useProdActor();
   const distributions = useDistributions(actor);
   const [answering, setAnswering] = useState<{ formId: string; submissionId: string | null } | null>(null);
+  const [view, setView] = useState<SubmissionView>('NAMED');
   const rows = distributions.data ?? [];
   const named = rows.filter((row) => row.identityMode === 'BER_IDENTITAS');
   const anonymous = rows.filter((row) => row.identityMode === 'ANONIM');
@@ -185,6 +189,16 @@ export function MySubmissionsPage() {
     >
       <div className="flex flex-col gap-5">
         <Note>Forms targeted by position are not shown to employees without a structural position.</Note>
+        {/* Dua daftar, satu tampil — dipisah segmented (UI review). */}
+        <Segmented<SubmissionView>
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'NAMED', label: `Forms for me (${named.length})` },
+            { value: 'ANONYMOUS', label: `Anonymous forms (${anonymous.length})` },
+          ]}
+        />
+        {view === 'NAMED' ? (
         <Card>
           <CardHead title="Forms for me" sub="Soonest due first" />
           <DataTable<FormDistribution>
@@ -214,7 +228,7 @@ export function MySubmissionsPage() {
             )}
           />
         </Card>
-        {anonymous.length > 0 && (
+        ) : (
           <Card>
             <CardHead
               title="Anonymous forms"
@@ -223,6 +237,8 @@ export function MySubmissionsPage() {
             <DataTable<FormDistribution>
               rows={anonymous}
               rowKey={(row) => row.formId}
+              loading={distributions.isLoading}
+              empty="No anonymous form is open for you right now."
               columns={columns}
               actions={(row) => (
                 <RowButton onClick={() => setAnswering({ formId: row.formId, submissionId: null })}>

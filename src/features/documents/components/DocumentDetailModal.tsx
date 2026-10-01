@@ -66,14 +66,15 @@ export function DocumentDetailModal({
       size="wide"
       footer={
         <>
+          {/* Urutan rumah: Close → aksi merah → aksi utama. */}
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
           {cancellable && (
             <Button variant="danger" onClick={() => setCancelling(true)}>
               Cancel letter
             </Button>
           )}
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
           <Button
             disabled={!row || !active || !isRetrievable(active.scanState)}
             onClick={() =>

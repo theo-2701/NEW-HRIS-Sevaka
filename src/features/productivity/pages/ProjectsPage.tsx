@@ -5,9 +5,10 @@ import { Card, CardHead } from '@/components/Card';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
-import { AddButton, RowActions, RowButton } from '@/components/RowActions';
+import { RowActions, RowButton } from '@/components/RowActions';
 import { TabMenu } from '@/components/TabMenu';
 import { TableToolbar } from '@/components/TableToolbar';
+import { Button } from '@/components/ui/button';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { PersonCell, ProdActorPicker } from '@/features/productivity/components/ProdBits';
 import {
@@ -52,7 +53,14 @@ export function ProjectsPage({ state }: { state: ProjectState }) {
       crumbs={[{ label: 'Productivity' }, { label: 'Project & Task' }, { label: 'Project' }]}
       title="Project"
       description="Projects you own, review, or oversee. Archived projects accept no new tasks until they are restored."
-      actions={<ProdActorPicker onChange={() => setOpenId(null)} />}
+      actions={
+        /* "New project" tingkat halaman — sejajar judul dan aktif di kedua tab (UI review). Proyek
+           baru selalu lahir AKTIF; dari tab Archive pun hasilnya muncul di tab Active. */
+        <div className="flex flex-wrap items-center gap-2.5">
+          <ProdActorPicker onChange={() => setOpenId(null)} />
+          <Button onClick={() => setCreateOpen(true)}>New project</Button>
+        </div>
+      }
     >
       <div className="flex flex-col gap-5">
         <TabMenu<ProjectState>
@@ -78,7 +86,6 @@ export function ProjectsPage({ state }: { state: ProjectState }) {
                 },
                 placeholder: 'Search project…',
               }}
-              actions={active ? <AddButton onClick={() => setCreateOpen(true)}>New project</AddButton> : undefined}
             />
             <DataTable<Project>
               rows={paged.rows}

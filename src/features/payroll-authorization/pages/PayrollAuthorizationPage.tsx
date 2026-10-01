@@ -5,6 +5,8 @@ import { TabMenu } from '@/components/TabMenu';
 import { Segmented } from '@/components/Segmented';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
+import { InfoButton } from '@/components/InfoButton';
+import { Modal } from '@/components/Modal';
 import { Pagination } from '@/components/Pagination';
 import { RowActions, RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -61,6 +63,8 @@ import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 
 type Tab = 'periods' | 'proposals' | 'handover';
 type ProposalView = 'traits' | 'individual' | 'batches';
+type HandoverView = 'waiting' | 'pickups' | 'reexports';
+type Guide = 'lifecycle' | 'gates' | 'handover';
 
 const LIFECYCLE = [
   { status: 'CALCULATED' as const, note: 'Dihitung Payroll Officer; masih bisa dihitung ulang.' },
@@ -68,6 +72,73 @@ const LIFECYCLE = [
   { status: 'LOCKED' as const, note: 'Angkanya beku. Bisa dibuka kembali oleh pemegang kuncinya.' },
   { status: 'HANDED_OVER' as const, note: 'Diserahkan ke sistem klien. Status ini permanen.' },
 ];
+
+const GUIDE_TEXT: Record<Guide, { title: string; description: string }> = {
+  lifecycle: { title: 'Period lifecycle', description: 'Empat status, dengan satu jalan mundur lewat buka kembali.' },
+  gates: { title: 'Lock gates', description: 'Dievaluasi berurutan setiap kali penguncian diminta.' },
+  handover: { title: 'How a handover ends', description: 'Tiga langkah, dua di antaranya dilakukan sistem klien.' },
+};
+
+/** Penjelasan yang dulu memakan dua-tiga kartu — kini dibuka dari tombol teks / ikon info. */
+function GuideModal({ guide, onClose }: { guide: Guide | null; onClose: () => void }) {
+  const text = guide ? GUIDE_TEXT[guide] : GUIDE_TEXT.lifecycle;
+  return (
+    <Modal
+      open={Boolean(guide)}
+      onOpenChange={(next) => !next && onClose()}
+      title={text.title}
+      description={text.description}
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          Close
+        </Button>
+      }
+    >
+      {guide === 'lifecycle' && (
+        <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          {LIFECYCLE.map((step) => (
+            <li key={step.status} className="flex items-start gap-3">
+              <PeriodStatusBadge status={step.status} />
+              <span className="font-body text-[13px] font-medium leading-normal text-fg-2">{step.note}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {guide === 'gates' && (
+        <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
+          <li className="font-body text-[13px] font-medium leading-normal text-fg-2">
+            <strong className="text-fg-1">Gate 1 · Time reconciliation</strong> — data kehadiran periode ini cocok
+            dengan sumbernya.
+          </li>
+          <li className="font-body text-[13px] font-medium leading-normal text-fg-2">
+            <strong className="text-fg-1">Gate 2 · Finance deduction pull</strong> — potongan dari Finance sudah
+            tertarik utuh.
+          </li>
+          <li className="font-body text-[13px] font-medium leading-normal text-fg-2">
+            <strong className="text-fg-1">Gate 3 · Param snapshot</strong> — sepuluh parameter periode sudah
+            dibekukan.
+          </li>
+          <li className="font-body text-[13px] font-medium leading-normal text-fg-3">
+            Pengunci juga wajib orang yang berbeda dari yang menjalankan perhitungan.
+          </li>
+        </ol>
+      )}
+      {guide === 'handover' && (
+        <KeyValueList>
+          <KeyValueRow label="1 · Diotorisasi">
+            Pemeriksa menyerahkan periode, lalu barisnya muncul di daftar menunggu.
+          </KeyValueRow>
+          <KeyValueRow label="2 · Diambil">
+            Sistem klien menarik barisnya; barisnya hilang dari daftar menunggu dan tercatat di riwayat.
+          </KeyValueRow>
+          <KeyValueRow label="3 · Ekspor ulang">
+            Hanya bila klien memintanya, dan hanya setelah barisnya diambil.
+          </KeyValueRow>
+        </KeyValueList>
+      )}
+    </Modal>
+  );
+}
 
 /**
  * Payroll › Authorization & Handover — port `_prototype/payroll-doc-authorization.html`
@@ -82,6 +153,8 @@ export function PayrollAuthorizationPage() {
   const checker = isChecker(actor);
   const [tab, setTab] = useState<Tab>('periods');
   const [proposalView, setProposalView] = useState<ProposalView>('traits');
+  const [handoverView, setHandoverView] = useState<HandoverView>('waiting');
+  const [guide, setGuide] = useState<Guide | null>(null);
 
   const [locking, setLocking] = useState<PayrollPeriod | null>(null);
   const [reopening, setReopening] = useState<PayrollPeriod | null>(null);
@@ -169,43 +242,21 @@ export function PayrollAuthorizationPage() {
 
           {tab === 'periods' && (
             <>
-              <div className="grid gap-4 xl:grid-cols-2">
-                <Card>
-                  <CardHead title="Period lifecycle" sub="Empat status, dengan satu jalan mundur lewat buka kembali" />
-                  <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-                    {LIFECYCLE.map((step) => (
-                      <li key={step.status} className="flex items-start gap-3">
-                        <PeriodStatusBadge status={step.status} />
-                        <span className="font-body text-[13px] font-medium leading-normal text-fg-2">{step.note}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-
-                <Card>
-                  <CardHead title="Lock gates" sub="Dievaluasi berurutan setiap kali penguncian diminta" />
-                  <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
-                    <li className="font-body text-[13px] font-medium leading-normal text-fg-2">
-                      <strong className="text-fg-1">Gate 1 · Time reconciliation</strong> — data kehadiran periode ini
-                      cocok dengan sumbernya.
-                    </li>
-                    <li className="font-body text-[13px] font-medium leading-normal text-fg-2">
-                      <strong className="text-fg-1">Gate 2 · Finance deduction pull</strong> — potongan dari Finance
-                      sudah tertarik utuh.
-                    </li>
-                    <li className="font-body text-[13px] font-medium leading-normal text-fg-2">
-                      <strong className="text-fg-1">Gate 3 · Param snapshot</strong> — sepuluh parameter periode sudah
-                      dibekukan.
-                    </li>
-                    <li className="font-body text-[13px] font-medium leading-normal text-fg-3">
-                      Pengunci juga wajib orang yang berbeda dari yang menjalankan perhitungan.
-                    </li>
-                  </ol>
-                </Card>
-              </div>
-
               <Card>
-                <CardHead title="Payroll periods" sub="Aksi menyesuaikan status tiap baris" />
+                <CardHead
+                  title="Payroll periods"
+                  sub="Aksi menyesuaikan status tiap baris"
+                  action={
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" onClick={() => setGuide('lifecycle')}>
+                        Period lifecycle
+                      </Button>
+                      <Button variant="ghost" onClick={() => setGuide('gates')}>
+                        Lock gates
+                      </Button>
+                    </div>
+                  }
+                />
                 <div className="flex flex-col">
                   <DataTable<PayrollPeriod>
                     rows={pagedPeriods.rows}
@@ -513,6 +564,20 @@ export function PayrollAuthorizationPage() {
 
           {tab === 'handover' && (
             <div className="flex flex-col gap-5">
+              <div className="flex items-center gap-2">
+                <Segmented<HandoverView>
+                  value={handoverView}
+                  onChange={setHandoverView}
+                  options={[
+                    { value: 'waiting', label: 'Waiting to be collected' },
+                    { value: 'pickups', label: 'Pickup history' },
+                    { value: 'reexports', label: 'Re-export history' },
+                  ]}
+                />
+                <InfoButton label="How a handover ends" onClick={() => setGuide('handover')} />
+              </div>
+
+              {handoverView === 'waiting' && (
               <Card>
                 <CardHead title="Waiting to be collected" sub="Baris jembatan yang belum diambil sistem klien" />
                 <DataTable<HandoverPending>
@@ -542,7 +607,9 @@ export function PayrollAuthorizationPage() {
                   ]}
                 />
               </Card>
+              )}
 
+              {handoverView === 'pickups' && (
               <Card>
                 <CardHead title="Pickup history" sub="Diambil sistem klien, bukan oleh orang" />
                 <DataTable<PickupLog>
@@ -577,7 +644,9 @@ export function PayrollAuthorizationPage() {
                   ]}
                 />
               </Card>
+              )}
 
+              {handoverView === 'reexports' && (
               <Card>
                 <CardHead title="Re-export history" sub="Alasan tetap tercatat meski permintaannya ditolak gerbang" />
                 <DataTable<ReexportLog>
@@ -616,26 +685,13 @@ export function PayrollAuthorizationPage() {
                   ]}
                 />
               </Card>
-
-              <Card>
-                <CardHead title="How a handover ends" sub="Tiga langkah, dua di antaranya dilakukan sistem klien" />
-                <KeyValueList>
-                  <KeyValueRow label="1 · Diotorisasi">
-                    Pemeriksa menyerahkan periode, lalu barisnya muncul di daftar menunggu.
-                  </KeyValueRow>
-                  <KeyValueRow label="2 · Diambil">
-                    Sistem klien menarik barisnya; barisnya hilang dari daftar menunggu dan tercatat di riwayat.
-                  </KeyValueRow>
-                  <KeyValueRow label="3 · Ekspor ulang">
-                    Hanya bila klien memintanya, dan hanya setelah barisnya diambil.
-                  </KeyValueRow>
-                </KeyValueList>
-              </Card>
+              )}
             </div>
           )}
         </div>
       </PageShell>
 
+      <GuideModal guide={guide} onClose={() => setGuide(null)} />
       <LockPeriodModal actor={actor} period={locking} onClose={() => setLocking(null)} />
       <ReopenPeriodModal actor={actor} period={reopening} onClose={() => setReopening(null)} />
       <AuthorizeHandoverModal actor={actor} period={authorizing} onClose={() => setAuthorizing(null)} />

@@ -35,7 +35,8 @@ const SCROLL_FADE = '[mask-image:linear-gradient(to_bottom,transparent,black_8px
  * - Identitas perusahaan pemakai (logo, nama, jumlah karyawan) + tombol collapse; switch company dihapus.
  *   Saat ciut, logo perusahaan sendiri yang menjadi tombol untuk melebarkan sidebar.
  * - Section bisa dilipat, **buka satu tutup satu**; grup di dalamnya juga akordeon antar-saudara.
- *   Isi section menjorok dengan garis pandu supaya hierarkinya tetap terbaca.
+ *   Isi section menjorok dengan garis pandu supaya hierarkinya tetap terbaca. Section `flat`
+ *   (produk satu-section, mis. Performance) langsung menampilkan menunya tanpa judul section.
  * - Label yang terpotong tampil utuh saat di-hover; area menu digulir tanpa scrollbar.
  * Pohon menunya sendiri tidak berubah — hanya cara menampilkannya.
  * Collapsed 84px (hanya baris depth-1 sebagai ikon 44×44) ↔ expanded 264px.
@@ -140,18 +141,24 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
       >
         <OpenRequest.Provider value={requested}>
           {expanded
-            ? nav.map((section) => (
-                <SidebarSection
-                  key={section.section}
-                  section={section}
-                  open={openSection === section.section}
-                  holdsActive={section.section === activeSection}
-                  onToggle={() => {
-                    setRequested(null);
-                    setOpenSection((current) => (current === section.section ? null : section.section));
-                  }}
-                />
-              ))
+            ? nav.map((section) =>
+                section.flat ? (
+                  <div key={section.section} className="flex flex-col">
+                    <NodeList nodes={section.children} depth={1} />
+                  </div>
+                ) : (
+                  <SidebarSection
+                    key={section.section}
+                    section={section}
+                    open={openSection === section.section}
+                    holdsActive={section.section === activeSection}
+                    onToggle={() => {
+                      setRequested(null);
+                      setOpenSection((current) => (current === section.section ? null : section.section));
+                    }}
+                  />
+                ),
+              )
             : nav.map((section, i) => (
                 <div
                   key={section.section}

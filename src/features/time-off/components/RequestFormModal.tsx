@@ -5,7 +5,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { DateField } from '@/components/form/DateField';
+import { DateRangeField } from '@/components/form/DateRangeField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { CheckboxField } from '@/components/form/CheckboxField';
@@ -172,10 +172,13 @@ export function RequestFormModal({
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="startDate" label="Tanggal mulai" required />
-                <DateField name="endDate" label="Tanggal selesai" required />
-              </div>
+              <DateRangeField
+                fromName="startDate"
+                toName="endDate"
+                label="Tanggal cuti"
+                required
+                hint="Klik satu tanggal saja untuk cuti satu hari."
+              />
 
               <div className="flex flex-col gap-1">
                 <Label htmlFor="requester">

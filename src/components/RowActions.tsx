@@ -107,6 +107,39 @@ export function PanelActionButton({
 }
 
 /**
+ * "Action ▾" tingkat halaman/panel — trigger `<PanelActionButton>` 36px, isi sama dengan
+ * `<RowActions>`. Dipakai saat header halaman punya ≥ 2 aksi (mis. Asset Detail) supaya tidak
+ * berjajar banyak tombol. Satu aksi tetap tombol biasa.
+ */
+export function PanelActions({ actions, label = 'Action' }: { actions: RowAction[]; label?: string }) {
+  if (actions.length === 0) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <PanelActionButton>
+          {label}
+          <ChevronDown />
+        </PanelActionButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {actions.map((action) => (
+          <DropdownMenuItem
+            key={action.label}
+            danger={action.danger}
+            disabled={action.disabled}
+            onSelect={action.onSelect}
+          >
+            {action.icon}
+            {action.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/**
  * Tombol "Add …" — SATU standar di seluruh app (`.add-filter`): **40px**, putih +
  * inset-rim, 14px/700 Secondary-700, ikon **outline circle-plus** 18px di kiri
  * (bukan kotak solid), hover soft-press.

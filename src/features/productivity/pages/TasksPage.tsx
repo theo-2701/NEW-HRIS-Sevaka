@@ -97,23 +97,22 @@ function TasksTab() {
   return (
     <>
       <Card>
-        <CardHead title={SCOPE_LABEL[activeScope]} sub="Newest first · open a task to update it or read its history" />
+        {/* Urutan UI review: segmented cakupan di atas → divider → baris filter, search, aksi. */}
+        <Segmented<TaskScope>
+          value={activeScope}
+          onChange={(next) => {
+            setScope(next);
+            paged.resetPage();
+          }}
+          options={scopes.map((value) => ({ value, label: SCOPE_LABEL[value] }))}
+        />
+        <hr className="m-0 border-0 border-t border-border-1" />
         <div>
           <TableToolbar
             filters={
-              <div className="flex flex-wrap items-center gap-2">
-                <Segmented<TaskScope>
-                  value={activeScope}
-                  onChange={(next) => {
-                    setScope(next);
-                    paged.resetPage();
-                  }}
-                  options={scopes.map((value) => ({ value, label: SCOPE_LABEL[value] }))}
-                />
-                <Button variant="secondary" onClick={() => setFilterOpen(true)}>
-                  {active ? `Filter (${active})` : 'Filter'}
-                </Button>
-              </div>
+              <Button variant="secondary" onClick={() => setFilterOpen(true)}>
+                {active ? `Filter (${active})` : 'Filter'}
+              </Button>
             }
             summary={summary || undefined}
             search={{

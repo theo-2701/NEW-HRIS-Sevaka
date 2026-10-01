@@ -9,6 +9,7 @@ import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { DateField } from '@/components/form/DateField';
+import { DateRangeField } from '@/components/form/DateRangeField';
 import { CheckboxField } from '@/components/form/CheckboxField';
 import { Note } from '@/features/time-off/components/TimeOffBits';
 import {
@@ -487,15 +488,13 @@ export function BlackoutModal({
                 hint="Opsional; 5–300 karakter bila diisi."
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="startDate" label="Start date" required />
-                <DateField
-                  name="endDate"
-                  label="End date"
-                  required
-                  hint="Wajib — periode tanpa ujung sama saja dengan larangan permanen."
-                />
-              </div>
+              <DateRangeField
+                fromName="startDate"
+                toName="endDate"
+                label="Period"
+                required
+                hint="Tanggal akhir wajib — periode tanpa ujung sama saja dengan larangan permanen."
+              />
 
               <SelectField
                 name="mode"

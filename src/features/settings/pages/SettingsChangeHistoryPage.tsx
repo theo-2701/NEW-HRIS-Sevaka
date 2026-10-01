@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
 import { Pagination } from '@/components/Pagination';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -258,14 +258,15 @@ export function SettingsChangeHistoryPage() {
             label: ACTOR_CLASSES[key],
           }))}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Changed from">
-            <DatePicker value={startDate} max={endDate || undefined} onChange={touch(setStartDate)} />
-          </Field>
-          <Field label="Changed to">
-            <DatePicker value={endDate} min={startDate || undefined} onChange={touch(setEndDate)} />
-          </Field>
-        </div>
+        <Field label="Changed on">
+          <DateRangePicker
+            value={{ from: startDate, to: endDate }}
+            onChange={touch((range: { from: string; to: string }) => {
+              setStartDate(range.from);
+              setEndDate(range.to);
+            })}
+          />
+        </Field>
       </FilterModal>
     </PageShell>
   );

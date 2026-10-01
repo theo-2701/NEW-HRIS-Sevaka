@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { DateField } from '@/components/form/DateField';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
@@ -458,27 +458,14 @@ export function BulkAssignModal({
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <Label>
-              From<em>*</em>
-            </Label>
-            <DatePicker
-              value={draft.from}
-              max={draft.to || undefined}
-              onChange={(from) => setDraft((prev) => ({ ...prev, from }))}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label>
-              To<em>*</em>
-            </Label>
-            <DatePicker
-              value={draft.to}
-              min={draft.from || undefined}
-              onChange={(to) => setDraft((prev) => ({ ...prev, to }))}
-            />
-          </div>
+        <div className="flex flex-col gap-1">
+          <Label>
+            Period<em>*</em>
+          </Label>
+          <DateRangePicker
+            value={{ from: draft.from, to: draft.to }}
+            onChange={(range) => setDraft((prev) => ({ ...prev, ...range }))}
+          />
         </div>
 
         <label className="flex cursor-pointer items-center gap-3">

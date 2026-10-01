@@ -1,22 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Filter } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { Segmented } from '@/components/Segmented';
 import { DataTable, CellIdentity } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { RowButton } from '@/components/RowActions';
-import { EmptyState } from '@/components/Card';
 import { Avatar } from '@/components/Avatar';
 import { EmploymentStatusBadge, WorkArrangementTag } from '@/features/employees/components/EmployeeTags';
-import { EmployeeCriteriaForm } from '@/features/employees/components/EmployeeCriteriaForm';
+import { EmployeeFilterBar } from '@/features/employees/components/EmployeeFilterBar';
+import { OrganizationTree } from '@/features/employees/components/OrganizationTree';
 import { ScopeBar } from '@/features/employees/components/ScopeBar';
 import { useEmployeeSearch } from '@/features/employees/hooks/useEmployees';
 import { CURRENT_EMPLOYEE_ID } from '@/features/employees/services/employee.service';
 import { maskNik } from '@/features/employees/masking';
 import {
-  BRANCHES,
-  EMPLOYMENT_STATUS_LABEL,
   EMPTY_CRITERIA,
   type ActorScope,
   type EmployeeRow,
@@ -26,20 +23,6 @@ import {
 import { formatNumber } from '@/lib/format';
 
 type Tab = 'directory' | 'organization';
-
-/** Ringkasan kriteria aktif — padanan `.doc-fsum` pada layar berfilter. */
-function summarize(criteria: EmployeeSearchCriteria): string {
-  const parts: string[] = [];
-  if (criteria.keyword) parts.push(`keyword "${criteria.keyword}"`);
-  if (criteria.employmentStatus.length) {
-    parts.push(criteria.employmentStatus.map((s) => EMPLOYMENT_STATUS_LABEL[s]).join(' / '));
-  }
-  if (criteria.branchId) parts.push(BRANCHES.find((b) => b.id === criteria.branchId)?.name ?? criteria.branchId);
-  if (criteria.createdFrom || criteria.createdTo) {
-    parts.push(`created ${criteria.createdFrom || '…'} → ${criteria.createdTo || '…'}`);
-  }
-  return parts.length ? parts.join(' · ') : 'no filter';
-}
 
 /**
  * Employee Directory — port `_prototype/employee-directory.html`
@@ -98,39 +81,27 @@ export function EmployeeDirectoryPage() {
           />
 
           {tab === 'organization' ? (
-            <EmptyState
-              title="Tampilan Organization belum tersedia"
-              description="Struktur pohon organisasi belum bisa ditampilkan saat ini. Gunakan tab Directory untuk mencari karyawan."
-            />
+            <OrganizationTree />
           ) : (
             <>
               <ScopeBar value={scope} onChange={setScope} />
-
-              <EmployeeCriteriaForm
-                initialValues={criteria}
-                loading={isFetching}
-                onSearch={(next) => {
-                  setCriteria(next);
-                  setPage(1);
-                }}
-                onReset={() => {
-                  setCriteria(EMPTY_CRITERIA);
-                  setPage(1);
-                }}
-              />
 
               <section className="overflow-hidden rounded-lg border border-border-1 bg-bg-surface">
                 <header className="flex flex-wrap items-center gap-3 border-b border-border-1 px-[18px] py-3.5">
                   <span className="font-body text-[13px] font-bold leading-tight text-fg-1">
                     Menampilkan <b className="text-secondary-600">{formatNumber(total)}</b> hasil
                   </span>
-                  <span className="ml-auto inline-flex h-[26px] items-center gap-1.5 rounded-pill bg-secondary-950 px-3 font-mono text-[11px] font-semibold text-[#cfe8f6]">
-                    <Filter className="size-3 text-[#7cc2e6]" />
-                    <b className="text-white">{summarize(criteria)}</b>
-                  </span>
                 </header>
 
                 <div className="p-[18px]">
+                  <EmployeeFilterBar
+                    value={criteria}
+                    onChange={(next) => {
+                      setCriteria(next);
+                      setPage(1);
+                    }}
+                  />
+
                   <DataTable<EmployeeRow>
                     rows={rows}
                     loading={isFetching && rows.length === 0}

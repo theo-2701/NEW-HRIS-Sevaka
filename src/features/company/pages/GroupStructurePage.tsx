@@ -18,6 +18,7 @@ import {
 } from '@/features/company/components/CompanyModals';
 import { ModuleMappingCard } from '@/features/company/components/ModuleMappingCard';
 import { PositionChart } from '@/features/company/components/PositionChart';
+import { PositionTreeTable } from '@/features/company/components/PositionTreeTable';
 import {
   useDeleteGroupLevel,
   useDeletePosition,
@@ -94,15 +95,7 @@ export function GroupStructurePage() {
   const [history, setHistory] = useState<GroupPosition | null>(null);
   const [deletingPosition, setDeletingPosition] = useState<GroupPosition | null>(null);
 
-  const filteredPositions = useMemo(() => {
-    const query = positionSearch.trim().toLowerCase();
-    return query ? positionRows.filter((row) => row.positionName.toLowerCase().includes(query)) : positionRows;
-  }, [positionRows, positionSearch]);
-  const pagedPositions = usePagedRows(filteredPositions);
-
   const positionLevelName = (id: string) => positionLevelRows.find((row) => row.id === id)?.levelName ?? '—';
-  const positionName = (id: string | null) =>
-    id ? (positionRows.find((row) => row.id === id)?.positionName ?? '—') : 'Puncak struktur';
 
   const closeGroupForm = () => {
     setGroupForm(false);
@@ -333,77 +326,30 @@ export function GroupStructurePage() {
                 <PositionChart
                   positions={positionRows}
                   levelName={positionLevelName}
+                  levelOrder={(id) => positionLevelRows.find((row) => row.id === id)?.levelOrder ?? 0}
                   onEdit={(row) => {
                     setEditingPosition(row);
                     setPositionForm(true);
                   }}
                 />
               ) : (
-                <>
-                  <DataTable<GroupPosition>
-                    rows={pagedPositions.rows}
-                    rowKey={(row) => row.id}
-                    loading={positions.isLoading}
-                    empty="Belum ada posisi pada group ini."
-                    columns={[
-                      { key: 'name', header: 'Posisi', strong: true, render: (row) => row.positionName },
-                      { key: 'level', header: 'Level', render: (row) => positionLevelName(row.groupStructLevelId) },
-                      {
-                        key: 'holder',
-                        header: 'Pengisi',
-                        render: (row) => (row.employeeInfo ? row.employeeInfo.nama : <StatusBadge tone="warn">Lowong</StatusBadge>),
-                      },
-                      {
-                        key: 'nik',
-                        header: 'NIK',
-                        muted: true,
-                        nowrap: true,
-                        render: (row) => <span className="font-mono text-xs">{row.employeeInfo?.nik ?? '—'}</span>,
-                      },
-                      { key: 'parent', header: 'Posisi atasan', muted: true, render: (row) => positionName(row.parentId) },
-                      {
-                        key: 'supervisor',
-                        header: 'Atasan saat ini',
-                        muted: true,
-                        render: (row) => row.supervisorInfo?.nama ?? '—',
-                      },
-                      {
-                        key: 'sign',
-                        header: 'Tanda tangan surat',
-                        align: 'center',
-                        render: (row) =>
-                          row.canSignLetter ? <StatusBadge tone="ok">Berwenang</StatusBadge> : <span className="text-fg-4">—</span>,
-                      },
-                    ]}
-                    actions={(row) => (
-                      <RowActions
-                        actions={[
-                          {
-                            label: 'Ubah',
-                            onSelect: () => {
-                              setEditingPosition(row);
-                              setPositionForm(true);
-                            },
-                          },
-                          { label: 'Riwayat', onSelect: () => setHistory(row) },
-                          { label: 'Hapus', danger: true, onSelect: () => setDeletingPosition(row) },
-                        ]}
-                      />
-                    )}
-                  />
-                  <Pagination
-                    page={pagedPositions.page}
-                    pageSize={pagedPositions.pageSize}
-                    total={pagedPositions.total}
-                    noun="positions"
-                    onPageChange={pagedPositions.setPage}
-                    onPageSizeChange={pagedPositions.setPageSize}
-                  />
-                </>
+                <PositionTreeTable
+                  positions={positionRows}
+                  loading={positions.isLoading}
+                  query={positionSearch}
+                  levelName={positionLevelName}
+                  onEdit={(row) => {
+                    setEditingPosition(row);
+                    setPositionForm(true);
+                  }}
+                  onHistory={setHistory}
+                  onDelete={setDeletingPosition}
+                />
               )}
               <p className="mt-2 font-body text-xs font-medium text-fg-4">
-                Atasan (parent) adalah POSISI, bukan karyawan. Pada Table View, klik salah satu baris untuk mengubah
-                posisi atau menempatkan karyawan; Chart View baca-saja kecuali ikon pensil.
+                Atasan (parent) adalah POSISI, bukan karyawan. Table View menampilkan posisi bawahan menjorok di bawah
+                atasannya — buka-tutup cabangnya lewat panah, dan ubah posisi atau tempatkan karyawan lewat Action.
+                Chart View baca-saja kecuali ikon pensil.
               </p>
             </div>
           </Card>

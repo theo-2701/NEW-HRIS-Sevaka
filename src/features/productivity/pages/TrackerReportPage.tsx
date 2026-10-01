@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
@@ -196,14 +196,15 @@ export function TrackerReportPage() {
             label: ORIGIN_META[value].label,
           }))}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Work date from">
-            <DatePicker value={filters.from} max={filters.to || undefined} onChange={(value) => set('from', value)} />
-          </Field>
-          <Field label="Work date to">
-            <DatePicker value={filters.to} min={filters.from || undefined} onChange={(value) => set('to', value)} />
-          </Field>
-        </div>
+        <Field label="Work date">
+          <DateRangePicker
+            value={{ from: filters.from, to: filters.to }}
+            onChange={(range) => {
+              setFilters((prev) => ({ ...prev, ...range }));
+              paged.resetPage();
+            }}
+          />
+        </Field>
       </FilterModal>
     </PageShell>
   );

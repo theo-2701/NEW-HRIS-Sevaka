@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ONCALL_STATUS_LABEL } from '@/features/oncall/types';
 import { OVERTIME_CATEGORY_LABEL, OVERTIME_STATUS_LABEL } from '@/features/overtime/types';
@@ -65,14 +65,9 @@ function DateRange({
   onChange: (next: { from: string; to: string }) => void;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Field label={`${label} dari`}>
-        <DatePicker value={from} max={to || undefined} onChange={(value) => onChange({ from: value, to })} />
-      </Field>
-      <Field label={`${label} sampai`}>
-        <DatePicker value={to} min={from || undefined} onChange={(value) => onChange({ from, to: value })} />
-      </Field>
-    </div>
+    <Field label={label}>
+      <DateRangePicker value={{ from, to }} onChange={onChange} />
+    </Field>
   );
 }
 

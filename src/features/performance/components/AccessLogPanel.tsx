@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
+import { InfoButton } from '@/components/InfoButton';
+import { Modal } from '@/components/Modal';
 import { Pagination } from '@/components/Pagination';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableToolbar } from '@/components/TableToolbar';
@@ -72,6 +74,7 @@ function PersonSelect({ id, label, value, onChange }: { id: string; label: strin
 export function AccessLogPanel({ actor }: { actor: PerfActor }) {
   const [filter, setFilter] = useState<Filter>(EMPTY);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [triggersOpen, setTriggersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const { data, isLoading } = useAccessLogs(
@@ -110,9 +113,12 @@ export function AccessLogPanel({ actor }: { actor: PerfActor }) {
             }
             summary={active.length > 0 ? active.join(' · ') : undefined}
             actions={
-              <span className="inline-flex h-10 items-center rounded-pill bg-vapor px-3.5 font-body text-[12px] font-semibold text-fg-2">
-                Urut: terbaru dicatat
-              </span>
+              <>
+                <span className="inline-flex h-10 items-center rounded-pill bg-vapor px-3.5 font-body text-[12px] font-semibold text-fg-2">
+                  Urut: terbaru dicatat
+                </span>
+                <InfoButton label="Titik pemicu pencatatan" onClick={() => setTriggersOpen(true)} />
+              </>
             }
           />
           <DataTable<AccessLogRow>
@@ -157,11 +163,18 @@ export function AccessLogPanel({ actor }: { actor: PerfActor }) {
         </div>
       </Card>
 
-      <Card>
-        <CardHead
-          title="Titik pemicu pencatatan"
-          sub="Baca yang ditolak tidak menulis apa pun; baca yang berhasil menulis tepat satu baris. Membaca data sendiri tidak dicatat."
-        />
+      <Modal
+        open={triggersOpen}
+        onOpenChange={setTriggersOpen}
+        title="Titik pemicu pencatatan"
+        description="Baca yang ditolak tidak menulis apa pun; baca yang berhasil menulis tepat satu baris. Membaca data sendiri tidak dicatat."
+        size="wide"
+        footer={
+          <Button variant="secondary" onClick={() => setTriggersOpen(false)}>
+            Close
+          </Button>
+        }
+      >
         <DataTable
           rows={TRIGGERS}
           rowKey={(row) => row.door}
@@ -171,7 +184,7 @@ export function AccessLogPanel({ actor }: { actor: PerfActor }) {
             { key: 'source', header: 'Data yang dibuka (dokumentasi, bukan kolom tersimpan)', muted: true, render: (row) => row.source },
           ]}
         />
-      </Card>
+      </Modal>
 
       <FilterModal
         open={filterOpen}
@@ -186,25 +199,12 @@ export function AccessLogPanel({ actor }: { actor: PerfActor }) {
         <div className="grid gap-4">
           <PersonSelect id="log-subject" label="Subjek" value={filter.subject} onChange={(value) => change({ subject: value })} />
           <PersonSelect id="log-reader" label="Pembaca" value={filter.reader} onChange={(value) => change({ reader: value })} />
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <Label>Dari tanggal</Label>
-              <DatePicker
-                value={filter.startDate}
-                max={filter.endDate || undefined}
-                placeholder="Tanggal awal"
-                onChange={(value) => change({ startDate: value })}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Label>Sampai tanggal</Label>
-              <DatePicker
-                value={filter.endDate}
-                min={filter.startDate || undefined}
-                placeholder="Tanggal akhir"
-                onChange={(value) => change({ endDate: value })}
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <Label>Tanggal</Label>
+            <DateRangePicker
+              value={{ from: filter.startDate, to: filter.endDate }}
+              onChange={(range) => change({ startDate: range.from, endDate: range.to })}
+            />
           </div>
         </div>
       </FilterModal>

@@ -236,9 +236,13 @@ export function SignalBoardPanel({ actor }: { actor: PerfActor }) {
               <StatusBadge tone="info">Tanpa tugas</StatusBadge>
             </div>
           </Card>
-          <div className="grid gap-5 xl:grid-cols-2">
+          {/* Dua kolom bergaya masonry: kartu tanpa tabel tidak lagi melar setinggi kartu bertabel di
+              sebelahnya. Urutan baca turun lalu ke kolom kanan; di layar sempit tetap satu kolom berurutan. */}
+          <div className="-mb-5 gap-5 xl:columns-2">
             {board.data.groups.map((group, index) => (
-              <SignalCard key={group.groupKey} index={index + 1} group={group} />
+              <div key={group.groupKey} className="mb-5 break-inside-avoid">
+                <SignalCard index={index + 1} group={group} />
+              </div>
             ))}
           </div>
         </>
@@ -339,9 +343,18 @@ export function ReviewHistoryPanel({ actor }: { actor: PerfActor }) {
         title="Riwayat beku"
         sub="Satu baris per lembar yang sudah disahkan; revisi naik satu tiap pengesahan ulang setelah sanggahan"
       />
-      <div className="flex flex-wrap items-end gap-3">
+      {!self && subject && (
+        <Banner tone="info">
+          Hak baca mengikuti rantai atasan saat ini — atasan lama yang sudah keluar rantai tidak lagi melihat riwayat ini.
+        </Banner>
+      )}
+      {/* Kontrol + tabel satu kelompok: jarak 8px seperti toolbar tabel lain. `self-end` menurunkan
+          segmented sejajar kotak pilih, bukan sejajar labelnya. */}
+      <div>
+      <div className="mb-2 flex flex-wrap items-end gap-3">
         <SubjectSelect id="history-subject" label="Riwayat milik" value={subject} onChange={setPicked} options={subjects.options} />
         <Segmented<'latest' | 'all'>
+          className="self-end"
           value={revisions}
           onChange={setRevisions}
           options={[
@@ -350,11 +363,6 @@ export function ReviewHistoryPanel({ actor }: { actor: PerfActor }) {
           ]}
         />
       </div>
-      {!self && subject && (
-        <Banner tone="info">
-          Hak baca mengikuti rantai atasan saat ini — atasan lama yang sudah keluar rantai tidak lagi melihat riwayat ini.
-        </Banner>
-      )}
       {!subject ? (
         <EmptyState title="Belum ada riwayat yang dapat dibuka" description="Riwayat orang lain hanya untuk atasan pada rantai dan HR." />
       ) : history.isError ? (
@@ -375,6 +383,7 @@ export function ReviewHistoryPanel({ actor }: { actor: PerfActor }) {
           actions={(row) => <RowButton onClick={() => setViewing(row.snapshotId)}>View Detail</RowButton>}
         />
       )}
+      </div>
       <SnapshotModal actor={actor} id={viewing} onClose={() => setViewing(null)} />
     </Card>
   );

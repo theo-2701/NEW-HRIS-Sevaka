@@ -3,7 +3,7 @@ import { PageShell } from '@/components/PageShell';
 import { Card, CardHead, EmptyState } from '@/components/Card';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DataTable } from '@/components/DataTable';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { FilterModal } from '@/components/FilterModal';
 import { Pagination } from '@/components/Pagination';
 import { RowActions, RowButton } from '@/components/RowActions';
@@ -261,14 +261,15 @@ export function ActivitiesPage() {
             label: ORIGIN_META[value].label,
           }))}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Work date from">
-            <DatePicker value={from} max={to || undefined} onChange={setFrom} />
-          </Field>
-          <Field label="Work date to">
-            <DatePicker value={to} min={from || undefined} onChange={setTo} />
-          </Field>
-        </div>
+        <Field label="Work date">
+          <DateRangePicker
+            value={{ from, to }}
+            onChange={(range) => {
+              setFrom(range.from);
+              setTo(range.to);
+            }}
+          />
+        </Field>
       </FilterModal>
 
       <EditWorklogModal actor={actor} row={editing} onClose={() => setEditing(null)} />

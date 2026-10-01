@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/DatePicker';
+import { DateRangePicker } from '@/components/DatePicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   OVERTIME_CATEGORY_LABEL,
@@ -58,7 +58,7 @@ const CATEGORY_OPTIONS = (Object.keys(OVERTIME_CATEGORY_LABEL) as OvertimeCatego
   label: OVERTIME_CATEGORY_LABEL[value],
 }));
 
-/** Rentang tanggal — satu filter, dua kotak. */
+/** Rentang tanggal — satu filter, satu field. */
 function DateRange({
   from,
   to,
@@ -69,14 +69,9 @@ function DateRange({
   onChange: (next: { from: string; to: string }) => void;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Field label="Tanggal dari">
-        <DatePicker value={from} max={to || undefined} onChange={(value) => onChange({ from: value, to })} />
-      </Field>
-      <Field label="Tanggal sampai">
-        <DatePicker value={to} min={from || undefined} onChange={(value) => onChange({ from, to: value })} />
-      </Field>
-    </div>
+    <Field label="Tanggal">
+      <DateRangePicker value={{ from, to }} onChange={onChange} />
+    </Field>
   );
 }
 

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
-import { Card, CardHead, EmptyState, StatCard } from '@/components/Card';
+import { Card, EmptyState, StatCard } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
+import { InfoButton } from '@/components/InfoButton';
 import { Modal } from '@/components/Modal';
+import { Segmented } from '@/components/Segmented';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +28,8 @@ import { ApiError } from '@/services/api';
 const monthLabel = (start: string) =>
   new Date(`${start}T00:00:00`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
+type Detail = 'task' | 'origin';
+
 /**
  * Productivity › Timesheet › Summary — FSD-001-PRODUCTIVITY-0.2 §6 (`SM-A2`/`SM-A3`).
  *
@@ -47,6 +51,8 @@ export function SummaryPage() {
   const reopen = useReopenPeriod();
   const [reopenOpen, setReopenOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [detail, setDetail] = useState<Detail>('task');
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const owner = target === actor.employeeId;
   const canReopen =
@@ -114,6 +120,7 @@ export function SummaryPage() {
             </Select>
           )}
           {period && <PeriodStateBadge value={period.state} />}
+          <InfoButton label="Timesheet status reference" onClick={() => setLegendOpen(true)} />
           <div className="ml-auto flex gap-2">
             {canReopen && (
               <Button variant="secondary" onClick={() => setReopenOpen(true)}>
@@ -190,12 +197,24 @@ export function SummaryPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-              <Card>
-                <CardHead
-                  title="Hours by task"
-                  sub={`${formatDate(period.periodStart)} – ${formatDate(period.periodEnd)}`}
+            <Card>
+              {/* Ringkasan di atas (kartu angka), rincian di bawahnya dipisah segmented — satu tabel tampil. */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Segmented<Detail>
+                  value={detail}
+                  onChange={setDetail}
+                  options={[
+                    { value: 'task', label: 'Hours by task' },
+                    { value: 'origin', label: 'How the hours were recorded' },
+                  ]}
                 />
+                <span className="font-body text-xs font-medium text-fg-3">
+                  {detail === 'task'
+                    ? `${formatDate(period.periodStart)} – ${formatDate(period.periodEnd)}`
+                    : 'Measured, typed, and stopped by the system — added up the same way'}
+                </span>
+              </div>
+              {detail === 'task' ? (
                 <DataTable
                   rows={period.breakdownByTask}
                   rowKey={(row) => row.taskId}
@@ -210,12 +229,7 @@ export function SummaryPage() {
                     },
                   ]}
                 />
-              </Card>
-              <Card>
-                <CardHead
-                  title="How the hours were recorded"
-                  sub="Measured, typed, and stopped by the system — added up the same way"
-                />
+              ) : (
                 <DataTable
                   rows={(Object.keys(period.originComposition) as WorklogOrigin[]).map((origin) => ({
                     origin,
@@ -227,32 +241,37 @@ export function SummaryPage() {
                     { key: 'minutes', header: 'Hours', align: 'right', render: (row) => formatMinutes(row.minutes) },
                   ]}
                 />
-              </Card>
-            </div>
+              )}
+            </Card>
           </>
         )}
-
-        <Card>
-          <CardHead
-            title="Timesheet status reference"
-            sub="Approval and rejection come only from the approval process; there is no button for them here."
-          />
-          <DataTable<{ state: TimesheetPeriodState }>
-            rows={(Object.keys(PERIOD_STATE_META) as TimesheetPeriodState[]).map((state) => ({ state }))}
-            rowKey={(row) => row.state}
-            columns={[
-              { key: 'state', header: 'Status', render: (row) => <PeriodStateBadge value={row.state} /> },
-              {
-                key: 'meaning',
-                header: 'Meaning',
-                render: (row) => (
-                  <span className="block max-w-[640px] whitespace-normal">{PERIOD_STATE_META[row.state].meaning}</span>
-                ),
-              },
-            ]}
-          />
-        </Card>
       </div>
+
+      <Modal
+        open={legendOpen}
+        onOpenChange={setLegendOpen}
+        size="wide"
+        title="Timesheet status reference"
+        description="Approval and rejection come only from the approval process; there is no button for them here."
+        footer={
+          <Button variant="secondary" onClick={() => setLegendOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <DataTable<{ state: TimesheetPeriodState }>
+          rows={(Object.keys(PERIOD_STATE_META) as TimesheetPeriodState[]).map((state) => ({ state }))}
+          rowKey={(row) => row.state}
+          columns={[
+            { key: 'state', header: 'Status', render: (row) => <PeriodStateBadge value={row.state} /> },
+            {
+              key: 'meaning',
+              header: 'Meaning',
+              render: (row) => <span className="block whitespace-normal">{PERIOD_STATE_META[row.state].meaning}</span>,
+            },
+          ]}
+        />
+      </Modal>
 
       <Modal
         open={reopenOpen && Boolean(period)}

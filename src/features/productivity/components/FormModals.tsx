@@ -327,6 +327,10 @@ export function FormDetailModal({
       size="wide"
       footer={
         <>
+          {/* Urutan rumah: Close dulu, lalu aksi merah, lalu aksi lain. */}
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
           {manager && form.submissionCount === 0 && (
             <Button
               variant="danger"
@@ -345,7 +349,6 @@ export function FormDetailModal({
               Close form
             </Button>
           )}
-          <Button onClick={onClose}>Done</Button>
         </>
       }
     >
