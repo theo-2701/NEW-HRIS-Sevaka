@@ -9,7 +9,8 @@ import { RadioBranch } from '@/components/RadioBranch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
 import { AdvanceStatusBadge } from '@/features/cash-advance/components/CashAdvanceBits';
-import { EMPLOYEES, employeeName, employeeOf } from '@/features/cash-advance/mock-data';
+import { ADVANCE_EMPLOYEE_SOURCE, employeeName, employeeOf } from '@/features/cash-advance/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { parseAmount, purposeSelectable, thousands } from '@/features/cash-advance/rules';
 import {
   useCancelAdvance,
@@ -110,24 +111,17 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
 
         {door === 'ON_BEHALF' && (
           <div className="flex flex-col gap-1">
-            <Label>
+            <Label htmlFor="advance-recipient">
               Recipient<em>*</em>
             </Label>
-            <Select
+            <EmployeeSelect
+              id="advance-recipient"
+              lang="en"
+              source={ADVANCE_EMPLOYEE_SOURCE}
+              exclude={[actor.employeeId]}
               value={draft.recipientEmployeeId}
-              onValueChange={(recipientEmployeeId) => patch({ recipientEmployeeId })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select employee" />
-              </SelectTrigger>
-              <SelectContent>
-                {EMPLOYEES.filter((row) => row.id !== actor.employeeId).map((row) => (
-                  <SelectItem key={row.id} value={row.id}>
-                    {row.name} — {row.unit}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(recipientEmployeeId) => patch({ recipientEmployeeId })}
+            />
           </div>
         )}
 

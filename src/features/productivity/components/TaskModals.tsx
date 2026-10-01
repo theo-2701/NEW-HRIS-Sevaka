@@ -4,7 +4,7 @@ import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
-import { Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { ErrorBanner, Note, TaskStatusBadge } from '@/features/productivity/components/ProdBits';
 import {
   useCreateTask,
@@ -15,7 +15,7 @@ import {
   useTaskHistory,
   useUpdateTask,
 } from '@/features/productivity/hooks/useProjects';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
 import {
   canAssignTo,
   isSupervisorOf,
@@ -125,15 +125,13 @@ export function CreateTaskModal({ actor, open, onClose }: { actor: ProdActor; op
           <Textarea rows={3} value={draft.description} onChange={(event) => set('description', event.target.value)} />
         </Field>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <SelectRow
+          <EmployeeRow
             label="Assignee"
             required
+            lang="en"
             value={draft.assigneeEmployeeId}
             onChange={(value) => set('assigneeEmployeeId', value)}
-            options={pickers.assignees.map((row) => ({
-              value: row.employeeId,
-              label: row.employeeId === actor.employeeId ? `${row.name} (me)` : row.name,
-            }))}
+            source={prodEmployeeSource(pickers.assignees, actor.employeeId)}
             hint="Yourself, people under you, or members of a project you own."
           />
           <Field label="Due date" required>
@@ -339,12 +337,13 @@ export function TaskDetailModal({
                 onChange={(value) => set('dueDate', value)}
               />
             </Field>
-            <SelectRow
+            <EmployeeRow
               label="Assignee"
+              lang="en"
               value={form.assigneeEmployeeId}
               disabled={!(isAssigner || isChain)}
               onChange={(value) => set('assigneeEmployeeId', value)}
-              options={assigneeOptions.map((row) => ({ value: row.employeeId, label: row.name }))}
+              source={prodEmployeeSource(assigneeOptions)}
               hint="Changing the assignee does not change how the task was created."
             />
             <SelectRow

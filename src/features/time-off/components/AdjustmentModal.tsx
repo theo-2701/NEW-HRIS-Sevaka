@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
+import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
 import { DateField } from '@/components/form/DateField';
 import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
 import { useCreateAdjustment } from '@/features/time-off/hooks/useBalance';
-import { EMPLOYEES, LEAVE_TYPES } from '@/features/time-off/mock-data';
+import { LEAVE_TYPES, timeEmployeeSource } from '@/features/time-off/mock-data';
 import type { AdjustmentDraft, Session } from '@/features/time-off/types';
 
 const EMPTY: AdjustmentDraft = {
@@ -93,12 +94,11 @@ export function AdjustmentModal({
           >
             <Form className="flex flex-col gap-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
+                <EmployeeSelectField
                   name="employeeId"
                   label="Karyawan"
                   required
-                  placeholder="Pilih karyawan"
-                  options={EMPLOYEES.map((row) => ({ value: row.id, label: row.name }))}
+                  source={timeEmployeeSource(session.employeeId)}
                 />
                 <SelectField
                   name="leaveTypeId"

@@ -1,4 +1,5 @@
 import { HESTI, RINA } from '@/features/documents/mock-data';
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import type {
   AccessTrailRow,
   CategoryAdmin,
@@ -37,6 +38,14 @@ export const DOC_PEOPLE: PersonSnapshot[] = [
 /** Karyawan yang dapat menjadi pokok surat/penerima massal (PICKER → employee-service). */
 export const LETTER_SUBJECTS = DOC_PEOPLE.filter((row) =>
   ['emp-yanti', 'emp-rina', 'emp-budi', 'emp-dedi', 'emp-nurul', 'emp-sinta'].includes(row.employeeId),
+);
+
+const toEmployeeOption = (row: PersonSnapshot) => ({ id: row.employeeId, name: row.nama, nik: row.nik });
+
+/** Sumber `<EmployeeSelect>` modul Documents — dummy belum memuat unit, jadi baris berisi nama · NIK. */
+export const DOC_PEOPLE_SOURCE = createLocalEmployeeSource('documents-people', () => DOC_PEOPLE.map(toEmployeeOption));
+export const LETTER_SUBJECT_SOURCE = createLocalEmployeeSource('letter-subjects', () =>
+  LETTER_SUBJECTS.map(toEmployeeOption),
 );
 
 export const BRANCHES = [

@@ -6,9 +6,10 @@ import { DatePicker } from '@/components/DatePicker';
 import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Field, SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import { Note } from '@/features/settings/components/SettingsBits';
-import { useCreateErasure, useErasureDetail, useErasureSubjects } from '@/features/settings/hooks/useSettings';
+import { useCreateErasure, useErasureDetail } from '@/features/settings/hooks/useSettings';
+import { erasureSubjectSource } from '@/features/settings/services/erasure.service';
 import { ERASURE_TIMEZONES } from '@/features/settings/mock-data';
 import { SERVICE_LABELS, summarizeProgress, validateErasureDraft } from '@/features/settings/rules';
 import type {
@@ -112,7 +113,6 @@ export function ErasureFormModal({
   onClose: () => void;
   onOpenDetail: (id: string) => void;
 }) {
-  const subjects = useErasureSubjects();
   const create = useCreateErasure();
   const [draft, setDraft] = useState<ErasureDraft>(EMPTY_DRAFT);
   const [touched, setTouched] = useState(false);
@@ -221,9 +221,10 @@ export function ErasureFormModal({
             once the current one is completed.
           </Note>
         )}
-        <SelectRow
+        <EmployeeRow
           label="Data subject"
           required
+          lang="en"
           hint={
             show('employeeId') ? (
               <span className="text-error-700">{show('employeeId')}</span>
@@ -231,13 +232,9 @@ export function ErasureFormModal({
               'Former employees are included.'
             )
           }
-          placeholder="Choose employee…"
           value={draft.employeeId}
           onChange={(value) => set('employeeId', value)}
-          options={(subjects.data ?? []).map((row) => ({
-            value: row.employeeId,
-            label: `${row.nama} · ${row.nik} · ${row.employmentStatus}`,
-          }))}
+          source={erasureSubjectSource}
         />
         <Field
           label="Subject's letter date"

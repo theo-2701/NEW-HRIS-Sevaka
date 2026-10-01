@@ -5,8 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/input';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
-import { PEOPLE, personName } from '@/features/company/mock-data';
+import { EmployeeRow, Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
+import { PEOPLE_SOURCE, personName } from '@/features/company/mock-data';
 import { deriveZip, isCompanyAdmin } from '@/features/company/rules';
 import {
   useSaveBranch,
@@ -55,8 +55,6 @@ import type {
   VendorType,
 } from '@/features/company/types';
 import { formatDateTime } from '@/lib/format';
-
-const PEOPLE_OPTIONS = Object.entries(PEOPLE).map(([id, person]) => ({ value: id, label: `${person.nama} · ${person.nik}` }));
 
 function FooterButtons({ onClose, onSave, saving }: { onClose: () => void; onSave: () => void; saving: boolean }) {
   return (
@@ -375,13 +373,12 @@ export function GroupStructFormModal({
       }
     >
       <TextRow label="Nama group" required value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
-      <SelectRow
+      <EmployeeRow
         label="Persetujuan akhir"
-        allowEmpty
         emptyLabel="Belum ditunjuk"
         value={draft.finalApproverEmployeeId}
         onChange={(finalApproverEmployeeId) => setDraft({ ...draft, finalApproverEmployeeId })}
-        options={PEOPLE_OPTIONS}
+        source={PEOPLE_SOURCE}
       />
       <label className="flex cursor-pointer items-start gap-2.5">
         <Checkbox
@@ -560,14 +557,13 @@ export function PositionFormModal({
           .filter((row) => row.id !== editing?.id)
           .map((row) => ({ value: row.id, label: row.positionName }))}
       />
-      <SelectRow
+      <EmployeeRow
         label="Pengisi posisi"
-        allowEmpty
         emptyLabel="Lowong"
         hint="Mengosongkan pengisi tidak menghapus posisinya; rantai persetujuan tetap berdiri."
         value={draft.employeeId}
         onChange={(employeeId) => setDraft({ ...draft, employeeId })}
-        options={PEOPLE_OPTIONS}
+        source={PEOPLE_SOURCE}
       />
 
       {canWriteSignLetter ? (
@@ -597,13 +593,14 @@ export function PositionFormModal({
       )}
 
       {turningOn && (
-        <SelectRow
+        <EmployeeRow
           label="Approver kedua"
           required
           hint="Wajib berperan admin dan bukan diri sendiri; tidak disimpan sebagai field posisi, hanya penegak saat ini."
           value={draft.secondApproverEmployeeId}
           onChange={(secondApproverEmployeeId) => setDraft({ ...draft, secondApproverEmployeeId })}
-          options={PEOPLE_OPTIONS.filter((option) => option.value !== actor.employeeId)}
+          source={PEOPLE_SOURCE}
+          exclude={[actor.employeeId]}
         />
       )}
     </Modal>
@@ -891,13 +888,12 @@ export function CostCenterFormModal({
             .filter((row) => row.id !== editing?.id)
             .map((row) => ({ value: row.id, label: `${row.code} — ${row.name}` }))}
         />
-        <SelectRow
+        <EmployeeRow
           label="Penanggung jawab"
-          allowEmpty
           emptyLabel="Belum ditunjuk"
           value={draft.responsibleEmployeeId}
           onChange={(responsibleEmployeeId) => setDraft({ ...draft, responsibleEmployeeId })}
-          options={PEOPLE_OPTIONS}
+          source={PEOPLE_SOURCE}
         />
         <TextRow
           label="Anggaran tahunan"
@@ -1011,13 +1007,12 @@ export function SbuFormModal({
           onChange={(parentId) => setDraft({ ...draft, parentId })}
           options={sbus.filter((row) => row.id !== editing?.id).map((row) => ({ value: row.id, label: row.name }))}
         />
-        <SelectRow
+        <EmployeeRow
           label="Penanggung jawab"
-          allowEmpty
           emptyLabel="Belum ditunjuk"
           value={draft.responsibleEmployeeId}
           onChange={(responsibleEmployeeId) => setDraft({ ...draft, responsibleEmployeeId })}
-          options={PEOPLE_OPTIONS}
+          source={PEOPLE_SOURCE}
         />
       </FieldGrid>
     </Modal>

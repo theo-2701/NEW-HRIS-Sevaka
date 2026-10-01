@@ -1,3 +1,4 @@
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import type {
   Actor,
   Finding,
@@ -57,6 +58,16 @@ export function employeeName(id: string | null): string {
   if (!id) return '—';
   return EMPLOYEES[id]?.name ?? PEOPLE[id] ?? id;
 }
+
+/** Sumber `<EmployeeSelect>` Payroll (Salary Processing & Salary Settings) — baris kedua NIK · jabatan, cabang. */
+export const PAYROLL_EMPLOYEE_SOURCE = createLocalEmployeeSource('payroll', () =>
+  Object.entries(EMPLOYEES).map(([id, row]) => ({
+    id,
+    name: row.name,
+    nik: row.nik,
+    unit: `${row.position}, ${row.branch}`,
+  })),
+);
 
 const at = (date: string, time = '09:00') => `${date}T${time}:00+07:00`;
 

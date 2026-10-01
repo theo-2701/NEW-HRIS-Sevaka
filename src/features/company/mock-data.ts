@@ -1,3 +1,4 @@
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import type {
   Branch,
   BranchGroup,
@@ -369,3 +370,8 @@ export const PEOPLE: Record<string, { nama: string; nik: string }> = {
 };
 
 export const personName = (id: string | null) => (id ? (PEOPLE[id]?.nama ?? id) : '—');
+
+/** Sumber `<EmployeeSelect>` modal Company — dummy belum memuat unit, jadi baris berisi nama · NIK. */
+export const PEOPLE_SOURCE = createLocalEmployeeSource('company-people', () =>
+  Object.entries(PEOPLE).map(([id, person]) => ({ id, name: person.nama, nik: person.nik })),
+);

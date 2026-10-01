@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
-import { EMPLOYEES, employeeName } from '@/features/salary-processing/mock-data';
+import { PAYROLL_EMPLOYEE_SOURCE, employeeName } from '@/features/salary-processing/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import type { BatchItem, ChangeBatch, SalaryComponent } from '@/features/payroll-authorization/types';
 import { BATCH_STATUS_LABEL } from '@/features/payroll-authorization/types';
 import {
@@ -233,18 +234,14 @@ export function SalarySettingsPage() {
               <div className="flex flex-col">
                 <TableToolbar
                   filters={
-                    <Select value={employeeId} onValueChange={setEmployeeId}>
-                      <SelectTrigger className="h-10 w-[240px]" aria-label="Employee">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(EMPLOYEES).map(([id, employee]) => (
-                          <SelectItem key={id} value={id}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <EmployeeSelect
+                      lang="en"
+                      source={PAYROLL_EMPLOYEE_SOURCE}
+                      value={employeeId}
+                      onChange={(id) => setEmployeeId(id)}
+                      aria-label="Employee"
+                      className="h-10 w-[240px]"
+                    />
                   }
                   summary={`Upah minimum cabang ${formatCurrency(regionalWageOf(employeeId))}`}
                 />

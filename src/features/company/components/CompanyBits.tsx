@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { EmployeeSource } from '@/lib/employeeSource';
 import { cn } from '@/lib/utils';
 
 /** Satu baris isian di dalam modal master data. */
@@ -111,6 +113,53 @@ export function SelectRow({
           ))}
         </SelectContent>
       </Select>
+    </Field>
+  );
+}
+
+/**
+ * Baris pilih karyawan — `<EmployeeSelect>` rumah dalam bingkai `Field`.
+ * `emptyLabel` (mis. "Lowong", "Belum ditunjuk") jadi teks saat kosong dan pilihan bisa dihapus.
+ */
+export function EmployeeRow({
+  label,
+  hint,
+  required,
+  value,
+  onChange,
+  source,
+  exclude,
+  emptyLabel,
+  lang,
+  disabled,
+  className,
+}: {
+  label: string;
+  hint?: ReactNode;
+  required?: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  source: EmployeeSource;
+  exclude?: string[];
+  emptyLabel?: string;
+  /** Bahasa layar — teks bawaan pemilih ikut. */
+  lang?: 'id' | 'en';
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <Field label={label} hint={hint} required={required} className={className}>
+      <EmployeeSelect
+        source={source}
+        value={value}
+        onChange={(id) => onChange(id)}
+        exclude={exclude}
+        placeholder={emptyLabel}
+        clearable={Boolean(emptyLabel)}
+        lang={lang}
+        disabled={disabled}
+        aria-label={label}
+      />
     </Field>
   );
 }

@@ -1,6 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EMPLOYEES, LEAVE_TYPES } from '@/features/time-off/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
+import { LEAVE_TYPES, timeEmployeeSource } from '@/features/time-off/mock-data';
 import { MUTATION_SOURCE_LABEL } from '@/features/time-off/types';
 import type { MutationSource } from '@/features/time-off/types';
 
@@ -15,22 +16,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function EmployeeSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function EmployeeFilter({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
     <Field label="Karyawan">
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="ALL">All employees</SelectItem>
-          {EMPLOYEES.map((row) => (
-            <SelectItem key={row.id} value={row.id}>
-              {row.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <EmployeeSelect
+        source={timeEmployeeSource()}
+        placeholder="Semua karyawan"
+        clearable
+        value={value === 'ALL' ? '' : value}
+        onChange={(id) => onChange(id || 'ALL')}
+        aria-label="Karyawan"
+      />
     </Field>
   );
 }
@@ -95,7 +91,7 @@ export function BalanceFilterFields({
 }) {
   return (
     <>
-      <EmployeeSelect value={value.employeeId} onChange={(employeeId) => onChange({ ...value, employeeId })} />
+      <EmployeeFilter value={value.employeeId} onChange={(employeeId) => onChange({ ...value, employeeId })} />
       <LeaveTypeSelect value={value.leaveTypeId} onChange={(leaveTypeId) => onChange({ ...value, leaveTypeId })} />
       <YearSelect value={value.periodYear} years={years} onChange={(periodYear) => onChange({ ...value, periodYear })} />
     </>
@@ -114,7 +110,7 @@ export function LedgerFilterFields({
 }) {
   return (
     <>
-      <EmployeeSelect value={value.employeeId} onChange={(employeeId) => onChange({ ...value, employeeId })} />
+      <EmployeeFilter value={value.employeeId} onChange={(employeeId) => onChange({ ...value, employeeId })} />
       <Field label="Sumber mutasi">
         <Select value={value.source} onValueChange={(source) => onChange({ ...value, source })}>
           <SelectTrigger>

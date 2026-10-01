@@ -4,9 +4,10 @@ import { Segmented } from '@/components/Segmented';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/input';
-import { Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { useBranches, useVendors } from '@/features/company/hooks/useCompany';
 import { EMPLOYEE_OPTIONS } from '@/features/assets/mock-data';
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import {
   useAssetCategories,
   useAssign,
@@ -32,7 +33,9 @@ import type {
   ReturnStatus,
 } from '@/features/assets/types';
 
-const PEOPLE = EMPLOYEE_OPTIONS.map((row) => ({ value: row.employeeId, label: `${row.nama} · ${row.nik}` }));
+const PEOPLE = createLocalEmployeeSource('assets', () =>
+  EMPLOYEE_OPTIONS.map((row) => ({ id: row.employeeId, name: row.nama, nik: row.nik })),
+);
 
 function Footer({
   onClose,
@@ -432,12 +435,13 @@ export function LifecycleModal({
       footer={<Footer onClose={onClose} saving={current.saving} onSave={current.save} />}
     >
       {action === 'assign' && (
-        <SelectRow
+        <EmployeeRow
           label="Karyawan penerima"
           required
           value={employeeId}
           onChange={setEmployeeId}
-          options={PEOPLE.filter((row) => row.value !== asset.employeeId)}
+          source={PEOPLE}
+          exclude={asset.employeeId ? [asset.employeeId] : undefined}
         />
       )}
       {action === 'assign' && (
@@ -640,12 +644,12 @@ export function DisposalModal({
         hint="Matikan bila penerimanya pihak luar — data identitasnya wajib diisi."
       />
       {draft.isEmployee ? (
-        <SelectRow
+        <EmployeeRow
           label="Karyawan penerima"
           required
           value={draft.employeeId}
           onChange={(value) => set('employeeId', value)}
-          options={PEOPLE}
+          source={PEOPLE}
         />
       ) : (
         <FieldGrid>

@@ -11,7 +11,7 @@ import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Field, SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import { useSettingVersions } from '@/features/settings/hooks/useSettings';
 import { LOCKED_CODES, SETTING_SEED, SETTINGS_VIEWERS } from '@/features/settings/mock-data';
 import {
@@ -24,6 +24,7 @@ import {
 } from '@/features/settings/rules';
 import type { HistoryModule, SettingsActor, SettingsMenuId, VersionRow } from '@/features/settings/types';
 import { formatDate, formatDateTime } from '@/lib/format';
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import { ApiError } from '@/services/api';
 
 type ActorClass = 'ALL' | 'HUMAN' | 'SYSTEM';
@@ -37,6 +38,9 @@ const ACTOR_CLASSES: Record<ActorClass, string> = {
 const ALL_CODES = [...SETTING_SEED.map((row) => row.setupCode), ...LOCKED_CODES].sort((a, b) => a.localeCompare(b));
 /** Pemilih pelaku — dependensi lapis tampilan milik employee-service (UIC §3.4), di sini dari persona dataset. */
 const PEOPLE = SETTINGS_VIEWERS.filter((viewer) => viewer.nik !== '-');
+const PEOPLE_SOURCE = createLocalEmployeeSource('settings-actors', () =>
+  PEOPLE.map((row) => ({ id: row.id, name: row.nama, nik: row.nik })),
+);
 
 function ActorCell({ row }: { row: VersionRow }) {
   if (row.isSystemActor) return <StatusBadge tone="info">SYSTEM</StatusBadge>;
@@ -241,13 +245,13 @@ export function SettingsChangeHistoryPage() {
           onChange={touch(setSetupCode)}
           options={ALL_CODES.map((code) => ({ value: code, label: code }))}
         />
-        <SelectRow
+        <EmployeeRow
           label="Actor"
-          allowEmpty
+          lang="en"
           emptyLabel="Anyone"
           value={personId}
           onChange={touch(setPersonId)}
-          options={PEOPLE.map((row) => ({ value: row.id, label: `${row.nama} · ${row.nik}` }))}
+          source={PEOPLE_SOURCE}
         />
         <SelectRow
           label="Actor class"

@@ -31,7 +31,8 @@ import {
   RunPeriodModal,
 } from '@/features/salary-processing/components/ProcessingModals';
 import { useFindings, useImports, usePeriods } from '@/features/salary-processing/hooks/useSalaryProcessing';
-import { EMPLOYEES, FINDING_TYPE_INFO, VIEWERS, employeeName } from '@/features/salary-processing/mock-data';
+import { FINDING_TYPE_INFO, PAYROLL_EMPLOYEE_SOURCE, VIEWERS, employeeName } from '@/features/salary-processing/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { firstPeriodMonth, isPayrollOfficer, periodLabel, periodName } from '@/features/salary-processing/rules';
 import { FINAL_STATE_LABEL, PERIOD_STATUSES, PERIOD_STATUS_LABEL } from '@/features/salary-processing/types';
 import type {
@@ -477,25 +478,19 @@ export function SalaryProcessingPage() {
                 <TableToolbar
                   filters={
                     <>
-                      <Select
-                        value={importEmployee}
-                        onValueChange={(value) => {
-                          setImportEmployee(value);
+                      <EmployeeSelect
+                        lang="en"
+                        source={PAYROLL_EMPLOYEE_SOURCE}
+                        placeholder="All employees"
+                        clearable
+                        value={importEmployee === 'ALL' ? '' : importEmployee}
+                        onChange={(value) => {
+                          setImportEmployee(value || 'ALL');
                           pagedImports.resetPage();
                         }}
-                      >
-                        <SelectTrigger className="h-10 w-[220px]" aria-label="Employee">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">All employees</SelectItem>
-                          {Object.entries(EMPLOYEES).map(([id, employee]) => (
-                            <SelectItem key={id} value={id}>
-                              {employee.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        aria-label="Employee"
+                        className="h-10 w-[220px]"
+                      />
                       <Select
                         value={importStatus}
                         onValueChange={(value) => {
@@ -608,23 +603,16 @@ export function SalaryProcessingPage() {
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <Label>Employee</Label>
-          <Select
-            value={findingFilter.employeeId}
-            onValueChange={(value) => setFindingFilter((current) => ({ ...current, employeeId: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All employees</SelectItem>
-              {Object.entries(EMPLOYEES).map(([id, employee]) => (
-                <SelectItem key={id} value={id}>
-                  {employee.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label htmlFor="finding-employee">Employee</Label>
+          <EmployeeSelect
+            id="finding-employee"
+            lang="en"
+            source={PAYROLL_EMPLOYEE_SOURCE}
+            placeholder="All employees"
+            clearable
+            value={findingFilter.employeeId === 'ALL' ? '' : findingFilter.employeeId}
+            onChange={(value) => setFindingFilter((current) => ({ ...current, employeeId: value || 'ALL' }))}
+          />
         </div>
         <div className="flex flex-col gap-2">
           <Label>Finding type</Label>

@@ -3,7 +3,7 @@ import { DatePicker, DateRangePicker } from '@/components/DatePicker';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
-import { Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { CorrectionBadge, ErrorBanner, Note, OriginBadge } from '@/features/productivity/components/ProdBits';
 import {
   useAcceptSystemStop,
@@ -14,7 +14,7 @@ import {
 } from '@/features/productivity/hooks/useTimesheet';
 import { formatMinutes, nameOf, subordinatesOf } from '@/features/productivity/rules';
 import { projectService } from '@/features/productivity/services/project.service';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
 import type { ProdActor, Worklog, WorklogPatch } from '@/features/productivity/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 
@@ -292,13 +292,13 @@ export function GrantWindowModal({ actor, open, onClose }: { actor: ProdActor; o
     >
       <div className="flex flex-col gap-4">
         <ErrorBanner error={grant.error} />
-        <SelectRow
+        <EmployeeRow
           label="Employee"
           required
-          placeholder="Choose employee…"
+          lang="en"
           value={form.targetEmployeeId}
           onChange={(value) => setForm((prev) => ({ ...prev, targetEmployeeId: value }))}
-          options={targets.map((row) => ({ value: row.employeeId, label: `${row.name} · ${row.positionName}` }))}
+          source={prodEmployeeSource(targets)}
         />
         <Field label="Window period" required>
           <DateRangePicker

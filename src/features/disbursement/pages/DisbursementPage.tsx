@@ -33,7 +33,9 @@ import {
   ReverseMarkModal,
 } from '@/features/disbursement/components/DisbursementModals';
 import { useClearances, usePayables } from '@/features/disbursement/hooks/useDisbursement';
-import { EMPLOYEES, VIEWERS, employeeName, employeeOf } from '@/features/disbursement/mock-data';
+import { VIEWERS, employeeName, employeeOf } from '@/features/disbursement/mock-data';
+import { ADVANCE_EMPLOYEE_SOURCE } from '@/features/cash-advance/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { canDeclareSettled, canMark, canRead, keyOf } from '@/features/disbursement/rules';
 import {
   EMPTY_CLEARANCE_FILTER,
@@ -593,26 +595,19 @@ export function DisbursementPage() {
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <Label>Employee</Label>
-            <Select
-              value={clearanceFilter.employeeId}
-              onValueChange={(employeeId) => {
-                setClearanceFilter((prev) => ({ ...prev, employeeId }));
+            <Label htmlFor="clearance-employee">Employee</Label>
+            <EmployeeSelect
+              id="clearance-employee"
+              lang="en"
+              source={ADVANCE_EMPLOYEE_SOURCE}
+              placeholder="All employees"
+              clearable
+              value={clearanceFilter.employeeId === 'ALL' ? '' : clearanceFilter.employeeId}
+              onChange={(id) => {
+                setClearanceFilter((prev) => ({ ...prev, employeeId: id || 'ALL' }));
                 pagedClearances.resetPage();
               }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All employees</SelectItem>
-                {EMPLOYEES.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
           <div className="flex flex-col gap-1">
             <Label>Date range</Label>

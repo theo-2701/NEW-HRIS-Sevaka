@@ -6,9 +6,9 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/input';
-import { Field, SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import { GovError, GovNote } from '@/features/documents/components/GovBits';
-import { BRANCHES, LETTER_SUBJECTS } from '@/features/documents/governance-data';
+import { BRANCHES, LETTER_SUBJECTS, LETTER_SUBJECT_SOURCE } from '@/features/documents/governance-data';
 import {
   useApproveLetter,
   useBatchReport,
@@ -123,13 +123,13 @@ export function IssueLetterModal({ actor, open, onClose }: { actor: DocActor; op
           }))}
         />
         {template?.letterTarget === 'PERORANGAN' && (
-          <SelectRow
+          <EmployeeRow
             label="Employee"
             required
-            placeholder="Choose employee…"
+            lang="en"
             value={draft.subjectEmployeeId}
             onChange={(value) => set('subjectEmployeeId', value)}
-            options={LETTER_SUBJECTS.map((row) => ({ value: row.employeeId, label: `${row.nama} · ${row.nik}` }))}
+            source={LETTER_SUBJECT_SOURCE}
           />
         )}
         {template?.letterTarget === 'EDARAN' && (

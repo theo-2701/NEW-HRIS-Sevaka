@@ -8,10 +8,10 @@ import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
 import { usePagedRows } from '@/hooks/usePagedRows';
-import { Field, SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import { OriginBadge, PersonCell, ProdActorPicker } from '@/features/productivity/components/ProdBits';
 import { useActivityTypes, useTrackerReport } from '@/features/productivity/hooks/useTimesheet';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
 import { formatMinutes, isHr, nameOf, ORIGIN_META, subordinatesOf } from '@/features/productivity/rules';
 import { projectService } from '@/features/productivity/services/project.service';
 import { useProdActor } from '@/features/productivity/store/prodActor.store';
@@ -169,13 +169,13 @@ export function TrackerReportPage() {
         onOpenChange={setFilterOpen}
         onReset={() => setFilters(NONE)}
       >
-        <SelectRow
+        <EmployeeRow
           label="Employee"
-          allowEmpty
+          lang="en"
           emptyLabel="Everyone I supervise"
           value={filters.employeeId}
           onChange={(value) => set('employeeId', value)}
-          options={people.map((row) => ({ value: row.employeeId, label: row.name }))}
+          source={prodEmployeeSource(people)}
         />
         <SelectRow
           label="Activity type"

@@ -1,3 +1,4 @@
+import { createLocalEmployeeSource, type EmployeeSource } from '@/lib/employeeSource';
 import type {
   AccrualPolicy,
   Blackout,
@@ -307,6 +308,26 @@ export const MEDICAL_ACCESS: MedicalAccessLog[] = [
 
 export function employeeName(id: string): string {
   return EMPLOYEES.find((row) => row.id === id)?.name ?? id;
+}
+
+const timeSources = new Map<string, EmployeeSource>();
+
+/**
+ * Sumber `<EmployeeSelect>` untuk seluruh Time Management (Time Off, Attendance, Overtime,
+ * Scheduler, On Call memakai daftar yang sama). Contoh kontrak belum memuat NIK, jadi baris
+ * hanya nama · unit. `actorId` = identitas yang sedang dipakai → saran "Satu unit dengan Anda".
+ */
+export function timeEmployeeSource(actorId = ''): EmployeeSource {
+  const unit = EMPLOYEES.find((row) => row.id === actorId)?.unit;
+  const key = `time-management:${unit ?? 'all'}`;
+  let source = timeSources.get(key);
+  if (!source) {
+    source = createLocalEmployeeSource(key, () => EMPLOYEES.map((row) => ({ id: row.id, name: row.name, unit: row.unit })), {
+      sameUnitAs: unit,
+    });
+    timeSources.set(key, source);
+  }
+  return source;
 }
 
 export function leaveTypeOf(id: string): LeaveType | undefined {

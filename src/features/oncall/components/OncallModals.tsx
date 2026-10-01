@@ -7,12 +7,13 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { DateRangeField } from '@/components/form/DateRangeField';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
-import { SelectField } from '@/components/form/SelectField';
+import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
+import { timeEmployeeSource } from '@/features/time-off/mock-data';
 import { DerivedBox } from '@/features/attendance/components/AttendanceBits';
 import { DAILY_HOUR_CAP } from '@/features/overtime/mock-data';
 import { EXTRA_REASON_LABEL } from '@/features/overtime/types';
-import { EMPLOYEES, employeeName } from '@/features/oncall/mock-data';
+import { employeeName } from '@/features/oncall/mock-data';
 import type { OncallSession } from '@/features/oncall/mock-data';
 import { deriveOncall, windowLabel } from '@/features/oncall/rules';
 import { useCancelOncall, useDecideOncall, useSaveOncall } from '@/features/oncall/hooks/useOncall';
@@ -158,12 +159,12 @@ export function OncallFormModal({
                 </Note>
               )}
 
-              <SelectField
+              <EmployeeSelectField
                 name="employeeId"
                 label="On-call employee"
                 required
-                placeholder="Select employee"
-                options={EMPLOYEES.map((row) => ({ value: row.id, label: row.name }))}
+                lang="en"
+                source={timeEmployeeSource(session.employeeId)}
                 disabled={Boolean(editing)}
               />
 

@@ -286,6 +286,17 @@ Batas rentang lewat prop `min`/`max` (tanggal di luar rentang tidak bisa
 diklik), dan rentang dua tanggal saling mengunci — lihat `CreatedRange` di
 Employee Directory.
 
+**Pilih karyawan.** Setiap field atau filter yang memilih karyawan memakai
+`<EmployeeSelect>` (`@/components/EmployeeSelect`) — di Formik `<EmployeeSelectField>`,
+di modal master data `EmployeeRow` (`CompanyBits`). Jangan membuat `<Select>` berisi
+daftar karyawan: daftarnya diambil **per halaman** dari sumbernya (`EmployeeSource`,
+`@/lib/employeeSource`) dan halaman berikutnya dimuat saat digulir, jadi tetap ringan
+walau karyawannya ribuan. Sebelum mengetik tampil "Terakhir dipilih" dan "Satu unit
+dengan Anda", lalu semua karyawan. Tiap baris = nama, lalu NIK · unit. `multiple` =
+centang per baris + chip yang bisa dihapus. Pilihan "semua"/"tidak ada" → `clearable`
++ `placeholder`; nilai sentinel lama seperti `ALL` dipetakan di pemanggil. Riwayat
+"terakhir dipilih" hanya menyimpan ID di peramban, bukan nama/NIK.
+
 **Lebar field.** Lebar field ditentukan **kolom grid-nya**, bukan dikunci per
 field. Jangan menempel `max-w-[…]` pada satu field — kalau ingin field pendek,
 taruh di grid `md:grid-cols-2` yang sama seperti baris di atasnya supaya

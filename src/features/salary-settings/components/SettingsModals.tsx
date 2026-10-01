@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
-import { EMPLOYEES, employeeName } from '@/features/salary-processing/mock-data';
+import { PAYROLL_EMPLOYEE_SOURCE, employeeName } from '@/features/salary-processing/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import type { ChangeBatch, SalaryComponent } from '@/features/payroll-authorization/types';
 import {
   useAddBatchItem,
@@ -534,21 +535,16 @@ export function BatchItemModal({
     >
       <div className="grid gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <Label>
+          <Label htmlFor="proposal-employee">
             Employee<em>*</em>
           </Label>
-          <Select value={employeeId} onValueChange={setEmployeeId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih karyawan" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(EMPLOYEES).map(([id, employee]) => (
-                <SelectItem key={id} value={id}>
-                  {employee.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <EmployeeSelect
+            id="proposal-employee"
+            lang="en"
+            source={PAYROLL_EMPLOYEE_SOURCE}
+            value={employeeId}
+            onChange={(id) => setEmployeeId(id)}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <Label>

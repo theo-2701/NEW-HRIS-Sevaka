@@ -25,7 +25,9 @@ import {
 } from '@/features/finance-security/components/SecurityModals';
 import type { ReferenceKind } from '@/features/finance-security/components/SecurityModals';
 import { useExportLogs, useHolds, useMedicalLogs } from '@/features/finance-security/hooks/useFinanceSecurity';
-import { EMPLOYEES, ROLE_OF, VIEWERS, employeeName } from '@/features/finance-security/mock-data';
+import { ROLE_OF, VIEWERS, employeeName } from '@/features/finance-security/mock-data';
+import { ADVANCE_EMPLOYEE_SOURCE } from '@/features/cash-advance/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { HOLD_TARGET_TYPES, canExport, canManageHolds, describeCriteria } from '@/features/finance-security/rules';
 import { EXPORT_SCOPE_LABEL, HOLD_TARGET_LABEL, ROLE_LABEL } from '@/features/finance-security/types';
 import type {
@@ -473,26 +475,19 @@ export function FinanceSecurityPage() {
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <Label>Subject employee</Label>
-            <Select
-              value={medicalFilter.employeeId}
-              onValueChange={(employeeId) => {
-                setMedicalFilter((prev) => ({ ...prev, employeeId }));
+            <Label htmlFor="medical-subject">Subject employee</Label>
+            <EmployeeSelect
+              id="medical-subject"
+              lang="en"
+              source={ADVANCE_EMPLOYEE_SOURCE}
+              placeholder="All employees"
+              clearable
+              value={medicalFilter.employeeId === 'ALL' ? '' : medicalFilter.employeeId}
+              onChange={(id) => {
+                setMedicalFilter((prev) => ({ ...prev, employeeId: id || 'ALL' }));
                 pagedMedical.resetPage();
               }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All employees</SelectItem>
-                {EMPLOYEES.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
           <div className="flex flex-col gap-1">
             <Label>Accessed</Label>

@@ -9,7 +9,6 @@ import { Pagination } from '@/components/Pagination';
 import { RowActions, RowButton } from '@/components/RowActions';
 import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { Field, SelectRow } from '@/features/company/components/CompanyBits';
 import {
@@ -25,7 +24,8 @@ import {
   GrantWindowModal,
 } from '@/features/productivity/components/WorklogModals';
 import { useDeleteWorklog, useWorklogs } from '@/features/productivity/hooks/useTimesheet';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { formatMinutes, isHr, isSupervisorOf, ORIGIN_META, subordinatesOf } from '@/features/productivity/rules';
 import { projectService } from '@/features/productivity/services/project.service';
 import { useProdActor } from '@/features/productivity/store/prodActor.store';
@@ -113,24 +113,17 @@ export function ActivitiesPage() {
             filters={
               <div className="flex flex-wrap items-center gap-2">
                 {people.length > 1 && (
-                  <Select
+                  <EmployeeSelect
+                    lang="en"
+                    source={prodEmployeeSource(people, actor.employeeId)}
                     value={target}
-                    onValueChange={(value) => {
+                    onChange={(value) => {
                       setEmployeeId(value);
                       paged.resetPage();
                     }}
-                  >
-                    <SelectTrigger className="h-10 w-[220px]" aria-label="Employee">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {people.map((row) => (
-                        <SelectItem key={row.employeeId} value={row.employeeId}>
-                          {row.employeeId === actor.employeeId ? `${row.name} (me)` : row.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    aria-label="Employee"
+                    className="h-10 w-[220px]"
+                  />
                 )}
                 <Button variant="secondary" onClick={() => setFilterOpen(true)}>
                   {active ? `Filter (${active})` : 'Filter'}

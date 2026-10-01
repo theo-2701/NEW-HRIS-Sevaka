@@ -21,6 +21,8 @@ import {
   type SnapshotRow,
 } from '@/features/performance/types';
 import { formatDate, formatDateTime } from '@/lib/format';
+import { createLocalEmployeeSource, fromLabelOptions } from '@/lib/employeeSource';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 
 const SELF = 'self';
 const DEFAULT_PERIOD = 'default';
@@ -52,18 +54,12 @@ function SubjectSelect({
   return (
     <div className="flex w-[280px] flex-col gap-1">
       <Label htmlFor={id}>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id}>
-          <SelectValue placeholder="Pilih karyawan" />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <EmployeeSelect
+        id={id}
+        source={createLocalEmployeeSource('performance-subjects', fromLabelOptions(options))}
+        value={value}
+        onChange={(next) => onChange(next)}
+      />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { AddButton } from '@/components/RowActions';
 import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Field, SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import {
   ErasureDetailModal,
   ErasureFormModal,
@@ -17,6 +17,7 @@ import {
   SubjectCell,
 } from '@/features/settings/components/ErasureModals';
 import { useErasureRequests, useErasureSubjects } from '@/features/settings/hooks/useSettings';
+import { erasureSubjectSource } from '@/features/settings/services/erasure.service';
 import { SETTINGS_VIEWERS } from '@/features/settings/mock-data';
 import { canManageErasure } from '@/features/settings/rules';
 import type { ErasureRow, ErasureStatus, SettingsActor } from '@/features/settings/types';
@@ -218,13 +219,13 @@ export function ErasureRequestsPage() {
             })}
           />
         </Field>
-        <SelectRow
+        <EmployeeRow
           label="Subject"
-          allowEmpty
+          lang="en"
           emptyLabel="All subjects"
           value={subjectId}
           onChange={touch(setSubjectId)}
-          options={(subjects.data ?? []).map((row) => ({ value: row.employeeId, label: `${row.nama} · ${row.nik}` }))}
+          source={erasureSubjectSource}
         />
       </FilterModal>
 

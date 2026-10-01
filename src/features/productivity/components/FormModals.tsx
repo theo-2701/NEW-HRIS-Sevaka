@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { ErrorBanner, Note } from '@/features/productivity/components/ProdBits';
 import {
   useCreateForm,
@@ -28,7 +28,7 @@ import {
   useSubmitForm,
 } from '@/features/productivity/hooks/useForms';
 import { AGGREGATE_THRESHOLD } from '@/features/productivity/forms-data';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
 import { AUDIENCE_LABEL, nameOf, POSITIONS, QUESTION_TYPE_LABEL } from '@/features/productivity/rules';
 import type { Form, FormDraft, FormQuestion, ProdActor, QuestionType } from '@/features/productivity/types';
 import { formatDate, formatDateTime } from '@/lib/format';
@@ -459,15 +459,12 @@ export function FormDetailModal({
             </Note>
             <ErrorBanner error={grant.error ?? grants.error} />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1.4fr_auto] md:items-end">
-              <SelectRow
+              <EmployeeRow
                 label="Employee"
-                placeholder="Choose employee…"
+                lang="en"
                 value={target}
                 onChange={setTarget}
-                options={PROD_EMPLOYEES.map((row) => ({
-                  value: row.employeeId,
-                  label: `${row.name} · ${row.positionName}`,
-                }))}
+                source={prodEmployeeSource(PROD_EMPLOYEES)}
               />
               <TextRow label="Reason" value={reason} onChange={setReason} />
               <RowButton

@@ -1,3 +1,4 @@
+import { createLocalEmployeeSource, type EmployeeSource } from '@/lib/employeeSource';
 import type {
   ProdActor,
   ProdEmployee,
@@ -70,6 +71,22 @@ export const PROD_EMPLOYEES: ProdEmployee[] = [
     supervisorId: 'emp-hesti',
   },
 ];
+
+/**
+ * Sumber `<EmployeeSelect>` Productivity dari daftar yang sudah disaring di layar (bawahan,
+ * kandidat anggota, dsb.). Jabatan tampil sebagai baris kedua. `meId` → diberi akhiran "(me)".
+ */
+export function prodEmployeeSource(rows: ProdEmployee[], meId?: string): EmployeeSource {
+  return createLocalEmployeeSource(
+    meId ? `productivity:me-${meId}` : 'productivity',
+    rows.map((row) => ({
+      id: row.employeeId,
+      name: row.employeeId === meId ? `${row.name} (me)` : row.name,
+      nik: row.nik,
+      unit: row.positionName,
+    })),
+  );
+}
 
 export const PROD_ACTORS: ProdActor[] = [
   { employeeId: 'emp-dedi', role: 'ROLE_EMPLOYEE', label: 'Dedi Kurniawan — Employee' },

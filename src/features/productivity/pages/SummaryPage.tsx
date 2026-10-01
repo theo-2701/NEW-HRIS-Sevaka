@@ -18,7 +18,8 @@ import {
   ProdActorPicker,
 } from '@/features/productivity/components/ProdBits';
 import { usePeriods, useReopenPeriod, useSubmitPeriod } from '@/features/productivity/hooks/useTimesheet';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { employeeOf, formatMinutes, isHr, PERIOD_STATE_META, subordinatesOf } from '@/features/productivity/rules';
 import { useProdActor } from '@/features/productivity/store/prodActor.store';
 import type { TimesheetPeriodState, WorklogOrigin } from '@/features/productivity/types';
@@ -79,25 +80,18 @@ export function SummaryPage() {
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-2">
           {people.length > 1 && (
-            <Select
+            <EmployeeSelect
+              lang="en"
+              source={prodEmployeeSource(people, actor.employeeId)}
               value={target}
-              onValueChange={(value) => {
+              onChange={(value) => {
                 setEmployeeId(value);
                 setPeriodId('');
                 submit.reset();
               }}
-            >
-              <SelectTrigger className="h-10 w-[240px]" aria-label="Employee">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {people.map((row) => (
-                  <SelectItem key={row.employeeId} value={row.employeeId}>
-                    {row.employeeId === actor.employeeId ? `${row.name} (me)` : row.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              aria-label="Employee"
+              className="h-10 w-[240px]"
+            />
           )}
           {(periods.data ?? []).length > 0 && period && (
             <Select

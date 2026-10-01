@@ -6,14 +6,16 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { DateField } from '@/components/form/DateField';
 import { DateRangePicker } from '@/components/DatePicker';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
+import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
+import { timeEmployeeSource } from '@/features/time-off/mock-data';
 import { DerivedBox } from '@/features/attendance/components/AttendanceBits';
 import { SwapStatusBadge } from '@/features/scheduler/components/SchedulerBits';
 import { EMPLOYEES, ME, employeeName } from '@/features/scheduler/mock-data';
@@ -346,12 +348,12 @@ export function AssignmentFormModal({
           >
             <Form className="flex flex-col gap-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
+                <EmployeeSelectField
                   name="employeeId"
                   label="Employee"
                   required
-                  placeholder="Select employee"
-                  options={EMPLOYEES.map((row) => ({ value: row.id, label: row.name }))}
+                  lang="en"
+                  source={timeEmployeeSource(ME)}
                   disabled={Boolean(editing)}
                 />
                 <DateField name="workDate" label="Work date" required />
@@ -383,24 +385,15 @@ export function BulkAssignModal({
 }) {
   const run = useRunBulk();
   const [draft, setDraft] = useState<BulkDraft>({ employeeIds: [], from: '', to: '', shiftId: '', isOffDay: false });
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (open) {
       setDraft({ employeeIds: [], from: '', to: '', shiftId: '', isOffDay: false });
-      setSearch('');
     }
   }, [open]);
 
   const preview = useMemo(() => schedulerService.previewBulk(draft), [draft]);
-  const people = EMPLOYEES.filter((row) => row.name.toLowerCase().includes(search.trim().toLowerCase()));
   const allChecked = draft.employeeIds.length === EMPLOYEES.length;
-
-  const toggle = (id: string, next: boolean) =>
-    setDraft((prev) => ({
-      ...prev,
-      employeeIds: next ? [...prev.employeeIds, id] : prev.employeeIds.filter((item) => item !== id),
-    }));
 
   return (
     <Modal
@@ -422,40 +415,28 @@ export function BulkAssignModal({
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <Label>
-            Employees<em>*</em>
-          </Label>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search employee name"
-          />
-          <div className="mt-1 flex max-h-[180px] flex-col gap-2 overflow-y-auto rounded-md border border-border-1 bg-cloud p-3">
-            <label className="flex cursor-pointer items-center gap-3 border-b border-border-1 pb-2">
-              <Checkbox
-                checked={allChecked}
-                onCheckedChange={(next) =>
-                  setDraft((prev) => ({ ...prev, employeeIds: next === true ? EMPLOYEES.map((row) => row.id) : [] }))
-                }
-              />
-              <span className="font-body text-[13px] font-semibold text-fg-2">All</span>
-            </label>
-            {people.map((row) => (
-              <label key={row.id} className="flex cursor-pointer items-center gap-3">
-                <Checkbox
-                  checked={draft.employeeIds.includes(row.id)}
-                  onCheckedChange={(next) => toggle(row.id, next === true)}
-                />
-                <span className="font-body text-[13px] font-medium text-fg-2">
-                  {row.name}
-                  <span className="ml-1.5 text-fg-4">{row.unit}</span>
-                </span>
-              </label>
-            ))}
-            {!people.length && (
-              <span className="font-body text-xs font-medium text-fg-4">No employee matches that search.</span>
-            )}
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="bulk-employees">
+              Employees<em>*</em>
+            </Label>
+            <button
+              type="button"
+              onClick={() =>
+                setDraft((prev) => ({ ...prev, employeeIds: allChecked ? [] : EMPLOYEES.map((row) => row.id) }))
+              }
+              className="rounded-md px-2 py-1 font-body text-xs font-bold text-secondary-700 transition-colors duration-200 ease-standard hover:bg-mist"
+            >
+              {allChecked ? 'Clear all' : `Select all (${EMPLOYEES.length})`}
+            </button>
           </div>
+          <EmployeeSelect
+            multiple
+            id="bulk-employees"
+            lang="en"
+            source={timeEmployeeSource(ME)}
+            value={draft.employeeIds}
+            onChange={(employeeIds) => setDraft((prev) => ({ ...prev, employeeIds }))}
+          />
         </div>
 
         <div className="flex flex-col gap-1">

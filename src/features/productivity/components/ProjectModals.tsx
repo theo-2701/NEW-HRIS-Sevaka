@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@/components/Modal';
 import { RemoveRowButton, RowButton } from '@/components/RowActions';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { Field, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { ErrorBanner, Note, PersonCell } from '@/features/productivity/components/ProdBits';
 import {
@@ -12,7 +12,7 @@ import {
   useRemoveMember,
   useUpdateProject,
 } from '@/features/productivity/hooks/useProjects';
-import { PROD_EMPLOYEES } from '@/features/productivity/mock-data';
+import { PROD_EMPLOYEES, prodEmployeeSource } from '@/features/productivity/mock-data';
 import { isHr, nameOf } from '@/features/productivity/rules';
 import type { ProdActor, Project, ProjectState } from '@/features/productivity/types';
 import { formatDateTime } from '@/lib/format';
@@ -167,18 +167,14 @@ export function ProjectDetailModal({
             ))}
             {editable && candidates.length > 0 && (
               <div className="flex items-center gap-2">
-                <Select value={candidate} onValueChange={setCandidate}>
-                  <SelectTrigger className="h-9 w-[280px]" aria-label="Add member">
-                    <SelectValue placeholder="Choose employee…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {candidates.map((row) => (
-                      <SelectItem key={row.employeeId} value={row.employeeId}>
-                        {row.name} · {row.positionName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <EmployeeSelect
+                  lang="en"
+                  source={prodEmployeeSource(candidates)}
+                  value={candidate}
+                  onChange={setCandidate}
+                  aria-label="Add member"
+                  className="w-[280px]"
+                />
                 <RowButton
                   disabled={!candidate || addMember.isPending}
                   onClick={() =>

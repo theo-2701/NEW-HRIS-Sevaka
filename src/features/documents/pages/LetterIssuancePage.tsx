@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { TabMenu } from '@/components/TabMenu';
 import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
-import { SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, SelectRow } from '@/features/company/components/CompanyBits';
 import { GovActorPicker, GovError, GovNote, NoMenuRowBanner } from '@/features/documents/components/GovBits';
 import {
   BatchDecisionModal,
@@ -17,7 +17,7 @@ import {
   IssueLetterModal,
   LetterDecisionModal,
 } from '@/features/documents/components/LetterModals';
-import { DOC_PEOPLE, GOV_VIEWERS } from '@/features/documents/governance-data';
+import { DOC_PEOPLE_SOURCE, GOV_VIEWERS } from '@/features/documents/governance-data';
 import { useBatches, useOfficerTemplates, usePendingLetters } from '@/features/documents/hooks/useGovernance';
 import { personName } from '@/features/documents/services/document.service';
 import { BATCH_STATE_LABEL } from '@/features/documents/types';
@@ -224,13 +224,13 @@ function BulkTab({ actor }: { actor: DocActor }) {
           onChange={setTemplateId}
           options={(templates.data ?? []).map((row) => ({ value: row.id, label: row.templateName }))}
         />
-        <SelectRow
+        <EmployeeRow
           label="Submitted by"
-          allowEmpty
+          lang="en"
           emptyLabel="Anyone"
           value={submitter}
           onChange={setSubmitter}
-          options={DOC_PEOPLE.map((row) => ({ value: row.employeeId, label: row.nama }))}
+          source={DOC_PEOPLE_SOURCE}
         />
       </FilterModal>
       <BatchSubmitModal actor={actor} open={submitOpen} onClose={() => setSubmitOpen(false)} />

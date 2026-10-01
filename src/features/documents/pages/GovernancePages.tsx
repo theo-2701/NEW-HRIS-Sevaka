@@ -11,7 +11,7 @@ import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/input';
-import { Field, SelectRow } from '@/features/company/components/CompanyBits';
+import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import { ClassBadge } from '@/features/documents/components/DocBits';
 import {
   CreateCategoryModal,
@@ -20,7 +20,7 @@ import {
   ReadersModal,
 } from '@/features/documents/components/CategoryModals';
 import { GovActorPicker, GovError, GovNote, NoMenuRowBanner } from '@/features/documents/components/GovBits';
-import { DOC_PEOPLE, GOV_VIEWERS } from '@/features/documents/governance-data';
+import { DOC_PEOPLE_SOURCE, GOV_VIEWERS } from '@/features/documents/governance-data';
 import {
   useAccessTrail,
   useCategoryAdmin,
@@ -304,13 +304,13 @@ export function AccessTrailPage() {
         onOpenChange={setFilterOpen}
         onReset={() => setFilters({ actorId: '', granularity: '', flagged: false, from: '', to: '' })}
       >
-        <SelectRow
+        <EmployeeRow
           label="Actor"
-          allowEmpty
+          lang="en"
           emptyLabel="Anyone"
           value={filters.actorId}
           onChange={(value) => setFilters((prev) => ({ ...prev, actorId: value }))}
-          options={DOC_PEOPLE.map((row) => ({ value: row.employeeId, label: `${row.nama} · ${row.nik}` }))}
+          source={DOC_PEOPLE_SOURCE}
         />
         <SelectRow
           label="Granularity"
@@ -468,13 +468,13 @@ export function MalwareAlertsPage() {
           setTo('');
         }}
       >
-        <SelectRow
+        <EmployeeRow
           label="Uploader"
-          allowEmpty
+          lang="en"
           emptyLabel="Anyone"
           value={uploader}
           onChange={setUploader}
-          options={DOC_PEOPLE.map((row) => ({ value: row.employeeId, label: `${row.nama} · ${row.nik}` }))}
+          source={DOC_PEOPLE_SOURCE}
         />
         <SelectRow
           label="State"

@@ -1,5 +1,6 @@
 import { api, ApiError } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import {
   ANONYMIZED_SUBJECT_ID,
   ERASURE_SEED,
@@ -281,3 +282,18 @@ export const erasureService = {
     return fromRawDetail(data);
   },
 };
+
+
+/**
+ * Sumber `<EmployeeSelect>` subjek erasure — memakai picker yang sama (`subjects()`), mantan
+ * karyawan ikut, status kepegawaian tampil di baris kedua. Saat backend aktif, halaman berikutnya
+ * cukup dikirim lewat `page`/`size` endpoint yang sama.
+ */
+export const erasureSubjectSource = createLocalEmployeeSource('erasure-subjects', async () =>
+  (await erasureService.subjects()).map((row) => ({
+    id: row.employeeId,
+    name: row.nama,
+    nik: row.nik,
+    unit: row.employmentStatus,
+  })),
+);

@@ -31,6 +31,10 @@ import type {
   Standing,
 } from '@/features/reprimand/types';
 import { formatDate, toIsoDate } from '@/lib/format';
+import { createLocalEmployeeSource, fromLabelOptions } from '@/lib/employeeSource';
+import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
+
+const EMPLOYEE_SOURCE = createLocalEmployeeSource('reprimand', fromLabelOptions(EMPLOYEE_OPTIONS));
 
 const EMPTY: ReprimandDraft = {
   employeeId: '',
@@ -132,12 +136,12 @@ export function IssueReprimandModal({
             }
           >
             <Form className="flex flex-col gap-4">
-              <SelectField
+              <EmployeeSelectField
                 name="employeeId"
                 label="Karyawan"
                 required
-                placeholder="Pilih karyawan"
-                options={EMPLOYEE_OPTIONS.filter((option) => option.value !== CURRENT_USER.id)}
+                source={EMPLOYEE_SOURCE}
+                exclude={[CURRENT_USER.id]}
               />
 
               <div className="grid gap-4 md:grid-cols-[1fr_200px]">

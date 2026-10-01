@@ -18,6 +18,10 @@ import {
   TYPE_LABEL,
 } from '@/features/transitions/types';
 import type { TransitionDraft, TransitionType } from '@/features/transitions/types';
+import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
+import { createLocalEmployeeSource, fromLabelOptions } from '@/lib/employeeSource';
+
+const EMPLOYEE_SOURCE = createLocalEmployeeSource('transitions', fromLabelOptions(EMPLOYEE_OPTIONS));
 
 const DESCRIPTION: Record<TransitionType, string> = {
   ONBOARDING: 'Menyiapkan akses dan aset untuk karyawan baru.',
@@ -132,13 +136,7 @@ export function CreateTransitionModal({
           >
             {type && (
               <Form className="flex flex-col gap-4">
-                <SelectField
-                  name="employeeId"
-                  label="Karyawan"
-                  required
-                  placeholder="Pilih karyawan"
-                  options={EMPLOYEE_OPTIONS}
-                />
+                <EmployeeSelectField name="employeeId" label="Karyawan" required source={EMPLOYEE_SOURCE} />
 
                 {type === 'TRANSFER' && <TransferBlock />}
                 {type === 'OFFBOARDING' && <OffboardingBlock />}

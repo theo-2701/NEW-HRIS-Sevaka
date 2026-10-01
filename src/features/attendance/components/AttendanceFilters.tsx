@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EMPLOYEES } from '@/features/time-off/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
+import { timeEmployeeSource } from '@/features/time-off/mock-data';
 import {
   ATTENDANCE_STATUS_LABEL,
   CORRECTION_REASON_LABEL,
@@ -58,7 +59,32 @@ function Choice({
   );
 }
 
-const EMPLOYEE_OPTIONS = EMPLOYEES.map((row) => ({ value: row.id, label: row.name }));
+/** Filter karyawan memakai pemilih rumah; kosong disimpan sebagai `ALL` supaya bentuk state filter tetap. */
+function EmployeeChoice({
+  label,
+  value,
+  allLabel,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  allLabel: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field label={label}>
+      <EmployeeSelect
+        lang="en"
+        source={timeEmployeeSource()}
+        placeholder={allLabel}
+        clearable
+        value={value === 'ALL' ? '' : value}
+        onChange={(id) => onChange(id || 'ALL')}
+        aria-label={label}
+      />
+    </Field>
+  );
+}
 
 export function DayFilterFields({
   value,
@@ -99,11 +125,10 @@ export function DayFilterFields({
         ]}
         onChange={(excused) => onChange({ ...value, excused })}
       />
-      <Choice
+      <EmployeeChoice
         label="Karyawan"
         value={value.employeeId}
         allLabel="All employees"
-        options={EMPLOYEE_OPTIONS}
         onChange={(employeeId) => onChange({ ...value, employeeId })}
       />
     </>
@@ -150,11 +175,10 @@ export function TapFilterFields({
         ]}
         onChange={(mockLocation) => onChange({ ...value, mockLocation })}
       />
-      <Choice
+      <EmployeeChoice
         label="Karyawan"
         value={value.employeeId}
         allLabel="All employees"
-        options={EMPLOYEE_OPTIONS}
         onChange={(employeeId) => onChange({ ...value, employeeId })}
       />
     </>
@@ -190,11 +214,10 @@ export function CorrectionFilterFields({
         }))}
         onChange={(correctionReasonType) => onChange({ ...value, correctionReasonType })}
       />
-      <Choice
+      <EmployeeChoice
         label="Pengaju"
         value={value.employeeId}
         allLabel="All filers"
-        options={EMPLOYEE_OPTIONS}
         onChange={(employeeId) => onChange({ ...value, employeeId })}
       />
     </>

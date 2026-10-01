@@ -1,3 +1,4 @@
+import { createLocalEmployeeSource } from '@/lib/employeeSource';
 import type {
   Actor,
   CashAdvance,
@@ -145,3 +146,8 @@ export function employeeOf(id: string | null | undefined) {
 export function employeeName(id: string | null | undefined): string {
   return employeeOf(id)?.name ?? '—';
 }
+
+/** Sumber `<EmployeeSelect>` Cash Advance — baris kedua NIK · unit. */
+export const ADVANCE_EMPLOYEE_SOURCE = createLocalEmployeeSource('cash-advance', () =>
+  EMPLOYEES.map((row) => ({ id: row.id, name: row.name, nik: row.nik, unit: row.unit })),
+);

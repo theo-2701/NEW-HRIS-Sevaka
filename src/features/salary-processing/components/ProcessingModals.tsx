@@ -20,7 +20,8 @@ import {
   useSubmitImport,
   useVerifyImport,
 } from '@/features/salary-processing/hooks/useSalaryProcessing';
-import { EMPLOYEES, FINDING_TYPE_INFO, employeeName } from '@/features/salary-processing/mock-data';
+import { FINDING_TYPE_INFO, PAYROLL_EMPLOYEE_SOURCE, employeeName } from '@/features/salary-processing/mock-data';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { newIdempotencyKey, periodLabel, periodName, runBranch } from '@/features/salary-processing/rules';
 import { MONTH_NAMES } from '@/features/salary-processing/types';
 import type {
@@ -504,21 +505,17 @@ export function ImportFormModal({
     >
       <div className="grid gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <Label>
+          <Label htmlFor="import-employee">
             Employee<em>*</em>
           </Label>
-          <Select value={draft.employeeId} onValueChange={set('employeeId')} disabled={Boolean(correcting)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select employee" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(EMPLOYEES).map(([id, employee]) => (
-                <SelectItem key={id} value={id}>
-                  {employee.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <EmployeeSelect
+            id="import-employee"
+            lang="en"
+            source={PAYROLL_EMPLOYEE_SOURCE}
+            value={draft.employeeId}
+            onChange={(id) => set('employeeId')(id)}
+            disabled={Boolean(correcting)}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="import-month">
