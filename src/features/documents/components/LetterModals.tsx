@@ -4,11 +4,11 @@ import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { Textarea } from '@/components/ui/input';
 import { EmployeeRow, Field, SelectRow } from '@/features/company/components/CompanyBits';
 import { GovError, GovNote } from '@/features/documents/components/GovBits';
-import { BRANCHES, LETTER_SUBJECTS, LETTER_SUBJECT_SOURCE } from '@/features/documents/governance-data';
+import { BRANCHES, LETTER_SUBJECT_SOURCE } from '@/features/documents/governance-data';
 import {
   useApproveLetter,
   useBatchReport,
@@ -302,24 +302,14 @@ export function BatchSubmitModal({ actor, open, onClose }: { actor: DocActor; op
           hint="Individual letters only — circulars cannot be issued in bulk."
         />
         <Field label="Recipients" required hint="At least two.">
-          <div className="grid grid-cols-2 gap-2">
-            {LETTER_SUBJECTS.map((row) => (
-              <label
-                key={row.employeeId}
-                className="flex items-center gap-2 font-body text-[13px] font-semibold text-fg-1"
-              >
-                <Checkbox
-                  checked={recipients.includes(row.employeeId)}
-                  onCheckedChange={(checked) =>
-                    setRecipients((prev) =>
-                      checked === true ? [...prev, row.employeeId] : prev.filter((id) => id !== row.employeeId),
-                    )
-                  }
-                />
-                {row.nama} · {row.nik}
-              </label>
-            ))}
-          </div>
+          <EmployeeSelect
+            multiple
+            lang="en"
+            source={LETTER_SUBJECT_SOURCE}
+            value={recipients}
+            onChange={setRecipients}
+            aria-label="Recipients"
+          />
         </Field>
       </div>
     </Modal>
