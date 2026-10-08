@@ -1,9 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, LayoutGrid, LogOut, PanelLeftClose } from 'lucide-react';
-import dikaLogo from '@/assets/brand/dika-logo-trim.png';
-import { CompanyLogo } from '@/components/brand/CompanyLogo';
-import { navForPath, type NavLeaf, type NavSection } from '@/config/nav';
+import { ChevronDown, LayoutGrid, LogOut, PanelLeftClose, Search, X } from 'lucide-react';
+import { flattenNav, navForPath, type NavLeaf, type NavPathEntry, type NavSection } from '@/config/nav';
 import { NavIcon } from '@/components/NavIcon';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/lib/utils';
@@ -14,10 +12,19 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-/** Identitas perusahaan pemakai (pengganti switch company). */
-const COMPANY_IDENTITY: Record<string, { name: string; sub: string; logo: string | null }> = {
-  DIKA: { name: 'PT DIKA', sub: '1.284 karyawan', logo: dikaLogo },
-};
+/**
+ * Cari menu: setiap kata harus muncul di rantai label (section › grup › menu), tanpa peduli huruf
+ * besar/kecil — "time req" menemukan Time Management › Time Off › Time Off Request. Hanya menu yang
+ * punya halaman yang ikut dicari.
+ */
+function searchNav(nav: NavSection[], query: string): NavPathEntry[] {
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  return flattenNav(nav).filter((entry) => {
+    const haystack = entry.trail.join(' ').toLowerCase();
+    return words.every((word) => haystack.includes(word));
+  });
+}
 
 /**
  * Permintaan membuka grup tertentu — dipakai saat ikon grup di sidebar ciut diklik: sidebar melebar,
@@ -33,8 +40,9 @@ const SCROLL_FADE = '[mask-image:linear-gradient(to_bottom,transparent,black_8px
 
 /**
  * Sidebar — port `js/shell.js` + `css/dashboard.css`, dirapikan supaya tidak terlalu panjang:
- * - Identitas perusahaan pemakai (logo, nama, jumlah karyawan) + tombol collapse; switch company dihapus.
- *   Saat ciut, logo perusahaan sendiri yang menjadi tombol untuk melebarkan sidebar.
+ * - Kepala sidebar = kotak "Cari menu" + tombol collapse (logo perusahaan dihapus atas permintaan Theo,
+ *   8 Okt 2026). Mengetik mengganti pohon menu dengan daftar hasil; Enter membuka hasil pertama, Esc
+ *   mengosongkan. Saat ciut, ikon cari melebarkan sidebar lalu langsung fokus ke kotak cari.
  * - Section bisa dilipat, **buka satu tutup satu**; grup di dalamnya juga akordeon antar-saudara.
  *   Isi section menjorok dengan garis pandu supaya hierarkinya tetap terbaca. Section `flat`
  *   (produk satu-section, mis. Performance) langsung menampilkan menunya tanpa judul section.
@@ -45,10 +53,27 @@ const SCROLL_FADE = '[mask-image:linear-gradient(to_bottom,transparent,black_8px
 export function Sidebar({ expanded, onToggle }: SidebarProps) {
   const location = useLocation();
   const logout = useLogout();
+  const navigate = useNavigate();
   const companyId = useAuthStore((s) => s.companyId) ?? 'DIKA';
-  const company = COMPANY_IDENTITY[companyId] ?? { name: companyId, sub: '', logo: null };
 
   const nav = navForPath(location.pathname);
+
+  const [query, setQuery] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  /** Ikon cari di sidebar ciut: lebarkan dulu, baru fokus ke kotak cari. */
+  const focusOnExpand = useRef(false);
+  useEffect(() => {
+    if (expanded && focusOnExpand.current) {
+      focusOnExpand.current = false;
+      searchRef.current?.focus();
+    }
+  }, [expanded]);
+  const results = useMemo(() => searchNav(nav, query), [nav, query]);
+  const searching = expanded && query.trim().length > 0;
+  const openResult = (path: string) => {
+    setQuery('');
+    navigate(path);
+  };
   const activeSection = nav.find((section) =>
     section.children.some((node) => containsPath(node, location.pathname)),
   )?.section;
@@ -78,20 +103,38 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         expanded ? 'w-[264px] min-w-[264px]' : 'w-[84px] min-w-[84px]',
       )}
     >
-      {/* ---- Header: identitas perusahaan + collapse ---- */}
+      {/* ---- Header: cari menu + collapse ---- */}
       {expanded ? (
-        <div className="flex min-h-16 flex-shrink-0 items-center gap-2 border-b border-border-1 py-3 pl-3.5 pr-2">
-          <CompanyLogo name={company.name} src={company.logo} size="md" framed={false} />
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span title={company.name} className="truncate font-body text-[13px] font-bold leading-tight text-fg-1">
-              {company.name}
-            </span>
-            {company.sub && (
-              <span title={company.sub} className="truncate font-body text-[11px] font-medium leading-tight text-fg-3">
-                {company.sub}
-              </span>
+        <div className="flex min-h-16 flex-shrink-0 items-center gap-1.5 border-b border-border-1 py-3 pl-3.5 pr-2">
+          <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-silver bg-cloud px-2.5 transition-[border-color,box-shadow] duration-200 ease-standard focus-within:border-secondary-500 focus-within:shadow-[0_0_0_4px_rgba(2,132,199,.16)]">
+            <Search className="size-4 shrink-0 text-fg-3" />
+            <input
+              ref={searchRef}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setQuery('');
+                if (event.key === 'Enter' && results[0]) openResult(results[0].path);
+              }}
+              placeholder="Cari menu"
+              aria-label="Cari menu"
+              className="min-w-0 flex-1 border-none bg-transparent font-body text-[13px] font-medium leading-[1.4] text-fg-2 outline-none placeholder:text-fg-4 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="Hapus pencarian"
+                onClick={() => {
+                  setQuery('');
+                  searchRef.current?.focus();
+                }}
+                className="inline-flex size-4 shrink-0 items-center justify-center text-fg-4 transition-colors duration-200 ease-standard hover:text-fg-2 [&_svg]:size-3.5"
+              >
+                <X />
+              </button>
             )}
-          </span>
+          </label>
           <button
             type="button"
             aria-label="Tutup sidebar"
@@ -103,15 +146,18 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
           </button>
         </div>
       ) : (
-        <div className="flex flex-shrink-0 justify-center border-b border-border-1 px-2 py-3">
+        <div className="flex min-h-16 flex-shrink-0 items-center justify-center border-b border-border-1 px-2 py-3">
           <button
             type="button"
-            aria-label="Buka sidebar"
-            title={`${company.name} — buka sidebar`}
-            onClick={onToggle}
-            className="flex items-center justify-center rounded-lg p-1.5 transition-[background,transform] duration-200 ease-standard hover:scale-[1.04] hover:bg-bg-app"
+            aria-label="Cari menu"
+            title="Cari menu"
+            onClick={() => {
+              focusOnExpand.current = true;
+              onToggle();
+            }}
+            className="flex size-11 items-center justify-center rounded-[10px] text-secondary-700 transition-colors duration-200 ease-standard hover:bg-bg-app"
           >
-            <CompanyLogo name={company.name} src={company.logo} size="sm" framed={false} />
+            <Search className="size-[22px]" />
           </button>
         </div>
       )}
@@ -142,42 +188,46 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         )}
       >
         <OpenRequest.Provider value={requested}>
-          {expanded
-            ? nav.map((section) =>
-                section.flat ? (
-                  <div key={section.section} className="flex flex-col">
-                    <NodeList nodes={section.children} depth={1} />
-                  </div>
-                ) : (
-                  <SidebarSection
-                    key={section.section}
-                    section={section}
-                    open={openSection === section.section}
-                    holdsActive={section.section === activeSection}
-                    onToggle={() => {
-                      setRequested(null);
-                      setOpenSection((current) => (current === section.section ? null : section.section));
-                    }}
-                  />
-                ),
-              )
-            : nav.map((section, i) => (
-                <div
-                  key={section.section}
-                  className={cn('flex flex-col', i > 0 && 'mt-1.5 border-t border-border-1 pt-1.5')}
-                >
-                  {section.children.map((node) => (
-                    <SidebarNode
-                      key={node.label}
-                      node={node}
-                      depth={1}
-                      expanded={false}
-                      open={false}
-                      onToggle={() => openFromRail(section.section, node.label)}
-                    />
-                  ))}
+          {searching ? (
+            <SearchResults results={results} query={query} activePath={location.pathname} onOpen={openResult} />
+          ) : expanded ? (
+            nav.map((section) =>
+              section.flat ? (
+                <div key={section.section} className="flex flex-col">
+                  <NodeList nodes={section.children} depth={1} />
                 </div>
-              ))}
+              ) : (
+                <SidebarSection
+                  key={section.section}
+                  section={section}
+                  open={openSection === section.section}
+                  holdsActive={section.section === activeSection}
+                  onToggle={() => {
+                    setRequested(null);
+                    setOpenSection((current) => (current === section.section ? null : section.section));
+                  }}
+                />
+              ),
+            )
+          ) : (
+            nav.map((section, i) => (
+              <div
+                key={section.section}
+                className={cn('flex flex-col', i > 0 && 'mt-1.5 border-t border-border-1 pt-1.5')}
+              >
+                {section.children.map((node) => (
+                  <SidebarNode
+                    key={node.label}
+                    node={node}
+                    depth={1}
+                    expanded={false}
+                    open={false}
+                    onToggle={() => openFromRail(section.section, node.label)}
+                  />
+                ))}
+              </div>
+            ))
+          )}
         </OpenRequest.Provider>
       </nav>
 
@@ -373,5 +423,47 @@ function SidebarNode({
       <NavIcon name={node.icon} className={cn('shrink-0', expanded ? 'size-5' : 'size-[22px]')} />
       {expanded && <span className="flex-1 overflow-hidden text-ellipsis">{node.label}</span>}
     </button>
+  );
+}
+
+/** Hasil cari menu — label tebal + jejak induknya; menu yang sedang dibuka ditandai. */
+function SearchResults({
+  results,
+  query,
+  activePath,
+  onOpen,
+}: {
+  results: NavPathEntry[];
+  query: string;
+  activePath: string;
+  onOpen: (path: string) => void;
+}) {
+  if (!results.length) {
+    return (
+      <p className="m-0 px-3 py-6 text-center font-body text-[13px] font-medium text-fg-3">
+        Tidak ada menu yang cocok dengan &ldquo;{query.trim()}&rdquo;.
+      </p>
+    );
+  }
+  return (
+    <>
+      <span className="px-3 pb-1 font-body text-[11px] font-semibold text-fg-4">{results.length} menu ditemukan</span>
+      {results.map((entry) => (
+        <button
+          key={entry.path}
+          type="button"
+          onClick={() => onOpen(entry.path)}
+          className={cn(
+            'flex w-full flex-col items-start gap-0.5 rounded-md px-3 py-2 text-left transition-colors duration-200 ease-standard hover:bg-secondary-700/[0.07]',
+            entry.path === activePath && 'bg-primary-50',
+          )}
+        >
+          <span className="font-body text-sm font-bold text-secondary-700">{entry.label}</span>
+          <span className="font-body text-[11px] font-medium leading-snug text-fg-3">
+            {entry.trail.slice(0, -1).join(' › ')}
+          </span>
+        </button>
+      ))}
+    </>
   );
 }
