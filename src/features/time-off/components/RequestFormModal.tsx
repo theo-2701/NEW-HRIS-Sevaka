@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Form, Formik, useFormikContext } from 'formik';
 import {  Lock } from 'lucide-react';
 import { Modal } from '@/components/Modal';
@@ -43,8 +43,15 @@ function DynamicSection({
   existing: LeaveRequest[];
   editingId?: string;
 }) {
-  const { values } = useFormikContext<RequestDraft>();
+  const { values, setFieldValue } = useFormikContext<RequestDraft>();
   const type = leaveTypeOf(values.leaveTypeId);
+  const multiDay = Boolean(values.startDate && values.endDate && values.startDate !== values.endDate);
+
+  // FSD-TIME 0.13 #12/#14: field yang disembunyikan karena bendera berganti DIKOSONGKAN.
+  useEffect(() => {
+    if (multiDay && values.daySession !== 'FULL') void setFieldValue('daySession', 'FULL');
+    if (!type?.requiresDocument && values.hasDoctorNote) void setFieldValue('hasDoctorNote', false);
+  }, [multiDay, values.daySession, type?.requiresDocument, values.hasDoctorNote, setFieldValue]);
 
   const gate = useMemo(
     () =>
@@ -167,8 +174,13 @@ export function RequestFormModal({
                   name="daySession"
                   label="Sesi hari"
                   required
-                  options={SESSION_OPTIONS}
-                  hint="Setengah hari hanya sah bila tanggal mulai dan selesai sama."
+                  // Mulai ≠ Selesai ⇒ opsi Setengah disembunyikan, hanya Penuh (FSD-TIME 0.13 #12).
+                  options={
+                    values.startDate && values.endDate && values.startDate !== values.endDate
+                      ? SESSION_OPTIONS.filter((option) => option.value === 'FULL')
+                      : SESSION_OPTIONS
+                  }
+                  hint="Setengah hari hanya tersedia bila tanggal mulai dan selesai sama."
                 />
               </div>
 

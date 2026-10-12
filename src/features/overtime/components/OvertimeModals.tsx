@@ -299,9 +299,12 @@ export function OvertimeApproveModal({
               <Button variant="secondary" onClick={onClose}>
                 Cancel
               </Button>
-              <Button onClick={submitForm} disabled={sod || decide.isPending}>
-                Approve
-              </Button>
+              {/* FSD-TIME 0.13 #8 (K1): tombol keputusan DISEMBUNYIKAN bagi pengaju sendiri. */}
+              {!sod && (
+                <Button onClick={submitForm} disabled={decide.isPending}>
+                  Approve
+                </Button>
+              )}
             </>
           }
         >
@@ -354,13 +357,15 @@ export function OvertimeRejectModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            variant="danger"
-            disabled={sod || decide.isPending}
-            onClick={() => row && decide.mutate({ id: row.id, kind: 'REJECTED' }, { onSuccess: onClose })}
-          >
-            Reject
-          </Button>
+          {!sod && (
+            <Button
+              variant="danger"
+              disabled={decide.isPending}
+              onClick={() => row && decide.mutate({ id: row.id, kind: 'REJECTED' }, { onSuccess: onClose })}
+            >
+              Reject
+            </Button>
+          )}
         </>
       }
     >

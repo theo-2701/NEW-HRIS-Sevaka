@@ -190,23 +190,34 @@ const EMPTY_POLICY: AccrualPolicyDraft = {
 
 /** Field yang hidup-matinya bergantung entitled dan mode carry-over. */
 function PolicyConditionalFields() {
-  const { values } = useFormikContext<AccrualPolicyDraft>();
+  const { values, setFieldValue } = useFormikContext<AccrualPolicyDraft>();
   const capped = values.carryOverPolicy === 'CARRY_CAPPED';
+
+  // FSD-TIME 0.13 #30/#31: field tersembunyi DIKOSONGKAN seketika bendera berganti.
+  useEffect(() => {
+    if (!values.isEligible && values.ratePerMonth !== null) void setFieldValue('ratePerMonth', null);
+  }, [values.isEligible, values.ratePerMonth, setFieldValue]);
+  useEffect(() => {
+    if (capped) return;
+    if (values.carryOverMaxDays !== null) void setFieldValue('carryOverMaxDays', null);
+    if (values.carryOverExpiry !== null) void setFieldValue('carryOverExpiry', null);
+  }, [capped, values.carryOverMaxDays, values.carryOverExpiry, setFieldValue]);
 
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
-        <TextField
-          name="ratePerMonth"
-          type="number"
-          step="0.25"
-          min={0}
-          label="Rate per month"
-          required={values.isEligible}
-          disabled={!values.isEligible}
-          placeholder="mis. 1.00"
-          hint="Wajib saat entitled, harus kosong saat tidak."
-        />
+        {values.isEligible && (
+          <TextField
+            name="ratePerMonth"
+            type="number"
+            step="0.25"
+            min={0}
+            label="Rate per month"
+            required
+            placeholder="mis. 1.00"
+            hint="Wajib saat entitled."
+          />
+        )}
         <TextField
           name="maxBalanceDays"
           type="number"

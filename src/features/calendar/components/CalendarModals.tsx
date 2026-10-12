@@ -76,7 +76,16 @@ const holidaySchema = Yup.object({
 /** Scope hanya muncul untuk libur regional, dan daftarnya ikut scope level. */
 function ScopeFields({ locked }: { locked: boolean }) {
   const { values, setFieldValue } = useFormikContext<HolidayDraft>();
-  if (values.holidayType !== 'REGIONAL') return null;
+  const regional = values.holidayType === 'REGIONAL';
+
+  // FSD-TIME 0.13 #1/#2: Tipe diganti ke Company ⇒ Jenis Wilayah & Wilayah DIKOSONGKAN seketika.
+  useEffect(() => {
+    if (regional) return;
+    if (values.scopeLevel) void setFieldValue('scopeLevel', '');
+    if (values.scopeRef) void setFieldValue('scopeRef', '');
+  }, [regional, values.scopeLevel, values.scopeRef, setFieldValue]);
+
+  if (!regional) return null;
 
   const options = (values.scopeLevel === 'UNIT' ? UNITS : BRANCHES).map((row) => ({ value: row.id, label: row.name }));
 
@@ -90,14 +99,17 @@ function ScopeFields({ locked }: { locked: boolean }) {
         options={SCOPE_LEVEL_OPTIONS}
         disabled={locked}
       />
-      <SelectField
-        name="scopeRef"
-        label="Scope"
-        required
-        placeholder={values.scopeLevel ? 'Select scope' : 'Select scope level first'}
-        options={options}
-        disabled={locked || !values.scopeLevel}
-      />
+      {/* Wilayah DISEMBUNYIKAN sebelum Jenis Wilayah dipilih (FSD-TIME 0.13 #2). */}
+      {values.scopeLevel && (
+        <SelectField
+          name="scopeRef"
+          label="Scope"
+          required
+          placeholder="Select scope"
+          options={options}
+          disabled={locked}
+        />
+      )}
       {/* Mengganti level membuang scope lama supaya tidak tertinggal nilai asing. */}
       <ScopeLevelSync onLevelChange={() => void setFieldValue('scopeRef', '')} />
     </div>
@@ -307,21 +319,28 @@ export function HolidayDecisionModal({ row, onClose }: { row: CalendarHoliday | 
       description="Menyetujui membuat tanggal itu jadi libur yang berlaku; menolak membiarkan barisnya tetap memegang slotnya."
       size="wide"
       footer={
-        <>
-          <Button
-            variant="danger"
-            disabled={sod || decide.isPending}
-            onClick={() => row && decide.mutate({ id: row.id, kind: 'REJECTED', note }, { onSuccess: onClose })}
-          >
-            Reject
+        // FSD-TIME 0.13 #8 (K1): tombol keputusan DISEMBUNYIKAN bagi pengaju baris itu sendiri.
+        sod ? (
+          <Button variant="secondary" onClick={onClose}>
+            Close
           </Button>
-          <Button
-            disabled={sod || decide.isPending}
-            onClick={() => row && decide.mutate({ id: row.id, kind: 'APPROVED', note }, { onSuccess: onClose })}
-          >
-            Approve
-          </Button>
-        </>
+        ) : (
+          <>
+            <Button
+              variant="danger"
+              disabled={decide.isPending}
+              onClick={() => row && decide.mutate({ id: row.id, kind: 'REJECTED', note }, { onSuccess: onClose })}
+            >
+              Reject
+            </Button>
+            <Button
+              disabled={decide.isPending}
+              onClick={() => row && decide.mutate({ id: row.id, kind: 'APPROVED', note }, { onSuccess: onClose })}
+            >
+              Approve
+            </Button>
+          </>
+        )
       }
     >
       {row && (
@@ -485,7 +504,16 @@ const patternSchema = Yup.object({
 });
 
 function PatternScopeRef({ locked }: { locked: boolean }) {
-  const { values } = useFormikContext<WorkCalendarDraft>();
+  const { values, setFieldValue } = useFormikContext<WorkCalendarDraft>();
+  const [seen, setSeen] = useState(values.scopeLevel);
+
+  // FSD-TIME 0.13 #9: Jenis diganti (ke Company, atau Unit ↔ Lokasi) ⇒ Wilayah lama DIKOSONGKAN.
+  useEffect(() => {
+    if (values.scopeLevel === seen) return;
+    setSeen(values.scopeLevel);
+    if (values.scopeRef) void setFieldValue('scopeRef', '');
+  }, [values.scopeLevel, values.scopeRef, seen, setFieldValue]);
+
   if (values.scopeLevel === 'COMPANY' || !values.scopeLevel) return null;
   const options = (values.scopeLevel === 'UNIT' ? UNITS : BRANCHES).map((row) => ({ value: row.id, label: row.name }));
   return (

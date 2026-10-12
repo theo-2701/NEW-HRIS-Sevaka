@@ -135,7 +135,8 @@ export function RequestDetailModal({
       }
     >
       <div className="flex flex-col gap-4">
-        {request.hasDoctorNote && (
+        {/* FSD-TIME 0.13 #21 (K1): tab akses surat dokter DISEMBUNYIKAN bagi peran non-HR. */}
+        {request.hasDoctorNote && allowed && (
           <Segmented<DetailTab>
             value={tab}
             onChange={setTab}
@@ -186,7 +187,7 @@ export function RequestDetailModal({
           </>
         )}
 
-        {tab === 'medical' && (
+        {tab === 'medical' && allowed && (
           <>
             <Note tone={allowed ? 'info' : 'warn'} icon={<ShieldAlert />}>
               {allowed ? (
@@ -261,14 +262,24 @@ export function DecisionModal({
   session: Session;
   onClose: () => void;
 }) {
+  const [decision, setDecision] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [reject, setReject] = useState<RejectInput>(EMPTY_REJECT);
   const decide = useDecideRequest(session);
 
   useEffect(() => {
-    if (request) setReject(EMPTY_REJECT);
+    if (request) {
+      setDecision('APPROVED');
+      setReject(EMPTY_REJECT);
+    }
   }, [request]);
 
   if (!request) return null;
+
+  // FSD-TIME 0.13 #19: Alasan/Catatan Penolakan tampil hanya saat Tolak; kembali ke Setuju ⇒ dikosongkan.
+  const choose = (next: 'APPROVED' | 'REJECTED') => {
+    setDecision(next);
+    if (next === 'APPROVED') setReject(EMPTY_REJECT);
+  };
 
   return (
     <Modal
@@ -276,29 +287,32 @@ export function DecisionModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title={`Leave approval — ${request.id}`}
-      description="Menyetujui boleh membawa catatan. Menolak wajib memilih alasan penolakan."
+      description="Pilih keputusan. Menolak wajib memilih alasan penolakan."
       footer={
         <>
-          <Button
-            variant="danger"
-            disabled={decide.isPending || !reject.reason}
-            onClick={() =>
-              decide.mutate({ id: request.id, decision: 'REJECTED', input: { reject } }, { onSuccess: onClose })
-            }
-          >
-            Reject
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
           </Button>
-          <Button
-            disabled={decide.isPending}
-            onClick={() =>
-              decide.mutate(
-                { id: request.id, decision: 'APPROVED', input: { note: reject.note.trim() } },
-                { onSuccess: onClose },
-              )
-            }
-          >
-            {decide.isPending ? 'Memproses…' : 'Approve'}
-          </Button>
+          {decision === 'REJECTED' ? (
+            <Button
+              variant="danger"
+              disabled={decide.isPending || !reject.reason}
+              onClick={() =>
+                decide.mutate({ id: request.id, decision: 'REJECTED', input: { reject } }, { onSuccess: onClose })
+              }
+            >
+              {decide.isPending ? 'Memproses…' : 'Reject'}
+            </Button>
+          ) : (
+            <Button
+              disabled={decide.isPending}
+              onClick={() =>
+                decide.mutate({ id: request.id, decision: 'APPROVED', input: { note: '' } }, { onSuccess: onClose })
+              }
+            >
+              {decide.isPending ? 'Memproses…' : 'Approve'}
+            </Button>
+          )}
         </>
       }
     >
@@ -319,7 +333,18 @@ export function DecisionModal({
           </KeyValueRow>
         </KeyValueList>
 
-        <RejectFields value={reject} onChange={setReject} reasonLabel="Alasan penolakan (wajib untuk tolak)" />
+        <Segmented<'APPROVED' | 'REJECTED'>
+          value={decision}
+          onChange={choose}
+          options={[
+            { value: 'APPROVED', label: 'Setujui' },
+            { value: 'REJECTED', label: 'Tolak' },
+          ]}
+        />
+
+        {decision === 'REJECTED' && (
+          <RejectFields value={reject} onChange={setReject} reasonLabel="Alasan penolakan" />
+        )}
       </div>
     </Modal>
   );

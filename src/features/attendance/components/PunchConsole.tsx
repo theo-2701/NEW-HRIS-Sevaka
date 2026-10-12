@@ -138,14 +138,17 @@ export function PunchConsole({
                 {selfieCaptured ? 'Retake selfie' : 'Take selfie'}
               </Button>
             )}
-            <button
-              type="button"
-              disabled={!nextType || busy}
-              onClick={onPunch}
-              className="h-12 flex-1 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {nextType === 'IN' ? 'TAP IN' : nextType === 'OUT' ? 'TAP OUT' : 'DAY COMPLETE'}
-            </button>
+            {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan. */}
+            {nextType && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={onPunch}
+                className="h-12 flex-1 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {nextType === 'IN' ? 'TAP IN' : 'TAP OUT'}
+              </button>
+            )}
           </div>
           {selfieHint && nextType && (
             <span className="font-body text-[11.5px] font-medium leading-[1.45] text-white/80">{selfieHint}</span>

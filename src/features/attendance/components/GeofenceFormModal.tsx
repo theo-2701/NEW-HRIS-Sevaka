@@ -12,6 +12,18 @@ import { useSaveGeofence } from '@/features/attendance/hooks/useGeofences';
 import { ARRANGEMENTS, ARRANGEMENT_LABEL } from '@/features/attendance/types';
 import type { Geofence, GeofenceDraft, WorkArrangement } from '@/features/attendance/types';
 
+/** FSD-TIME 0.13 #43 (K3): radius < 20 m ⇒ peringatan (bukan penolakan) — di bawah akurasi GPS ponsel umumnya. */
+function RadiusWarning() {
+  const { values } = useFormikContext<GeofenceDraft>();
+  const radius = Number(values.radiusMeters);
+  if (!radius || radius >= 20) return null;
+  return (
+    <span className="-mt-2 font-body text-xs font-semibold text-warning-800">
+      Radius di bawah 20 meter — lebih kecil dari akurasi GPS ponsel pada umumnya; karyawan bisa sering tercatat di luar radius.
+    </span>
+  );
+}
+
 const BRANCH_OPTIONS = BRANCHES.map((row) => ({ value: row.id, label: row.name }));
 
 const BLANK_RULES = ARRANGEMENTS.reduce(
@@ -233,6 +245,7 @@ export function GeofenceFormModal({
                 placeholder="e.g. 120"
                 hint="A positive whole number. A radius under typical phone GPS accuracy raises a warning, not a refusal."
               />
+              <RadiusWarning />
 
               <CaptureMatrix rules={rules} onToggle={toggleRule} />
               <ActiveToggle />

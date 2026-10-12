@@ -88,6 +88,17 @@ function ShiftTypeFields() {
     if (values.shiftType === 'ROTATING' && values.breakMinutes !== '0') void setFieldValue('breakMinutes', '0');
   }, [values.shiftType, values.breakMinutes, setFieldValue]);
 
+  // FSD-TIME 0.13 #53/#55/#56: field milik tipe lain DIKOSONGKAN saat Tipe Shift berganti.
+  useEffect(() => {
+    const type = values.shiftType;
+    if (type !== 'FIXED' && (values.startTime || values.endTime)) {
+      void setFieldValue('startTime', '');
+      void setFieldValue('endTime', '');
+    }
+    if (type !== 'ROTATING' && values.cycleDef) void setFieldValue('cycleDef', '');
+    if (type !== 'FLEXIBLE' && values.flexBand) void setFieldValue('flexBand', '');
+  }, [values.shiftType, values.startTime, values.endTime, values.cycleDef, values.flexBand, setFieldValue]);
+
   return (
     <>
       {values.shiftType === 'FIXED' && (

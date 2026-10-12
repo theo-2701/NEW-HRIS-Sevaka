@@ -875,3 +875,26 @@ Baseline FSD 0.10 / UIC 0.12. Basic Info §1.5 (matriks WNI/WNA R1–R15).
   Paspor/Visa. Status Perkawinan disabled + keterangan "Hanya HR Manager ke atas yang dapat mengubah".
 - **GAP:** layar Create profil (A3, R10 KTP kosong) belum ada di repo; mock hanya satu profil WNI sehingga cabang WNA
   belum dapat didemokan tanpa data tambahan.
+
+## 32. Time Management — FSD-001-TIME 0.13 / UIC-001-TIME 0.17 (rilis FE-261008, 13 Oktober 2026)
+
+Baseline FSD 0.10 / UIC 0.14. 24 celah routing komponen (`TIM-233`, K1–K4). Diterapkan yang belum sesuai:
+
+- **K1 — sembunyikan, bukan nonaktifkan:** tombol keputusan Holiday dan Overtime hilang bagi pengaju sendiri (catatan
+  SoD tetap tampil); tab "Medical document access" (Riwayat Akses + Buka Surat Dokter) hanya bagi HR; tombol tap
+  absen hilang saat IN dan OUT sudah ada (teks keadaan tetap).
+- **Time Off Request:** opsi Setengah Pagi/Sore disembunyikan saat Mulai ≠ Selesai dan pilihan direset ke Penuh;
+  centang surat dokter dikosongkan saat jenis cuti tidak mensyaratkannya.
+- **Keputusan cuti:** pilih Setujui/Tolak dulu; Alasan + Catatan Penolakan hanya tampil saat Tolak dan dikosongkan
+  saat kembali ke Setujui.
+- **Time Off Settings:** Rate per Bulan disembunyikan (bukan disabled) saat tidak berhak jatah dan dikosongkan;
+  Maks Terbawa/Tenggat dikosongkan saat bukan Terbawa Terbatas.
+- **Holiday:** Tipe ke Company mengosongkan Jenis Wilayah + Wilayah; dropdown Wilayah disembunyikan sebelum Jenis
+  dipilih. **Work Calendar:** Jenis diganti mengosongkan Wilayah.
+- **Shift:** Jam Mulai/Selesai, cycle_def, flex_band dikosongkan saat Tipe Shift berganti (Istirahat 0 terkunci
+  untuk Siklus sudah ada).
+- **Geofence (K3):** peringatan bila radius < 20 m (bukan penolakan).
+- Sudah sesuai sebelumnya: Edit/Hapus disembunyikan pada baris `is_system`, Simpan & Ajukan hanya baris Draft,
+  kombinasi Tidak Dibayar + Potong Saldo = 422 saat Simpan, batas Jam Disetujui ≤ jam diminta, kandidat tukar shift
+  dikosongkan saat baris sendiri berganti, form Bulk (pola wajib kecuali Hari Istirahat).
+- **Tidak diubah:** jendela susulan lembur tetap 7 hari di data contoh (FSD hanya menyebut *default* 2 hari).
