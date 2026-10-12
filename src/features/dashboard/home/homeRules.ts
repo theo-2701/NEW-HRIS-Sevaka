@@ -15,8 +15,12 @@ const MONTHS = [
 
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-/** Lapis Perusahaan hanya untuk peran HR/manajemen (FSD-001-AUTH §2.9). */
-export const canSeeCompanyLayer = (role: string | undefined) => /admin|hr|manager|manajer/i.test(role ?? '');
+/**
+ * Lapis Perusahaan hanya untuk SUPER_ADMIN · HR_MANAGER · HR_STAFF · Dept Manager (dua ejaan) — FSD-AUTH 0.18
+ * §2.9. Peran lain: kartu tidak dirender sama sekali (tanpa ruang kosong).
+ */
+const COMPANY_LAYER_ROLES = ['ROLE_SUPER_ADMIN', 'ROLE_HR_MANAGER', 'ROLE_HR_STAFF', 'ROLE_DEPT_MANAGER', 'ROLE_DEPARTMENT_MANAGER'];
+export const canSeeCompanyLayer = (role: string | undefined) => COMPANY_LAYER_ROLES.includes(role ?? '');
 
 export function greetingFor(date: Date): string {
   const hour = date.getHours();

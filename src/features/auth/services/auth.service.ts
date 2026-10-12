@@ -34,6 +34,15 @@ import type {
 
 const delay = (ms = 600) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Pesan seragam FSD-AUTH 0.18 (anti-oracle, UIC §1.5). */
+export const LINK_DEAD = 'Tautan ini tidak dapat dipakai — silakan minta yang baru.';
+/** Pemicu demo login gagal: password `Salah@123` ⇒ 401 generik (anti-enumerasi). */
+function assertMockCredentials(password: string) {
+  if (password === 'Salah@123') throw new ApiError('Invalid credentials', 401);
+}
+
+export const OTP_WRONG = 'Kode tidak cocok atau sudah tidak berlaku — periksa kembali, atau minta kode baru.';
+
 /** Data contoh akun belum aktivasi (TTL tautan undangan 24 jam, UIC §5.1). */
 const hoursFromNow = (hours: number) => new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 const pendingInvites: PendingInvitation[] = [
@@ -48,7 +57,7 @@ const MOCK_SESSION: SessionResponse = {
     id: '0198e2a0-0000-7c40-9b00-000000000001',
     name: 'Budi Santoso',
     email: 'budi.santoso@ptdika.co.id',
-    role: 'Administrator',
+    role: 'ROLE_SUPER_ADMIN',
     position: 'HR Operations',
   },
 };
@@ -57,6 +66,7 @@ export const authService = {
   async loginWithEmail(payload: LoginEmailPayload): Promise<LoginChallengeResponse> {
     if (MOCK) {
       await delay();
+      assertMockCredentials(payload.password);
       return { challenge: 'magic_link', maskedTarget: maskEmail(payload.email), expiresInSeconds: 900 };
     }
     const { data } = await api.post<LoginChallengeResponse>('/auth/login', {
@@ -71,6 +81,7 @@ export const authService = {
   async loginWithUsername(payload: LoginUsernamePayload): Promise<LoginChallengeResponse> {
     if (MOCK) {
       await delay();
+      assertMockCredentials(payload.password);
       return { challenge: 'magic_link', maskedTarget: 's***@ptdika.co.id', expiresInSeconds: 900 };
     }
     const { data } = await api.post<LoginChallengeResponse>('/auth/login', {
@@ -85,6 +96,7 @@ export const authService = {
   async loginWithWhatsapp(payload: LoginWhatsappPayload): Promise<LoginChallengeResponse> {
     if (MOCK) {
       await delay();
+      assertMockCredentials(payload.password);
       return { challenge: 'otp', maskedTarget: maskPhone(payload.phone.trim().replace(/^\+?62/, '0')), expiresInSeconds: 300 };
     }
     // Server menormalkan 08…/62…/+62… — klien tidak menolak bentuk yang berbeda.
@@ -101,6 +113,8 @@ export const authService = {
   async verifyMagicLink(token: string): Promise<SessionResponse> {
     if (MOCK) {
       await delay(1200);
+      // Pemicu demo kartu "Verifikasi Gagal" (FSD 0.18 §2.4): 401 seragam tanpa pembeda sebab.
+      if (token === 'expired') throw new ApiError(LINK_DEAD, 401);
       return MOCK_SESSION;
     }
     // Magic link membawa ?aid=<otp_attempt_id>&token=<token>.
@@ -112,25 +126,14 @@ export const authService = {
   async verifyOtp(payload: VerifyOtpPayload): Promise<SessionResponse> {
     if (MOCK) {
       await delay();
+      // Pemicu demo kode salah: satu pesan seragam, tanpa "sisa N percobaan" (FSD 0.18 §2.5).
+      if (payload.code === '000000') throw new ApiError(OTP_WRONG, 401);
       return MOCK_SESSION;
     }
     const { data } = await api.post<SessionResponse>('/auth/verify-otp', {
       otp_attempt_id: sessionStorage.getItem('sevaka-otp-attempt-id'),
       token: payload.code,
     });
-    return data;
-  },
-
-  /**
-   * Maksimal 3 permintaan per 15 menit (FSD §2.5). GAP: UIC-AUTH §3 tidak memuat
-   * endpoint kirim-ulang tersendiri — alamat di bawah menunggu kontraknya.
-   */
-  async resendOtp(): Promise<{ expiresInSeconds: number }> {
-    if (MOCK) {
-      await delay(400);
-      return { expiresInSeconds: 300 };
-    }
-    const { data } = await api.post<{ expiresInSeconds: number }>('/auth/otp/resend');
     return data;
   },
 
@@ -142,9 +145,12 @@ export const authService = {
     await api.post('/auth/reset-password/request', { email: payload.email });
   },
 
+  /** Mode dummy: token `expired` → 401 (kartu Link Tidak Valid), `idp-down` → 502 (toast, field tetap). */
   async resetPassword(payload: ResetPasswordPayload): Promise<void> {
     if (MOCK) {
       await delay();
+      if (payload.token === 'expired') throw new ApiError(LINK_DEAD, 401);
+      if (payload.token === 'idp-down') throw new ApiError('Ada gangguan sistem — silakan coba lagi.', 502);
       return;
     }
     const aid = new URLSearchParams(window.location.search).get('aid');

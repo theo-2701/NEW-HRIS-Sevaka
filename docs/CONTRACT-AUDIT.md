@@ -839,3 +839,24 @@ Baseline sebelumnya FSD 0.16 / UIC 0.35. Aturan lintas-layar L1–L6 (`EMP-330`)
   - Panel Onboarding "Proses calon APPROVED" (§4.1) belum dibangun; Materialize tetap dari NJ-LIST.
   - L6 flag menu-tree (`can_view`/`can_insert`/…) belum punya sumber data di mode dummy; gating memakai peran.
   - Ubah calon WNI: KTP transient tidak dipulangkan detail, jadi KTP wajib diketik ulang saat Ubah.
+
+## 30. Auth — FSD-001-AUTH 0.18 / UIC-001-AUTH 0.24 (rilis FE-261008, 13 Oktober 2026)
+
+Baseline FSD 0.14 / UIC 0.19. Fokus perubahan tampilan (sapuan routing komponen TST-119, `AUT-251`).
+
+- **Password tiga layar login + RP2 + AA-1:** kompleksitas dicek di klien, SATU pesan aturan pertama yang gagal
+  (`Minimal 8 karakter` → huruf kecil → huruf kapital → angka → karakter spesial). Demo: pakai mis. `Sevaka@2026`.
+- **Login gagal:** identifier & password dipertahankan, Turnstile di-reset. Demo: password `Salah@123` ⇒ 401.
+- **OTP:** teks "Minta kode baru dalam mm:ss" menggantikan tombol; sesudah 00:00 tombol "Minta kode baru" ⇒ toast
+  + kembali ke Login WhatsApp (tanpa endpoint kirim-ulang; batas "3 permintaan" dicabut dari layar). Kode salah:
+  kotak tidak dikosongkan, satu pesan seragam. Demo: kode `000000`.
+- **Auto-verify magic link:** param hilang ⇒ toast + ke Login; gagal ⇒ kartu "Verifikasi Gagal" + Kembali ke Login.
+  Demo: `/auth/verify?aid=x&token=expired`.
+- **RP2:** param hilang / 401 ⇒ kartu "Link Tidak Valid" + "Minta Link Baru"; 502 ⇒ toast, field tetap; sukses
+  membersihkan sesi lokal dulu. Demo: `?aid=x&token=expired` / `token=idp-down`.
+- **AA-ERR:** pesan seragam UIC §5.1.
+- **Beranda:** kartu lapis Perusahaan hanya SUPER_ADMIN · HR_MANAGER · HR_STAFF · Dept Manager (peran lain tidak
+  dirender). Sesi dummy login kini `ROLE_SUPER_ADMIN` (sebelumnya label bebas "Administrator").
+- **Logout (topnav + tombol Keluar sidebar):** sesi lokal dibersihkan hanya bila server sukses; gagal ⇒ toast jujur.
+- **Activity Log:** rentang tanggal sudah tidak bisa terbalik (DateRangePicker) dan ganti Jenis mempertahankan
+  tanggal — sudah sesuai.

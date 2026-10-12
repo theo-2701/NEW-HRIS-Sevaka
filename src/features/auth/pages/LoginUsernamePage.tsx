@@ -17,7 +17,10 @@ export function LoginUsernamePage() {
       <Formik
         initialValues={{ username: '', password: '', turnstileToken: '' }}
         validationSchema={loginUsernameSchema}
-        onSubmit={(values) => login.mutate(values)}
+        // FSD-AUTH 0.18 §2: login gagal ⇒ identifier & password dipertahankan, token Turnstile dibuang.
+        onSubmit={(values, helpers) =>
+          login.mutate(values, { onError: () => void helpers.setFieldValue('turnstileToken', '', false) })
+        }
       >
         <Form className="mt-7 flex flex-col gap-3.5">
           <TextField

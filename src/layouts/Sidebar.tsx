@@ -7,6 +7,7 @@ import { navForPath, type NavLeaf, type NavSection } from '@/config/nav';
 import { NavIcon } from '@/components/NavIcon';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/lib/utils';
+import { useLogout } from '@/features/auth/hooks/useAuth';
 
 interface SidebarProps {
   expanded: boolean;
@@ -43,6 +44,7 @@ const SCROLL_FADE = '[mask-image:linear-gradient(to_bottom,transparent,black_8px
  */
 export function Sidebar({ expanded, onToggle }: SidebarProps) {
   const location = useLocation();
+  const logout = useLogout();
   const companyId = useAuthStore((s) => s.companyId) ?? 'DIKA';
   const company = COMPANY_IDENTITY[companyId] ?? { name: companyId, sub: '', logo: null };
 
@@ -189,6 +191,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         <button
           type="button"
           aria-label="Keluar"
+          onClick={() => logout.mutate()}
           title="Keluar"
           className="flex size-9 items-center justify-center rounded-md text-fg-3 transition-colors duration-200 ease-standard hover:bg-bg-app hover:text-error-700"
         >

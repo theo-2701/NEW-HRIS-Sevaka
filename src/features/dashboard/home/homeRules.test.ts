@@ -10,9 +10,11 @@ describe('Home — aturan tampilan', () => {
   });
 
   it('lapis Perusahaan hanya untuk HR/manajemen (FSD-AUTH §2.9)', () => {
-    expect(canSeeCompanyLayer('Administrator')).toBe(true);
-    expect(canSeeCompanyLayer('HR Manager')).toBe(true);
-    expect(canSeeCompanyLayer('Employee')).toBe(false);
+    expect(canSeeCompanyLayer('ROLE_SUPER_ADMIN')).toBe(true);
+    expect(canSeeCompanyLayer('ROLE_HR_STAFF')).toBe(true);
+    expect(canSeeCompanyLayer('ROLE_DEPT_MANAGER')).toBe(true);
+    expect(canSeeCompanyLayer('ROLE_EMPLOYEE')).toBe(false);
+    expect(canSeeCompanyLayer('ROLE_FINANCE_OFFICER')).toBe(false);
     expect(canSeeCompanyLayer(undefined)).toBe(false);
   });
 

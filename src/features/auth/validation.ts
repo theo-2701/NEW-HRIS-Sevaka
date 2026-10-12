@@ -1,21 +1,22 @@
 import * as Yup from 'yup';
 
 /**
- * Skema validasi Yup untuk modul auth.
- * Aturan password mengikuti layar RP2: minimal 8 karakter dengan huruf besar,
- * huruf kecil, angka, dan simbol.
+ * Kompleksitas password (FSD-AUTH 0.17 §2): dicek di klien pada tiga layar login, RP2, dan AA-1.
+ * SATU pesan saja — aturan pertama yang gagal, urutan tetap: min 8 → kecil → kapital → angka → spesial.
+ * Formik mengambil galat pertama per field, jadi urutan `.test` di bawah = urutan tampil.
  */
-export const passwordRule = Yup.string()
-  .required('Password wajib diisi.')
-  .min(8, 'Password minimal 8 karakter.')
-  .matches(/[A-Z]/, 'Password harus memuat huruf besar.')
-  .matches(/[a-z]/, 'Password harus memuat huruf kecil.')
-  .matches(/\d/, 'Password harus memuat angka.')
-  .matches(/[^A-Za-z0-9]/, 'Password harus memuat simbol.');
+export const passwordRule = (requiredMessage = 'Password wajib diisi') =>
+  Yup.string()
+    .required(requiredMessage)
+    .min(8, 'Minimal 8 karakter')
+    .matches(/[a-z]/, 'Harus mengandung huruf kecil')
+    .matches(/[A-Z]/, 'Harus mengandung huruf kapital')
+    .matches(/\d/, 'Harus mengandung angka')
+    .matches(/[^A-Za-z0-9]/, 'Harus mengandung karakter spesial');
 
 export const loginEmailSchema = Yup.object({
   email: Yup.string().required('Email wajib diisi.').email('Format email tidak valid.'),
-  password: Yup.string().required('Password wajib diisi.'),
+  password: passwordRule(),
   turnstileToken: Yup.string().required('Selesaikan verifikasi anti-bot terlebih dahulu.'),
 });
 
@@ -23,14 +24,14 @@ export const loginUsernameSchema = Yup.object({
   username: Yup.string()
     .required('Username wajib diisi.')
     .matches(/^[a-z][a-z0-9._-]*$/, 'Huruf kecil, diawali huruf.'),
-  password: Yup.string().required('Password wajib diisi.'),
+  password: passwordRule(),
   turnstileToken: Yup.string().required('Selesaikan verifikasi anti-bot terlebih dahulu.'),
 });
 
 export const loginWhatsappSchema = Yup.object({
   // Klien DILARANG menolak bentuk 08…/62…/+62… (KA-17) — hanya wajib isi; server yang menormalkan.
   phone: Yup.string().trim().required('Nomor handphone wajib diisi.'),
-  password: Yup.string().required('Password wajib diisi.'),
+  password: passwordRule(),
   turnstileToken: Yup.string().required('Selesaikan verifikasi anti-bot terlebih dahulu.'),
 });
 
@@ -39,10 +40,10 @@ export const forgotPasswordSchema = Yup.object({
 });
 
 export const resetPasswordSchema = Yup.object({
-  password: passwordRule,
+  password: passwordRule('Password baru wajib diisi'),
   passwordConfirmation: Yup.string()
     .required('Konfirmasi password wajib diisi.')
-    .oneOf([Yup.ref('password')], 'Password tidak cocok.'),
+    .oneOf([Yup.ref('password')], 'Password tidak cocok'),
 });
 
 /** Skor kekuatan password 0–4 untuk meter di layar RP2. */

@@ -31,7 +31,7 @@ export function MagicLinkSentPage() {
       {/* Tombol simulasi ini menggantikan klik tautan pada email — hapus saat
           integrasi backend selesai dan tautan asli sudah bisa dibuka. */}
       <div className="mt-7">
-        <AuthSubmit type="button" onClick={() => navigate('/auth/verify')}>
+        <AuthSubmit type="button" onClick={() => navigate('/auth/verify?aid=mock-aid&token=mock-magic-token')}>
           Simulasikan klik tautan
         </AuthSubmit>
       </div>

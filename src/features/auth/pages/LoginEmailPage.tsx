@@ -17,7 +17,10 @@ export function LoginEmailPage() {
       <Formik
         initialValues={{ email: '', password: '', turnstileToken: '' }}
         validationSchema={loginEmailSchema}
-        onSubmit={(values) => login.mutate(values)}
+        // FSD-AUTH 0.18 §2: login gagal ⇒ identifier & password dipertahankan, token Turnstile dibuang.
+        onSubmit={(values, helpers) =>
+          login.mutate(values, { onError: () => void helpers.setFieldValue('turnstileToken', '', false) })
+        }
       >
         <Form className="mt-7 flex flex-col gap-3.5">
           <TextField name="email" type="email" label="Email" placeholder="Masukkan email Anda" autoComplete="email" />

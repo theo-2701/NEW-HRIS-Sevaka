@@ -43,7 +43,8 @@ export function ActivateAccountPage() {
           size="sm"
           center
           title="Tautan tidak dapat dipakai"
-          lead="Tautan aktivasi ini sudah kedaluwarsa atau sudah pernah dipakai. Hubungi admin HR untuk meminta tautan aktivasi baru."
+          // FSD-AUTH 0.18 §5.1: pesan seragam UIC §5.1, tanpa pembeda sebab.
+          lead="Tautan ini tidak dapat dipakai — silakan minta undangan baru ke admin/HR."
         />
         <div className="mt-7">
           <AuthSubmit type="button" onClick={() => navigate('/auth/login')}>

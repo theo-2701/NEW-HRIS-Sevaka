@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { useHomeStats } from '@/features/dashboard/hooks/useDashboard';
 import { useAuthStore } from '@/store/auth.store';
 import { formatDate } from '@/lib/format';
+import { canSeeCompanyLayer } from '@/features/dashboard/home/homeRules';
 
 const MONTHS = [
   'Januari',
@@ -20,8 +21,6 @@ const MONTHS = [
   'Desember',
 ];
 
-/** Lapis Perusahaan hanya untuk peran HR/manajemen (FSD-AUTH §2.9, DS-5). */
-const COMPANY_LAYER_ROLE = /admin|hr|manager|manajer/i;
 
 function StatCardShell({ title, sub, children }: { title: string; sub: string; children: ReactNode }) {
   return (
@@ -80,7 +79,7 @@ function StatSection({
 export function HomeStatCards() {
   const user = useAuthStore((s) => s.user);
   const { data, isLoading } = useHomeStats();
-  const companyLayer = COMPANY_LAYER_ROLE.test(user?.role ?? '');
+  const companyLayer = canSeeCompanyLayer(user?.role);
   const monthLabel = data ? `${MONTHS[Number(data.month.slice(5, 7)) - 1]} ${data.month.slice(0, 4)}` : 'bulan berjalan';
 
   return (

@@ -1,6 +1,8 @@
 import { Form, Formik, useFormikContext } from 'formik';
-import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Check, CircleX } from 'lucide-react';
+import { ApiError } from '@/services/api';
+import { LINK_DEAD } from '@/features/auth/services/auth.service';
 import { PasswordField } from '@/components/form/PasswordField';
 import { AuthHeading, AuthSubmit } from '@/features/auth/components/AuthScreen';
 import { useResetPassword } from '@/features/auth/hooks/useAuth';
@@ -36,9 +38,30 @@ export function PasswordStrengthMeter() {
   );
 }
 
-/** RP2 — Atur Password Baru. */
+/**
+ * RP2 — Atur Password Baru. FSD-AUTH 0.18 §3.3: param `aid`/`token` hilang (saat dibuka) atau `401`
+ * (sesudah Simpan) ⇒ form diganti kartu "Link Tidak Valid"; galat lain ⇒ isi kedua field dipertahankan.
+ */
 export function ResetPasswordPage() {
-  const reset = useResetPassword();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const token = params.get('token');
+  const reset = useResetPassword(token ?? '');
+  const dead = !params.get('aid') || !token || (reset.error instanceof ApiError && reset.error.status === 401);
+
+  if (dead) {
+    return (
+      <div className="flex flex-col items-center gap-6 py-4">
+        <span className="flex size-16 items-center justify-center rounded-full bg-error-100 text-error-700">
+          <CircleX className="size-8" />
+        </span>
+        <AuthHeading size="sm" center title="Link Tidak Valid" lead={LINK_DEAD} />
+        <AuthSubmit type="button" onClick={() => navigate('/auth/forgot-password')}>
+          Minta Link Baru
+        </AuthSubmit>
+      </div>
+    );
+  }
 
   return (
     <>

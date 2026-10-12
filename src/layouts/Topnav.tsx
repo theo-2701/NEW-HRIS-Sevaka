@@ -27,7 +27,7 @@ import {
 import { Avatar } from '@/components/Avatar';
 import { SevakaLogo } from '@/components/brand/SevakaLogo';
 import { useAuthStore } from '@/store/auth.store';
-import { authService } from '@/features/auth/services/auth.service';
+import { useLogout } from '@/features/auth/hooks/useAuth';
 import { useHasUnread } from '@/features/notification/hooks/useNotification';
 import { NOTIFICATION_PATH } from '@/features/notification/types';
 import { cn } from '@/lib/utils';
@@ -60,7 +60,7 @@ export function Topnav() {
   const navigate = useNavigate();
   const { data: hasUnread } = useHasUnread();
   const user = useAuthStore((s) => s.user);
-  const clear = useAuthStore((s) => s.clear);
+  const logout = useLogout();
   const product = productForPath(useLocation().pathname);
 
   return (
@@ -182,13 +182,7 @@ export function Topnav() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               danger
-              onSelect={() => {
-                // Force logout SELF_LOGOUT mencabut sesi di server; store dibersihkan apa pun hasilnya.
-                const employeeId = useAuthStore.getState().user?.id;
-                if (employeeId) void authService.logout(employeeId).catch(() => undefined);
-                clear();
-                navigate('/auth/login');
-              }}
+              onSelect={() => logout.mutate()}
             >
               <LogOut />
               Sign out

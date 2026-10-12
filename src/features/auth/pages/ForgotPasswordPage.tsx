@@ -60,7 +60,7 @@ export function ForgotPasswordSentPage() {
 
       {/* Simulasi klik tautan reset — hapus setelah backend siap. */}
       <div className="mt-7">
-        <AuthSubmit type="button" onClick={() => navigate('/auth/reset-password')}>
+        <AuthSubmit type="button" onClick={() => navigate('/auth/reset-password?aid=mock-aid&token=mock-reset-token')}>
           Simulasikan klik tautan
         </AuthSubmit>
       </div>

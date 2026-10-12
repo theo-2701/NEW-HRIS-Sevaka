@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/features/auth/services/auth.service';
+import { ApiError } from '@/services/api';
 import { useAuthFlowStore } from '@/features/auth/store/authFlow.store';
 import { useAuthStore } from '@/store/auth.store';
 import { toast } from '@/store/ui.store';
@@ -70,13 +71,12 @@ function useCompleteSession() {
   };
 }
 
-/** Verifikasi tautan magic link (layar AV). */
+/** Verifikasi tautan magic link (layar AV). Galat ditampilkan sebagai kartu, bukan toast (FSD 0.18 §2.4). */
 export function useVerifyMagicLink() {
   const complete = useCompleteSession();
   return useMutation({
     mutationFn: (token: string) => authService.verifyMagicLink(token),
     onSuccess: complete,
-    onError: (error: Error) => toast(error.message, 'danger'),
   });
 }
 
@@ -90,18 +90,6 @@ export function useVerifyOtp() {
   });
 }
 
-export function useResendOtp() {
-  const countResend = useAuthFlowStore((s) => s.countResend);
-  return useMutation({
-    mutationFn: () => authService.resendOtp(),
-    onSuccess: () => {
-      countResend();
-      toast('Kode OTP baru telah dikirim.', 'ok');
-    },
-    onError: (error: Error) => toast(error.message, 'danger'),
-  });
-}
-
 export function useForgotPassword() {
   const navigate = useNavigate();
   return useMutation({
@@ -111,13 +99,43 @@ export function useForgotPassword() {
   });
 }
 
-export function useResetPassword() {
+/** 401 ⇒ kartu Link Tidak Valid (dirender halaman); galat lain toast, isi field dipertahankan. */
+export function useResetPassword(token: string) {
   const navigate = useNavigate();
+  const clearSession = useAuthStore((s) => s.clear);
   return useMutation({
     mutationFn: (payload: { password: string; passwordConfirmation: string }) =>
-      authService.resetPassword({ token: 'reset-token', ...payload }),
-    onSuccess: () => navigate('/auth/reset-password/done'),
-    onError: (error: Error) => toast(error.message, 'danger'),
+      authService.resetPassword({ token, ...payload }),
+    onSuccess: () => {
+      // Sesi lokal dibersihkan LEBIH DULU — server sudah mencabut semua sesi (FSD 0.18 §3.3).
+      clearSession();
+      navigate('/auth/reset-password/done');
+    },
+    onError: (error: Error) => {
+      if (error instanceof ApiError && error.status === 401) return;
+      toast(error instanceof ApiError && error.status >= 502 ? 'Ada gangguan sistem — silakan coba lagi.' : error.message, 'danger');
+    },
+  });
+}
+
+/**
+ * Keluar (SELF_LOGOUT · SINGLE_EMPLOYEE · diri sendiri). FSD-AUTH 0.18 §2.9: gagal ⇒ sesi lokal TIDAK
+ * dibersihkan, pengguna tetap masuk di layar yang sama, toast jujur.
+ */
+export function useLogout() {
+  const navigate = useNavigate();
+  const clear = useAuthStore((s) => s.clear);
+  return useMutation({
+    mutationFn: () => authService.logout(useAuthStore.getState().user?.id ?? ''),
+    onSuccess: () => {
+      clear();
+      navigate('/auth/login');
+    },
+    onError: () =>
+      toast(
+        'Sesi belum ditutup di server, jadi Anda masih masuk. Coba tekan Keluar sekali lagi; kalau tetap gagal, jangan tinggalkan perangkat ini dalam keadaan masuk.',
+        'danger',
+      ),
   });
 }
 
