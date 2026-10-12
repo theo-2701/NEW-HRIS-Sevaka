@@ -11,6 +11,8 @@ const validRequisition = {
   title: 'Staff Finance',
   headcount: 2,
   reason: 'Cabang baru butuh dua staf finance.',
+  activeFrom: '2099-01-01',
+  activeUntil: '2099-06-30',
 };
 
 describe('REQ-CREATE — validasi', () => {
@@ -34,15 +36,38 @@ describe('REQ-CREATE — validasi', () => {
   });
 });
 
-describe('REQ-CREATE — draft-first', () => {
-  it('menyimpan sebagai DRAFT tanpa submit, dan IN_APPROVAL bila disubmit', async () => {
-    const draft = await manpowerService.createRequisition(validRequisition, false);
-    expect(draft.status).toBe('DRAFT');
-    expect(draft.maker).toBe(CURRENT_USER);
+describe('REQ-CREATE — lahir IN_APPROVAL (FSD 0.24 §3.1)', () => {
+  it('tanpa draf: requisition baru langsung IN_APPROVAL, terisi 0', async () => {
+    const row = await manpowerService.createRequisition(validRequisition);
+    expect(row).toMatchObject({ status: 'IN_APPROVAL', maker: CURRENT_USER, filledCount: 0 });
+  });
 
-    const submitted = await manpowerService.createRequisition(validRequisition, true);
-    expect(submitted.status).toBe('IN_APPROVAL');
-    expect(submitted.id).not.toBe(draft.id);
+  it('tanggal batas sebelum mulai ditolak skema; batas di masa lampau ditolak server', async () => {
+    await expect(
+      requisitionSchema.validateAt('activeUntil', { ...validRequisition, activeUntil: '2098-12-31' }),
+    ).rejects.toThrow(/tidak boleh sebelum/);
+    await expect(
+      manpowerService.createRequisition({ ...validRequisition, activeFrom: '2020-01-01', activeUntil: '2020-02-01' }),
+    ).rejects.toThrow(/masa lampau/);
+  });
+});
+
+describe('REQ — Ubah · Batalkan · Tutup', () => {
+  it('Ubah dan Batalkan hanya saat IN_APPROVAL', async () => {
+    const row = await manpowerService.createRequisition(validRequisition);
+    await manpowerService.updateRequisition(row.id, { ...validRequisition, headcount: 3 });
+    expect((await manpowerService.requisitions()).find((r) => r.id === row.id)!.headcount).toBe(3);
+    await manpowerService.cancelRequisition(row.id);
+    await expect(manpowerService.updateRequisition(row.id, validRequisition)).rejects.toThrow(/422/);
+  });
+
+  it('Tutup: APPROVED → CLOSED dengan alasan wajib; status lain 422', async () => {
+    await expect(manpowerService.closeRequisition('REQ-0229', '  ')).rejects.toThrow(/alasan/);
+    await manpowerService.closeRequisition('REQ-0229', 'Posisi dibekukan');
+    const row = (await manpowerService.requisitions()).find((r) => r.id === 'REQ-0229')!;
+    expect(row).toMatchObject({ status: 'CLOSED', closedReason: 'Posisi dibekukan', closedByName: CURRENT_USER });
+    await expect(manpowerService.closeRequisition('REQ-0229', 'lagi')).rejects.toThrow(/422/);
+    await expect(manpowerService.cancelRequisition('REQ-0230')).rejects.toThrow(/422/);
   });
 });
 
@@ -64,17 +89,13 @@ describe('REQ-APPROVE — SoD', () => {
 });
 
 describe('REQ — guard state (UIC-EMPLOYEE §1.6)', () => {
-  it('requisition yang sudah diputus tidak bisa diputus lagi (409)', async () => {
-    const rows = await manpowerService.requisitions();
-    const other = rows.find((row) => row.status === 'IN_APPROVAL' && row.maker !== CURRENT_USER);
-    if (!other) return;
-    await manpowerService.approveRequisition(other.id, 'Disetujui');
-    await expect(manpowerService.approveRequisition(other.id, 'Lagi')).rejects.toThrow(/409/);
+  it('requisition yang sudah diputus tidak bisa diputus lagi (422 status)', async () => {
+    await expect(manpowerService.approveRequisition('REQ-0230', 'Lagi')).rejects.toThrow(/422/);
   });
 
   it('server menolak requisition tanpa justifikasi (422)', async () => {
     await expect(
-      manpowerService.createRequisition({ ...validRequisition, reason: '  ' }, false),
+      manpowerService.createRequisition({ ...validRequisition, reason: '  ' }),
     ).rejects.toThrow(/422/);
   });
 });

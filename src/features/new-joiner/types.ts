@@ -35,6 +35,8 @@ export interface Candidate {
    */
   idCardLast4: string;
   passportNumber: string;
+  /** `visa_number` — wajib bila FOREIGNER, `[A-Z0-9]{6,20}` (FSD 0.20). */
+  visaNumber: string;
   intendedJoinDate: string;
   status: CandidateStatus;
   maker: string;
@@ -49,9 +51,11 @@ export interface CandidateDraft {
   positionId: string;
   requisitionId: string;
   name: string;
-  nationality: Nationality;
+  /** '' = radio belum dipilih — keadaan awal NJ-CREATE (FSD 0.23 L2). */
+  nationality: Nationality | '';
   idCardNumber: string;
   passportNumber: string;
+  visaNumber: string;
   email: string;
   phone: string;
   intendedJoinDate: string;
@@ -99,12 +103,10 @@ export const POSITION_OPTIONS: SelectOption[] = [
   { value: 'pos-sales', label: 'Sales Executive — BR-Surabaya' },
 ];
 
-/** Kosong = kursi vacant; Radix Select tidak menerima item bernilai '', jadi
- *  keadaan "tanpa requisition" diwakili placeholder. */
-export const REQUISITION_OPTIONS: SelectOption[] = [
-  { value: 'REQ-0230', label: 'REQ-0230 — Engineering HQ' },
-  { value: 'REQ-0231', label: 'REQ-0231 — Finance BR-Papua' },
-];
+/** Maker NJ = Super Admin · HR Manager · HR Staff; checker = HR Manager · Super Admin (FSD §4.3). */
+export const isNjMaker = (role?: string) =>
+  role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER' || role === 'ROLE_HR_STAFF';
+export const isNjChecker = (role?: string) => role === 'ROLE_HR_MANAGER' || role === 'ROLE_SUPER_ADMIN';
 
 export const JOB_GRADE_OPTIONS: SelectOption[] = [
   { value: 'gr-2c', label: 'Class II-C · Pelaksana' },

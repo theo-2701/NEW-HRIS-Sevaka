@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { newJoinerService } from '@/features/new-joiner/services/new-joiner.service';
 import { toast } from '@/store/ui.store';
-import type { CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
 
 export const newJoinerKeys = {
@@ -29,12 +29,15 @@ function useCandidateMutation<TVars, TResult = void>(
 }
 
 export const useCreateCandidate = () =>
-  useCandidateMutation<{ draft: CandidateDraft; submitNow: boolean }>(
-    ({ draft, submitNow }) => newJoinerService.create(draft, submitNow),
-    (_result, { draft, submitNow }) =>
-      submitNow
-        ? `${draft.name} diajukan untuk persetujuan. Checker lain yang memutuskan (SoD).`
-        : `${draft.name} tersimpan sebagai draft. Pakai Submit untuk mengajukan.`,
+  useCandidateMutation<CandidateDraft, Candidate>(
+    (draft) => newJoinerService.create(draft),
+    (row) => `${row.name} tersimpan sebagai draft. Ajukan dari panel calon-tersimpan atau daftar.`,
+  );
+
+export const useUpdateCandidate = () =>
+  useCandidateMutation<{ id: string; draft: CandidateDraft }>(
+    ({ id, draft }) => newJoinerService.update(id, draft),
+    (_result, { draft }) => `Draft ${draft.name} diperbarui.`,
   );
 
 export const useSubmitCandidate = () =>
@@ -50,12 +53,6 @@ export const useApproveCandidate = () =>
       autoRejected > 0
         ? `${name} disetujui — kursi ditahan. ${autoRejected} kandidat saingan otomatis ditolak.`
         : `${name} disetujui — kursi ditahan sampai tanggal kedaluwarsa.`,
-  );
-
-export const useRejectCandidate = () =>
-  useCandidateMutation<{ id: string; name: string; note: string }>(
-    ({ id, note }) => newJoinerService.reject(id, note),
-    (_result, { name }) => `${name} ditolak.`,
   );
 
 export const useCancelCandidate = () =>

@@ -801,3 +801,41 @@ FSD-NOTIFICATION 0.4 / UIC 0.2 dan FSD-PERFORMANCE 0.11 / UIC 0.12.
   - Body laporan `PL-06`..`PL-12` memakai kunci snake_case.
   - **GAP:** G1/G2 "tenggat sanggahan telah lewat" tidak dapat dinilai FE sebelum server menjawab — karyawan tidak
     berhak membaca jendela yang dibuka ulang (`P5.08` HR saja); tetap mengandalkan `422 OBJECTION_DEADLINE_PASSED`.
+
+## 29. Employee — FSD-001-EMPLOYEE 0.24 / UIC-001-EMPLOYEE 0.42 (rilis FE-261008, 12 Oktober 2026)
+
+Baseline sebelumnya FSD 0.16 / UIC 0.35. Aturan lintas-layar L1–L6 (`EMP-330`) diterapkan per layar.
+
+- **Manpower & Requisition (§3):** requisition lahir `IN_APPROVAL` (tanpa draf/Ajukan); +`CLOSED`; field wajib
+  Tanggal Mulai/Batas (`active_from`/`active_until`, batas ≥ mulai, tidak lampau); kolom Terisi
+  (`filled_count / headcount`), Masa Aktif, Pengaju. Aksi per status × peran: Setujui/Tolak (checker HRM·SA),
+  Ubah (`PUT`) + Batalkan (`/cancel`) hanya `IN_APPROVAL` (maker HRS·HRM·SA), Tutup (`/close`, dialog alasan
+  maks 150, galat 422 tampil di dialog) hanya `APPROVED`. Galat status = 422 (urutan 404→403→409 SoD→422).
+- **New Joiner (§4):** create selalu `DRAFT` + panel calon-tersimpan (Ajukan/Ubah/Hapus draf/Tutup panel, form
+  dikosongkan); radio kewarganegaraan awal kosong, identitas tersembunyi sampai dipilih, ganti radio
+  mengosongkan cabang lain; `visa_number` wajib WNA `[A-Z0-9]{6,20}`; payload hanya cabang terpilih (L2).
+  `requisition_id` wajib — picker hanya Requisition `APPROVED` yang aktif hari ini (lintas modul ke
+  `manpowerService`), nama pengaju tampil; kolom Requisition di NJ-LIST. Aksi baris per §4.3 (Detail semua
+  status; Ajukan/Ubah/Hapus hanya DRAFT; Batalkan DRAFT/SUBMITTED/IN_APPROVAL, **tidak** APPROVED; Setujui
+  checker). Aksi **Tolak checker dicabut** (TSD §7.4.9). Materialize: tombol nonaktif sampai Tanggal join +
+  Golongan + Kontrak terisi (L3); `join_date` tidak lagi default dari `intended_join_date`.
+- **PTKP (§2):** Simpan nonaktif sampai Atestasi dicentang + teks "Atestasi: wajib dicentang"; ganti subjek ⇒
+  form (termasuk tanggungan) lahir ulang; daftar tanggungan kosong = "Tidak ada tanggungan tercatat".
+- **Transition (§5):** Posisi tujuan opsional; sub-tipe non-promosi/demosi mengosongkan Golongan tujuan; payload
+  API hanya isian yang tampil per jenis (L2). Waive juga untuk `SKIPPED` clearance-blocking (guard 409
+  diselaraskan). Force-release hanya peran checker (HRM·SA).
+- **Reprimand (§6):** Approve hanya `IN_APPROVAL`, Revoke hanya `ACTIVE`, keduanya HRM·SA dan disembunyikan bila
+  subjek = akun login; tidak ada Tolak. Blok snapshot tidak tampil di form, baru tampil dari respons sesudah
+  Simpan. Type Setting: segmen `ACCUMULATIVE` nonaktif ("enforcement ditunda"); layar hanya Super Admin.
+- **Mass Resignation (§7):** `DRAFT` langsung dapat di-Approve (tanpa Submit); aksi baris hanya HRM·SA.
+  Dry-run terpisah dicabut — dampak dihitung server saat Simpan; melewati ambang ⇒ PREVIEW tanpa simpan,
+  centang konfirmasi lalu Simpan kedua (`confirmed=true`). Seleksi memuat diri sendiri ⇒ 422 seluruhnya.
+  `selection_hash` hex 64 tanpa prefix, dibawa dari respons approve; Process tanpa hash ⇒ nonaktif +
+  "Buka batch ini dari layar persetujuan".
+- **Directory (UIC 0.36):** DTO search +`employee_ids` (maks 500 ⇒ 422).
+- **GAP / belum:**
+  - Bulk Import (§8 `BI-*`) belum punya layar di repo — aturan 0.23 (Tinjau & Putuskan, Unggah nonaktif tanpa
+    CSV, berkas dikosongkan setelah 422) menunggu modul dibangun.
+  - Panel Onboarding "Proses calon APPROVED" (§4.1) belum dibangun; Materialize tetap dari NJ-LIST.
+  - L6 flag menu-tree (`can_view`/`can_insert`/…) belum punya sumber data di mode dummy; gating memakai peran.
+  - Ubah calon WNI: KTP transient tidak dipulangkan detail, jadi KTP wajib diketik ulang saat Ubah.

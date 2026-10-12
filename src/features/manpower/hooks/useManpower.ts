@@ -36,24 +36,37 @@ function useManpowerMutation<TVars, TResult = void>(
 }
 
 export const useCreateRequisition = () =>
-  useManpowerMutation<{ draft: RequisitionDraft; submitNow: boolean }, Requisition>(
-    ({ draft, submitNow }) => manpowerService.createRequisition(draft, submitNow),
-    (row, { submitNow }) =>
-      submitNow
-        ? {
-            text: `${row.id} diajukan untuk persetujuan. Menunggu HR Manager lain (SoD).`,
-            tone: 'info',
-          }
-        : { text: `${row.id} tersimpan sebagai draft. Bisa diubah dan diajukan nanti.` },
+  useManpowerMutation<RequisitionDraft, Requisition>(
+    (draft) => manpowerService.createRequisition(draft),
+    (row) => ({ text: `${row.id} diajukan untuk persetujuan. Menunggu HR Manager lain (SoD).`, tone: 'info' }),
     manpowerKeys.requisitions,
   );
 
-export const useSubmitRequisition = () =>
-  useManpowerMutation<{ id: string }>(
-    ({ id }) => manpowerService.submitRequisition(id),
-    (_result, { id }) => ({ text: `${id} diajukan untuk persetujuan.`, tone: 'info' }),
+export const useUpdateRequisition = () =>
+  useManpowerMutation<{ id: string; draft: RequisitionDraft }>(
+    ({ id, draft }) => manpowerService.updateRequisition(id, draft),
+    (_result, { id }) => ({ text: `${id} diperbarui.` }),
     manpowerKeys.requisitions,
   );
+
+export const useCancelRequisition = () =>
+  useManpowerMutation<{ id: string }>(
+    ({ id }) => manpowerService.cancelRequisition(id),
+    (_result, { id }) => ({ text: `${id} dibatalkan.`, tone: 'warn' }),
+    manpowerKeys.requisitions,
+  );
+
+/** Tanpa toast galat: 422 Tutup ditampilkan di dalam dialog alasan (FSD §3.1). */
+export function useCloseRequisition() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => manpowerService.closeRequisition(id, reason),
+    onSuccess: (_result, { id }) => {
+      toast(`${id} ditutup.`, 'ok');
+      void queryClient.invalidateQueries({ queryKey: manpowerKeys.requisitions });
+    },
+  });
+}
 
 export const useApproveRequisition = () =>
   useManpowerMutation<{ id: string; unitId: string; note: string }>(

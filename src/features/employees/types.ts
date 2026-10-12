@@ -69,6 +69,8 @@ export interface EmployeeSearchCriteria {
   createdTo: string;
   /** Operator IN — multi pilih. */
   employmentStatus: EmploymentStatus[];
+  /** `employee_ids` (uuid[], maks 500 ⇒ 422) — UIC-EMPLOYEE 0.36 §2.1, untuk konsumen lintas modul. */
+  employeeIds?: string[];
 }
 
 export type SortDirection = 'ASC' | 'DESC';

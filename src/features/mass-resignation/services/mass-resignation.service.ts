@@ -1,7 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { BLAST_THRESHOLD, CURRENT_USER } from '@/features/mass-resignation/types';
-import type { BatchDraft, MassBatch, PoolEmployee } from '@/features/mass-resignation/types';
+import type { BatchDraft, CreateBatchResult, MassBatch, PoolEmployee } from '@/features/mass-resignation/types';
 
 /**
  * API service Mass Resignation.
@@ -29,10 +29,11 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 /** Interval spawn offboarding yang di-throttle (mock). */
 const THROTTLE_MS = 1200;
 
+/** `selection_hash` = hex 64 karakter tanpa prefix `sha256:` (TSD K4, FSD 0.24 §7.1). */
 function fakeHash(): string {
   const chars = 'abcdef0123456789';
-  let value = 'sha256:';
-  for (let i = 0; i < 24; i += 1) value += chars[Math.floor(Math.random() * chars.length)];
+  let value = '';
+  for (let i = 0; i < 64; i += 1) value += chars[Math.floor(Math.random() * chars.length)];
   return value;
 }
 
@@ -135,27 +136,21 @@ export const massResignationService = {
   },
 
   /**
-   * Dry-run blast-radius. Baris diri sendiri tidak pernah ikut terhitung —
-   * self-resign dilarang di level kontrak, bukan sekadar UI.
+   * MR-CREATE (TSD §7.5.1, tanpa endpoint dry-run terpisah). `impacted`/`exceedsThreshold`
+   * dihitung server sekali pada Simpan. Bila melewati ambang dan `confirmed=false`, server
+   * membalas PREVIEW tanpa menyimpan; Simpan kedua dengan `confirmed=true` baru melahirkan DRAFT.
    */
-  async dryRun(employeeIds: string[]): Promise<{ impacted: number; overThreshold: boolean }> {
-    if (MOCK) {
-      await delay(400);
-      const impacted = employeeIds.filter((id) => !pool.find((row) => row.id === id)?.self).length;
-      return { impacted, overThreshold: impacted > BLAST_THRESHOLD };
-    }
-    const { data } = await api.post<{ impacted: number; overThreshold: boolean }>(
-      '/mass-resignations/dry-run',
-      { employeeIds },
-    );
-    return data;
-  },
-
-  async createDraft(draft: BatchDraft): Promise<MassBatch> {
+  async createDraft(draft: BatchDraft, confirmed = false): Promise<CreateBatchResult> {
     if (MOCK) {
       await delay();
-      const eligible = draft.employeeIds.filter((id) => !pool.find((item) => item.id === id)?.self);
+      // Self-resign dilarang: bila lolos, seluruh pengajuan ditolak 422 (FSD 0.24 §7.1).
+      if (draft.employeeIds.some((id) => pool.find((item) => item.id === id)?.self)) {
+        throw new Error('422 — pengajuan memuat akun Anda sendiri; self-resign dilarang.');
+      }
+      const eligible = draft.employeeIds;
       if (!eligible.length) throw new Error('422 — pilih minimal satu karyawan (tanpa diri sendiri).');
+      const exceedsThreshold = eligible.length > BLAST_THRESHOLD;
+      if (exceedsThreshold && !confirmed) return { impacted: eligible.length, exceedsThreshold };
       if (!draft.reason || !draft.leaveDate) throw new Error('422 — reason_category dan effective_leave_date wajib diisi.');
       const title = draft.batchTitle?.trim() ?? '';
       if (title && !/^[A-Za-z0-9 .,'()-]{1,150}$/.test(title)) {
@@ -165,7 +160,7 @@ export const massResignationService = {
         id: `MR-00${43 + mockRows.length}`,
         reason: draft.reason,
         leaveDate: draft.leaveDate,
-        total: draft.employeeIds.filter((id) => !pool.find((item) => item.id === id)?.self).length,
+        total: eligible.length,
         progress: 0,
         status: 'DRAFT',
         maker: CURRENT_USER,
@@ -173,21 +168,10 @@ export const massResignationService = {
         batchTitle: title || undefined,
       };
       mockRows = [row, ...mockRows];
-      return row;
+      return { batch: row, impacted: eligible.length, exceedsThreshold };
     }
-    const { data } = await api.post<MassBatch>('/mass-resignations', draft);
+    const { data } = await api.post<CreateBatchResult>('/mass-resignations', { ...draft, confirmed });
     return data;
-  },
-
-  async submit(id: string): Promise<void> {
-    if (MOCK) {
-      await delay(200);
-      const row = find(id);
-      assertStatus(row, ['DRAFT'], 'submit');
-      row.status = 'IN_APPROVAL';
-      return;
-    }
-    await api.post(`/mass-resignations/${id}/submit`);
   },
 
   /** Approve membekukan seleksi sebagai hash (anti-TOCTOU). */
@@ -196,7 +180,8 @@ export const massResignationService = {
       await delay();
       const row = find(id);
       assertChecker(row);
-      assertStatus(row, ['IN_APPROVAL'], 'approve');
+      // Batch DRAFT dari form langsung dapat disetujui; tidak ada Ajukan (FSD 0.24 §7.3).
+      assertStatus(row, ['DRAFT', 'IN_APPROVAL'], 'approve');
       row.status = 'APPROVED';
       row.selectionHash = fakeHash();
       row.approverNote = note;

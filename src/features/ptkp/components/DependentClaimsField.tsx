@@ -22,7 +22,7 @@ export function DependentClaimsField({ relatives }: { relatives: Relative[] }) {
       <Label>Tanggungan yang diklaim</Label>
       {relatives.length === 0 ? (
         <span className="font-body text-xs font-medium text-fg-3">
-          Karyawan ini belum punya data keluarga di Employee Profile — tidak ada tanggungan yang bisa diklaim.
+          Tidak ada tanggungan tercatat.
         </span>
       ) : (
         <div className="flex flex-col gap-2">

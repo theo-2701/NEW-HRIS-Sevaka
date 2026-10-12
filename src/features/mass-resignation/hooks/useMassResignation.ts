@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { massResignationService } from '@/features/mass-resignation/services/mass-resignation.service';
 import { toast } from '@/store/ui.store';
-import type { BatchDraft, MassBatch } from '@/features/mass-resignation/types';
+import type { BatchDraft, CreateBatchResult, MassBatch } from '@/features/mass-resignation/types';
 import type { ToastTone } from '@/store/ui.store';
 
 export const massResignationKeys = {
@@ -42,24 +42,13 @@ function useBatchMutation<TVars, TResult = void>(
   });
 }
 
-/** Dry-run tidak mengubah apa pun — jadi bukan mutasi berinvalidasi. */
-export function useDryRun() {
-  return useMutation({
-    mutationFn: (employeeIds: string[]) => massResignationService.dryRun(employeeIds),
-    onError: (error: Error) => toast(error.message, 'danger'),
-  });
-}
-
 export const useCreateBatch = () =>
-  useBatchMutation<BatchDraft, MassBatch>(
-    (draft) => massResignationService.createDraft(draft),
-    (row) => ({ text: `${row.id} tersimpan sebagai draft dengan ${row.total} karyawan.` }),
-  );
-
-export const useSubmitBatch = () =>
-  useBatchMutation<{ id: string }>(
-    ({ id }) => massResignationService.submit(id),
-    (_result, { id }) => ({ text: `${id} diajukan untuk persetujuan.`, tone: 'info' }),
+  useBatchMutation<{ draft: BatchDraft; confirmed: boolean }, CreateBatchResult>(
+    ({ draft, confirmed }) => massResignationService.createDraft(draft, confirmed),
+    (result) =>
+      result.batch
+        ? { text: `${result.batch.id} tersimpan sebagai draft dengan ${result.batch.total} karyawan.` }
+        : { text: `Pratinjau dampak: ${result.impacted} karyawan melewati ambang. Konfirmasi lalu simpan lagi.`, tone: 'warn' },
   );
 
 export const useApproveBatch = () =>

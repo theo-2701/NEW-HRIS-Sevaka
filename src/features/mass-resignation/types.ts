@@ -57,6 +57,13 @@ export interface BatchDraft {
   batchTitle?: string;
 }
 
+/** Respons MR-CREATE: tanpa `batch` = PREVIEW (melewati ambang, belum dikonfirmasi). */
+export interface CreateBatchResult {
+  batch?: MassBatch;
+  impacted: number;
+  exceedsThreshold: boolean;
+}
+
 export const STATUS_LABEL: Record<BatchStatus, string> = {
   DRAFT: 'Draft',
   IN_APPROVAL: 'In approval',

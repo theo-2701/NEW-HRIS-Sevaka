@@ -9,6 +9,7 @@ import { Pagination } from '@/components/Pagination';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { RowButton } from '@/components/RowActions';
+import { useAuthStore } from '@/store/auth.store';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import {
   Note,
@@ -38,6 +39,8 @@ type Tab = 'standing' | 'history';
  * penerbitan. Alasan reprimand tidak pernah dirender di tabel.
  */
 export function ReprimandPage() {
+  const role = useAuthStore((s) => s.user?.role);
+  const canCheck = role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER';
   const { data: rows = [], isLoading } = useReprimands();
   const { data: standing = [] } = useStanding();
   const { data: categories = [] } = useReprimandCategories();
@@ -198,6 +201,7 @@ export function ReprimandPage() {
           reprimand={reviewing}
           standing={standing}
           policyMode={policyMode}
+          canCheck={canCheck}
           onClose={() => setReviewing(null)}
         />
       )}

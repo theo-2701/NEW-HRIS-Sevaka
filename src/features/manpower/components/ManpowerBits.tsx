@@ -15,6 +15,7 @@ const REQUISITION_TONE: Record<RequisitionStatus, BadgeTone> = {
   REJECTED: 'err',
   FULFILLED: 'ok',
   CANCELLED: 'mute',
+  CLOSED: 'mute',
 };
 
 const PLAN_TONE: Record<PlanStatus, BadgeTone> = {

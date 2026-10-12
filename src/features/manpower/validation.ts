@@ -15,6 +15,13 @@ export const requisitionSchema = Yup.object({
     .trim()
     .required('Justifikasi wajib diisi.')
     .max(150, 'Maksimal 150 karakter.'),
+  activeFrom: Yup.string().required('Tanggal mulai wajib diisi.'),
+  activeUntil: Yup.string()
+    .required('Tanggal batas wajib diisi.')
+    .test('after-from', 'Tanggal batas tidak boleh sebelum tanggal mulai.', function (value) {
+      const { activeFrom } = this.parent as { activeFrom?: string };
+      return !value || !activeFrom || value >= activeFrom;
+    }),
 });
 
 /** Skema MP-CREATE — rencana headcount per unit (FSD §3.1). */

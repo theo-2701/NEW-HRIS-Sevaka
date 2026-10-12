@@ -7,6 +7,9 @@ import { Pagination } from '@/components/Pagination';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { RowActions, RowButton } from '@/components/RowActions';
+import type { RowAction as RowActionItem } from '@/components/RowActions';
+import { useAuthStore } from '@/store/auth.store';
+import { useRequisitions } from '@/features/manpower/hooks/useManpower';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { CandidateStatusBadge, StatusTabs, type StatusTab } from '@/features/new-joiner/components/CandidateBits';
@@ -25,6 +28,8 @@ import {
   POSITION_OPTIONS,
   STATUS_LABEL,
   STATUS_ORDER,
+  isNjChecker,
+  isNjMaker,
   labelOf,
 } from '@/features/new-joiner/types';
 import type { Candidate, CandidateStatus } from '@/features/new-joiner/types';
@@ -56,6 +61,11 @@ export function NewJoinerPage() {
   const [materializing, setMaterializing] = useState<Candidate | null>(null);
   const [cancelling, setCancelling] = useState<Candidate | null>(null);
   const [deleting, setDeleting] = useState<Candidate | null>(null);
+  const [editing, setEditing] = useState<Candidate | null>(null);
+  const role = useAuthStore((s) => s.user?.role);
+  const maker = isNjMaker(role);
+  const checker = isNjChecker(role);
+  const { data: requisitions = [] } = useRequisitions();
 
   const submit = useSubmitCandidate();
   const cancel = useCancelCandidate();
@@ -92,7 +102,7 @@ export function NewJoinerPage() {
             <Button variant="secondary" asChild>
               <Link to="/employees/new-joiner/add">Add employee manually</Link>
             </Button>
-            <Button onClick={() => setCreating(true)}>Add candidate</Button>
+            {maker && <Button onClick={() => setCreating(true)}>Add candidate</Button>}
           </>
         }
       >
@@ -131,6 +141,14 @@ export function NewJoinerPage() {
                     header: 'Position',
                     muted: true,
                     render: (row) => labelOf(POSITION_OPTIONS, row.positionId),
+                  },
+                  {
+                    key: 'requisition',
+                    header: 'Requisition',
+                    render: (row) => {
+                      const req = requisitions.find((item) => item.id === row.requisitionId);
+                      return <CellIdentity name={req?.title ?? row.requisitionId} sub={req?.maker} />;
+                    },
                   },
                   {
                     key: 'nationality',
@@ -176,11 +194,18 @@ export function NewJoinerPage() {
         </div>
       </PageShell>
 
-      <CandidateFormModal open={creating} onClose={() => setCreating(false)} />
+      <CandidateFormModal
+        open={creating || Boolean(editing)}
+        editing={editing}
+        onClose={() => (setCreating(false), setEditing(null))}
+        onEdit={(row) => (setCreating(false), setEditing(row))}
+        onDelete={setDeleting}
+      />
 
       <ReviewCandidateModal
         candidate={reviewing}
         rivals={reviewing ? rivalsOf(rows, reviewing).length : 0}
+        canDecide={checker && (reviewing?.status === 'SUBMITTED' || reviewing?.status === 'IN_APPROVAL')}
         onClose={() => setReviewing(null)}
       />
 
@@ -202,7 +227,7 @@ export function NewJoinerPage() {
       <ConfirmDialog
         open={Boolean(deleting)}
         title="Hapus draft kandidat?"
-        description={`Draft ${deleting?.name ?? ''} akan dihapus permanen.`}
+        description={`Draft ${deleting?.name ?? ''} akan dihapus.`}
         loading={remove.isPending}
         onOpenChange={(open) => !open && setDeleting(null)}
         onConfirm={() =>
@@ -213,40 +238,26 @@ export function NewJoinerPage() {
   );
 
   /**
-   * Aksi baris mengikuti status (standar rumah: 1 aksi = tombol inline,
-   * ≥ 2 aksi = dropdown "Action ▾").
+   * Aksi baris per `nj_status` × peran (FSD 0.24 §4.3; L1 sembunyikan yang tak berhak).
+   * Pembuat tidak diketahui klien — Ubah/Batalkan tampil per peran, server menjawab 403.
+   * 1 aksi = tombol inline, ≥ 2 aksi = dropdown "Action ▾".
    */
   function RowAction({ row }: { row: Candidate }) {
-    if (row.status === 'DRAFT') {
-      return (
-        <RowActions
-          actions={[
-            {
-              label: 'Submit',
-              onSelect: () => submit.mutate({ id: row.id, name: row.name }),
-            },
-            { label: 'Delete', danger: true, onSelect: () => setDeleting(row) },
-          ]}
-        />
-      );
-    }
-    if (row.status === 'SUBMITTED' || row.status === 'IN_APPROVAL') {
-      return <RowButton onClick={() => setReviewing(row)}>Review</RowButton>;
-    }
-    if (row.status === 'APPROVED') {
-      return (
-        <RowActions
-          actions={[
-            { label: 'Materialise', onSelect: () => setMaterializing(row) },
-            { label: 'Cancel', danger: true, onSelect: () => setCancelling(row) },
-          ]}
-        />
-      );
-    }
-    if (row.status === 'MATERIALIZED') {
-      return <RowButton onClick={() => navigate('/employees/directory')}>View employee</RowButton>;
-    }
-    return <span className="font-body text-xs font-medium text-fg-4">Tidak ada aksi</span>;
+    const draft = row.status === 'DRAFT';
+    const pendingDecision = row.status === 'SUBMITTED' || row.status === 'IN_APPROVAL';
+    const actions: RowActionItem[] = [
+      { label: pendingDecision && checker ? 'Setujui' : 'Detail', onSelect: () => setReviewing(row) },
+      ...(draft && maker ? [{ label: 'Ajukan', onSelect: () => submit.mutate({ id: row.id, name: row.name }) }] : []),
+      ...(draft && maker ? [{ label: 'Ubah', onSelect: () => setEditing(row) }] : []),
+      ...(row.status === 'APPROVED' && maker ? [{ label: 'Materialize', onSelect: () => setMaterializing(row) }] : []),
+      ...(row.status === 'MATERIALIZED' ? [{ label: 'View employee', onSelect: () => navigate('/employees/directory') }] : []),
+      ...((draft || pendingDecision) && (maker || checker)
+        ? [{ label: 'Batalkan', danger: true, onSelect: () => setCancelling(row) }]
+        : []),
+      ...(draft && (maker || checker) ? [{ label: 'Hapus', danger: true, onSelect: () => setDeleting(row) }] : []),
+    ];
+    if (actions.length === 1) return <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>;
+    return <RowActions actions={actions} />;
   }
 }
 

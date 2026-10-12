@@ -66,7 +66,8 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
   return (
     <Formik
       initialValues={{
-        joinDate: candidate?.intendedJoinDate ?? '',
+        // FSD §4.1: join_date = kenyataan; intended_join_date bukan default.
+        joinDate: '',
         jobGradeId: '',
         contractFileName: '',
       }}
@@ -80,7 +81,7 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
         );
       }}
     >
-      {({ submitForm }) => (
+      {({ submitForm, values }) => (
         <Modal
           open={Boolean(candidate)}
           onOpenChange={(open) => !open && onClose()}
@@ -92,7 +93,11 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
               <Button variant="secondary" onClick={onClose}>
                 Cancel
               </Button>
-              <Button onClick={submitForm} disabled={materialize.isPending}>
+              <Button
+                onClick={submitForm}
+                // L3: nonaktif sampai Tanggal join, Golongan, dan Kontrak ketiganya terisi.
+                disabled={materialize.isPending || !values.joinDate || !values.jobGradeId || !values.contractFileName}
+              >
                 {materialize.isPending ? 'Memproses…' : 'Materialise employee'}
               </Button>
             </>

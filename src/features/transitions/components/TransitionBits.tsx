@@ -150,6 +150,8 @@ export function TaskCard({
 }) {
   const closed = isTaskClosed(task);
   const overdue = Boolean(task.timedOut) && !closed;
+  // FSD 0.24 §5.1: Waive pada state terbuka, plus SKIPPED khusus clearance-blocking.
+  const waivable = !closed || (task.status === 'SKIPPED' && Boolean(task.clearanceBlocking));
   const schedule = task.releasedAt || task.dueAt;
 
   return (
@@ -185,7 +187,7 @@ export function TaskCard({
         {task.skipReason && <MetaRow icon={<Info />}>Alasan: {task.skipReason}</MetaRow>}
       </div>
 
-      {(overdue || !closed) && (
+      {(overdue || waivable) && (
         <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border-1 pt-2.5">
           {overdue && (
             <span className="inline-flex items-center gap-1 font-body text-[11.5px] font-bold text-error-600 [&_svg]:size-3.5">
@@ -203,7 +205,7 @@ export function TaskCard({
               Confirm receipt
             </RowButton>
           )}
-          {!closed && (
+          {waivable && (
             <RowButton onClick={onWaive} disabled={busy}>
               Waive
             </RowButton>

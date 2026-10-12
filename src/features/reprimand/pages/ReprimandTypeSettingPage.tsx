@@ -25,6 +25,7 @@ import {
 import { categorySchema } from '@/features/reprimand/validation';
 import type { PolicyMode, PolicyVersion, ReprimandCategory } from '@/features/reprimand/types';
 import { formatDate } from '@/lib/format';
+import { useAuthStore } from '@/store/auth.store';
 
 type Tab = 'categories' | 'policy';
 
@@ -142,6 +143,19 @@ export function ReprimandTypeSettingPage() {
 
   const activeCategories = categories.filter((row) => row.active).sort((a, b) => a.levelOrder - b.levelOrder);
   const reprimandRule = useReprimandRule();
+  const role = useAuthStore((s) => s.user?.role);
+
+  // FSD 0.24 §6.1 (L6): layar konfigurasi hanya untuk Super Admin; peran lain tanpa akses.
+  if (role !== 'ROLE_SUPER_ADMIN') {
+    return (
+      <PageShell
+        crumbs={[{ label: 'Employee Management' }, { label: 'Reprimand', to: '/employees/reprimand' }, { label: 'Type Setting' }]}
+        title="Reprimand Type Setting"
+      >
+        <Note icon={<Info />}>Anda tidak memiliki akses ke layar ini. Konfigurasi kategori SP hanya untuk Super Admin.</Note>
+      </PageShell>
+    );
+  }
 
   return (
     <>
@@ -236,7 +250,8 @@ export function ReprimandTypeSettingPage() {
                       value: 'ACCUMULATIVE',
                       title: 'Accumulative',
                       description:
-                        'Standing diturunkan dengan menjumlahkan poin demerit aktif terhadap ambang di bawah ini. Belum tersedia pada rilis ini.',
+                        'Arsitektur siap · enforcement ditunda (FSD 0.24 §6.1) — belum dapat dipilih.',
+                      disabled: true,
                     },
                   ]}
                 />

@@ -10,56 +10,65 @@ import {
   KeyValueRow,
   Note,
 } from '@/features/new-joiner/components/CandidateBits';
-import { useApproveCandidate, useRejectCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
+import { useApproveCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
 import { NATIONALITY_LABEL, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
 import type { Candidate } from '@/features/new-joiner/types';
 import { formatDate } from '@/lib/format';
 
 /**
- * NJ-APPROVE — checker memutuskan. Menyetujui menahan kursi dan otomatis
- * menolak kandidat saingan di posisi yang sama (FSD §4.2). Maker tidak boleh
- * memutuskan pengajuannya sendiri (SoD) — ditolak service dengan 409.
+ * Detail calon + NJ-APPROVE. `canDecide` = checker dan status SUBMITTED/IN_APPROVAL;
+ * selain itu read-only. Checker **tidak punya Tolak** (FSD 0.17, TSD §7.4.9) — REJECTED
+ * hanya otomatis untuk sibling. SoD maker ≠ checker ditegakkan server (409).
  */
 export function ReviewCandidateModal({
   candidate,
   rivals,
+  canDecide,
   onClose,
 }: {
   candidate: Candidate | null;
   rivals: number;
+  canDecide: boolean;
   onClose: () => void;
 }) {
   const [note, setNote] = useState('');
   const approve = useApproveCandidate();
-  const reject = useRejectCandidate();
 
   useEffect(() => {
     if (candidate) setNote('');
   }, [candidate]);
-
-  const decide = (mutation: typeof approve | typeof reject) => {
-    if (!candidate) return;
-    mutation.mutate({ id: candidate.id, name: candidate.name, note }, { onSuccess: onClose });
-  };
-
-  const pending = approve.isPending || reject.isPending;
 
   return (
     <Modal
       open={Boolean(candidate)}
       onOpenChange={(open) => !open && onClose()}
       size="wide"
-      title="Review candidate"
-      description="Menyetujui akan menahan kursi dan menolak otomatis kandidat saingan di posisi yang sama."
+      title={canDecide ? 'Review candidate' : 'Candidate detail'}
+      description={
+        canDecide
+          ? 'Menyetujui akan menahan kursi dan menolak otomatis kandidat saingan di posisi yang sama.'
+          : 'Read-only.'
+      }
       footer={
-        <>
-          <Button variant="danger" onClick={() => decide(reject)} disabled={pending}>
-            Reject
+        canDecide ? (
+          <>
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              disabled={approve.isPending}
+              onClick={() =>
+                candidate && approve.mutate({ id: candidate.id, name: candidate.name, note }, { onSuccess: onClose })
+              }
+            >
+              {approve.isPending ? 'Memproses…' : 'Approve & reserve seat'}
+            </Button>
+          </>
+        ) : (
+          <Button variant="secondary" onClick={onClose}>
+            Close
           </Button>
-          <Button onClick={() => decide(approve)} disabled={pending}>
-            {approve.isPending ? 'Memproses…' : 'Approve & reserve seat'}
-          </Button>
-        </>
+        )
       }
     >
       {candidate && (
@@ -73,8 +82,9 @@ export function ReviewCandidateModal({
             <KeyValueRow label="Identitas">
               {candidate.nationality === 'CITIZEN'
                 ? `KTP •••• ${candidate.idCardLast4}`
-                : `Paspor ${candidate.passportNumber}`}
+                : `Paspor ${candidate.passportNumber} · Visa ${candidate.visaNumber}`}
             </KeyValueRow>
+            <KeyValueRow label="Requisition">{candidate.requisitionId}</KeyValueRow>
             <KeyValueRow label="Rencana masuk">{formatDate(candidate.intendedJoinDate)}</KeyValueRow>
             <KeyValueRow label="Maker">{candidate.maker}</KeyValueRow>
             <KeyValueRow label="Status">
@@ -82,7 +92,7 @@ export function ReviewCandidateModal({
             </KeyValueRow>
           </KeyValueList>
 
-          {rivals > 0 && (
+          {canDecide && rivals > 0 && (
             <Note tone="warn" icon={<Users />}>
               <strong>
                 {rivals} kandidat saingan
@@ -91,6 +101,7 @@ export function ReviewCandidateModal({
             </Note>
           )}
 
+          {canDecide && (
           <div className="flex flex-col gap-1">
             <Label htmlFor="checker-note">Catatan checker</Label>
             <Textarea
@@ -102,6 +113,7 @@ export function ReviewCandidateModal({
               placeholder="Tersimpan bersama keputusan"
             />
           </div>
+          )}
         </div>
       )}
     </Modal>

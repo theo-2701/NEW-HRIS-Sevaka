@@ -303,6 +303,7 @@ function applyCriteria(request: EmployeeSearchRequest): EmployeeSearchResponse {
       return false;
     }
     if (request.branchId && e.branchId !== request.branchId) return false;
+    if (request.employeeIds?.length && !request.employeeIds.includes(e.id)) return false;
     if (request.createdFrom && e.createdAt < request.createdFrom) return false;
     if (request.createdTo && e.createdAt > request.createdTo) return false;
     return true;
@@ -365,6 +366,7 @@ export const employeeService = {
   async search(request: EmployeeSearchRequest): Promise<EmployeeSearchResponse> {
     if (MOCK) {
       await delay();
+      if ((request.employeeIds?.length ?? 0) > 500) throw new Error('422 — employee_ids maksimal 500 item.');
       return applyCriteria(request);
     }
     const { data } = await api.post<EmployeeSearchResponse>('/employees/search', request);

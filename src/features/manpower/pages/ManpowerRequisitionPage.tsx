@@ -6,25 +6,32 @@ import { Card, CardHead, StatCard } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { RowButton } from '@/components/RowActions';
+import { RowActions, RowButton } from '@/components/RowActions';
+import type { RowAction } from '@/components/RowActions';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { formatDateRange } from '@/lib/format';
+import { useAuthStore } from '@/store/auth.store';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { Note, RequisitionStatusBadge } from '@/features/manpower/components/ManpowerBits';
 import { PlanCard } from '@/features/manpower/components/PlanCard';
 import { CreatePlanModal } from '@/features/manpower/components/CreatePlanModal';
 import {
+  CloseRequisitionDialog,
   CreateRequisitionModal,
   ReviewRequisitionModal,
 } from '@/features/manpower/components/RequisitionModals';
 import {
+  useCancelRequisition,
   useManpowerPlans,
   useRequisitions,
-  useSubmitRequisition,
 } from '@/features/manpower/hooks/useManpower';
 import {
   CURRENT_USER,
   PARENT_POSITION_OPTIONS,
   TERMINAL_REQUISITION,
   UNIT_OPTIONS,
+  isRequisitionChecker,
+  isRequisitionMaker,
   labelOf,
   planTotals,
 } from '@/features/manpower/types';
@@ -40,12 +47,33 @@ type Tab = 'plans' | 'requisitions';
 export function ManpowerRequisitionPage() {
   const { data: plans = [], isLoading: plansLoading } = useManpowerPlans();
   const { data: requisitions = [], isLoading: reqLoading } = useRequisitions();
-  const submit = useSubmitRequisition();
+  const cancel = useCancelRequisition();
+  const role = useAuthStore((s) => s.user?.role);
+  const maker = isRequisitionMaker(role);
+  const checker = isRequisitionChecker(role);
 
   const [tab, setTab] = useState<Tab>('plans');
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [creatingReq, setCreatingReq] = useState(false);
+  const [editing, setEditing] = useState<Requisition | null>(null);
   const [reviewing, setReviewing] = useState<Requisition | null>(null);
+  const [cancelling, setCancelling] = useState<Requisition | null>(null);
+  const [closing, setClosing] = useState<Requisition | null>(null);
+
+  /** Aksi baris per status × peran (FSD 0.24 §3.1); yang tak berhak disembunyikan (L1). */
+  const rowActions = (row: Requisition): RowAction[] => {
+    const open = row.status === 'IN_APPROVAL';
+    return [
+      { label: open && checker ? 'Review' : 'View Detail', onSelect: () => setReviewing(row) },
+      ...(open && maker
+        ? [
+            { label: 'Ubah', onSelect: () => setEditing(row) },
+            { label: 'Batalkan', danger: true, onSelect: () => setCancelling(row) },
+          ]
+        : []),
+      ...(row.status === 'APPROVED' && maker ? [{ label: 'Tutup', danger: true, onSelect: () => setClosing(row) }] : []),
+    ];
+  };
 
   const paged = usePagedRows(requisitions);
 
@@ -67,7 +95,7 @@ export function ManpowerRequisitionPage() {
             <Button variant="secondary" onClick={() => setCreatingPlan(true)}>
               New plan
             </Button>
-            <Button onClick={() => setCreatingReq(true)}>New requisition</Button>
+            {maker && <Button onClick={() => setCreatingReq(true)}>New requisition</Button>}
           </>
         }
       >
@@ -140,18 +168,30 @@ export function ManpowerRequisitionPage() {
                       render: (row) => labelOf(PARENT_POSITION_OPTIONS, row.parentPositionId),
                     },
                     { key: 'headcount', header: 'Headcount', align: 'center', strong: true, render: (row) => row.headcount },
+                    {
+                      key: 'filled',
+                      header: 'Terisi',
+                      align: 'center',
+                      nowrap: true,
+                      render: (row) => `${row.filledCount} / ${row.headcount}`,
+                    },
+                    {
+                      key: 'active',
+                      header: 'Masa Aktif',
+                      nowrap: true,
+                      render: (row) => formatDateRange(row.activeFrom, row.activeUntil),
+                    },
                     { key: 'status', header: 'Status', render: (row) => <RequisitionStatusBadge status={row.status} /> },
-                    { key: 'maker', header: 'Maker', muted: true, render: (row) => row.maker },
+                    { key: 'maker', header: 'Pengaju', muted: true, render: (row) => row.maker },
                   ]}
-                  actions={(row) =>
-                    row.status === 'DRAFT' ? (
-                      <RowButton onClick={() => submit.mutate({ id: row.id })}>Submit</RowButton>
+                  actions={(row) => {
+                    const actions = rowActions(row);
+                    return actions.length === 1 ? (
+                      <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>
                     ) : (
-                      <RowButton onClick={() => setReviewing(row)}>
-                        {row.status === 'IN_APPROVAL' ? 'Review' : 'View Detail'}
-                      </RowButton>
-                    )
-                  }
+                      <RowActions actions={actions} />
+                    );
+                  }}
                 />
 
                 <Pagination
@@ -169,8 +209,24 @@ export function ManpowerRequisitionPage() {
       </PageShell>
 
       <CreatePlanModal open={creatingPlan} onClose={() => setCreatingPlan(false)} />
-      <CreateRequisitionModal open={creatingReq} plans={plans} onClose={() => setCreatingReq(false)} />
-      <ReviewRequisitionModal requisition={reviewing} onClose={() => setReviewing(null)} />
+      <CreateRequisitionModal
+        open={creatingReq || Boolean(editing)}
+        plans={plans}
+        editing={editing}
+        onClose={() => (setCreatingReq(false), setEditing(null))}
+      />
+      <ReviewRequisitionModal requisition={reviewing} canCheck={checker} onClose={() => setReviewing(null)} />
+      <CloseRequisitionDialog key={closing?.id} requisition={closing} onClose={() => setClosing(null)} />
+      <ConfirmDialog
+        open={Boolean(cancelling)}
+        onOpenChange={(open) => !open && setCancelling(null)}
+        title={`Batalkan ${cancelling?.id ?? ''}?`}
+        description="Requisition berhenti menunggu keputusan checker dan menjadi CANCELLED."
+        confirmLabel="Batalkan requisition"
+        cancelLabel="Kembali"
+        loading={cancel.isPending}
+        onConfirm={() => cancelling && cancel.mutate({ id: cancelling.id }, { onSuccess: () => setCancelling(null) })}
+      />
     </>
   );
 }

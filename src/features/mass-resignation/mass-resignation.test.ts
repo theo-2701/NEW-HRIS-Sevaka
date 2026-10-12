@@ -15,25 +15,27 @@ describe('MR-CREATE — draft-first & blast radius', () => {
     ).rejects.toThrow(/minimal satu karyawan/);
   });
 
-  it('dry-run tidak menghitung baris diri sendiri (larangan self-resign)', async () => {
-    const withSelf = await massResignationService.dryRun(['emp-agus', 'emp-tony', 'emp-bunga']);
-    expect(withSelf.impacted).toBe(2);
-    expect(withSelf.overThreshold).toBe(false);
+  it('seleksi yang memuat diri sendiri ditolak seluruhnya 422 (FSD 0.24 §7.1)', async () => {
+    await expect(
+      massResignationService.createDraft({
+        reason: 'LAYOFF',
+        leaveDate: '2026-12-01',
+        employeeIds: ['emp-agus', 'emp-tony'],
+        notes: '',
+      }),
+    ).rejects.toThrow(/self-resign/);
   });
 
-  it('batch baru selalu lahir sebagai DRAFT milik maker yang login', async () => {
-    const row = await massResignationService.createDraft({
+  it('batch baru lahir DRAFT milik maker; dampak dihitung server saat Simpan', async () => {
+    const { batch, impacted, exceedsThreshold } = await massResignationService.createDraft({
       reason: 'LAYOFF',
       leaveDate: '2026-12-01',
-      employeeIds: ['emp-agus', 'emp-bunga', 'emp-tony'],
+      employeeIds: ['emp-agus', 'emp-bunga'],
       notes: '',
       batchTitle: 'Batch PHK Cabang X',
     });
-    expect(row.status).toBe('DRAFT');
-    expect(row.batchTitle).toBe('Batch PHK Cabang X');
-    expect(row.maker).toBe(CURRENT_USER);
-    // Baris diri sendiri tidak ikut terhitung.
-    expect(row.total).toBe(2);
+    expect({ impacted, exceedsThreshold }).toEqual({ impacted: 2, exceedsThreshold: false });
+    expect(batch).toMatchObject({ status: 'DRAFT', batchTitle: 'Batch PHK Cabang X', maker: CURRENT_USER, total: 2 });
   });
 });
 
@@ -41,7 +43,6 @@ describe('MR-APPROVE — SoD & pembekuan hash', () => {
   it('menolak approve oleh maker sendiri', async () => {
     const rows = await massResignationService.list();
     const own = rows.find((row) => row.maker === CURRENT_USER && row.status === 'DRAFT')!;
-    await massResignationService.submit(own.id);
     await expect(massResignationService.approve(own.id, 'oke')).rejects.toThrow(/409/);
   });
 
@@ -49,7 +50,7 @@ describe('MR-APPROVE — SoD & pembekuan hash', () => {
     const rows = await massResignationService.list();
     const target = rows.find((row) => row.status === 'IN_APPROVAL' && row.maker !== CURRENT_USER)!;
     const hash = await massResignationService.approve(target.id, 'Disetujui manajemen');
-    expect(hash).toMatch(/^sha256:[0-9a-f]{24}$/);
+    expect(hash).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 
@@ -57,7 +58,7 @@ describe('MR-PROCESS — anti-TOCTOU', () => {
   it('hash yang tidak cocok ditolak 409 dan batch tetap APPROVED', async () => {
     const rows = await massResignationService.list();
     const approved = rows.find((row) => row.status === 'APPROVED')!;
-    await expect(massResignationService.process(approved.id, 'sha256:deadbeef')).rejects.toThrow(/409/);
+    await expect(massResignationService.process(approved.id, 'deadbeef')).rejects.toThrow(/409/);
     const after = await massResignationService.list();
     expect(after.find((row) => row.id === approved.id)!.status).toBe('APPROVED');
   });

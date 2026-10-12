@@ -19,14 +19,14 @@ describe('TR-CREATE — field bercabang per tipe', () => {
     ).resolves.toBeTruthy();
   });
 
-  it('transfer mewajibkan sub-tipe dan posisi tujuan', async () => {
+  it('posisi tujuan transfer boleh kosong (FSD 0.24 §5.1)', async () => {
     await expect(
       transitionSchema.validateAt('destinationPositionId', {
         ...base,
         type: 'TRANSFER',
         destinationPositionId: '',
       }),
-    ).rejects.toThrow(/Posisi tujuan/);
+    ).resolves.toBe('');
   });
 
   it('target job grade hanya wajib untuk promosi/demosi', async () => {

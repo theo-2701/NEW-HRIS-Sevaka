@@ -3,7 +3,9 @@ import { MOCK } from '@/services/mock';
 import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER } from '@/features/new-joiner/types';
-import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
+import { manpowerService } from '@/features/manpower/services/manpower.service';
+import type { Requisition } from '@/features/manpower/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
 import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
 import { registerMaterializedEmployee } from '@/features/employees/services/employee.service';
@@ -14,11 +16,13 @@ import { startOnboardingForNewJoiner } from '@/features/transitions/services/tra
  *
  * Endpoint kontrak (FSD §4 · UIC §4):
  *   GET    /new-joiners                      — NJ-LIST  (lihat catatan gap)
- *   POST   /new-joiners                      — NJ-CREATE (draft / submit)
+ *   POST   /new-joiners                      — NJ-CREATE (selalu DRAFT)
+ *   PUT    /new-joiners/{id}                 — Ubah (hanya DRAFT)
  *   POST   /new-joiners/{id}/submit          — draft → SUBMITTED
- *   POST   /new-joiners/{id}/approve         — NJ-APPROVE, menahan kursi
- *   POST   /new-joiners/{id}/reject          — status REJECTED (§6.3); endpoint tak eksplisit di §4
- *   POST   /new-joiners/{id}/cancel
+ *   POST   /new-joiners/{id}/approve         — NJ-APPROVE, menahan kursi (checker tanpa Tolak —
+ *                                                REJECTED hanya otomatis untuk sibling, TSD §7.4.9)
+ *   POST   /new-joiners/{id}/cancel          — bukan untuk APPROVED (FSD 0.22)
+ *   DELETE /new-joiners/{id}                 — hapus draf
  *   POST   /new-joiners/{id}/materialize     — NJ-MATERIALIZE (Idempotency-Key)
  *
  * `PROB-FRONTEND-004`: kontrak read/list NJ-LIST belum ditegaskan di §7.
@@ -50,6 +54,7 @@ let mockRows: Candidate[] = [
     nationality: 'CITIZEN',
     idCardLast4: '0012',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-11-01',
     status: 'SUBMITTED',
     maker: 'Rina Hartono',
@@ -64,6 +69,7 @@ let mockRows: Candidate[] = [
     nationality: 'FOREIGNER',
     idCardLast4: '',
     passportNumber: 'A1234567',
+    visaNumber: 'VA12345679',
     intendedJoinDate: '2026-11-01',
     status: 'SUBMITTED',
     maker: 'Rina Hartono',
@@ -78,6 +84,7 @@ let mockRows: Candidate[] = [
     nationality: 'CITIZEN',
     idCardLast4: '7781',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-10-28',
     status: 'IN_APPROVAL',
     maker: 'Dewi Anggraini',
@@ -88,10 +95,11 @@ let mockRows: Candidate[] = [
     email: 'siti.n@email.com',
     phone: '+628120000013',
     positionId: 'pos-hrbp',
-    requisitionId: '',
+    requisitionId: 'REQ-0229',
     nationality: 'CITIZEN',
     idCardLast4: '4410',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-10-20',
     status: 'APPROVED',
     maker: 'Rina Hartono',
@@ -103,10 +111,11 @@ let mockRows: Candidate[] = [
     email: 'rudi.s@email.com',
     phone: '+628120000014',
     positionId: 'pos-sales',
-    requisitionId: '',
+    requisitionId: 'REQ-0228',
     nationality: 'CITIZEN',
     idCardLast4: '9032',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-10-18',
     status: 'APPROVED',
     maker: 'Bagus Pratama',
@@ -122,6 +131,7 @@ let mockRows: Candidate[] = [
     nationality: 'CITIZEN',
     idCardLast4: '1187',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-09-15',
     status: 'MATERIALIZED',
     maker: 'Rina Hartono',
@@ -133,10 +143,11 @@ let mockRows: Candidate[] = [
     email: 'bima.s@email.com',
     phone: '+628120000016',
     positionId: 'pos-sales',
-    requisitionId: '',
+    requisitionId: 'REQ-0228',
     nationality: 'CITIZEN',
     idCardLast4: '5520',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-09-10',
     status: 'REJECTED',
     maker: 'Bagus Pratama',
@@ -147,10 +158,11 @@ let mockRows: Candidate[] = [
     email: 'clara.d@email.com',
     phone: '+628120000017',
     positionId: 'pos-hrbp',
-    requisitionId: '',
+    requisitionId: 'REQ-0229',
     nationality: 'FOREIGNER',
     idCardLast4: '',
     passportNumber: 'FR889201',
+    visaNumber: 'VFR8892019',
     intendedJoinDate: '2026-08-30',
     status: 'EXPIRED',
     maker: 'Dewi Anggraini',
@@ -161,10 +173,11 @@ let mockRows: Candidate[] = [
     email: 'yoga.p@email.com',
     phone: '+628120000018',
     positionId: 'pos-be',
-    requisitionId: '',
+    requisitionId: 'REQ-0230',
     nationality: 'CITIZEN',
     idCardLast4: '3345',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2026-12-01',
     status: 'DRAFT',
     maker: CURRENT_USER,
@@ -203,6 +216,49 @@ function assertStatus(row: Candidate, allowed: Candidate['status'][], action: st
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Requisition yang boleh dipilih calon: APPROVED dan hari ini di dalam masa aktifnya (FSD 0.22). */
+export function isPickableRequisition(row: Requisition, today = toIsoDate(new Date())): boolean {
+  return row.status === 'APPROVED' && row.activeFrom <= today && today <= row.activeUntil;
+}
+
+/** L2: payload hanya memuat identitas cabang kewarganegaraan yang terpilih. */
+function toBody(draft: CandidateDraft) {
+  const { idCardNumber, passportNumber, visaNumber, ...rest } = draft;
+  const identity =
+    draft.nationality === 'CITIZEN' ? { idCardNumber } : { passportNumber, visaNumber };
+  return { ...rest, ...identity, phone: normalizePhone(draft.phone) };
+}
+
+/** Validasi server NJ-CREATE / Ubah (UIC-EMPLOYEE 0.42 §4.1). */
+async function assertCandidate(draft: CandidateDraft) {
+  const name = draft.name.trim();
+  if (!name || name.length > 150) throw new Error('422 — candidate_name wajib, maksimal 150 karakter.');
+  if (!CANDIDATE_NAME.test(name)) throw new Error('422 — candidate_name format §8.9 (subset full_name auth).');
+  if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email tidak valid.');
+  if (!CANDIDATE_PHONE.test(normalizePhone(draft.phone ?? ''))) {
+    throw new Error('422 — candidate_phone wajib, format §8.3 (mis. +628123456789).');
+  }
+  if (!draft.nationality) throw new Error('422 — nationality wajib dipilih.');
+  if (draft.nationality === 'CITIZEN' && !/^\d{16}$/.test(draft.idCardNumber)) {
+    throw new Error('422 — id_card_number wajib 16 digit untuk CITIZEN.');
+  }
+  if (draft.nationality === 'FOREIGNER') {
+    if (!/^[A-Z0-9]{6,15}$/.test(draft.passportNumber)) {
+      throw new Error('422 — passport_number wajib [A-Z0-9]{6,15} untuk FOREIGNER.');
+    }
+    if (!draft.visaNumber) throw new Error('422 — visa_number wajib untuk nationality FOREIGNER');
+    if (!/^[A-Z0-9]{6,20}$/.test(draft.visaNumber)) throw new Error('422 — visa_number [A-Z0-9]{6,20}.');
+  }
+  if (!draft.intendedJoinDate || draft.intendedJoinDate < toIsoDate(new Date())) {
+    throw new Error('422 — intended_join_date wajib dan tidak boleh di masa lalu.');
+  }
+  const requisitions = await manpowerService.requisitions();
+  const requisition = requisitions.find((row) => row.id === draft.requisitionId);
+  if (!requisition || !isPickableRequisition(requisition)) {
+    throw new Error('422 — requisition_id wajib menunjuk Requisition APPROVED yang masih di masa aktifnya.');
+  }
+}
+
 export const newJoinerService = {
   async list(): Promise<Candidate[]> {
     if (MOCK) {
@@ -214,53 +270,57 @@ export const newJoinerService = {
     return data.data;
   },
 
-  async create(draft: CandidateDraft, submitNow: boolean): Promise<void> {
+  /** Create §4.1 selalu melahirkan DRAFT; "Ajukan" = transisi §4.2 terpisah (dari panel calon-tersimpan). */
+  async create(draft: CandidateDraft): Promise<Candidate> {
     if (MOCK) {
       await delay();
-      // MbV (UIC-EMPLOYEE §4.1): identitas bercabang mengikuti kewarganegaraan.
-      const name = draft.name.trim();
-      if (!name || name.length > 150) throw new Error('422 — candidate_name wajib, maksimal 150 karakter.');
-      if (!CANDIDATE_NAME.test(name)) throw new Error('422 — candidate_name format §8.9 (subset full_name auth).');
-      if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email tidak valid.');
-      const phone = normalizePhone(draft.phone ?? '');
-      if (!CANDIDATE_PHONE.test(phone)) {
-        throw new Error('422 — candidate_phone wajib, format §8.3 (mis. +628123456789).');
-      }
-      if (draft.nationality === 'CITIZEN' && !/^\d{16}$/.test(draft.idCardNumber)) {
-        throw new Error('422 — id_card_number wajib 16 digit untuk CITIZEN.');
-      }
-      if (draft.nationality === 'FOREIGNER' && !/^[A-Z0-9]{6,15}$/.test(draft.passportNumber)) {
-        throw new Error('422 — passport_number wajib [A-Z0-9]{6,15} untuk FOREIGNER.');
-      }
-      if (!draft.intendedJoinDate || draft.intendedJoinDate < toIsoDate(new Date())) {
-        throw new Error('422 — intended_join_date wajib dan tidak boleh di masa lalu.');
-      }
-      mockRows = [
-        {
-          id: newId(),
-          name: draft.name.trim(),
-          email: draft.email.trim(),
-          phone,
-          positionId: draft.positionId,
-          requisitionId: draft.requisitionId,
-          nationality: draft.nationality,
-          // KTP transient: hanya 4 digit terakhir yang disimpan.
-          idCardLast4: draft.nationality === 'CITIZEN' ? draft.idCardNumber.slice(-4) : '',
-          passportNumber: draft.nationality === 'FOREIGNER' ? draft.passportNumber : '',
-          intendedJoinDate: draft.intendedJoinDate,
-          // Create §4.1 selalu melahirkan DRAFT; "Ajukan" = transisi §4.2 terpisah.
-          status: 'DRAFT',
-          maker: CURRENT_USER,
-        },
-        ...mockRows,
-      ];
-      if (submitNow) mockRows[0].status = 'SUBMITTED';
+      await assertCandidate(draft);
+      const nationality = draft.nationality as Nationality;
+      const row: Candidate = {
+        id: newId(),
+        name: draft.name.trim(),
+        email: draft.email.trim(),
+        phone: normalizePhone(draft.phone),
+        positionId: draft.positionId,
+        requisitionId: draft.requisitionId,
+        nationality,
+        // KTP transient: hanya 4 digit terakhir yang disimpan.
+        idCardLast4: nationality === 'CITIZEN' ? draft.idCardNumber.slice(-4) : '',
+        passportNumber: nationality === 'FOREIGNER' ? draft.passportNumber : '',
+        visaNumber: nationality === 'FOREIGNER' ? draft.visaNumber : '',
+        intendedJoinDate: draft.intendedJoinDate,
+        status: 'DRAFT',
+        maker: CURRENT_USER,
+      };
+      mockRows = [row, ...mockRows];
+      return { ...row };
+    }
+    const { data } = await api.post<Candidate>('/new-joiners', toBody(draft));
+    return data;
+  },
+
+  /** Ubah — hanya DRAFT (selain itu 409); Posisi & Requisition tidak ikut berubah; MbV dievaluasi ulang. */
+  async update(id: string, draft: CandidateDraft): Promise<void> {
+    if (MOCK) {
+      await delay();
+      const row = find(id);
+      assertStatus(row, ['DRAFT'], 'ubah');
+      await assertCandidate({ ...draft, positionId: row.positionId, requisitionId: row.requisitionId });
+      const nationality = draft.nationality as Nationality;
+      Object.assign(row, {
+        name: draft.name.trim(),
+        email: draft.email.trim(),
+        phone: normalizePhone(draft.phone),
+        nationality,
+        idCardLast4: nationality === 'CITIZEN' ? draft.idCardNumber.slice(-4) || row.idCardLast4 : '',
+        passportNumber: nationality === 'FOREIGNER' ? draft.passportNumber : '',
+        visaNumber: nationality === 'FOREIGNER' ? draft.visaNumber : '',
+        intendedJoinDate: draft.intendedJoinDate,
+      });
       return;
     }
-    await api.post('/new-joiners', { ...draft, phone: normalizePhone(draft.phone) });
-    if (submitNow) {
-      // Kontrak memisahkan create (DRAFT) dan submit.
-    }
+    const { positionId: _p, requisitionId: _r, ...rest } = toBody(draft);
+    await api.put(`/new-joiners/${id}`, rest);
   },
 
   async submit(id: string): Promise<void> {
@@ -294,24 +354,12 @@ export const newJoinerService = {
     return data.autoRejected;
   },
 
-  async reject(id: string, note: string): Promise<void> {
-    if (MOCK) {
-      await delay();
-      const row = find(id);
-      assertChecker(row);
-      assertStatus(row, ['SUBMITTED', 'IN_APPROVAL'], 'reject');
-      row.status = 'REJECTED';
-      row.checkerNote = note;
-      return;
-    }
-    await api.post(`/new-joiners/${id}/reject`, { note });
-  },
-
+  /** Calon APPROVED tidak dapat dibatalkan sejak FSD 0.22 (409). */
   async cancel(id: string): Promise<void> {
     if (MOCK) {
       await delay();
       const row = find(id);
-      assertStatus(row, ['DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED'], 'cancel');
+      assertStatus(row, ['DRAFT', 'SUBMITTED', 'IN_APPROVAL'], 'cancel');
       row.status = 'CANCELLED';
       delete row.seatExpiry;
       return;

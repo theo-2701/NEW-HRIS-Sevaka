@@ -56,7 +56,16 @@ function ReasonField({
 }
 
 /** MR-APPROVE — approve membekukan seleksi jadi hash (anti-TOCTOU). */
-export function ApproveBatchModal({ batch, onClose }: { batch: MassBatch | null; onClose: () => void }) {
+export function ApproveBatchModal({
+  batch,
+  onClose,
+  onApproved,
+}: {
+  batch: MassBatch | null;
+  onClose: () => void;
+  /** Hash dari respons approve dibawa ke MR-PROCESS (tidak ada di respons detail/search). */
+  onApproved: (batch: MassBatch, selectionHash: string) => void;
+}) {
   const [note, setNote] = useState('');
   const approve = useApproveBatch();
   const reject = useRejectBatch();
@@ -86,7 +95,9 @@ export function ApproveBatchModal({ batch, onClose }: { batch: MassBatch | null;
           </Button>
           <Button
             disabled={!noteOk || pending}
-            onClick={() => batch && approve.mutate({ id: batch.id, note: note.trim() }, { onSuccess: onClose })}
+            onClick={() =>
+              batch && approve.mutate({ id: batch.id, note: note.trim() }, { onSuccess: (hash) => onApproved(batch, hash) })
+            }
           >
             {approve.isPending ? 'Memproses…' : 'Approve & freeze hash'}
           </Button>
@@ -124,7 +135,16 @@ export function ApproveBatchModal({ batch, onClose }: { batch: MassBatch | null;
 }
 
 /** MR-PROCESS — mengirim hash beku; mismatch ditolak 409. */
-export function ProcessBatchModal({ batch, onClose }: { batch: MassBatch | null; onClose: () => void }) {
+export function ProcessBatchModal({
+  batch,
+  selectionHash,
+  onClose,
+}: {
+  batch: MassBatch | null;
+  /** Dibawa dari respons approve — read-only, dikirim apa adanya (FSD 0.24 §7.1). */
+  selectionHash?: string;
+  onClose: () => void;
+}) {
   const process = useProcessBatch();
 
   return (
@@ -140,10 +160,9 @@ export function ProcessBatchModal({ batch, onClose }: { batch: MassBatch | null;
             Cancel
           </Button>
           <Button
-            disabled={process.isPending || !batch?.selectionHash}
+            disabled={process.isPending || !selectionHash}
             onClick={() =>
-              batch?.selectionHash &&
-              process.mutate({ id: batch.id, selectionHash: batch.selectionHash }, { onSuccess: onClose })
+              batch && selectionHash && process.mutate({ id: batch.id, selectionHash }, { onSuccess: onClose })
             }
           >
             {process.isPending ? 'Mengirim…' : 'Send hash & process'}
@@ -168,8 +187,13 @@ export function ProcessBatchModal({ batch, onClose }: { batch: MassBatch | null;
               className="flex items-center gap-2 rounded-md border border-border-1 bg-mist px-3 py-2.5 font-mono text-xs font-semibold text-fg-2 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3"
             >
               <Fingerprint />
-              <span className="min-w-0 break-all">{batch.selectionHash}</span>
+              <span className="min-w-0 break-all">{selectionHash ?? '—'}</span>
             </div>
+            {!selectionHash && (
+              <span className="font-body text-xs font-medium text-error-800">
+                Buka batch ini dari layar persetujuan.
+              </span>
+            )}
           </div>
 
           <Note tone="warn" icon={<TriangleAlert />}>

@@ -1,50 +1,51 @@
-import { useRef } from 'react';
+import { useState } from 'react';
 import { Form, Formik, useField, useFormikContext } from 'formik';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/form/TextField';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
-import { useCreateCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
+import { useCreateCandidate, useSubmitCandidate, useUpdateCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
+import { useRequisitions } from '@/features/manpower/hooks/useManpower';
+import { isPickableRequisition } from '@/features/new-joiner/services/new-joiner.service';
 import { candidateSchema } from '@/features/new-joiner/validation';
-import { POSITION_OPTIONS, REQUISITION_OPTIONS } from '@/features/new-joiner/types';
-import type { CandidateDraft, Nationality } from '@/features/new-joiner/types';
+import { POSITION_OPTIONS } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft, Nationality } from '@/features/new-joiner/types';
+import { KeyValueList, KeyValueRow } from '@/features/new-joiner/components/CandidateBits';
 import { cn } from '@/lib/utils';
 
 const EMPTY: CandidateDraft = {
   positionId: '',
   requisitionId: '',
   name: '',
-  nationality: 'CITIZEN',
+  nationality: '',
   idCardNumber: '',
   passportNumber: '',
+  visaNumber: '',
   email: '',
   phone: '',
   intendedJoinDate: '',
 };
 
 const BRANCH: { value: Nationality; title: string; description: string }[] = [
-  { value: 'CITIZEN', title: 'Citizen (WNI)', description: 'Membutuhkan KTP 16 digit' },
-  { value: 'FOREIGNER', title: 'Foreigner (WNA)', description: 'Membutuhkan nomor paspor' },
+  { value: 'CITIZEN', title: 'WNI (Warga Negara Indonesia)', description: 'Membutuhkan KTP 16 digit' },
+  { value: 'FOREIGNER', title: 'WNA (Warga Negara Asing)', description: 'Membutuhkan nomor paspor dan visa' },
 ];
 
 /**
- * Pemilih kewarganegaraan (MbV, UIC §1.7). Mengganti pilihan akan
- * mengosongkan field identitas cabang lain supaya tidak ada dua identitas
- * terkirim sekaligus.
+ * Pemilih kewarganegaraan (MbV, UIC §1.7). Keadaan awal belum terpilih; mengganti
+ * pilihan mengosongkan identitas cabang lain (L2) — tidak ada dua identitas terkirim.
  */
 function NationalityBranch() {
-  const [field, , helpers] = useField<Nationality>('nationality');
+  const [field, meta, helpers] = useField<CandidateDraft['nationality']>('nationality');
   const { setFieldValue, setFieldTouched } = useFormikContext<CandidateDraft>();
 
   const pick = (value: Nationality) => {
     helpers.setValue(value);
-    if (value === 'CITIZEN') {
-      void setFieldValue('passportNumber', '');
-      void setFieldTouched('passportNumber', false);
-    } else {
-      void setFieldValue('idCardNumber', '');
-      void setFieldTouched('idCardNumber', false);
+    const cleared = value === 'CITIZEN' ? ['passportNumber', 'visaNumber'] : ['idCardNumber'];
+    for (const name of cleared) {
+      void setFieldValue(name, '');
+      void setFieldTouched(name, false);
     }
   };
 
@@ -83,17 +84,21 @@ function NationalityBranch() {
           );
         })}
       </div>
+      {meta.touched && meta.error && (
+        <span className="font-body text-xs font-medium text-error-800">{meta.error}</span>
+      )}
     </fieldset>
   );
 }
 
-/** Cabang identitas: hanya satu yang tampil, mengikuti kewarganegaraan. */
+/** Cabang identitas: tidak tampil sampai radio dipilih, lalu hanya cabang yang terpilih. */
 function IdentityBranch() {
   const { values } = useFormikContext<CandidateDraft>();
+  if (!values.nationality) return null;
 
-  if (values.nationality === 'CITIZEN') {
-    return (
-      <div className="rounded-[10px] border border-dashed border-fog bg-mist p-4">
+  return (
+    <div className="grid gap-4 rounded-[10px] border border-dashed border-fog bg-mist p-4 md:grid-cols-2">
+      {values.nationality === 'CITIZEN' ? (
         <TextField
           name="idCardNumber"
           label="Nomor KTP"
@@ -103,59 +108,115 @@ function IdentityBranch() {
           placeholder="16 digit"
           hint={`${values.idCardNumber.length}/16 digit`}
         />
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-[10px] border border-dashed border-fog bg-mist p-4">
-      <TextField
-        name="passportNumber"
-        label="Nomor paspor"
-        required
-        maxLength={15}
-        placeholder="mis. A1234567"
-        className="uppercase"
-        hint="6–15 karakter, hanya huruf dan angka."
-      />
+      ) : (
+        <>
+          <TextField
+            name="passportNumber"
+            label="Nomor paspor"
+            required
+            maxLength={15}
+            placeholder="mis. A1234567"
+            className="uppercase"
+            hint="6–15 karakter, hanya huruf dan angka."
+          />
+          <TextField
+            name="visaNumber"
+            label="Nomor visa"
+            required
+            maxLength={20}
+            placeholder="mis. VK2026ABC"
+            className="uppercase"
+            hint="6–20 karakter, huruf kapital dan angka."
+          />
+        </>
+      )}
     </div>
   );
 }
 
-/**
- * NJ-CREATE — maker mendaftarkan kandidat. Draft-first: "Save as draft" dan
- * "Save & submit" adalah dua aksi berbeda (FSD §4.1).
- */
-export function CandidateFormModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const create = useCreateCandidate();
-  const today = new Date().toISOString().slice(0, 10);
-  /** Aksi mana yang menekan submit — dibaca saat handler jalan, jadi pakai ref. */
-  const modeRef = useRef<'draft' | 'submit'>('submit');
+/** Requisition APPROVED yang hari ini di dalam masa aktifnya; nama pengaju tampil sesudah dipilih. */
+function RequisitionPicker() {
+  const { data: requisitions = [] } = useRequisitions();
+  const { values } = useFormikContext<CandidateDraft>();
+  const pickable = requisitions.filter((row) => isPickableRequisition(row));
+  const chosen = requisitions.find((row) => row.id === values.requisitionId);
 
   return (
-    <Formik
-      initialValues={EMPTY}
+    <SelectField
+      name="requisitionId"
+      label="Requisition"
+      required
+      placeholder="Pilih requisition APPROVED"
+      options={pickable.map((row) => ({ value: row.id, label: `${row.id} — ${row.title}` }))}
+      hint={chosen ? `Pengaju: ${chosen.maker}` : 'Hanya requisition APPROVED yang masih di masa aktifnya.'}
+    />
+  );
+}
+
+/** Ubah: nilai awal dari detail apa adanya (KTP transient tidak pernah dipulangkan). */
+function toDraft(row: Candidate): CandidateDraft {
+  return {
+    positionId: row.positionId,
+    requisitionId: row.requisitionId,
+    name: row.name,
+    nationality: row.nationality,
+    idCardNumber: '',
+    passportNumber: row.passportNumber,
+    visaNumber: row.visaNumber,
+    email: row.email,
+    phone: row.phone,
+    intendedJoinDate: row.intendedJoinDate,
+  };
+}
+
+/**
+ * NJ-CREATE / Ubah. Simpan selalu melahirkan DRAFT; sesudahnya form dikosongkan (L5)
+ * dan panel calon-tersimpan menawarkan Ajukan · Ubah · Hapus draf · Tutup panel.
+ * Modal Ubah (`editing`) memakai isian yang sama kecuali Posisi dan Requisition.
+ */
+export function CandidateFormModal({
+  open,
+  editing,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  open: boolean;
+  editing?: Candidate | null;
+  onClose: () => void;
+  onEdit: (row: Candidate) => void;
+  onDelete: (row: Candidate) => void;
+}) {
+  const create = useCreateCandidate();
+  const update = useUpdateCandidate();
+  const submit = useSubmitCandidate();
+  const [saved, setSaved] = useState<Candidate | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  const pending = create.isPending || update.isPending;
+
+  return (
+    <Formik<CandidateDraft>
+      initialValues={editing ? toDraft(editing) : EMPTY}
+      enableReinitialize
       validationSchema={candidateSchema}
       onSubmit={(values, helpers) => {
-        create.mutate(
-          { draft: values, submitNow: modeRef.current === 'submit' },
-          {
-            onSuccess: () => {
-              helpers.resetForm();
-              onClose();
-            },
+        if (editing) {
+          update.mutate({ id: editing.id, draft: values }, { onSuccess: onClose });
+          return;
+        }
+        create.mutate(values, {
+          onSuccess: (row) => {
+            helpers.resetForm();
+            setSaved(row);
           },
-        );
+        });
       }}
     >
       {({ submitForm, resetForm }) => {
         const close = () => {
           resetForm();
+          setSaved(null);
           onClose();
-        };
-        const save = (mode: 'draft' | 'submit') => {
-          modeRef.current = mode;
-          void submitForm();
         };
 
         return (
@@ -163,39 +224,61 @@ export function CandidateFormModal({ open, onClose }: { open: boolean; onClose: 
             open={open}
             onOpenChange={(next) => !next && close()}
             size="wide"
-            title="Add candidate"
-            description="Anda berperan sebagai maker. Field identitas mengikuti kewarganegaraan; menyimpan tanpa mengajukan menghasilkan DRAFT."
+            title={editing ? `Ubah ${editing.name}` : 'Add candidate'}
+            description="Anda berperan sebagai maker. Field identitas mengikuti kewarganegaraan; calon tersimpan sebagai DRAFT."
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
                   Cancel
                 </Button>
-                <Button variant="secondary" onClick={() => save('draft')} disabled={create.isPending}>
-                  Save as draft
-                </Button>
-                <Button onClick={() => save('submit')} disabled={create.isPending}>
-                  {create.isPending ? 'Menyimpan…' : 'Save & submit'}
+                <Button onClick={() => void submitForm()} disabled={pending}>
+                  {pending ? 'Menyimpan…' : editing ? 'Save changes' : 'Simpan'}
                 </Button>
               </>
             }
           >
-            <Form className="flex flex-col gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
-                  name="positionId"
-                  label="Posisi"
-                  required
-                  placeholder="Pilih posisi yang dibuka"
-                  options={POSITION_OPTIONS}
-                />
-                <SelectField
-                  name="requisitionId"
-                  label="Requisition"
-                  placeholder="Vacant (no requisition)"
-                  hint="Opsional — kosongkan bila kursi tidak berasal dari requisition."
-                  options={REQUISITION_OPTIONS}
-                />
+            {saved && (
+              <div className="mb-4 flex flex-col gap-3 rounded-[10px] border border-silver bg-mist p-4">
+                <p className="m-0 font-body text-[13px] font-bold text-fg-1">Calon tersimpan sebagai DRAFT</p>
+                <KeyValueList>
+                  <KeyValueRow label="Kandidat">{saved.name}</KeyValueRow>
+                  <KeyValueRow label="Requisition">{saved.requisitionId}</KeyValueRow>
+                </KeyValueList>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button variant="secondary" onClick={() => setSaved(null)}>
+                    Tutup panel
+                  </Button>
+                  <Button variant="secondary" onClick={() => (onDelete(saved), setSaved(null))}>
+                    Hapus draf
+                  </Button>
+                  <Button variant="secondary" onClick={() => (onEdit(saved), setSaved(null))}>
+                    Ubah
+                  </Button>
+                  <Button
+                    disabled={submit.isPending}
+                    onClick={() =>
+                      submit.mutate({ id: saved.id, name: saved.name }, { onSuccess: () => setSaved(null) })
+                    }
+                  >
+                    Ajukan
+                  </Button>
+                </div>
               </div>
+            )}
+
+            <Form className="flex flex-col gap-4">
+              {!editing && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SelectField
+                    name="positionId"
+                    label="Posisi"
+                    required
+                    placeholder="Pilih posisi yang dibuka"
+                    options={POSITION_OPTIONS}
+                  />
+                  <RequisitionPicker />
+                </div>
+              )}
 
               <TextField name="name" label="Nama kandidat" required maxLength={150} placeholder="Nama lengkap sesuai identitas" />
 

@@ -250,7 +250,9 @@ export const transitionService = {
       ) {
         throw new Error(`409 — ${employee} masih punya transisi struktural terbuka; hanya satu per karyawan (VAL-HRIS-109).`);
       }
-      const destination = labelOf(DESTINATION_OPTIONS, draft.destinationPositionId);
+      const destination = draft.destinationPositionId
+        ? labelOf(DESTINATION_OPTIONS, draft.destinationPositionId)
+        : 'jabatan tetap';
       const subtypeLabel = labelOf(SUBTYPE_OPTIONS, draft.subtype);
       const reasonLabel = labelOf(REASON_OPTIONS, draft.reason);
 
@@ -279,7 +281,15 @@ export const transitionService = {
       mockRows = [row, ...mockRows];
       return row;
     }
-    const { data } = await api.post<Transition>('/transitions', draft);
+    // L2: isian yang tidak tampil untuk jenis ini tidak dikirim.
+    const { subtype, destinationPositionId, targetJobGradeId, reason, ...core } = draft;
+    const body =
+      draft.type === 'TRANSFER'
+        ? { ...core, subtype, destinationPositionId: destinationPositionId || undefined, targetJobGradeId: targetJobGradeId || undefined }
+        : draft.type === 'OFFBOARDING'
+          ? { ...core, reason }
+          : core;
+    const { data } = await api.post<Transition>('/transitions', body);
     return data;
   },
 
@@ -324,8 +334,9 @@ export const transitionService = {
     if (MOCK) {
       await delay(200);
       const row = findTask(transitionId, taskId);
-      if (row.status === 'COMPLETED' || row.status === 'WAIVED') {
-        throw new Error('409 — task sudah terminal; waive hanya untuk task yang belum selesai.');
+      // TSD §7.6.4: state terbuka, atau SKIPPED hanya bila clearance-blocking.
+      if (row.status === 'COMPLETED' || row.status === 'WAIVED' || (row.status === 'SKIPPED' && !row.clearanceBlocking)) {
+        throw new Error('409 — waive hanya untuk task terbuka atau SKIPPED clearance-blocking.');
       }
       row.status = 'WAIVED';
       row.skipReason = payload.reason;

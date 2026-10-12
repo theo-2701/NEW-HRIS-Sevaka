@@ -36,13 +36,13 @@ export function normalizePhone(value: string): string {
 
 export const candidateSchema = Yup.object({
   positionId: Yup.string().required('Posisi wajib dipilih.'),
-  requisitionId: Yup.string(),
+  requisitionId: Yup.string().required('Requisition wajib dipilih.'),
   name: Yup.string()
     .trim()
     .required('Nama kandidat wajib diisi.')
     .max(150, 'Maksimal 150 karakter.')
     .matches(CANDIDATE_NAME, 'Hanya huruf, spasi, dan tanda \'.,- ; wajib diawali huruf.'),
-  nationality: Yup.string().oneOf(['CITIZEN', 'FOREIGNER']).required(),
+  nationality: Yup.string().oneOf(['CITIZEN', 'FOREIGNER'], 'Kewarganegaraan wajib dipilih.').required('Kewarganegaraan wajib dipilih.'),
   idCardNumber: Yup.string().when('nationality', {
     is: 'CITIZEN',
     then: (schema) =>
@@ -57,6 +57,14 @@ export const candidateSchema = Yup.object({
       schema
         .required('Nomor paspor wajib diisi untuk WNA.')
         .matches(/^[A-Z0-9]{6,15}$/, 'Paspor 6–15 karakter, hanya huruf dan angka.'),
+    otherwise: (schema) => schema,
+  }),
+  visaNumber: Yup.string().when('nationality', {
+    is: 'FOREIGNER',
+    then: (schema) =>
+      schema
+        .required('Nomor visa wajib diisi untuk WNA.')
+        .matches(/^[A-Z0-9]{6,20}$/, 'Visa 6–20 karakter, hanya huruf kapital dan angka.'),
     otherwise: (schema) => schema,
   }),
   email: Yup.string().required('Email kandidat wajib diisi.').email('Format email tidak valid.'),

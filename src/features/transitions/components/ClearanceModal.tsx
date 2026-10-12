@@ -8,6 +8,7 @@ import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Note, TaskStatusBadge } from '@/features/transitions/components/TransitionBits';
 import { useForceRelease } from '@/features/transitions/hooks/useTransitions';
+import { useAuthStore } from '@/store/auth.store';
 import { isTaskClosed } from '@/features/transitions/types';
 import type { Transition, TransitionTask } from '@/features/transitions/types';
 
@@ -28,6 +29,9 @@ export function ClearanceModal({
   const [reason, setReason] = useState('');
   const force = useForceRelease();
   const blockers = transition.tasks.filter((task) => task.clearanceBlocking);
+  // FSD 0.24 §5.1: Force-release (Waive ELEVATED) hanya peran checker; peran lain disembunyikan (L1).
+  const role = useAuthStore((s) => s.user?.role);
+  const checker = role === 'ROLE_HR_MANAGER' || role === 'ROLE_SUPER_ADMIN';
 
   useEffect(() => {
     if (open) setReason('');
@@ -45,6 +49,7 @@ export function ClearanceModal({
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
+          {checker && (
           <Button
             variant="danger"
             disabled={reason.trim().length === 0 || force.isPending}
@@ -57,6 +62,7 @@ export function ClearanceModal({
           >
             {force.isPending ? 'Memproses…' : 'Force-release & complete'}
           </Button>
+          )}
         </>
       }
     >
@@ -82,6 +88,8 @@ export function ClearanceModal({
           ]}
         />
 
+        {checker && (
+        <>
         <Note tone="danger" icon={<ShieldAlert />}>
           <strong>Force-release</strong> menembus gerbang untuk semua task yang masih memblokir. Aksi ini elevated
           dan ditulis ke audit log bersama identitas serta alasan Anda.
@@ -100,6 +108,8 @@ export function ClearanceModal({
             placeholder="Kenapa gerbang clearance ditembus?"
           />
         </div>
+        </>
+        )}
       </div>
     </Modal>
   );

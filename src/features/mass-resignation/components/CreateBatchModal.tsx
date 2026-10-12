@@ -4,13 +4,12 @@ import { CircleCheckBig, Info, Lock, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RowButton } from '@/components/RowActions';
 import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { TextField } from '@/components/form/TextField';
 import { SelectField } from '@/components/form/SelectField';
 import { ImpactBar, Note } from '@/features/mass-resignation/components/BatchBits';
-import { useCreateBatch, useDryRun, useEmployeePool } from '@/features/mass-resignation/hooks/useMassResignation';
+import { useCreateBatch, useEmployeePool } from '@/features/mass-resignation/hooks/useMassResignation';
 import { batchSchema } from '@/features/mass-resignation/validation';
 import { BLAST_THRESHOLD, REASON_OPTIONS } from '@/features/mass-resignation/types';
 import type { BatchDraft } from '@/features/mass-resignation/types';
@@ -104,34 +103,24 @@ function SelectionSync({ selected }: { selected: string[] }) {
   return null;
 }
 
-/** Panel dry-run — wajib dijalankan sebelum batch bisa disimpan. */
-function DryRunPanel({
-  result,
-  pending,
-  disabled,
-  onRun,
-}: {
-  result: DryRunResult | null;
-  pending: boolean;
-  /** Tanpa karyawan terpilih tidak ada yang bisa dihitung. */
-  disabled: boolean;
-  onRun: () => void;
-}) {
-  const pct = result ? Math.min(100, Math.round((result.impacted / BLAST_THRESHOLD) * 100)) : 0;
+/**
+ * Panel dry-run (FSD 0.24 §7.1). Sebelum Simpan hanya jumlah baris terpilih (klien);
+ * `impacted`/`exceeds_threshold` dari respons server pada Simpan, tidak dihitung ulang.
+ */
+function DryRunPanel({ selectedCount, result }: { selectedCount: number; result: DryRunResult | null }) {
+  const shown = result?.impacted ?? selectedCount;
+  const pct = Math.min(100, Math.round((shown / BLAST_THRESHOLD) * 100));
 
   return (
     <section className="flex flex-col gap-3 rounded-md bg-mist p-4">
       <header className="flex flex-wrap items-center gap-2">
         <h3 className="m-0 font-body text-[13px] font-bold text-fg-1">Dry-run — blast radius</h3>
-        <RowButton className="ml-auto" onClick={onRun} disabled={pending || disabled}>
-          {pending ? 'Menghitung…' : 'Run dry-run'}
-        </RowButton>
       </header>
 
       <div className="flex flex-wrap items-center gap-4">
         <span className="flex items-baseline gap-1.5">
-          <span className="font-display text-[28px] font-bold leading-none text-fg-1">{result?.impacted ?? 0}</span>
-          <span className="font-body text-xs font-medium text-fg-3">terdampak</span>
+          <span className="font-display text-[28px] font-bold leading-none text-fg-1">{shown}</span>
+          <span className="font-body text-xs font-medium text-fg-3">{result ? 'terdampak' : 'dipilih'}</span>
         </span>
         <div className="flex min-w-[180px] flex-1 flex-col gap-1">
           <ImpactBar value={pct} over={result?.overThreshold} />
@@ -143,16 +132,16 @@ function DryRunPanel({
       </div>
 
       {!result && (
-        <Note icon={<Info />}>Jalankan dry-run untuk menghitung berapa karyawan yang akan di-offboard batch ini.</Note>
+        <Note icon={<Info />}>Jumlah terdampak dan status ambang dihitung server saat Simpan.</Note>
       )}
       {result?.overThreshold && (
         <Note tone="danger" icon={<TriangleAlert />}>
-          <strong>Melewati ambang ({BLAST_THRESHOLD}).</strong> Batch ini butuh sign-off elevated sebelum bisa
-          diproses.
+          <strong>Melewati ambang ({BLAST_THRESHOLD}).</strong> Batch belum tersimpan — centang konfirmasi lalu
+          Simpan lagi. Batch hanya dapat disetujui peran lebih tinggi.
         </Note>
       )}
       {result && !result.overThreshold && (
-        <Note icon={<CircleCheckBig />}>Masih di dalam ambang aman {BLAST_THRESHOLD}. Siap disimpan sebagai draft.</Note>
+        <Note icon={<CircleCheckBig />}>Masih di dalam ambang aman {BLAST_THRESHOLD}.</Note>
       )}
     </section>
   );
@@ -165,21 +154,24 @@ function DryRunPanel({
  */
 export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [dry, setDry] = useState<DryRunResult | null>(null);
+  /** Langkah 2 konfirmasi dua langkah (CD-015) — dicentang sesudah pratinjau melewati ambang. */
+  const [confirmed, setConfirmed] = useState(false);
   /** Seleksi disimpan di sini supaya klik beruntun tidak saling menimpa. */
   const [selected, setSelected] = useState<string[]>([]);
-  const dryRun = useDryRun();
   const create = useCreateBatch();
 
   useEffect(() => {
     if (open) {
       setDry(null);
+      setConfirmed(false);
       setSelected([]);
     }
   }, [open]);
 
   const toggle = (id: string, checked: boolean) => {
-    // Mengubah seleksi membatalkan hasil dry-run supaya angkanya tidak basi.
+    // Seleksi berubah ⇒ pratinjau server basi; Simpan berikutnya menghitung ulang.
     setDry(null);
+    setConfirmed(false);
     setSelected((current) => (checked ? [...current, id] : current.filter((item) => item !== id)));
   };
 
@@ -188,12 +180,17 @@ export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: ()
       initialValues={{ reason: '', leaveDate: '', employeeIds: [], notes: '', batchTitle: '' }}
       validationSchema={batchSchema}
       onSubmit={(values, helpers) =>
-        create.mutate(values, {
-          onSuccess: () => {
-            helpers.resetForm();
-            onClose();
+        create.mutate(
+          { draft: values, confirmed },
+          {
+            onSuccess: (result) => {
+              setDry({ impacted: result.impacted, overThreshold: result.exceedsThreshold });
+              if (!result.batch) return;
+              helpers.resetForm();
+              onClose();
+            },
           },
-        })
+        )
       }
     >
       {({ submitForm, resetForm }) => {
@@ -215,7 +212,7 @@ export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: ()
                 <Button variant="secondary" onClick={close}>
                   Cancel
                 </Button>
-                <Button onClick={submitForm} disabled={!dry || create.isPending}>
+                <Button onClick={submitForm} disabled={create.isPending || (dry?.overThreshold && !confirmed)}>
                   {create.isPending ? 'Menyimpan…' : 'Save batch as draft'}
                 </Button>
               </>
@@ -247,16 +244,16 @@ export function CreateBatchModal({ open, onClose }: { open: boolean; onClose: ()
                 hint="Opsional."
               />
 
-              <DryRunPanel
-                result={dry}
-                pending={dryRun.isPending}
-                disabled={selected.length === 0}
-                onRun={() =>
-                  dryRun.mutate(selected, {
-                    onSuccess: (result) => setDry(result),
-                  })
-                }
-              />
+              <DryRunPanel selectedCount={selected.length} result={dry} />
+
+              {dry?.overThreshold && (
+                <label className="flex cursor-pointer items-start gap-2.5">
+                  <Checkbox checked={confirmed} onCheckedChange={(next) => setConfirmed(next === true)} />
+                  <span className="font-body text-[13px] font-medium text-fg-2">
+                    Saya memahami dampak {dry.impacted} karyawan dan tetap menyimpan batch ini.
+                  </span>
+                </label>
+              )}
             </Form>
           </Modal>
         );

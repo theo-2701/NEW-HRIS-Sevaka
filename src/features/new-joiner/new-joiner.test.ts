@@ -8,8 +8,9 @@ import { transitionService } from '@/features/transitions/services/transition.se
 
 const base = {
   positionId: 'pos-be',
-  requisitionId: '',
+  requisitionId: 'REQ-0230',
   name: 'Kandidat Uji',
+  visaNumber: '',
   email: 'kandidat@email.com',
   phone: '081234567890',
   intendedJoinDate: '2099-01-01',
@@ -26,6 +27,7 @@ function candidate(patch: Partial<Candidate>): Candidate {
     nationality: 'CITIZEN',
     idCardLast4: '0000',
     passportNumber: '',
+    visaNumber: '',
     intendedJoinDate: '2099-01-01',
     status: 'SUBMITTED',
     maker: 'Rina Hartono',
@@ -48,10 +50,10 @@ describe('NJ-CREATE — MbV identitas', () => {
 
   it('mewajibkan paspor untuk WNA dan mengabaikan KTP', async () => {
     await expect(
-      candidateSchema.validate({ ...base, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'A1234567' }),
+      candidateSchema.validate({ ...base, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'A1234567', visaNumber: 'VK2026ABC' }),
     ).resolves.toBeTruthy();
     await expect(
-      candidateSchema.validate({ ...base, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'a1' }),
+      candidateSchema.validate({ ...base, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'a1', visaNumber: 'VK2026ABC' }),
     ).rejects.toThrow(/6–15 karakter/);
   });
 
@@ -94,16 +96,16 @@ describe('NJ-CREATE — KTP transient', () => {
     await newJoinerService.create(
       {
         positionId: 'pos-be',
-        requisitionId: '',
+        requisitionId: 'REQ-0230',
         name: 'Transient Test',
         nationality: 'CITIZEN',
         idCardNumber: '3171021505901234',
         passportNumber: '',
+        visaNumber: '',
         email: 'transient@email.com',
         phone: '081234567890',
         intendedJoinDate: '2099-01-01',
       },
-      false,
     );
     const rows = await newJoinerService.list();
     const saved = rows.find((row) => row.name === 'Transient Test');
@@ -140,7 +142,6 @@ describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)',
     await expect(
       newJoinerService.create(
         { ...base, nationality: 'CITIZEN', idCardNumber: '123', passportNumber: '' },
-        false,
       ),
     ).rejects.toThrow(/422/);
   });
@@ -189,10 +190,9 @@ describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)',
 
 describe('NJ-CREATE — candidate_phone (UIC-EMPLOYEE §4.1)', () => {
   it('nomor HP wajib dan diseragamkan ke +62', async () => {
-    await expect(newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505909999', passportNumber: '', phone: '' }, false)).rejects.toThrow(/candidate_phone/);
+    await expect(newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505909999', passportNumber: '', phone: '' })).rejects.toThrow(/candidate_phone/);
     await newJoinerService.create(
       { ...base, name: 'Phone Test', nationality: 'CITIZEN', idCardNumber: '3171021505908888', passportNumber: '', phone: '0812-3456-7890' },
-      false,
     );
     const saved = (await newJoinerService.list()).find((row) => row.name === 'Phone Test');
     expect(saved?.phone).toBe('+6281234567890');
@@ -200,7 +200,7 @@ describe('NJ-CREATE — candidate_phone (UIC-EMPLOYEE §4.1)', () => {
 
   it('menolak nomor yang tidak berpola +62/0-8xxxxxxxxxx (TSD-EMPLOYEE 0.26 §8.3)', async () => {
     await expect(
-      newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505907777', passportNumber: '', phone: '021-5551234' }, false),
+      newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505907777', passportNumber: '', phone: '021-5551234' }),
     ).rejects.toThrow(/candidate_phone/);
   });
 });
@@ -208,7 +208,36 @@ describe('NJ-CREATE — candidate_phone (UIC-EMPLOYEE §4.1)', () => {
 describe('NJ-CREATE — candidate_name (TSD-EMPLOYEE 0.26 §8.9)', () => {
   it('menolak nama yang memuat angka atau simbol di luar pola', async () => {
     await expect(
-      newJoinerService.create({ ...base, name: 'Budi123', nationality: 'CITIZEN', idCardNumber: '3171021505906666', passportNumber: '' }, false),
+      newJoinerService.create({ ...base, name: 'Budi123', nationality: 'CITIZEN', idCardNumber: '3171021505906666', passportNumber: '' }),
     ).rejects.toThrow(/candidate_name/);
+  });
+});
+
+describe('NJ 0.24 — visa, Requisition wajib, Ubah, Batalkan', () => {
+  const wna = { ...base, nationality: 'FOREIGNER' as const, idCardNumber: '', passportNumber: 'A1234567' };
+
+  it('WNA wajib nomor visa [A-Z0-9]{6,20}; kewarganegaraan wajib dipilih', async () => {
+    await expect(candidateSchema.validate({ ...wna, visaNumber: '' })).rejects.toThrow(/visa wajib/);
+    await expect(candidateSchema.validate({ ...wna, visaNumber: 'VK2026ABC' })).resolves.toBeTruthy();
+    await expect(candidateSchema.validateAt('nationality', { ...base, nationality: '' })).rejects.toThrow(/Kewarganegaraan/);
+    await expect(newJoinerService.create({ ...wna, name: 'Visa Kosong' })).rejects.toThrow(/visa_number wajib/);
+  });
+
+  it('Requisition wajib APPROVED & aktif; IN_APPROVAL ditolak 422', async () => {
+    await expect(candidateSchema.validateAt('requisitionId', { ...base, requisitionId: '' })).rejects.toThrow(/Requisition wajib/);
+    await expect(
+      newJoinerService.create({ ...wna, name: 'Req Pending', visaNumber: 'VK2026ABC', requisitionId: 'REQ-0231' }),
+    ).rejects.toThrow(/requisition_id/);
+  });
+
+  it('create melahirkan DRAFT; Ubah hanya DRAFT; Batalkan tidak berlaku untuk APPROVED', async () => {
+    const row = await newJoinerService.create({ ...wna, name: 'Draft Baru', visaNumber: 'VK2026ABC' });
+    expect(row).toMatchObject({ status: 'DRAFT', visaNumber: 'VK2026ABC', idCardLast4: '' });
+    await newJoinerService.update(row.id, { ...wna, name: 'Draft Ubah', visaNumber: 'VK2026XYZ' });
+    expect((await newJoinerService.list()).find((r) => r.id === row.id)).toMatchObject({ name: 'Draft Ubah' });
+    await newJoinerService.submit(row.id);
+    await expect(newJoinerService.update(row.id, { ...wna, visaNumber: 'VK2026ABC' })).rejects.toThrow(/409/);
+    const approved = (await newJoinerService.list()).find((r) => r.status === 'APPROVED')!;
+    await expect(newJoinerService.cancel(approved.id)).rejects.toThrow(/409/);
   });
 });

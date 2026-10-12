@@ -114,14 +114,16 @@ export function PtkpAdjustmentPage() {
                   </Note>
                 )}
 
+                {/* Ganti subjek ⇒ form (termasuk tanggungan) lahir ulang kosong — FSD 0.24 §2.1. */}
                 <Formik<PtkpAdjustmentDraft>
+                  key={subject?.id}
                   initialValues={EMPTY_DRAFT}
                   validationSchema={ptkpAdjustmentSchema}
                   onSubmit={(values, helpers) =>
                     adjust.mutate(values, { onSuccess: () => helpers.resetForm() })
                   }
                 >
-                  {({ submitForm, resetForm }) => (
+                  {({ submitForm, resetForm, values }) => (
                     <Form className="flex flex-col gap-4">
                       <div className="grid gap-4 md:grid-cols-2">
                         <SelectField
@@ -177,12 +179,13 @@ export function PtkpAdjustmentPage() {
                         dokumen pendukung karyawan yang sah. Pernyataan ini direkam di log perubahan yang
                         tidak bisa diubah.
                       </CheckboxField>
+                      <span className="-mt-2 font-body text-xs font-medium text-fg-3">Atestasi: wajib dicentang</span>
 
                       <div className="flex flex-wrap justify-end gap-2 border-t border-border-1 pt-4">
                         <Button variant="secondary" onClick={() => resetForm()}>
                           Cancel
                         </Button>
-                        <Button onClick={submitForm} disabled={adjust.isPending}>
+                        <Button onClick={submitForm} disabled={adjust.isPending || !values.attestation}>
                           {adjust.isPending ? 'Menyimpan…' : 'Save Adjustment'}
                         </Button>
                       </div>

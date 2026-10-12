@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Form, Formik, useFormikContext } from 'formik';
 import { TriangleAlert, Workflow } from 'lucide-react';
 import { Modal } from '@/components/Modal';
@@ -31,8 +32,13 @@ const DESCRIPTION: Record<TransitionType, string> = {
 
 /** Blok khusus TRANSFER — target job grade hanya muncul untuk promosi/demosi. */
 function TransferBlock() {
-  const { values } = useFormikContext<TransitionDraft>();
+  const { values, setFieldValue } = useFormikContext<TransitionDraft>();
   const gradeNeeded = GRADE_REQUIRED_SUBTYPES.includes(values.subtype);
+
+  // L2: sub-tipe berganti ke non-promosi/demosi ⇒ golongan tujuan dikosongkan dan tidak dikirim.
+  useEffect(() => {
+    if (!gradeNeeded && values.targetJobGradeId) void setFieldValue('targetJobGradeId', '');
+  }, [gradeNeeded, values.targetJobGradeId, setFieldValue]);
 
   return (
     <div className="grid gap-4 rounded-[10px] border border-dashed border-fog bg-mist p-4 md:grid-cols-2">
@@ -40,9 +46,9 @@ function TransferBlock() {
       <SelectField
         name="destinationPositionId"
         label="Posisi tujuan"
-        required
         placeholder="Pilih posisi"
         options={DESTINATION_OPTIONS}
+        hint="Opsional pada promosi/demosi tanpa pindah jabatan."
       />
       {gradeNeeded && (
         <SelectField

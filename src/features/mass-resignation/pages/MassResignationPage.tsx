@@ -14,7 +14,8 @@ import {
   ProcessBatchModal,
   ResumeBatchModal,
 } from '@/features/mass-resignation/components/BatchModals';
-import { useBatches, useSubmitBatch } from '@/features/mass-resignation/hooks/useMassResignation';
+import { useBatches } from '@/features/mass-resignation/hooks/useMassResignation';
+import { useAuthStore } from '@/store/auth.store';
 import { REASON_OPTIONS, isTerminal, labelOf } from '@/features/mass-resignation/types';
 import type { MassBatch } from '@/features/mass-resignation/types';
 import { formatDate } from '@/lib/format';
@@ -27,11 +28,13 @@ import { formatDate } from '@/lib/format';
 export function MassResignationPage() {
   const { data, isLoading } = useBatches();
   const rows = useMemo(() => data ?? [], [data]);
-  const submit = useSubmitBatch();
+  const role = useAuthStore((s) => s.user?.role);
+  // FSD 0.24 §7.3: Approve/Process/Halt/Resume hanya Super Admin · HR Manager (L1).
+  const checker = role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER';
 
   const [creating, setCreating] = useState(false);
   const [approving, setApproving] = useState<MassBatch | null>(null);
-  const [processing, setProcessing] = useState<MassBatch | null>(null);
+  const [processing, setProcessing] = useState<{ batch: MassBatch; hash?: string } | null>(null);
   const [halting, setHalting] = useState<MassBatch | null>(null);
   const [resuming, setResuming] = useState<MassBatch | null>(null);
 
@@ -42,15 +45,15 @@ export function MassResignationPage() {
   const halted = rows.filter((row) => row.status === 'HALTED').length;
   const impacted = rows.reduce((total, row) => total + row.total, 0);
 
-  /** Aksi baris mengikuti status — satu aksi per status, jadi tombol inline. */
+  /** Aksi baris per status (FSD 0.24 §7.3) — satu aksi per status, jadi tombol inline. DRAFT tanpa Ajukan. */
   const actionFor = (row: MassBatch) => {
+    if (!checker) return <span className="font-body text-xs font-medium text-fg-4">Tidak ada aksi</span>;
     switch (row.status) {
       case 'DRAFT':
-        return <RowButton onClick={() => submit.mutate({ id: row.id })}>Submit</RowButton>;
       case 'IN_APPROVAL':
-        return <RowButton onClick={() => setApproving(row)}>Review</RowButton>;
+        return <RowButton onClick={() => setApproving(row)}>Approve</RowButton>;
       case 'APPROVED':
-        return <RowButton onClick={() => setProcessing(row)}>Process</RowButton>;
+        return <RowButton onClick={() => setProcessing({ batch: row })}>Process</RowButton>;
       case 'PROCESSING':
         return <RowButton onClick={() => setHalting(row)}>Halt</RowButton>;
       case 'HALTED':
@@ -144,8 +147,16 @@ export function MassResignationPage() {
       </PageShell>
 
       <CreateBatchModal open={creating} onClose={() => setCreating(false)} />
-      <ApproveBatchModal batch={approving} onClose={() => setApproving(null)} />
-      <ProcessBatchModal batch={processing} onClose={() => setProcessing(null)} />
+      <ApproveBatchModal
+        batch={approving}
+        onClose={() => setApproving(null)}
+        onApproved={(batch, hash) => (setApproving(null), setProcessing({ batch, hash }))}
+      />
+      <ProcessBatchModal
+        batch={processing?.batch ?? null}
+        selectionHash={processing?.hash}
+        onClose={() => setProcessing(null)}
+      />
       <HaltBatchModal batch={halting} onClose={() => setHalting(null)} />
       <ResumeBatchModal batch={resuming} onClose={() => setResuming(null)} />
     </>

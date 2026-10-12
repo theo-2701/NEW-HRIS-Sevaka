@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Form, Formik, useFormikContext } from 'formik';
+import { Form, Formik } from 'formik';
 import { ArrowRight, TrendingUp } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,6 @@ import {
   useCreateReprimand,
   useRevokeReprimand,
 } from '@/features/reprimand/hooks/useReprimand';
-import { reprimandService } from '@/features/reprimand/services/reprimand.service';
 import { reprimandSchema } from '@/features/reprimand/validation';
 import { CURRENT_USER, EMPLOYEE_OPTIONS, deriveLevel } from '@/features/reprimand/types';
 import type {
@@ -45,36 +44,19 @@ const EMPTY: ReprimandDraft = {
 };
 
 /**
- * Pratinjau snapshot. Angkanya milik server — layar ini hanya menampilkan apa
- * yang AKAN dibekukan, dan tidak satu pun ikut dikirim di payload.
+ * Blok snapshot — server-authoritative. FSD 0.24 §6.1: TIDAK tampil di form; baru tampil
+ * read-only sesudah Simpan berhasil, terisi dari respons server.
  */
-function SnapshotPreview() {
-  const { values } = useFormikContext<ReprimandDraft>();
-  if (!values.categoryCode) return null;
-
-  let preview: ReturnType<typeof reprimandService.previewSnapshot>;
-  try {
-    preview = reprimandService.previewSnapshot(values.categoryCode, values.issuedDate);
-  } catch {
-    return null;
-  }
-
+function IssuedSnapshot({ row }: { row: Reprimand }) {
   return (
     <SnapshotPanel>
-      <SnapshotRow label="Poin demerit">
-        {preview.point} {preview.point === 1 ? 'poin' : 'poin'}
-      </SnapshotRow>
-      <SnapshotRow label="Urutan level">Level {preview.levelOrder}</SnapshotRow>
-      <SnapshotRow label="Masa berlaku">{preview.validityMonths} bulan</SnapshotRow>
-      <SnapshotRow label="Tanggal kedaluwarsa">
-        {preview.expiryDate ? (
-          formatDate(preview.expiryDate)
-        ) : (
-          <span className="font-medium text-fg-4">Isi tanggal terbit</span>
-        )}
+      <SnapshotRow label="Poin demerit">{row.snapshot.point} poin</SnapshotRow>
+      <SnapshotRow label="Urutan level">Level {row.snapshot.levelOrder}</SnapshotRow>
+      <SnapshotRow label="Masa berlaku">
+        {row.snapshot.validityMonths} bulan · s.d. {formatDate(row.expiryDate)}
       </SnapshotRow>
       <SnapshotRow label="Terminal">
-        {preview.terminal ? <span className="text-error-700">Ya — terminal</span> : 'Tidak'}
+        {row.snapshot.terminal ? <span className="text-error-700">Ya — terminal</span> : 'Tidak'}
       </SnapshotRow>
     </SnapshotPanel>
   );
@@ -91,6 +73,7 @@ export function IssueReprimandModal({
   onClose: () => void;
 }) {
   const create = useCreateReprimand();
+  const [issued, setIssued] = useState<Reprimand | null>(null);
   const today = toIsoDate(new Date());
 
   const categoryOptions = categories
@@ -104,9 +87,9 @@ export function IssueReprimandModal({
       validationSchema={reprimandSchema}
       onSubmit={(values, helpers) =>
         create.mutate(values, {
-          onSuccess: () => {
+          onSuccess: (row) => {
             helpers.resetForm();
-            onClose();
+            setIssued(row);
           },
         })
       }
@@ -114,6 +97,7 @@ export function IssueReprimandModal({
       {({ submitForm, resetForm }) => {
         const close = () => {
           resetForm();
+          setIssued(null);
           onClose();
         };
 
@@ -125,16 +109,30 @@ export function IssueReprimandModal({
             title="Issue reprimand"
             description="Anda berperan sebagai maker. Reprimand untuk diri sendiri akan ditolak."
             footer={
-              <>
+              issued ? (
                 <Button variant="secondary" onClick={close}>
-                  Cancel
+                  Close
                 </Button>
-                <Button onClick={submitForm} disabled={create.isPending}>
-                  {create.isPending ? 'Mengirim…' : 'Submit for approval'}
-                </Button>
-              </>
+              ) : (
+                <>
+                  <Button variant="secondary" onClick={close}>
+                    Cancel
+                  </Button>
+                  <Button onClick={submitForm} disabled={create.isPending}>
+                    {create.isPending ? 'Mengirim…' : 'Submit for approval'}
+                  </Button>
+                </>
+              )
             }
           >
+            {issued ? (
+              <div className="flex flex-col gap-3">
+                <p className="m-0 font-body text-[13px] font-medium text-fg-2">
+                  {issued.id} untuk {issued.employeeName} diajukan. Snapshot dibekukan server:
+                </p>
+                <IssuedSnapshot row={issued} />
+              </div>
+            ) : (
             <Form className="flex flex-col gap-4">
               <EmployeeSelectField
                 name="employeeId"
@@ -165,8 +163,8 @@ export function IssueReprimandModal({
                 hint="Maksimal 150 karakter · PII-sensitif."
               />
 
-              <SnapshotPreview />
             </Form>
+            )}
           </Modal>
         );
       }}
@@ -182,11 +180,14 @@ export function ReviewReprimandModal({
   reprimand,
   standing,
   policyMode,
+  canCheck,
   onClose,
 }: {
   reprimand: Reprimand | null;
   standing: Standing[];
   policyMode: PolicyMode;
+  /** Peran checker (Super Admin · HR Manager). */
+  canCheck: boolean;
   onClose: () => void;
 }) {
   const [note, setNote] = useState('');
@@ -208,7 +209,12 @@ export function ReviewReprimandModal({
     terminal: reprimand.snapshot.terminal,
   });
 
-  const canDecide = reprimand.status === 'IN_APPROVAL';
+  // FSD 0.24 §6.1 (L1): IN_APPROVAL ⇒ Approve; ACTIVE ⇒ Revoke; hanya SA/HRM, bukan bagi subjek sendiri.
+  // Tidak ada Tolak/Batalkan. Pembuat = penyetuju dijawab server 409 (L4).
+  const allowed = canCheck && reprimand.employeeId !== CURRENT_USER.id;
+  const canApprove = allowed && reprimand.status === 'IN_APPROVAL';
+  const canRevoke = allowed && reprimand.status === 'ACTIVE';
+  const canDecide = canApprove || canRevoke;
   const pending = approve.isPending || revoke.isPending;
 
   return (
@@ -225,19 +231,25 @@ export function ReviewReprimandModal({
       footer={
         canDecide ? (
           <>
-            <Button
-              variant="danger"
-              disabled={pending}
-              onClick={() => revoke.mutate({ id: reprimand.id, note: note.trim() }, { onSuccess: onClose })}
-            >
-              Revoke
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
             </Button>
-            <Button
-              disabled={pending}
-              onClick={() => approve.mutate({ id: reprimand.id, note: note.trim() }, { onSuccess: onClose })}
-            >
-              {approve.isPending ? 'Memproses…' : 'Approve reprimand'}
-            </Button>
+            {canRevoke ? (
+              <Button
+                variant="danger"
+                disabled={pending}
+                onClick={() => revoke.mutate({ id: reprimand.id, note: note.trim() }, { onSuccess: onClose })}
+              >
+                {revoke.isPending ? 'Memproses…' : 'Revoke'}
+              </Button>
+            ) : (
+              <Button
+                disabled={pending}
+                onClick={() => approve.mutate({ id: reprimand.id, note: note.trim() }, { onSuccess: onClose })}
+              >
+                {approve.isPending ? 'Memproses…' : 'Approve reprimand'}
+              </Button>
+            )}
           </>
         ) : (
           <Button variant="secondary" onClick={onClose}>

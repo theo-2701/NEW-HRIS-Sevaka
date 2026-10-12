@@ -4,11 +4,18 @@ import type { SelectOption } from '@/components/form/SelectField';
  * Manpower & Requisition — rencana headcount per unit dan pengajuan posisi
  * lewat maker→checker (FSD §3 · UIC §3).
  *
- * Requisition **draft-first**: create → DRAFT, lalu Submit dan Approve adalah
- * dua aksi terpisah dengan SoD (checker ≠ maker). Requisition yang disetujui
- * menyiapkan kursi terbuka di hilir.
+ * Requisition lahir langsung IN_APPROVAL (FSD 0.24 §3.1, TSD §15 K2 — DRAFT ada
+ * di enum tapi tidak diekspos, tanpa tombol Ajukan). Checker ≠ maker (SoD).
+ * APPROVED ditutup maker lewat dialog alasan → CLOSED.
  */
-export type RequisitionStatus = 'DRAFT' | 'IN_APPROVAL' | 'APPROVED' | 'REJECTED' | 'FULFILLED' | 'CANCELLED';
+export type RequisitionStatus =
+  | 'DRAFT'
+  | 'IN_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'FULFILLED'
+  | 'CANCELLED'
+  | 'CLOSED';
 
 export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED' | 'ARCHIVED';
 
@@ -26,6 +33,14 @@ export interface Requisition {
   reason: string;
   planId?: string;
   checkerNote?: string;
+  /** `active_from` – `active_until` (yyyy-MM-dd), wajib sejak FSD 0.22. */
+  activeFrom: string;
+  activeUntil: string;
+  /** `filled_count` — kursi yang sudah terisi; FULFILLED saat penuh. */
+  filledCount: number;
+  closedReason?: string;
+  closedByName?: string;
+  closedAt?: string;
 }
 
 export interface PlanLine {
@@ -55,6 +70,8 @@ export interface RequisitionDraft {
   title: string;
   headcount: number;
   reason: string;
+  activeFrom: string;
+  activeUntil: string;
 }
 
 export interface PlanDraft {
@@ -71,6 +88,7 @@ export const REQUISITION_STATUS_LABEL: Record<RequisitionStatus, string> = {
   REJECTED: 'Rejected',
   FULFILLED: 'Fulfilled',
   CANCELLED: 'Cancelled',
+  CLOSED: 'Closed',
 };
 
 export const PLAN_STATUS_LABEL: Record<PlanStatus, string> = {
@@ -96,7 +114,12 @@ export const PARENT_POSITION_OPTIONS: SelectOption[] = [
 ];
 
 /** Status requisition yang sudah tidak bergerak lagi. */
-export const TERMINAL_REQUISITION: RequisitionStatus[] = ['REJECTED', 'FULFILLED', 'CANCELLED'];
+export const TERMINAL_REQUISITION: RequisitionStatus[] = ['REJECTED', 'FULFILLED', 'CANCELLED', 'CLOSED'];
+
+/** Maker = HR Staff · HR Manager · Super Admin; checker = HR Manager · Super Admin (FSD 0.24 §3.1). */
+export const isRequisitionMaker = (role?: string) =>
+  role === 'ROLE_HR_STAFF' || role === 'ROLE_HR_MANAGER' || role === 'ROLE_SUPER_ADMIN';
+export const isRequisitionChecker = (role?: string) => role === 'ROLE_HR_MANAGER' || role === 'ROLE_SUPER_ADMIN';
 
 export function labelOf(options: SelectOption[], value: string): string {
   return options.find((option) => option.value === value)?.label ?? value;

@@ -16,11 +16,8 @@ export const transitionSchema = Yup.object({
     then: (schema) => schema.required('Sub-tipe transfer wajib dipilih.'),
     otherwise: (schema) => schema,
   }),
-  destinationPositionId: Yup.string().when('type', {
-    is: 'TRANSFER',
-    then: (schema) => schema.required('Posisi tujuan wajib dipilih.'),
-    otherwise: (schema) => schema,
-  }),
+  // Kondisional, bukan wajib mutlak (FSD 0.24 §5.1): promosi/demosi boleh tanpa pindah jabatan.
+  destinationPositionId: Yup.string(),
   targetJobGradeId: Yup.string().when('subtype', {
     is: (value: string) => GRADE_REQUIRED_SUBTYPES.includes(value),
     then: (schema) => schema.required('Target job grade wajib diisi untuk promosi dan demosi.'),
