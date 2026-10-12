@@ -72,6 +72,16 @@ export const useRegisterAsset = () =>
         : `201 — ${row.assetCode} terdaftar dan siap diserahkan.`,
   );
 
+/** Edit Aset / Lengkapi — `PUT /assets/{id}` (FSD-COMPANY 0.38 §7.3). */
+export const useUpdateAsset = () =>
+  useAssetMutation(
+    ({ actor, id, draft }: WithActor<{ id: string; draft: AssetDraft }>) => assetService.update(actor, id, draft),
+    (row) =>
+      row.lastAssetStatus === 'NOT_AVAILABLE'
+        ? `200 — ${row.assetCode} tersimpan, tetapi masih Tidak tersedia sampai datanya lengkap.`
+        : `200 — ${row.assetCode} tersimpan.`,
+  );
+
 export const useUploadPhoto = () =>
   useAssetMutation(
     ({ actor, id }: WithActor<{ id: string }>) => assetService.uploadPhoto(actor, id),
@@ -122,6 +132,7 @@ export const useMaintain = () =>
       id: string;
       maintenanceType: MaintenanceType;
       maintenanceDate: string;
+      completionDate: string;
       cost: string;
       note: string;
     }>) => assetService.maintain(actor, id, payload),

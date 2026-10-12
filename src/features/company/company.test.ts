@@ -99,8 +99,8 @@ describe('branch', () => {
   it('tetap membolehkan Branch Group walau hierarki dimatikan (UIC 0.16 mencabut gerbang mode)', async () => {
     await companyService.saveSetup({
       branchHierarchyMode: 'DISABLED',
-      costCenterAssignmentMode: 'ENABLED',
-      sbuAssignmentMode: 'ENABLED',
+      costCenterAssignmentMode: 'OPTIONAL',
+      sbuAssignmentMode: 'OPTIONAL',
     });
     const groups = await companyService.branchGroups();
     expect(groups.length).toBeGreaterThan(0);
@@ -114,11 +114,12 @@ const HR_MANAGER: CompanyActor = { employeeId: 'emp-maya', label: 'HR Manager', 
 const POSITION_BASE = { canSignLetter: false, secondApproverEmployeeId: '' };
 
 describe('group & level — di luar dokumen kontrak', () => {
-  it('menyalakan group utama baru mematikan yang lama', async () => {
-    const created = await companyService.saveGroupStruct({ name: 'Struktur Baru', isDefault: true, finalApproverEmployeeId: '' });
-    expect(created.isDefault).toBe(true);
+  it('Default Group kedua ditolak 409; default lama tidak dimatikan otomatis (FSD-COMPANY 0.38)', async () => {
+    await expect(
+      companyService.saveGroupStruct({ name: 'Struktur Baru', isDefault: true, finalApproverEmployeeId: '' }),
+    ).rejects.toThrow(/409/);
     const structs = await companyService.groupStructs();
-    expect(structs.find((row) => row.id === 'gs-main')?.isDefault).toBe(false);
+    expect(structs.find((row) => row.id === 'gs-main')?.isDefault).toBe(true);
   });
 
   it('menolak urutan level kembar dalam satu group dan menghapus level yang masih dipakai posisi', async () => {
@@ -280,16 +281,28 @@ describe('grade & class', () => {
     ).rejects.toThrow(/Rentang gaji wajib/);
   });
 
-  it('menolak rentang gaji pada Grade', async () => {
+  it('Grade boleh membawa rentang gaji; induk berupa keturunan sendiri ditolak 422 (FSD-COMPANY 0.38)', async () => {
+    const grade = await companyService.saveJobGrade({
+      name: 'Direksi',
+      parentId: '',
+      sortOrder: '3',
+      salaryRangeFrom: '10000000',
+      salaryRangeTo: '20000000',
+    });
+    expect(grade.salaryRangeFrom).toBe(10000000);
+    const child = await companyService.saveJobGrade({
+      name: 'Direksi Muda',
+      parentId: grade.id,
+      sortOrder: '1',
+      salaryRangeFrom: '1',
+      salaryRangeTo: '2',
+    });
     await expect(
-      companyService.saveJobGrade({
-        name: 'Direksi',
-        parentId: '',
-        sortOrder: '3',
-        salaryRangeFrom: '10000000',
-        salaryRangeTo: '20000000',
-      }),
-    ).rejects.toThrow(/hanya milik Class/);
+      companyService.saveJobGrade(
+        { name: 'Direksi', parentId: child.id, sortOrder: '3', salaryRangeFrom: '', salaryRangeTo: '' },
+        grade.id,
+      ),
+    ).rejects.toThrow(/422/);
   });
 
   it('menolak penghapusan Grade yang masih memayungi Class', async () => {

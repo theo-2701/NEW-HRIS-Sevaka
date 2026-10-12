@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/input';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EmployeeRow, Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { PEOPLE_SOURCE, personName } from '@/features/company/mock-data';
 import { deriveZip, isCompanyAdmin } from '@/features/company/rules';
@@ -203,6 +204,14 @@ export function BranchFormModal({
   }, [open, editing]);
 
   const derived = useMemo(() => deriveZip(draft.zip), [draft.zip]);
+  /**
+   * FSD-COMPANY 0.38 §1.2: saat BRANCH_HIERARCHY_MODE=DISABLED dropdown Kategori & Cabang induk disembunyikan;
+   * FE mengirim kategori bawaan perusahaan dan parent kosong.
+   */
+  const defaultGroupId = [...groups].sort((a, b) => a.levelOrder - b.levelOrder)[0]?.id ?? '';
+  const payload: BranchDraft = hierarchy
+    ? draft
+    : { ...draft, branchGroupId: draft.branchGroupId || defaultGroupId, parentId: '' };
 
   return (
     <Modal
@@ -215,7 +224,7 @@ export function BranchFormModal({
         <FooterButtons
           onClose={onClose}
           saving={save.isPending}
-          onSave={() => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose })}
+          onSave={() => save.mutate({ draft: payload, id: editing?.id }, { onSuccess: onClose })}
         />
       }
     >
@@ -234,13 +243,15 @@ export function BranchFormModal({
           value={draft.branchCode}
           onChange={(branchCode) => setDraft({ ...draft, branchCode })}
         />
-        <SelectRow
-          label="Kategori cabang"
-          required
-          value={draft.branchGroupId}
-          onChange={(branchGroupId) => setDraft({ ...draft, branchGroupId })}
-          options={groups.map((group) => ({ value: group.id, label: group.name }))}
-        />
+        {hierarchy && (
+          <SelectRow
+            label="Kategori cabang"
+            required
+            value={draft.branchGroupId}
+            onChange={(branchGroupId) => setDraft({ ...draft, branchGroupId })}
+            options={groups.map((group) => ({ value: group.id, label: group.name }))}
+          />
+        )}
         {hierarchy && (
           <SelectRow
             label="Cabang induk"
@@ -257,10 +268,14 @@ export function BranchFormModal({
         <TextRow
           label="Kode pos"
           required
-          hint={derived.known ? `${derived.city}, ${derived.province} · ${derived.timezone}` : 'Kode pos belum dikenali.'}
+          hint={derived.known ? undefined : 'Kode pos belum dikenali.'}
           value={draft.zip}
           onChange={(zip) => setDraft({ ...draft, zip })}
         />
+        {/* Snapshot kode pos diisi otomatis FE dan dikirim bersama kode pos; tidak dapat diketik (CMP-379). */}
+        <TextRow label="Provinsi" disabled value={derived.known ? derived.province : ''} onChange={() => undefined} />
+        <TextRow label="Kota" disabled value={derived.known ? derived.city : ''} onChange={() => undefined} />
+        <TextRow label="Zona waktu" disabled value={derived.known ? derived.timezone : ''} onChange={() => undefined} />
       </FieldGrid>
 
       <Field label="Alamat" required>
@@ -499,6 +514,7 @@ export function PositionFormModal({
 }) {
   const save = useSavePosition();
   const [draft, setDraft] = useState<PositionDraft>(EMPTY_POSITION);
+  const [confirmReplace, setConfirmReplace] = useState(false);
   const canWriteSignLetter = isCompanyAdmin(actor.role);
   const wasSigner = editing?.canSignLetter ?? false;
   const turningOn = canWriteSignLetter && !wasSigner && draft.canSignLetter;
@@ -517,9 +533,25 @@ export function PositionFormModal({
           }
         : { ...EMPTY_POSITION, groupStructLevelId: levels[0]?.id ?? '' },
     );
+    setConfirmReplace(false);
   }, [open, editing, levels]);
 
+  const submit = () => save.mutate({ actor, draft, id: editing?.id }, { onSuccess: onClose });
+  /** FSD-COMPANY 0.38 §2.3: posisi terisi → Ganti Pengisi lewat dialog konfirmasi yang menyebut pengisi lama. */
+  const replacing = Boolean(editing?.employeeId && draft.employeeId && draft.employeeId !== editing.employeeId);
+
   return (
+    <>
+    <ConfirmDialog
+      open={confirmReplace}
+      onOpenChange={setConfirmReplace}
+      title="Ganti pengisi posisi?"
+      description={`${editing?.employeeInfo?.nama ?? personName(editing?.employeeId ?? '')} akan digantikan ${personName(draft.employeeId)}. Atasan seluruh posisi bawahan ikut diperbarui; jejak pengisi lama tetap di riwayat posisi.`}
+      confirmLabel="Ganti pengisi"
+      tone="primary"
+      loading={save.isPending}
+      onConfirm={submit}
+    />
     <Modal
       open={open}
       onOpenChange={(next) => !next && onClose()}
@@ -529,7 +561,7 @@ export function PositionFormModal({
         <FooterButtons
           onClose={onClose}
           saving={save.isPending}
-          onSave={() => save.mutate({ actor, draft, id: editing?.id }, { onSuccess: onClose })}
+          onSave={() => (replacing ? setConfirmReplace(true) : submit())}
         />
       }
     >
@@ -542,6 +574,9 @@ export function PositionFormModal({
       <SelectRow
         label="Level"
         required
+        // Group dan Level terkunci setelah posisi dibuat (CMP-379).
+        disabled={Boolean(editing)}
+        hint={editing ? 'Level tidak dapat diubah setelah posisi dibuat.' : undefined}
         value={draft.groupStructLevelId}
         onChange={(groupStructLevelId) => setDraft({ ...draft, groupStructLevelId })}
         options={levels.map((level) => ({ value: level.id, label: `${level.levelOrder}. ${level.levelName}` }))}
@@ -604,6 +639,7 @@ export function PositionFormModal({
         />
       )}
     </Modal>
+    </>
   );
 }
 
@@ -695,6 +731,26 @@ export function JobGradeFormModal({
     );
   }, [open, editing]);
 
+  /**
+   * FSD-COMPANY 0.38 §3 (CMP-379): satu layar Edit Grade/Class — bentuk mengikuti `parent_id`, Parent boleh
+   * diubah (N-level). Pilihan induk = seluruh Grade/Class aktif kecuali baris ini dan keturunannya.
+   * Rentang gaji tampil di kedua cabang saat Edit, jadi tidak dikosongkan; wajib hanya untuk Class.
+   */
+  const isClass = editing ? Boolean(draft.parentId) : mode === 'class';
+  const excluded = new Set<string>(editing ? [editing.id] : []);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const row of grades) {
+      if (row.parentId && excluded.has(row.parentId) && !excluded.has(row.id)) {
+        excluded.add(row.id);
+        grew = true;
+      }
+    }
+  }
+  const parentOptions = grades
+    .filter((row) => !excluded.has(row.id) && (editing || row.parentId === null))
+    .map((row) => ({ value: row.id, label: `${row.name} (${row.gradeCode})` }));
+
   return (
     <Modal
       open={open}
@@ -713,7 +769,7 @@ export function JobGradeFormModal({
           saving={save.isPending}
           onSave={() =>
             save.mutate(
-              { draft: mode === 'grade' ? { ...draft, parentId: '' } : draft, id: editing?.id },
+              { draft: !editing && mode === 'grade' ? { ...draft, parentId: '' } : draft, id: editing?.id },
               { onSuccess: onClose },
             )
           }
@@ -730,33 +786,34 @@ export function JobGradeFormModal({
           onChange={(sortOrder) => setDraft({ ...draft, sortOrder })}
         />
       </FieldGrid>
-      {mode === 'class' && (
-        <>
-          <SelectRow
-            label="Induk (Grade)"
-            required
-            value={draft.parentId}
-            onChange={(parentId) => setDraft({ ...draft, parentId })}
-            options={grades
-              .filter((row) => row.parentId === null)
-              .map((row) => ({ value: row.id, label: `${row.name} (${row.gradeCode})` }))}
+      {(editing || mode === 'class') && (
+        <SelectRow
+          label="Induk"
+          required={!editing}
+          allowEmpty={Boolean(editing)}
+          emptyLabel="Tanpa induk (Grade)"
+          hint={editing ? 'Mengubah induk atau urutan menghitung ulang kode seluruh baris.' : undefined}
+          value={draft.parentId}
+          onChange={(parentId) => setDraft({ ...draft, parentId })}
+          options={parentOptions}
+        />
+      )}
+      {(editing || mode === 'class') && (
+        <FieldGrid>
+          <TextRow
+            label="Rentang gaji dari"
+            required={isClass}
+            value={draft.salaryRangeFrom}
+            onChange={(salaryRangeFrom) => setDraft({ ...draft, salaryRangeFrom })}
           />
-          <FieldGrid>
-            <TextRow
-              label="Rentang gaji dari"
-              required
-              value={draft.salaryRangeFrom}
-              onChange={(salaryRangeFrom) => setDraft({ ...draft, salaryRangeFrom })}
-            />
-            <TextRow
-              label="Rentang gaji sampai"
-              required
-              hint="Batas atas tidak boleh lebih kecil dari batas bawah."
-              value={draft.salaryRangeTo}
-              onChange={(salaryRangeTo) => setDraft({ ...draft, salaryRangeTo })}
-            />
-          </FieldGrid>
-        </>
+          <TextRow
+            label="Rentang gaji sampai"
+            required={isClass}
+            hint="Batas atas tidak boleh lebih kecil dari batas bawah."
+            value={draft.salaryRangeTo}
+            onChange={(salaryRangeTo) => setDraft({ ...draft, salaryRangeTo })}
+          />
+        </FieldGrid>
       )}
     </Modal>
   );
@@ -990,7 +1047,14 @@ export function SbuFormModal({
       }
     >
       <FieldGrid>
-        <TextRow label="Kode" required value={draft.code} onChange={(code) => setDraft({ ...draft, code })} />
+        <TextRow
+          label="Kode"
+          required
+          disabled={Boolean(editing)}
+          hint={editing ? 'Kode SBU tidak bisa diubah.' : undefined}
+          value={draft.code}
+          onChange={(code) => setDraft({ ...draft, code })}
+        />
         <TextRow label="Nama" required value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
         <SelectRow
           label="Grup SBU"

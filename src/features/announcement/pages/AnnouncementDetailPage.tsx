@@ -23,7 +23,9 @@ import {
   recipientLabel,
   type AnnouncementAttachment,
   type PublishLogEntry,
+  canPublishAnnouncement,
 } from '@/features/announcement/types';
+import { useAuthStore } from '@/store/auth.store';
 import { formatDateTime } from '@/lib/format';
 
 type Tab = 'detail' | 'log';
@@ -42,6 +44,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
  * Rancangan bisa disunting dan diterbitkan; yang terbit tampil baca saja, lampiran tetap bisa dikelola.
  */
 export function AnnouncementDetailPage() {
+  const role = useAuthStore((s) => s.user?.role);
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const id = params.get('id') ?? undefined;
@@ -92,7 +95,7 @@ export function AnnouncementDetailPage() {
               <Button variant="secondary" onClick={() => setEditing(true)}>
                 Edit
               </Button>
-              <Button onClick={() => setPublishing(true)}>Publish</Button>
+              {canPublishAnnouncement(role) && <Button onClick={() => setPublishing(true)}>Publish</Button>}
             </div>
           ) : undefined
         }

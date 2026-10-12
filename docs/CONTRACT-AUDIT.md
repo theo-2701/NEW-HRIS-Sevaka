@@ -898,3 +898,32 @@ Baseline FSD 0.10 / UIC 0.14. 24 celah routing komponen (`TIM-233`, K1–K4). Di
   kombinasi Tidak Dibayar + Potong Saldo = 422 saat Simpan, batas Jam Disetujui ≤ jam diminta, kandidat tukar shift
   dikosongkan saat baris sendiri berganti, form Bulk (pola wajib kecuali Hari Istirahat).
 - **Tidak diubah:** jendela susulan lembur tetap 7 hari di data contoh (FSD hanya menyebut *default* 2 hari).
+
+## 33. Company Management — FSD-001-COMPANY 0.38 / UIC-001-COMPANY 0.29 (rilis FE-261008, 13 Oktober 2026)
+
+28 celah routing komponen (`CMP-379`). Diterapkan:
+
+- **Aset:** layar **Edit Aset / Lengkapi** (`PUT /assets/{id}`, pembaruan penuh, `asset_code` read-only) — tombol
+  Lengkapi di baris NOT_AVAILABLE (Asset List) dan di banner blocker (Asset Detail); status naik AVAILABLE hanya bila
+  cabang + kategori + foto terisi. Kategori/Branch berlabel "disarankan" + teks bantu; vendor opsional saat
+  registrasi; blok OWNED/LEASED yang tidak berlaku dikosongkan saat kepemilikan dibalik dan disimpan NULL.
+  Aksi: Serahkan/Terima kembali/Sewa disembunyikan bila tak memenuhi syarat; Pindahkan/Maintenance/Nilai residu
+  tampil NON-AKTIF pada status akhir; Lepas aset NON-AKTIF selain AVAILABLE. Maintenance + Tanggal Selesai opsional
+  (FE menolak lebih awal dari mulai; jadwal bergeser hanya SCHEDULED + selesai + ber-interval). Disposal: nilai awal
+  penerima karyawan; pihak luar wajib nama, KTP 16 digit, email & HP berformat valid. Kategori: peringatan
+  interval baru tidak menghitung ulang aset yang ada.
+- **Branch:** mode hierarki DISABLED ⇒ dropdown Kategori & Cabang induk disembunyikan, FE mengirim kategori bawaan
+  (level teratas) dan parent kosong. Provinsi/Kota/Zona waktu tampil read-only dari kode pos.
+- **Position:** Level terkunci saat Edit; mengganti pengisi posisi terisi meminta konfirmasi "Ganti pengisi" yang
+  menyebut pengisi lama. Toggle `can_sign_letter` per peran sudah sesuai.
+- **Default Group:** menyalakan default kedua ⇒ 409 (default lama tidak dimatikan otomatis); mematikan default yang
+  masih memuat posisi ⇒ 422.
+- **Grade & Class:** satu layar Edit — induk boleh diubah (N-level, kecuali diri & keturunan; siklus 422),
+  rentang gaji tetap tampil dan opsional untuk Grade.
+- **Cost Center / SBU:** mode `REQUIRED` / `OPTIONAL` / `DISABLED` (bawaan OPTIONAL); REQUIRED & OPTIONAL membuka
+  menu, DISABLED ⇒ 422 tulis. Kode SBU read-only saat Edit.
+- **Pengumuman:** tombol Publish hanya pada DRAFT dan hanya bagi pemegang `announcement:publish` (mode dummy:
+  Super Admin · HR Manager — pemetaan peran → scope tidak tertulis di FSD).
+- **GAP:** layar Integration Contact (§13) dan Notice/rilis naskah (§10) belum ada di repo, sehingga aturannya
+  (peringatan email kontak kosong, versi tanpa naskah non-aktif, persetujuan rilis dua langkah) menunggu modul dibangun.
+  Impor Branch `parent_id` saat DISABLED belum punya layar impor.

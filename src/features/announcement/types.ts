@@ -16,6 +16,13 @@ export const CATEGORY_OPTIONS: { value: AnnouncementCategory; label: string }[] 
   { value: 'GENERAL', label: 'General' },
 ];
 
+/**
+ * Pemegang `announcement:publish` — izin TERPISAH, tidak diwarisi `announcement:write` (UIC-COMPANY §3C).
+ * Pemetaan peran → scope tidak tertulis di FSD; mode dummy memakai Super Admin · HR Manager.
+ * Tombol Terbitkan disembunyikan bagi peran lain (FSD-COMPANY 0.38 §11, CMP-379).
+ */
+export const canPublishAnnouncement = (role?: string) => role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER';
+
 /** Daftar peran baku (STD §14) yang boleh jadi sasaran. "Seluruh karyawan" = `ROLE_EMPLOYEE`. */
 export const RECIPIENT_ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: 'ROLE_EMPLOYEE', label: 'Seluruh karyawan' },

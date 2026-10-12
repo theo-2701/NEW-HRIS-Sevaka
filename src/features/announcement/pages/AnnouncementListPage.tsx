@@ -19,7 +19,9 @@ import {
   type AnnouncementCategory,
   type AnnouncementRow,
   type AnnouncementStatus,
+  canPublishAnnouncement,
 } from '@/features/announcement/types';
+import { useAuthStore } from '@/store/auth.store';
 import { formatDateTime } from '@/lib/format';
 
 const ALL = 'ALL';
@@ -61,12 +63,13 @@ export function AnnouncementListPage() {
     setPage(1);
   };
 
+  const canPublish = canPublishAnnouncement(useAuthStore((s) => s.user?.role));
   const rowActions = (row: AnnouncementRow) =>
     row.status === 'DRAFT' ? (
       <RowActions
         actions={[
           { label: 'Edit', onSelect: () => setEditingId(row.id) },
-          { label: 'Publish', onSelect: () => setPublishing(row) },
+          ...(canPublish ? [{ label: 'Publish', onSelect: () => setPublishing(row) }] : []),
           { label: 'View Detail', onSelect: () => navigate(detailPath(row.id)) },
         ]}
       />

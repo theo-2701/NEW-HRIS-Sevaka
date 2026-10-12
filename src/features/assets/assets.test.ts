@@ -33,7 +33,7 @@ const OUTSIDER: DisposalDraft = {
   employeeId: '',
   fullName: 'Andi Wijaya',
   idCardNumber: '3171021505900001',
-  email: '',
+  email: 'andi@mail.com',
   phone: '081234567890',
 };
 
@@ -138,6 +138,7 @@ describe('Lifecycle (§8.3)', () => {
     const scheduled = await assetService.maintain(GA, 'as-0002', {
       maintenanceType: 'SCHEDULED',
       maintenanceDate: '2026-09-01',
+      completionDate: '2026-09-01',
       cost: '',
       note: '',
     });
@@ -145,6 +146,7 @@ describe('Lifecycle (§8.3)', () => {
     const unscheduled = await assetService.maintain(GA, 'as-0002', {
       maintenanceType: 'UNSCHEDULED',
       maintenanceDate: '2026-09-15',
+      completionDate: '',
       cost: '',
       note: '',
     });

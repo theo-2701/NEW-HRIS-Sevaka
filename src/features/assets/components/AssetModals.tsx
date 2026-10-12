@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from '@/store/ui.store';
 import { Modal } from '@/components/Modal';
 import { Segmented } from '@/components/Segmented';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import {
   useLease,
   useMaintain,
   useRegisterAsset,
+  useUpdateAsset,
   useResidual,
   useReturnAsset,
   useSaveCategory,
@@ -131,6 +133,12 @@ export function CategoryFormModal({
         value={interval}
         onChange={setInterval}
       />
+      {editing && String(editing.maintenanceIntervalDays ?? '') !== interval.trim() && (
+        <p className="m-0 rounded-md border border-warning-200 bg-warning-50 px-3.5 py-2.5 font-body text-xs font-medium text-warning-800">
+          Interval baru tidak menghitung ulang aset yang sudah ada — berlaku sejak perawatan terjadwal berikutnya
+          selesai (FSD-COMPANY 0.38).
+        </p>
+      )}
     </Modal>
   );
 }
@@ -160,27 +168,62 @@ const EMPTY: AssetDraft = {
  * dikosongkan — aset tetap lahir, berstatus Tidak tersedia sampai foto menyusul. Berkas kontrak
  * sewa sengaja tidak diminta di sini; ia diisi lewat aksi Sewa sesudah aset tersimpan.
  */
+/** Asset tersimpan → bentuk draft untuk layar Edit (pembaruan penuh, seluruh nilai dikirim ulang). */
+function toDraft(row: Asset): AssetDraft {
+  const text = (value: string | number | null) => (value === null ? '' : String(value));
+  return {
+    assetCode: row.assetCode,
+    assetName: row.assetName,
+    serialNumber: row.serialNumber ?? '',
+    assetCategoryId: text(row.assetCategoryId),
+    branchId: text(row.branchId),
+    ownershipType: row.ownershipType,
+    photo1: text(row.photo1),
+    purchaseDate: text(row.purchaseDate),
+    purchasePrice: text(row.purchasePrice),
+    purchaseInvoiceNumber: text(row.purchaseInvoiceNumber),
+    leaseAmount: text(row.leaseAmount),
+    leaseStartDate: text(row.leaseStartDate),
+    leaseEndDate: text(row.leaseEndDate),
+    leaseContractNumber: text(row.leaseContractNumber),
+    vendorId: text(row.vendorId),
+  };
+}
+
+/** Blok kepemilikan yang tidak berlaku dikosongkan di FE saat kepemilikan dibalik (FSD-COMPANY 0.38 §7.3). */
+const OWNED_BLOCK: (keyof AssetDraft)[] = ['purchaseDate', 'purchasePrice', 'purchaseInvoiceNumber'];
+const LEASED_BLOCK: (keyof AssetDraft)[] = ['leaseAmount', 'leaseStartDate', 'leaseEndDate', 'leaseContractNumber', 'vendorId'];
+
 export function RegisterAssetModal({
   actor,
   open,
+  editing,
   onClose,
 }: {
   actor: AssetActor;
   open: boolean;
+  /** Terisi = layar Edit Aset / Lengkapi; `asset_code` read-only. */
+  editing?: Asset | null;
   onClose: () => void;
 }) {
   const register = useRegisterAsset();
+  const update = useUpdateAsset();
+  const saving = register.isPending || update.isPending;
   const categories = useAssetCategories();
   const branches = useBranches();
   const vendors = useVendors();
   const [draft, setDraft] = useState<AssetDraft>(EMPTY);
 
   useEffect(() => {
-    if (open) setDraft(EMPTY);
-  }, [open]);
+    if (open) setDraft(editing ? toDraft(editing) : EMPTY);
+  }, [open, editing]);
 
   const set = <K extends keyof AssetDraft>(key: K, value: AssetDraft[K]) =>
-    setDraft((prev) => ({ ...prev, [key]: value }));
+    setDraft((prev) => {
+      if (key !== 'ownershipType' || value === prev.ownershipType) return { ...prev, [key]: value };
+      const cleared = Object.fromEntries((value === 'OWNED' ? LEASED_BLOCK : OWNED_BLOCK).map((field) => [field, '']));
+      return { ...prev, ...cleared, ownershipType: value as OwnershipType };
+    });
   const owned = draft.ownershipType === 'OWNED';
   const missing = [!draft.branchId && 'branch', !draft.assetCategoryId && 'kategori', !draft.photo1 && 'foto'].filter(
     Boolean,
@@ -190,14 +233,18 @@ export function RegisterAssetModal({
     <Modal
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title="Daftarkan aset"
+      title={editing ? `Ubah aset — ${editing.assetCode}` : 'Daftarkan aset'}
       description="Bentuk form mengikuti kepemilikan. Data umum boleh belum lengkap — aset tetap tersimpan, tetapi belum bisa diserahkan."
       size="wide"
       footer={
         <Footer
           onClose={onClose}
-          saving={register.isPending}
-          onSave={() => register.mutate({ actor, draft }, { onSuccess: onClose })}
+          saving={saving}
+          onSave={() =>
+            editing
+              ? update.mutate({ actor, id: editing.id, draft }, { onSuccess: onClose })
+              : register.mutate({ actor, draft }, { onSuccess: onClose })
+          }
         />
       }
     >
@@ -211,7 +258,14 @@ export function RegisterAssetModal({
       />
 
       <FieldGrid>
-        <TextRow label="Kode aset" required value={draft.assetCode} onChange={(value) => set('assetCode', value)} />
+        {editing ? (
+          <Field label="Kode aset">
+            <span className="font-body text-[13px] font-semibold text-fg-1">{draft.assetCode}</span>
+            <span className="font-body text-xs font-medium text-fg-3">Tidak dapat diubah.</span>
+          </Field>
+        ) : (
+          <TextRow label="Kode aset" required value={draft.assetCode} onChange={(value) => set('assetCode', value)} />
+        )}
         <TextRow label="Nama aset" required value={draft.assetName} onChange={(value) => set('assetName', value)} />
         <TextRow
           label="Serial number"
@@ -220,17 +274,19 @@ export function RegisterAssetModal({
           onChange={(value) => set('serialNumber', value)}
         />
         <SelectRow
-          label="Kategori"
+          label="Kategori (disarankan)"
           allowEmpty
           emptyLabel="Belum dipilih"
+          hint="Dikosongkan, aset berstatus NOT_AVAILABLE dan tidak dapat di-assign"
           value={draft.assetCategoryId}
           onChange={(value) => set('assetCategoryId', value)}
           options={(categories.data ?? []).map((row) => ({ value: row.id, label: row.name }))}
         />
         <SelectRow
-          label="Branch"
+          label="Branch (disarankan)"
           allowEmpty
           emptyLabel="Belum dipilih"
+          hint="Dikosongkan, aset berstatus NOT_AVAILABLE dan tidak dapat di-assign"
           value={draft.branchId}
           onChange={(value) => set('branchId', value)}
           options={(branches.data ?? []).map((row) => ({ value: row.id, label: row.branchName }))}
@@ -276,7 +332,9 @@ export function RegisterAssetModal({
           />
           <SelectRow
             label="Vendor"
-            required
+            allowEmpty
+            emptyLabel="Belum dipilih"
+            hint="Opsional saat registrasi; wajib pada aksi Sewa."
             value={draft.vendorId}
             onChange={(value) => set('vendorId', value)}
             options={(vendors.data ?? []).map((row) => ({ value: row.id, label: row.vendorName }))}
@@ -350,6 +408,7 @@ export function LifecycleModal({
   const [photo, setPhoto] = useState(false);
   const [maintenanceType, setMaintenanceType] = useState<MaintenanceType>('SCHEDULED');
   const [maintenanceDate, setMaintenanceDate] = useState('');
+  const [completionDate, setCompletionDate] = useState('');
   const [cost, setCost] = useState('');
   const [vendorId, setVendorId] = useState('');
   const [contract, setContract] = useState('');
@@ -405,7 +464,14 @@ export function LifecycleModal({
       description:
         'Perawatan terjadwal menggeser jadwal berikutnya sejauh interval kategori; perawatan tak terjadwal tidak.',
       saving: maintain.isPending,
-      save: () => maintain.mutate({ actor, id: asset.id, maintenanceType, maintenanceDate, cost, note }, done),
+      save: () => {
+        // FE menolak Tanggal Selesai lebih awal dari Tanggal Mulai (server tidak memeriksa urutan).
+        if (completionDate && maintenanceDate && completionDate < maintenanceDate) {
+          toast('Tanggal selesai tidak boleh lebih awal dari tanggal mulai.', 'danger');
+          return;
+        }
+        maintain.mutate({ actor, id: asset.id, maintenanceType, maintenanceDate, completionDate, cost, note }, done);
+      },
     },
     lease: {
       title: 'Perbarui sewa',
@@ -521,11 +587,18 @@ export function LifecycleModal({
           </Field>
           <FieldGrid>
             <TextRow
-              label="Tanggal"
+              label="Tanggal mulai"
               required
               placeholder="yyyy-mm-dd"
               value={maintenanceDate}
               onChange={setMaintenanceDate}
+            />
+            <TextRow
+              label="Tanggal selesai"
+              placeholder="yyyy-mm-dd"
+              hint="Opsional. Jadwal berikutnya bergeser hanya untuk Terjadwal yang sudah selesai."
+              value={completionDate}
+              onChange={setCompletionDate}
             />
             <TextRow label="Biaya" value={cost} onChange={setCost} />
           </FieldGrid>
@@ -560,7 +633,8 @@ const EMPTY_DISPOSAL: DisposalDraft = {
   disposalNominal: '',
   disposalFileAttached: false,
   photoAttached: false,
-  isEmployee: false,
+  // Nilai awal: penerima karyawan (FSD-COMPANY 0.38 §9).
+  isEmployee: true,
   employeeId: '',
   fullName: '',
   idCardNumber: '',
@@ -661,7 +735,7 @@ export function DisposalModal({
             value={draft.idCardNumber}
             onChange={(value) => set('idCardNumber', value)}
           />
-          <TextRow label="Surel" value={draft.email} onChange={(value) => set('email', value)} />
+          <TextRow label="Surel" required value={draft.email} onChange={(value) => set('email', value)} />
           <TextRow label="Telepon" required value={draft.phone} onChange={(value) => set('phone', value)} />
         </FieldGrid>
       )}

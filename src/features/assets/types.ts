@@ -152,6 +152,8 @@ export interface MaintenanceLog {
   assetId: string;
   maintenanceType: MaintenanceType;
   maintenanceDate: string;
+  /** `completion_date` — opsional (FSD-COMPANY 0.38 §7.4). */
+  completionDate: string | null;
   cost: number | null;
   note: string | null;
   createdAt: string;

@@ -166,6 +166,7 @@ export const MAINTENANCE_SEED: MaintenanceLog[] = [
     assetId: 'as-0003',
     maintenanceType: 'SCHEDULED',
     maintenanceDate: '2026-07-01',
+    completionDate: null,
     cost: 850000,
     note: 'Servis berkala 10.000 km.',
     createdAt: at('2026-07-01'),

@@ -23,8 +23,8 @@ const at = (date: string, time = '10:00') => `${date}T${time}:00+07:00`;
 
 export const SETUP_SEED: CompanySetup = {
   branchHierarchyMode: 'ENABLED',
-  costCenterAssignmentMode: 'ENABLED',
-  sbuAssignmentMode: 'ENABLED',
+  costCenterAssignmentMode: 'OPTIONAL',
+  sbuAssignmentMode: 'OPTIONAL',
 };
 
 /** Kode pos → provinsi, kota, zona waktu. Di server ini snapshot, bukan kolom tersendiri. */

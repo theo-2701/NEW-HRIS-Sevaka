@@ -485,7 +485,7 @@ export const assetService = {
   async maintain(
     actor: AssetActor,
     id: string,
-    payload: { maintenanceType: MaintenanceType; maintenanceDate: string; cost: string; note: string },
+    payload: { maintenanceType: MaintenanceType; maintenanceDate: string; completionDate: string; cost: string; note: string },
   ): Promise<Asset> {
     if (MOCK) {
       await delay(250);
@@ -500,13 +500,15 @@ export const assetService = {
         assetId: id,
         maintenanceType: payload.maintenanceType,
         maintenanceDate: payload.maintenanceDate,
+        completionDate: payload.completionDate || null,
         cost,
         note: payload.note.trim() || null,
         createdAt: now(),
       });
-      if (payload.maintenanceType === 'SCHEDULED') {
-        const interval = categories.find((item) => item.id === row.assetCategoryId)?.maintenanceIntervalDays ?? null;
-        row.nextMaintenanceDate = nextMaintenanceDate(payload.maintenanceDate, interval);
+      // Jadwal berikutnya bergeser HANYA bila SCHEDULED + Tanggal Selesai terisi + kategori ber-interval (FSD 0.38).
+      const interval = categories.find((item) => item.id === row.assetCategoryId)?.maintenanceIntervalDays ?? null;
+      if (payload.maintenanceType === 'SCHEDULED' && payload.completionDate && interval) {
+        row.nextMaintenanceDate = nextMaintenanceDate(payload.completionDate, interval);
       }
       return { ...row };
     }
@@ -599,7 +601,12 @@ export const assetService = {
         if (!/^\d{16}$/.test(draft.idCardNumber.trim())) {
           throw new Error('422 VALIDATION_ERROR — nomor KTP penerima harus 16 digit.');
         }
-        if (!draft.phone.trim()) throw new Error('422 VALIDATION_ERROR — telepon penerima wajib diisi.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim())) {
+          throw new Error('422 VALIDATION_ERROR — email penerima wajib berformat valid.');
+        }
+        if (!/^(\+62|0)8\d{7,12}$/.test(draft.phone.replace(/[\s-]/g, ''))) {
+          throw new Error('422 VALIDATION_ERROR — nomor HP penerima wajib berformat valid.');
+        }
       }
       disposals.push({
         id: nextId('dp'),

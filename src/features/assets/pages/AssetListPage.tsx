@@ -5,7 +5,7 @@ import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
-import { AddButton, RowButton } from '@/components/RowActions';
+import { AddButton, RowActions, RowButton } from '@/components/RowActions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { AssetStatusBadge } from '@/features/assets/components/AssetBits';
@@ -36,6 +36,7 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
   const [register, setRegister] = useState(false);
   const { actor } = useAssetActor();
   const writable = canWriteAssets(actor.role);
+  const [editing, setEditing] = useState<Asset | null>(null);
 
   const statuses = assigned ? HELD : status === ALL ? [] : [status as AssetStatus];
   const assets = useAssets(statuses, search);
@@ -119,11 +120,21 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
               { key: 'holder', header: 'Pemegang', render: (row) => row.employeeInfo?.nama ?? '—' },
               { key: 'status', header: 'Status', render: (row) => <AssetStatusBadge status={row.lastAssetStatus} /> },
             ]}
-            actions={(row) => (
-              <RowButton onClick={() => navigate(`/company-management/assets/detail?id=${row.id}`)}>
-                View Detail
-              </RowButton>
-            )}
+            actions={(row) =>
+              // FSD-COMPANY 0.38 §7.3: baris NOT_AVAILABLE menyediakan Lengkapi (layar Edit Aset).
+              row.lastAssetStatus === 'NOT_AVAILABLE' && writable ? (
+                <RowActions
+                  actions={[
+                    { label: 'View Detail', onSelect: () => navigate(`/company-management/assets/detail?id=${row.id}`) },
+                    { label: 'Lengkapi', onSelect: () => setEditing(row) },
+                  ]}
+                />
+              ) : (
+                <RowButton onClick={() => navigate(`/company-management/assets/detail?id=${row.id}`)}>
+                  View Detail
+                </RowButton>
+              )
+            }
           />
           <Pagination
             page={paged.page}
@@ -137,6 +148,7 @@ export function AssetListPage({ mode = 'list' }: { mode?: 'list' | 'assigned' })
       </Card>
 
       <RegisterAssetModal actor={actor} open={register} onClose={() => setRegister(false)} />
+      <RegisterAssetModal actor={actor} open={Boolean(editing)} editing={editing} onClose={() => setEditing(null)} />
     </PageShell>
   );
 }

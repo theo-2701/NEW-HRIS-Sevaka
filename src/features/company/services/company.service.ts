@@ -55,7 +55,7 @@ import type {
   Sbu,
   SbuDraft,
   SbuGroup,
-  SetupMode,
+  AssignmentMode,
   Vendor,
   VendorDraft,
 } from '@/features/company/types';
@@ -120,8 +120,8 @@ const snapshotOf = (employeeId: string | null): PersonSnapshot | null => {
  * Branch Group: API-nya tetap hidup berapa pun `BRANCH_HIERARCHY_MODE`-nya (`branch_group_id`
  * tetap wajib dirujuk tiap cabang), hanya visibilitas menu yang diatur mode itu di UI.
  */
-function requireMode(mode: SetupMode, menu: string) {
-  if (mode !== 'ENABLED') throw new Error(`422 — menu ${menu} dimatikan pada Company Setup perusahaan ini.`);
+function requireMode(mode: AssignmentMode, menu: string) {
+  if (mode === 'DISABLED') throw new Error(`422 — menu ${menu} dimatikan pada Company Setup perusahaan ini.`);
 }
 
 /**
@@ -376,8 +376,14 @@ export const companyService = {
       if (groupStructs.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase())) {
         throw new Error(`409 — group bernama ${name} sudah ada.`);
       }
-      if (draft.isDefault) {
-        groupStructs.filter((row) => row.id !== id).forEach((row) => (row.isDefault = false));
+      // FSD-COMPANY 0.38 §2.2 (CMP-379): default lama TIDAK dimatikan otomatis — admin mematikannya dulu.
+      const otherDefault = groupStructs.find((row) => row.id !== id && row.isDefault);
+      if (draft.isDefault && otherDefault) {
+        throw new Error(`409 — ${otherDefault.name} masih menjadi Default Group. Matikan default lama lebih dulu.`);
+      }
+      const current = id ? groupStructs.find((row) => row.id === id) : undefined;
+      if (current?.isDefault && !draft.isDefault && positions.some((row) => groupLevels.find((level) => level.id === row.groupStructLevelId)?.groupStructId === id)) {
+        throw new Error('422 — Default Group yang masih memuat posisi tidak dapat dimatikan.');
       }
       const finalApproverInfo = snapshotOf(draft.finalApproverEmployeeId || null);
       if (id) {
@@ -641,8 +647,9 @@ export const companyService = {
       const to = draft.salaryRangeTo.trim() ? parseNumber(draft.salaryRangeTo) : null;
       const rangeError = salaryRangeError(parentId ?? '', from, to);
       if (rangeError) throw new Error(`422 VALIDATION_ERROR — ${rangeError}`);
-      if (!parentId && (from !== null || to !== null)) {
-        throw new Error('422 VALIDATION_ERROR — Grade tidak memakai rentang gaji; rentang hanya milik Class.');
+      // FSD-COMPANY 0.38 §3: Grade boleh membawa rentang gaji (opsional); induk yang membentuk siklus = 422.
+      for (let cursor = parentId; cursor; cursor = jobGrades.find((item) => item.id === cursor)?.parentId ?? null) {
+        if (cursor === id) throw new Error('422 VALIDATION_ERROR — induk tidak boleh baris ini sendiri atau keturunannya.');
       }
 
       const previousParentId = id ? (jobGrades.find((item) => item.id === id)?.parentId ?? null) : null;
@@ -654,8 +661,8 @@ export const companyService = {
           name,
           parentId,
           sortOrder,
-          salaryRangeFrom: parentId ? from : null,
-          salaryRangeTo: parentId ? to : null,
+          salaryRangeFrom: from,
+          salaryRangeTo: to,
         });
       } else {
         const row: JobGrade = {
@@ -664,8 +671,8 @@ export const companyService = {
           gradeCode: '',
           parentId,
           sortOrder,
-          salaryRangeFrom: parentId ? from : null,
-          salaryRangeTo: parentId ? to : null,
+          salaryRangeFrom: from,
+          salaryRangeTo: to,
           createdAt: now(),
         };
         jobGrades.push(row);

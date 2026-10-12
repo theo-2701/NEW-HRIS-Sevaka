@@ -24,7 +24,7 @@ type Tab = 'sbu' | 'groups';
  */
 export function SbuPage() {
   const setup = useCompanySetup();
-  const enabled = setup.data?.sbuAssignmentMode === 'ENABLED';
+  const enabled = setup.data?.sbuAssignmentMode !== 'DISABLED';
 
   const [tab, setTab] = useState<Tab>('sbu');
   const [search, setSearch] = useState('');

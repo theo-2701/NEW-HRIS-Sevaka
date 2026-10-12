@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { AssetActorPicker } from '@/features/assets/components/AssetActorPicker';
 import { useAssetActor } from '@/features/assets/store/assetActor.store';
 import { AssetStatusBadge } from '@/features/assets/components/AssetBits';
-import { DisposalModal, LifecycleModal } from '@/features/assets/components/AssetModals';
+import { DisposalModal, LifecycleModal, RegisterAssetModal } from '@/features/assets/components/AssetModals';
 import type { LifecycleAction } from '@/features/assets/components/AssetModals';
 import { useAsset, useAssetCategories, useAssetHistory, useUploadPhoto } from '@/features/assets/hooks/useAssets';
 import { useBranches, useVendors } from '@/features/company/hooks/useCompany';
@@ -61,6 +61,7 @@ export function AssetDetailPage() {
   const [tab, setTab] = useState<Tab>('handover');
   const [action, setAction] = useState<LifecycleAction | null>(null);
   const [disposing, setDisposing] = useState(false);
+  const [editingAsset, setEditingAsset] = useState(false);
 
   const row = asset.data;
   const categoryName = (value: string | null) => categories.data?.find((item) => item.id === value)?.name ?? '—';
@@ -125,6 +126,11 @@ export function AssetDetailPage() {
                 <span className="font-body text-xs font-medium text-error-700">
                   Belum bisa diserahkan: {blockers.join(', ')}.
                 </span>
+                {writable && (
+                  <Button variant="secondary" onClick={() => setEditingAsset(true)}>
+                    Lengkapi
+                  </Button>
+                )}
                 {!row.photo1 && writable && (
                   <Button
                     variant="secondary"
@@ -353,6 +359,12 @@ export function AssetDetailPage() {
 
       {row && <LifecycleModal actor={actor} asset={row} action={action} onClose={() => setAction(null)} />}
       <DisposalModal actor={actor} asset={disposing ? (row ?? null) : null} onClose={() => setDisposing(false)} />
+      <RegisterAssetModal
+        actor={actor}
+        open={editingAsset}
+        editing={editingAsset ? (row ?? null) : null}
+        onClose={() => setEditingAsset(false)}
+      />
     </PageShell>
   );
 }

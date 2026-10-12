@@ -30,7 +30,7 @@ type Tab = 'centers' | 'categories';
  */
 export function CostCenterPage() {
   const setup = useCompanySetup();
-  const enabled = setup.data?.costCenterAssignmentMode === 'ENABLED';
+  const enabled = setup.data?.costCenterAssignmentMode !== 'DISABLED';
 
   const [tab, setTab] = useState<Tab>('centers');
   const [search, setSearch] = useState('');

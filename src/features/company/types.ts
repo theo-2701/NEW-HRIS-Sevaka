@@ -11,10 +11,16 @@
 /** Mode Company Setup yang mengendalikan tampilnya sebagian menu dan elemen. */
 export type SetupMode = 'ENABLED' | 'DISABLED';
 
+/**
+ * Mode Cost Center / SBU = `REQUIRED` / `OPTIONAL` / `DISABLED` (bawaan OPTIONAL) — FSD-COMPANY 0.38 §4/§5.
+ * REQUIRED dan OPTIONAL sama-sama membuka menu; bedanya diterapkan di service pemakai (CD-012).
+ */
+export type AssignmentMode = 'REQUIRED' | 'OPTIONAL' | 'DISABLED';
+
 export interface CompanySetup {
   branchHierarchyMode: SetupMode;
-  costCenterAssignmentMode: SetupMode;
-  sbuAssignmentMode: SetupMode;
+  costCenterAssignmentMode: AssignmentMode;
+  sbuAssignmentMode: AssignmentMode;
 }
 
 /**
