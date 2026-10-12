@@ -4,7 +4,7 @@ import { Card, CardHead, EmptyState } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { RowButton } from '@/components/RowActions';
-import { Segmented } from '@/components/Segmented';
+import { cn } from '@/lib/utils';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ import {
   OBJECTION_STATUS_LABEL,
   SIGNAL_GROUP_LABEL,
   type PerfActor,
+  type SignalDetail,
   type SignalGroup,
   type SnapshotRow,
 } from '@/features/performance/types';
@@ -133,7 +134,8 @@ function detailValue(key: string, value: string | number | boolean) {
 function SignalCard({ index, group }: { index: number; group: SignalGroup }) {
   const badge = emptyBadge(group);
   const recap = recapText(group);
-  const keys = group.details[0] ? Object.keys(group.details[0]) : [];
+  // `attributes.is_excused` kolom sinyal mentah, bukan penanda — penanda kanonik = `excusal` (UIC 0.13).
+  const keys = group.details[0] ? Object.keys(group.details[0].attributes).filter((key) => key !== 'is_excused') : [];
   return (
     <Card>
       <CardHead
@@ -149,14 +151,23 @@ function SignalCard({ index, group }: { index: number; group: SignalGroup }) {
               : 'Belum ada rekap untuk periode ini.')}
       </p>
       {group.details.length > 0 && (
-        <DataTable<Record<string, string | number | boolean>>
+        <DataTable<SignalDetail>
           rows={group.details}
-          rowKey={(row, rowIndex) => `${String(row.date)}:${rowIndex}`}
-          columns={keys.map((key) => ({
-            key,
-            header: DETAIL_LABEL[key] ?? key,
-            render: (row) => detailValue(key, row[key]),
-          }))}
+          rowKey={(row) => row.sourceRowId}
+          columns={[
+            { key: 'occurred', header: 'Tanggal', nowrap: true, render: (row) => formatDate(row.occurredAt) },
+            ...keys.map((key) => ({
+              key,
+              header: DETAIL_LABEL[key] ?? key,
+              render: (row: SignalDetail) => detailValue(key, row.attributes[key] ?? '—'),
+            })),
+            {
+              key: 'excusal',
+              header: 'Pemaafan',
+              render: (row: SignalDetail) =>
+                row.excusal ? <StatusBadge tone="mute">Dimaafkan</StatusBadge> : '—',
+            },
+          ]}
         />
       )}
     </Card>
@@ -327,11 +338,11 @@ function SnapshotModal({ actor, id, onClose }: { actor: PerfActor; id: string | 
 export function ReviewHistoryPanel({ actor }: { actor: PerfActor }) {
   const subjects = useSubjectOptions(actor);
   const [picked, setPicked] = useState('');
-  const [revisions, setRevisions] = useState<'latest' | 'all'>('latest');
+  const [allRevisions, setAllRevisions] = useState(false);
   const [viewing, setViewing] = useState<string | null>(null);
   const subject = picked || subjects.fallback;
   const self = subject === SELF;
-  const history = useReviewHistory(actor, self ? null : subject, revisions === 'all', Boolean(subject));
+  const history = useReviewHistory(actor, self ? null : subject, allRevisions, Boolean(subject));
 
   return (
     <Card>
@@ -349,15 +360,27 @@ export function ReviewHistoryPanel({ actor }: { actor: PerfActor }) {
       <div>
       <div className="mb-2 flex flex-wrap items-end gap-3">
         <SubjectSelect id="history-subject" label="Riwayat milik" value={subject} onChange={setPicked} options={subjects.options} />
-        <Segmented<'latest' | 'all'>
-          className="self-end"
-          value={revisions}
-          onChange={setRevisions}
-          options={[
-            { value: 'latest', label: 'Revisi terbaru' },
-            { value: 'all', label: 'Semua revisi' },
-          ]}
-        />
+        {/* H4 (FSD 0.14 PRF-86): toggle bawaan mati = revisi terbaru; aktif = include-revisions + kolom Nomor Revisi. */}
+        <label className="flex h-9 items-center gap-2.5 self-end font-body text-[13px] font-semibold text-fg-2">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={allRevisions}
+            onClick={() => setAllRevisions((on) => !on)}
+            className={cn(
+              'relative h-6 w-11 shrink-0 rounded-pill transition-colors duration-200 ease-standard',
+              allRevisions ? 'bg-secondary-500' : 'bg-border-2',
+            )}
+          >
+            <span
+              className={cn(
+                'absolute top-0.5 size-5 rounded-full bg-white shadow-card-sm transition-[left] duration-200 ease-standard',
+                allRevisions ? 'left-[22px]' : 'left-0.5',
+              )}
+            />
+          </button>
+          Tampilkan semua revisi
+        </label>
       </div>
       {!subject ? (
         <EmptyState title="Belum ada riwayat yang dapat dibuka" description="Riwayat orang lain hanya untuk atasan pada rantai dan HR." />
@@ -370,11 +393,13 @@ export function ReviewHistoryPanel({ actor }: { actor: PerfActor }) {
           loading={history.isLoading}
           empty="Belum ada lembar yang disahkan."
           columns={[
-            { key: 'revision', header: 'Revisi', nowrap: true, render: (row) => `Revisi ${row.revisionNo}` },
             self
               ? { key: 'grade', header: 'Golongan', render: (row: SnapshotRow) => row.jobGradeNameSnapshot ?? '—' }
               : { key: 'employee', header: 'Karyawan', strong: true, render: (row: SnapshotRow) => row.employeeName ?? '—' },
             { key: 'approved', header: 'Disahkan', nowrap: true, render: (row) => formatDateTime(row.approvedAt) },
+            ...(allRevisions
+              ? [{ key: 'revision', header: 'Nomor Revisi', nowrap: true, render: (row: SnapshotRow) => row.revisionNo }]
+              : []),
           ]}
           actions={(row) => <RowButton onClick={() => setViewing(row.snapshotId)}>View Detail</RowButton>}
         />

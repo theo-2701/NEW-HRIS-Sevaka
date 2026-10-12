@@ -364,12 +364,12 @@ export function AddMasterLineModal({ open, sheetId, onClose }: { open: boolean; 
 export function AddAdditionalLineModal({
   open,
   sheetId,
-  currentShare,
+  remainingWeight,
   onClose,
 }: {
   open: boolean;
   sheetId: string;
-  currentShare: string;
+  remainingWeight: number | null;
   onClose: () => void;
 }) {
   const { actor } = usePerfActor();
@@ -434,7 +434,11 @@ export function AddAdditionalLineModal({
               min={0}
               max={9999.99}
               step="0.01"
-              hint={`Porsi baris tambahan saat ini ${currentShare}. Dihitung ulang termasuk baris ini; ditolak bila melewati batas perusahaan.`}
+              hint={
+                remainingWeight === null
+                  ? undefined
+                  : `Sisa bobot yang masih boleh diisi: ${formatWeight(remainingWeight)}`
+              }
             />
             <TextField name="target" label="Target" required maxLength={500} containerClassName="md:col-span-2" />
           </Form>

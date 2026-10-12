@@ -106,7 +106,7 @@ export function NotificationInboxPage() {
             rowKey={(row) => row.id}
             loading={inbox.isLoading}
             empty="No notification matches this filter."
-            onRowClick={(row) => !markRead.isPending && markRead.mutate(row.id)}
+            onRowClick={(row) => !markRead.isPending && markRead.mutate({ id: row.id, wasRead: row.isRead })}
             columns={[
               {
                 key: 'message',

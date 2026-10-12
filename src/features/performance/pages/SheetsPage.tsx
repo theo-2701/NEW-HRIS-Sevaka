@@ -51,6 +51,7 @@ function MySheetPanel({ actor, sheetId }: { actor: PerfActor; sheetId: string | 
 
   const data = sheet.data;
   const locked = data.items.some((row) => row.initialValueRecordedAt);
+  const final = data.status === 'APPROVED' || data.status === 'REJECTED_FINAL';
   const content = self.data?.content ?? null;
   const resetSeen = data.items.some((row) => row.employeeReadResetCount > 0 && !row.employeeReadAt);
 
@@ -119,10 +120,17 @@ function MySheetPanel({ actor, sheetId }: { actor: PerfActor; sheetId: string | 
             if (!row.employeeReadAt) actions.push({ label: 'Tandai dibaca', onSelect: () => setReading(row) });
             actions.push({
               label: row.employeeObjectionNote ? 'Ubah catatan keberatan' : 'Catat keberatan',
+              disabled: final,
               onSelect: () => setNoting(row),
             });
             return actions.length === 1 ? (
-              <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>
+              <RowButton
+                disabled={actions[0].disabled}
+                title={actions[0].disabled ? 'Lembar sudah final' : undefined}
+                onClick={actions[0].onSelect}
+              >
+                {actions[0].label}
+              </RowButton>
             ) : (
               <RowActions actions={actions} />
             );

@@ -778,3 +778,26 @@ Sidebar hanya punya satu baris "Monitor & Reports" (terkunci), jadi tiga Sub Men
   ekor acak uuid karena awalannya timestamp.
 
 9 pengujian baru di `performance/monitor.test.ts`.
+
+## 28. Rilis FE-261010 (10 Oktober 2026) — Notification & Performance
+
+Sumber: `Downloads/261010-fe/fe` (identik dengan `261008-FE` untuk dokumen yang sama versinya). Basis repo:
+FSD-NOTIFICATION 0.4 / UIC 0.2 dan FSD-PERFORMANCE 0.11 / UIC 0.12.
+
+- **Notification 0.6 / UIC 0.4:** varian toast tandai-dibaca kini ditentukan status `is_read` baris di grid
+  **sebelum** klik (sebelumnya dari respons — cabang API selalu dianggap "berubah"). Klik baris yang sudah dibaca
+  tetap memanggil `PUT`. Aturan tautan (hanya `ANNOUNCEMENT`; `PRODUCTIVITY_RECAP`/`FINANCE_REQUEST`/tak dikenal tanpa
+  tautan) dan kolom waktu (baris belum dibaca hanya `created_at`) sudah sesuai sejak awal.
+- **Performance 0.15 / UIC 0.14:**
+  - `D1` hanya EMP (bukan superset SA, `PRF-78`); cabang API `resolveMine` memakai `P3.15 GET /review-sheets`.
+  - `Idempotency-Key` Menu 3 dicabut dari cabang API (UIC 0.13: hanya `P2.01`/`P5.01`/`P5.05`/`P5.06`).
+  - Aturan tampil `PRF-86`: sebab peran = tidak dirender, sebab keadaan = disabled + keterangan. Diterapkan ke
+    Ajukan lembar (E6), tombol tambah baris & Ubah/Hapus/Sesuaikan (E3/E4), catatan keberatan D1 (nonaktif saat
+    lembar final), alasan keputusan F2 (disabled + dikosongkan saat Setujui), entry-point sanggahan G1/G2.
+  - E4b menampilkan `additional_quota.remaining_weight` dari detail lembar (hanya pemegang kursi; `null` saat total 0).
+  - H4: toggle "Tampilkan semua revisi"; kolom Nomor Revisi hanya saat toggle aktif.
+  - `PL-01`/`PL-02`: baris rincian berbentuk `source_table`/`source_row_id`/`occurred_at`/`attributes`/`excusal`;
+    penanda dimaafkan = `excusal != null`; `resolution_state` dicabut; kalimat disclaimer disamakan live.
+  - Body laporan `PL-06`..`PL-12` memakai kunci snake_case.
+  - **GAP:** G1/G2 "tenggat sanggahan telah lewat" tidak dapat dinilai FE sebelum server menjawab — karyawan tidak
+    berhak membaca jendela yang dibuka ulang (`P5.08` HR saja); tetap mengandalkan `422 OBJECTION_DEADLINE_PASSED`.

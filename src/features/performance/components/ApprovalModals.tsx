@@ -164,7 +164,10 @@ export function DecideModal({
               <RadioBranch<RoundOutcome>
                 name="decision"
                 value={values.decision}
-                onChange={(next) => void setFieldValue('decision', next)}
+                onChange={(next) => {
+                  void setFieldValue('decision', next);
+                  if (next === 'APPROVED') void setFieldValue('decisionReason', '');
+                }}
                 options={[
                   { value: 'APPROVED', title: 'Setujui', description: 'Lembar disahkan. Alasan tidak diperlukan.' },
                   {
@@ -183,8 +186,8 @@ export function DecideModal({
                 ]}
               />
 
-              {values.decision !== 'APPROVED' && (
-                <TextAreaField name="decisionReason" label="Alasan keputusan" required rows={4} maxLength={1000} />
+              {(
+                <TextAreaField name="decisionReason" label="Alasan keputusan" required={values.decision !== 'APPROVED'} disabled={values.decision === 'APPROVED'} rows={4} maxLength={1000} />
               )}
             </Form>
           )}

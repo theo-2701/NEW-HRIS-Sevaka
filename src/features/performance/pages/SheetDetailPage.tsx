@@ -107,14 +107,19 @@ export function SheetDetailPage() {
     if (editable && !row.initialValueRecordedAt) {
       actions.push({ label: 'Isi nilai awal', onSelect: () => setValuing({ item: row, kind: 'initial' }) });
     }
-    if (editable && open) actions.push({ label: 'Sesuaikan nilai', onSelect: () => setValuing({ item: row, kind: 'submitted' }) });
-    if (inProgress) actions.push({ label: 'Ubah baris', onSelect: () => setEditing(row) });
-    if (inProgress && row.origin === 'ADDITIONAL') {
-      actions.push({ label: 'Hapus baris', danger: true, onSelect: () => setDeleting(row) });
+    // FSD 0.14 (PRF-86): sebab keadaan = tetap dirender tetapi disabled; keterangannya di catatan bawah tabel.
+    if (open) {
+      actions.push({ label: 'Sesuaikan nilai', disabled: !editable, onSelect: () => setValuing({ item: row, kind: 'submitted' }) });
+    }
+    actions.push({ label: 'Ubah baris', disabled: !inProgress, onSelect: () => setEditing(row) });
+    if (row.origin === 'ADDITIONAL') {
+      actions.push({ label: 'Hapus baris', danger: true, disabled: !inProgress, onSelect: () => setDeleting(row) });
     }
     if (actions.length === 0) return null;
     return actions.length === 1 ? (
-      <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>
+      <RowButton disabled={actions[0].disabled} onClick={actions[0].onSelect}>
+        {actions[0].label}
+      </RowButton>
     ) : (
       <RowActions actions={actions} />
     );
@@ -129,8 +134,12 @@ export function SheetDetailPage() {
         actions={
           <div className="flex flex-wrap items-center gap-2.5">
             <PerfActorPicker onChange={() => setTab('lines')} />
-            {holder && editable && (
-              <Button onClick={() => setSubmitting(true)}>
+            {holder && (
+              <Button
+                disabled={!editable}
+                title={editable ? undefined : 'Lembar sedang/sudah diproses persetujuan'}
+                onClick={() => setSubmitting(true)}
+              >
                 {sheet.status === 'RETURNED_TO_ASSESSOR' ? 'Ajukan ulang' : 'Ajukan lembar'}
               </Button>
             )}
@@ -219,12 +228,22 @@ export function SheetDetailPage() {
                 title="Baris nilai"
                 sub={`Porsi baris tambahan ${share} dari total bobot ${formatWeight(total)}`}
                 action={
-                  holder && inProgress ? (
+                  holder ? (
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="secondary" onClick={() => setAdding('master')}>
+                      <Button
+                        variant="secondary"
+                        disabled={!inProgress}
+                        title={inProgress ? undefined : 'Hanya dapat ditambah saat lembar Dalam Penilaian'}
+                        onClick={() => setAdding('master')}
+                      >
                         Tambah dari daftar induk
                       </Button>
-                      <Button variant="secondary" onClick={() => setAdding('additional')}>
+                      <Button
+                        variant="secondary"
+                        disabled={!inProgress}
+                        title={inProgress ? undefined : 'Hanya dapat ditambah saat lembar Dalam Penilaian'}
+                        onClick={() => setAdding('additional')}
+                      >
                         Tambah baris tambahan
                       </Button>
                     </div>
@@ -280,8 +299,15 @@ export function SheetDetailPage() {
                     ),
                   },
                 ]}
-                actions={holder && editable ? lineActions : undefined}
+                actions={holder ? lineActions : undefined}
               />
+              {holder && !inProgress && (
+                <p className="m-0 font-body text-[12px] font-medium text-fg-3">
+                  {editable
+                    ? 'Baris hanya dapat ditambah, diubah, atau dihapus saat lembar Dalam Penilaian.'
+                    : 'Lembar tidak dalam tahap penyesuaian — nilai dan baris hanya dapat dibaca.'}
+                </p>
+              )}
               {inProgress && (
                 <p className="m-0 font-body text-[12px] font-medium text-fg-3">
                   Porsi beku terisi permanen saat lembar diajukan; sejak itu bobot tidak dapat diubah.
@@ -324,7 +350,7 @@ export function SheetDetailPage() {
       <AddAdditionalLineModal
         open={adding === 'additional'}
         sheetId={sheet.id}
-        currentShare={share}
+        remainingWeight={sheet.additionalQuota?.remainingWeight ?? null}
         onClose={() => setAdding(null)}
       />
       <ValueModal sheetId={sheet.id} target={valuing} onClose={() => setValuing(null)} />

@@ -218,6 +218,8 @@ export interface SheetDetail extends SheetRow {
   processInstanceId: string | null;
   selfAssessmentFilled: boolean;
   supervisorTransferred: boolean;
+  /** Hanya untuk atasan pemegang lembar (FSD 0.15 E4b). */
+  additionalQuota?: { remainingWeight: number | null };
   items: SheetItem[];
 }
 
@@ -408,8 +410,18 @@ export interface SignalGroup {
   groupKey: SignalGroupKey;
   /** Kolom rekap apa adanya dari `signal_recap` — nama kolom kontrak, nilai hitungan murni. */
   recap: Record<string, number> | null;
-  details: Record<string, string | number | boolean>[];
+  details: SignalDetail[];
   emptyState: SignalEmptyState | null;
+}
+
+/** Baris rincian `PL-01` (UIC 0.13) — dimaafkan = `excusal != null`, tetap tampil ber-penanda. */
+export interface SignalDetail {
+  sourceTable: string;
+  sourceRowId: string;
+  occurredAt: string;
+  /** Kunci khas tiap sumber, snake_case apa adanya. */
+  attributes: Record<string, string | number | boolean | null>;
+  excusal: { determinationBasis: string; reducedMinutes: number | null; basisDetail: string | null } | null;
 }
 
 export interface SignalBoard {

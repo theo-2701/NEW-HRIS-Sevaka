@@ -28,7 +28,8 @@ export const canListSheets = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF', 'ROLE_DEP
 /** Cakupan `ALL` pada `#14`; DM dipaksa server ke `ASSESSOR`. */
 export const canScopeAllSheets = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
 /** Permukaan `SELF` `D1` (`#15` SELF, `#20`–`#23`) — terikat identitas token. */
-export const hasOwnSheetSurface = allow('ROLE_EMPLOYEE');
+/** FSD 0.13 (PRF-78): EMP saja, bukan superset SA — SA/DM/HR yang dinilai masuk lewat tautan notifikasi. */
+export const hasOwnSheetSurface = (role: PerfRole) => role === 'ROLE_EMPLOYEE';
 /** `#16` riwayat penilai — HR; DM hanya bila pemegang kursi (dicek service). */
 export const canReadHistoryAsHr = allow('ROLE_HR_MANAGER', 'ROLE_HR_STAFF');
 

@@ -73,10 +73,24 @@ function MyObjections({ actor }: { actor: PerfActor }) {
               : undefined
           }
           action={
-            data?.status === 'APPROVED' ? (
-              <Button onClick={() => setSubject('VALUE')}>Sanggah nilai disahkan</Button>
-            ) : data?.status === 'REJECTED_FINAL' && rejected ? (
-              <Button onClick={() => setSubject('REJECTED_FINAL')}>Sanggah tolak final</Button>
+            data ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={data.status !== 'APPROVED'}
+                  title={data.status === 'APPROVED' ? undefined : 'Belum ada keputusan yang dapat disanggah'}
+                  onClick={() => setSubject('VALUE')}
+                >
+                  Sanggah nilai disahkan
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={!rejected}
+                  title={rejected ? undefined : 'Belum ada keputusan yang dapat disanggah'}
+                  onClick={() => setSubject('REJECTED_FINAL')}
+                >
+                  Sanggah tolak final
+                </Button>
+              </div>
             ) : undefined
           }
         />

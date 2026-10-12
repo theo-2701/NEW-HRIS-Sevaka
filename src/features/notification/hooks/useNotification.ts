@@ -18,10 +18,11 @@ export const useHasUnread = () =>
 export const useMarkRead = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => notificationService.markRead(id),
-    onSuccess: ({ changed }) => {
-      // Panggilan kedua tetap 200 apa adanya — bukan error (TSD §2.3 aturan tambahan #1).
-      toast(changed ? 'Marked as read.' : 'Already read — nothing changed.', changed ? 'ok' : 'info');
+    mutationFn: ({ id }: { id: string; wasRead: boolean }) => notificationService.markRead(id),
+    // Varian toast dari status baris di grid SEBELUM klik, bukan dari respons — kedua panggilan sama-sama
+    // 200 berbentuk sama (FSD-NOTIFICATION 0.6 §1.2).
+    onSuccess: (_result, { wasRead }) => {
+      toast(wasRead ? 'Already read — nothing changed.' : 'Marked as read.', wasRead ? 'info' : 'ok');
       void queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
     onError: (error: Error) => toast(error.message, 'danger'),

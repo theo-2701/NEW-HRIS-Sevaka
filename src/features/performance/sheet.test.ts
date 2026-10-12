@@ -156,3 +156,10 @@ describe('Ajukan lembar (P4.01, dirender di Menu 3)', () => {
     await expect(sheetService.submit(BUDI, 'rs-0001')).rejects.toMatchObject({ status: 422, code: 'WEIGHT_SUM_ZERO' });
   });
 });
+
+describe('Sisa kuota baris tambahan (FSD 0.15 E4b)', () => {
+  it('dihitung server hanya untuk atasan pemegang: 40+30 MASTER, 15 ADDITIONAL, pagar 30% ⇒ 15', async () => {
+    expect((await sheetService.get(BUDI, 'rs-0001')).additionalQuota).toEqual({ remainingWeight: 15 });
+    expect((await sheetService.get(HESTI, 'rs-0001')).additionalQuota).toBeUndefined();
+  });
+});

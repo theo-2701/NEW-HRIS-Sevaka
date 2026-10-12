@@ -573,7 +573,7 @@ export const OBJECTION_SEED: ObjectionSeed[] = [
 
 /** Kalimat tetap `reprimand_disclaimer` — selalu tampil di papan pantau (§4.7.1.2). */
 export const REPRIMAND_DISCLAIMER =
-  'Angka papan ini sudah memperhitungkan keadaan yang dimaafkan. Aturan pemaafan hanya berlaku untuk penilaian — surat peringatan di modul karyawan dihitung dengan aturannya sendiri.';
+  'Angka pada papan ini sudah memperhitungkan keadaan yang dimaafkan. Aturan pemaafan itu hanya berlaku untuk penilaian kinerja; surat peringatan dihitung dengan aturannya sendiri, sehingga kedua angka dapat berbeda.';
 
 /** Golongan saat pengesahan (dibaca Company saat snapshot dibuat). "Staff 2" = padanan "Staff Grade 3". */
 export const EMPLOYEE_GRADE: Record<string, string> = {
@@ -583,22 +583,43 @@ export const EMPLOYEE_GRADE: Record<string, string> = {
   'emp-rina-amelia': 'Manager 1',
 };
 
-const noRecord = (groupKey: SignalGroup['groupKey'], recap: Record<string, number>): SignalGroup => ({
+const noRecord = (groupKey: SignalGroup['groupKey'], recap: Record<string, number>): RawGroup => ({
   groupKey,
   recap,
   details: [],
   emptyState: 'NO_RECORD',
 });
-const reprimandUnavailable: SignalGroup = { groupKey: 'REPRIMAND', recap: null, details: [], emptyState: 'NOT_AVAILABLE' };
+const reprimandUnavailable: RawGroup = { groupKey: 'REPRIMAND', recap: null, details: [], emptyState: 'NOT_AVAILABLE' };
 
 /** `signal_recap` periode Semester 1 2026 per karyawan — Dedi mengikuti dataset UIC `PL-01` persis. */
-export const SIGNAL_SEED: Record<string, SignalGroup[]> = {
+type RawGroup = Omit<SignalGroup, 'details'> & { details: Record<string, string | number | boolean>[] };
+
+const SOURCE_TABLE: Record<string, string> = {
+  ATTENDANCE: 'attendance_signal',
+  OVERTIME: 'overtime_signal',
+  TRANSITION: 'transition_task_signal',
+  PENDING_DECISION: 'approval_delay_signal',
+};
+
+/** Seed ringkas `{date, ...atribut}` → bentuk baris kontrak (UIC 0.13 `PL-01`). */
+const toDetails = (employeeId: string, group: RawGroup): SignalGroup => ({
+  ...group,
+  details: group.details.map(({ date, excused, ...attributes }, index) => ({
+    sourceTable: SOURCE_TABLE[group.groupKey] ?? 'signal',
+    sourceRowId: `sig-${employeeId}-${group.groupKey.toLowerCase()}-${index + 1}`,
+    occurredAt: `${date}T08:00:00+07:00`,
+    attributes,
+    excusal: excused ? { determinationBasis: 'LEAVE_OVERLAP', reducedMinutes: null, basisDetail: null } : null,
+  })),
+});
+
+const SIGNAL_RAW: Record<string, RawGroup[]> = {
   'emp-dedi': [
     {
       groupKey: 'ATTENDANCE',
       recap: { late_occurrence_count: 2, absent_occurrence_count: 0 },
       details: [
-        { date: '2026-03-05', attendance_status: 'LATE' },
+        { date: '2026-03-05', attendance_status: 'LATE', excused: true },
         { date: '2026-02-10', attendance_status: 'LATE' },
       ],
       emptyState: null,
@@ -675,7 +696,7 @@ export const SIGNAL_SEED: Record<string, SignalGroup[]> = {
         approval_delay_minutes_total: 2880,
         approval_delay_count: 1,
       },
-      details: [{ date: '2026-03-02', delay_minutes: 2880, resolution_state: 'RESOLVED' }],
+      details: [{ date: '2026-03-02', delay_minutes: 2880 }],
       emptyState: null,
     },
     reprimandUnavailable,
@@ -693,12 +714,16 @@ export const SIGNAL_SEED: Record<string, SignalGroup[]> = {
         approval_delay_minutes_total: 1440,
         approval_delay_count: 1,
       },
-      details: [{ date: '2026-07-01', delay_minutes: 1440, resolution_state: 'PENDING' }],
+      details: [{ date: '2026-07-01', delay_minutes: 1440 }],
       emptyState: null,
     },
     reprimandUnavailable,
   ],
 };
+
+export const SIGNAL_SEED: Record<string, SignalGroup[]> = Object.fromEntries(
+  Object.entries(SIGNAL_RAW).map(([employeeId, groups]) => [employeeId, groups.map((group) => toDetails(employeeId, group))]),
+);
 
 export const SIGNAL_COMPUTED_AT = '2026-07-28T06:00:00+07:00';
 

@@ -65,7 +65,7 @@ function camelize<T>(value: unknown): T {
   return value as T;
 }
 
-/** Body laporan memakai ejaan kontrak apa adanya (`review-period-id`, dst.). */
+/** Body laporan memakai ejaan kontrak apa adanya (`review_period_id`, dst. — UIC 0.13). */
 async function report<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const { data } = await api.post<unknown>(`/performance/reports/${path}/search`, body);
   return camelize<T>(data);
@@ -215,16 +215,26 @@ export const monitorService = {
       review_period_name: string;
       review_period_phase: ReviewPeriod['phase'];
       employee_id: string;
-      groups: { group_key: SignalGroupKey; recap: Record<string, number> | null; details: SignalGroup['details']; empty_state: SignalGroup['emptyState'] }[];
+      groups: { group_key: SignalGroupKey; recap: Record<string, number> | null; details: { source_table: string; source_row_id: string; occurred_at: string; attributes: Record<string, string | number | boolean | null>; excusal: { determination_basis: string; reduced_minutes: number | null; basis_detail: string | null } | null }[]; empty_state: SignalGroup['emptyState'] }[];
       reprimand_disclaimer: string;
       computed_at: string;
-    }>(url, { params: { 'review-period-id': periodId } });
+    }>(url, { params: { review_period_id: periodId } });
     return {
       reviewPeriodId: data.review_period_id,
       reviewPeriodName: data.review_period_name,
       reviewPeriodPhase: data.review_period_phase,
       employeeId: data.employee_id,
-      groups: data.groups.map((row) => ({ groupKey: row.group_key, recap: row.recap, details: row.details, emptyState: row.empty_state })),
+      groups: data.groups.map((row) => ({ groupKey: row.group_key, recap: row.recap, details: row.details.map((detail) => ({
+          sourceTable: detail.source_table,
+          sourceRowId: detail.source_row_id,
+          occurredAt: detail.occurred_at,
+          attributes: detail.attributes,
+          excusal: detail.excusal && {
+            determinationBasis: detail.excusal.determination_basis,
+            reducedMinutes: detail.excusal.reduced_minutes,
+            basisDetail: detail.excusal.basis_detail,
+          },
+        })), emptyState: row.empty_state })),
       reprimandDisclaimer: data.reprimand_disclaimer,
       computedAt: data.computed_at,
     };
@@ -287,7 +297,7 @@ export const monitorService = {
   /** `PL-06` — seluruh bawahan tampil, termasuk yang "dilewati"; `null` ≠ 0. DM dipaksa = dirinya. */
   async taskDistribution(actor: PerfActor, periodId: string, supervisorId?: string): Promise<TaskDistributionRow[]> {
     if (!MOCK) {
-      return report('task-distribution', { 'review-period-id': periodId, 'supervisor-employee-id': supervisorId });
+      return report('task-distribution', { review_period_id: periodId, supervisor_employee_id: supervisorId });
     }
     await delay();
     const dm = actor.role === 'ROLE_DEPT_MANAGER';
@@ -314,7 +324,7 @@ export const monitorService = {
 
   /** `PL-07` — `COUNT ... GROUP BY` golongan atas daftar induk. */
   async targetTypeMix(actor: PerfActor, periodId: string): Promise<TargetMixRow[]> {
-    if (!MOCK) return report('kpi-item-target-type-mix', { 'review-period-id': periodId });
+    if (!MOCK) return report('kpi-item-target-type-mix', { review_period_id: periodId });
     await delay();
     if (!isHr(actor)) throw forbidden();
     const { rows } = await kpiService.search(SYSTEM, { page: 1, size: 1000 });
@@ -332,7 +342,7 @@ export const monitorService = {
   async inactiveKpi(actor: PerfActor, query: { jobGradeId?: string; page: number; size: number }): Promise<{ rows: InactiveKpiRow[]; totalData: number }> {
     if (!MOCK) {
       const data = await report<{ data: InactiveKpiRow[]; totalData: number }>('kpi-item-inactive', {
-        'job-grade-id': query.jobGradeId,
+        job_grade_id: query.jobGradeId,
         page: query.page,
         size: query.size,
       });
@@ -348,7 +358,7 @@ export const monitorService = {
 
   /** `PL-09` — porsi BOBOT tambahan per atasan; pagar hanya keterangan. */
   async additionalRatio(actor: PerfActor, periodId: string): Promise<AdditionalRatioRow[]> {
-    if (!MOCK) return report('additional-item-ratio', { 'review-period-id': periodId });
+    if (!MOCK) return report('additional-item-ratio', { review_period_id: periodId });
     await delay();
     if (!isHr(actor)) throw forbidden();
     const threshold = await readPerfNumber('performance.additional_item_max_ratio', 30);
@@ -362,7 +372,7 @@ export const monitorService = {
 
   /** `PL-10` — HR Manager saja. */
   async notYetAssessable(actor: PerfActor, periodId: string): Promise<ReasonRow[]> {
-    if (!MOCK) return report('not-yet-assessable', { 'review-period-id': periodId });
+    if (!MOCK) return report('not-yet-assessable', { review_period_id: periodId });
     await delay();
     if (!isSuper(actor) && !canReadManagerReports(actor.role)) throw forbidden();
     const gaps = await periodService.eligibilityGaps(SYSTEM, periodId);
@@ -371,7 +381,7 @@ export const monitorService = {
 
   /** `PL-11` — dua sebab struktural; tidak dapat disanggah. */
   async excluded(actor: PerfActor, periodId: string): Promise<ReasonRow[]> {
-    if (!MOCK) return report('excluded-from-assessment', { 'review-period-id': periodId });
+    if (!MOCK) return report('excluded-from-assessment', { review_period_id: periodId });
     await delay();
     if (!isHr(actor)) throw forbidden();
     const gaps = await periodService.eligibilityGaps(SYSTEM, periodId);
@@ -380,7 +390,7 @@ export const monitorService = {
 
   /** `PL-11b` — dua proporsi independen, netral, bukan gerbang. */
   async blankInput(actor: PerfActor, periodId: string): Promise<BlankInputRow[]> {
-    if (!MOCK) return report('blank-input-ratio', { 'review-period-id': periodId });
+    if (!MOCK) return report('blank-input-ratio', { review_period_id: periodId });
     await delay();
     if (!isHr(actor)) throw forbidden();
     return [...assessorSheets(periodId).entries()].map(([supervisor, sheets]) => {
@@ -395,7 +405,7 @@ export const monitorService = {
 
   /** `PL-12` — HR, atau pemikul saat ini untuk dirinya sendiri. */
   async pendingObjections(actor: PerfActor, holderId?: string): Promise<PendingObjectionRow[]> {
-    if (!MOCK) return report('pending-objections', { 'holder-employee-id': holderId });
+    if (!MOCK) return report('pending-objections', { holder_employee_id: holderId });
     await delay();
     const holder = isHr(actor) ? holderId : holderId ?? actor.employeeId;
     if (!isHr(actor) && (actor.role !== 'ROLE_DEPT_MANAGER' || holder !== actor.employeeId)) throw forbidden();

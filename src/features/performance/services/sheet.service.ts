@@ -165,13 +165,28 @@ const toRow = (sheet: SheetSeed): SheetRow => ({
 });
 
 /** Nilai atasan tidak pernah dikirim ke karyawan pemilik lembar (G5, TSD §4.3.9). */
-function project(actor: PerfActor, sheet: SheetSeed): SheetDetail {
+/**
+ * `additional_quota.remaining_weight` (TSD 0.43 §4.3.3, FSD 0.15 E4b) — bobot ADDITIONAL yang masih boleh
+ * ditambah sebelum melewati pagar: (A + r) / (T + r) = c  ⇒  r = (cT − A) / (1 − c). `null` bila total 0.
+ */
+function remainingWeight(sheet: SheetSeed, ceilingPercent: number): number | null {
+  const rows = live(sheet);
+  const total = rows.reduce((sum, row) => sum + row.rawWeight, 0);
+  if (total <= 0) return null;
+  const extra = rows.filter((row) => row.origin === 'ADDITIONAL').reduce((sum, row) => sum + row.rawWeight, 0);
+  const c = ceilingPercent / 100;
+  return Math.max(0, Math.floor(((c * total - extra) / (1 - c)) * 100) / 100);
+}
+
+function project(actor: PerfActor, sheet: SheetSeed, ceilingPercent?: number): SheetDetail {
   const hideValues = isOwner(actor, sheet);
   return {
     ...toRow(sheet),
     processInstanceId: sheet.processInstanceId,
     selfAssessmentFilled: Boolean(sheet.selfAssessment),
     supervisorTransferred: sheet.history.length > 1,
+    // Hanya untuk atasan pemegang lembar.
+    ...(ceilingPercent !== undefined && { additionalQuota: { remainingWeight: remainingWeight(sheet, ceilingPercent) } }),
     items: live(sheet).map(({ masterItemId: _master, deletedAt: _deleted, initialValue, submittedValue, ...rest }) =>
       hideValues ? rest : { ...rest, initialValue, submittedValue },
     ),
@@ -207,6 +222,7 @@ type RawSheet = {
   process_instance_id?: string | null;
   self_assessment_filled?: boolean;
   supervisor_transferred?: boolean;
+  additional_quota?: { remaining_weight: number | null };
   items?: RawItem[];
 };
 
@@ -241,10 +257,10 @@ const fromRawSheet = (raw: RawSheet): SheetDetail => ({
   processInstanceId: raw.process_instance_id ?? null,
   selfAssessmentFilled: raw.self_assessment_filled ?? false,
   supervisorTransferred: raw.supervisor_transferred ?? false,
+  ...(raw.additional_quota && { additionalQuota: { remainingWeight: raw.additional_quota.remaining_weight } }),
   items: (raw.items ?? []).map(fromRawItem),
 });
 
-const keyed = (key: string) => ({ headers: { 'Idempotency-Key': key } });
 const base = (id: string) => `/performance/review-sheets/${id}`;
 
 export const sheetService = {
@@ -290,7 +306,9 @@ export const sheetService = {
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
       return mine?.id ?? null;
     }
-    return null;
+    // `P3.15` — daftar lembar milik pemanggil, urut `created_at` menurun, tanpa envelope.
+    const { data } = await api.get<RawSheet[]>('/performance/review-sheets');
+    return data[0]?.id ?? null;
   },
 
   /** `P3.03` — nilai atasan dibuang untuk karyawan pemilik; rantai di atas penilai boleh membaca. */
@@ -301,7 +319,10 @@ export const sheetService = {
       if (!canRead(actor, sheet)) throw notFound();
       /* Titik pemicu jejak akses: HR/rantai membuka lembar orang lain; pemegang kursi & pemilik tidak. */
       if (!isOwner(actor, sheet) && !isHolder(actor, sheet)) recordAccess(actor, sheet.employeeId);
-      return project(actor, sheet);
+      const ceiling = isHolder(actor, sheet)
+        ? await readPerfNumber('performance.additional_item_max_ratio', 30)
+        : undefined;
+      return project(actor, sheet, ceiling);
     }
     const { data } = await api.get<RawSheet>(base(id));
     return fromRawSheet(data);
@@ -401,12 +422,12 @@ export const sheetService = {
             raw_weight: draft.rawWeight,
             target: draft.target,
           };
-    const { data } = await api.post<RawItem>(`${base(sheetId)}/items`, body, keyed(idempotencyKey));
+    const { data } = await api.post<RawItem>(`${base(sheetId)}/items`, body);
     return fromRawItem(data);
   },
 
   /** `P3.06` — MASTER hanya target; bobot MASTER → `403 MASTER_WEIGHT_LOCKED`. */
-  async updateItem(actor: PerfActor, sheetId: string, itemId: string, patch: ItemPatch, idempotencyKey: string): Promise<void> {
+  async updateItem(actor: PerfActor, sheetId: string, itemId: string, patch: ItemPatch, _idempotencyKey: string): Promise<void> {
     if (MOCK) {
       await delay();
       const sheet = sheetOf(sheetId);
@@ -432,12 +453,11 @@ export const sheetService = {
     await api.put(
       `${base(sheetId)}/items/${itemId}`,
       { target: patch.target, raw_weight: patch.rawWeight },
-      keyed(idempotencyKey),
     );
   },
 
   /** `P3.07` — soft-delete; secara kontrak hanya untuk baris ADDITIONAL. */
-  async deleteItem(actor: PerfActor, sheetId: string, itemId: string, idempotencyKey: string): Promise<void> {
+  async deleteItem(actor: PerfActor, sheetId: string, itemId: string, _idempotencyKey: string): Promise<void> {
     if (MOCK) {
       await delay();
       const sheet = sheetOf(sheetId);
@@ -448,11 +468,11 @@ export const sheetService = {
       item.deletedAt = new Date().toISOString();
       return;
     }
-    await api.delete(`${base(sheetId)}/items/${itemId}`, keyed(idempotencyKey));
+    await api.delete(`${base(sheetId)}/items/${itemId}`);
   },
 
   /** `P3.08` — tanda sudah dibaca, bukan persetujuan (`PF-21 k6`). */
-  async markRead(actor: PerfActor, sheetId: string, itemId: string, idempotencyKey: string): Promise<void> {
+  async markRead(actor: PerfActor, sheetId: string, itemId: string, _idempotencyKey: string): Promise<void> {
     if (MOCK) {
       await delay();
       const sheet = sheetOf(sheetId);
@@ -461,11 +481,11 @@ export const sheetService = {
       item.employeeReadAt ??= new Date().toISOString();
       return;
     }
-    await api.post(`${base(sheetId)}/items/${itemId}/read-mark`, {}, keyed(idempotencyKey));
+    await api.post(`${base(sheetId)}/items/${itemId}/read-mark`, {});
   },
 
   /** `P3.09` — catatan keberatan per baris; tidak menahan apa pun (beda dari Sanggahan). */
-  async saveObjectionNote(actor: PerfActor, sheetId: string, itemId: string, note: string, idempotencyKey: string): Promise<void> {
+  async saveObjectionNote(actor: PerfActor, sheetId: string, itemId: string, note: string, _idempotencyKey: string): Promise<void> {
     if (MOCK) {
       await delay();
       const sheet = sheetOf(sheetId);
@@ -474,7 +494,7 @@ export const sheetService = {
       item.employeeObjectionNote = checkText(note, 'Catatan keberatan');
       return;
     }
-    await api.post(`${base(sheetId)}/items/${itemId}/objection`, { note }, keyed(idempotencyKey));
+    await api.post(`${base(sheetId)}/items/${itemId}/objection`, { note });
   },
 
   /**
@@ -523,11 +543,11 @@ export const sheetService = {
     }
     const exists = await sheetService.get(actor, sheetId).then((row) => row.selfAssessmentFilled);
     const call = exists ? api.put : api.post;
-    await call(`${base(sheetId)}/self-assessment`, { content }, keyed(idempotencyKey));
+    await call(`${base(sheetId)}/self-assessment`, { content });
   },
 
   /** `P3.13` — nilai awal BUTA; tidak pernah dapat ditimpa (`PF-37 k1`). */
-  async setInitialValue(actor: PerfActor, sheetId: string, itemId: string, value: string, idempotencyKey: string): Promise<void> {
+  async setInitialValue(actor: PerfActor, sheetId: string, itemId: string, value: string, _idempotencyKey: string): Promise<void> {
     if (MOCK) {
       await delay();
       const sheet = sheetOf(sheetId);
@@ -541,11 +561,11 @@ export const sheetService = {
       item.initialValueRecordedAt = new Date().toISOString();
       return;
     }
-    await api.put(`${base(sheetId)}/items/${itemId}/initial-value`, { value }, keyed(idempotencyKey));
+    await api.put(`${base(sheetId)}/items/${itemId}/initial-value`, { value });
   },
 
   /** `P3.14` — penyesuaian tanpa batas selama lembar belum diajukan/sah; nilai awal tetap terbaca. */
-  async setSubmittedValue(actor: PerfActor, sheetId: string, itemId: string, value: string, idempotencyKey: string): Promise<void> {
+  async setSubmittedValue(actor: PerfActor, sheetId: string, itemId: string, value: string, _idempotencyKey: string): Promise<void> {
     if (MOCK) {
       await delay();
       const sheet = sheetOf(sheetId);
@@ -555,7 +575,7 @@ export const sheetService = {
       item.submittedValue = checkText(value, 'Nilai penyesuaian', 500);
       return;
     }
-    await api.put(`${base(sheetId)}/items/${itemId}/submitted-value`, { value }, keyed(idempotencyKey));
+    await api.put(`${base(sheetId)}/items/${itemId}/submitted-value`, { value });
   },
 
   /**
