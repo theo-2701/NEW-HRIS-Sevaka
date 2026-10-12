@@ -71,7 +71,7 @@ describe('Register — dua cabang ownership + blocker NOT_AVAILABLE (§7.3)', ()
     await expect(assetService.register(GA, { ...OWNED, purchasePrice: '' })).rejects.toThrow(/422/);
   });
 
-  it('LEASED wajib vendor dan tidak menerima berkas kontrak saat registrasi', async () => {
+  it('LEASED: vendor opsional saat registrasi (FSD-COMPANY 0.38) dan tidak menerima berkas kontrak saat registrasi', async () => {
     const leased: AssetDraft = {
       ...OWNED,
       assetCode: 'AS-0101',
@@ -82,7 +82,7 @@ describe('Register — dua cabang ownership + blocker NOT_AVAILABLE (§7.3)', ()
       leaseContractNumber: 'SWA-9',
       vendorId: '',
     };
-    await expect(assetService.register(GA, leased)).rejects.toThrow(/vendor/);
+    await expect(assetService.register(GA, { ...leased, assetCode: 'AST-NOVENDOR' })).resolves.toMatchObject({ vendorId: null });
     const row = await assetService.register(GA, { ...leased, vendorId: 'vd-sumber' });
     expect(row.currentLeaseContractFile).toBeNull();
   });

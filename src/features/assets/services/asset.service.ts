@@ -110,6 +110,53 @@ export interface AssetHistory {
   disposals: DisposalLog[];
 }
 
+/**
+ * Blok kepemilikan (§7.3) — validasi Mandatory-by-Value lalu bentuk kolomnya. Blok cabang yang tidak
+ * berlaku disimpan NULL (FSD-COMPANY 0.38). Vendor opsional saat registrasi; wajib hanya pada aksi Sewa.
+ */
+function branchFields(draft: AssetDraft) {
+  const owned = draft.ownershipType === 'OWNED';
+  let purchasePrice: number | null = null;
+  let leaseAmount: number | null = null;
+  if (owned) {
+    purchasePrice = parseAmount(draft.purchasePrice);
+    if (purchasePrice === null)
+      throw new Error('422 VALIDATION_ERROR — harga beli wajib untuk aset milik sendiri.');
+    if (!draft.purchaseInvoiceNumber.trim()) {
+      throw new Error('422 VALIDATION_ERROR — nomor faktur wajib untuk aset milik sendiri.');
+    }
+    if (!draft.purchaseDate) throw new Error('422 VALIDATION_ERROR — tanggal beli wajib untuk aset milik sendiri.');
+    if (draft.purchaseDate > now().slice(0, 10)) {
+      throw new Error('422 VALIDATION_ERROR — tanggal beli tidak boleh melewati hari ini.');
+    }
+  } else {
+    leaseAmount = parseAmount(draft.leaseAmount);
+    if (leaseAmount === null) throw new Error('422 VALIDATION_ERROR — nilai sewa wajib untuk aset sewaan.');
+    if (!draft.leaseStartDate || !draft.leaseEndDate) {
+      throw new Error('422 VALIDATION_ERROR — tanggal mulai dan akhir sewa wajib diisi.');
+    }
+    if (draft.leaseEndDate < draft.leaseStartDate) {
+      throw new Error('422 VALIDATION_ERROR — akhir sewa tidak boleh sebelum mulai sewa.');
+    }
+    if (!draft.leaseContractNumber.trim())
+      throw new Error('422 VALIDATION_ERROR — nomor kontrak sewa wajib diisi.');
+  }
+
+  return {
+    assetCategoryId: draft.assetCategoryId || null,
+    branchId: draft.branchId || null,
+    ownershipType: draft.ownershipType,
+    purchaseDate: owned ? draft.purchaseDate : null,
+    purchasePrice,
+    purchaseInvoiceNumber: owned ? draft.purchaseInvoiceNumber.trim() : null,
+    leaseAmount,
+    leaseStartDate: owned ? null : draft.leaseStartDate,
+    leaseEndDate: owned ? null : draft.leaseEndDate,
+    leaseContractNumber: owned ? null : draft.leaseContractNumber.trim(),
+    vendorId: owned ? null : draft.vendorId || null,
+  };
+}
+
 export const assetService = {
   // ---------- Kategori ----------
 
@@ -214,59 +261,22 @@ export const assetService = {
         throw new Error(`409 — kode aset ${code} sudah dipakai aset aktif lain.`);
       }
 
-      const owned = draft.ownershipType === 'OWNED';
-      let purchasePrice: number | null = null;
-      let leaseAmount: number | null = null;
-      if (owned) {
-        purchasePrice = parseAmount(draft.purchasePrice);
-        if (purchasePrice === null)
-          throw new Error('422 VALIDATION_ERROR — harga beli wajib untuk aset milik sendiri.');
-        if (!draft.purchaseInvoiceNumber.trim()) {
-          throw new Error('422 VALIDATION_ERROR — nomor faktur wajib untuk aset milik sendiri.');
-        }
-        if (!draft.purchaseDate) throw new Error('422 VALIDATION_ERROR — tanggal beli wajib untuk aset milik sendiri.');
-        if (draft.purchaseDate > now().slice(0, 10)) {
-          throw new Error('422 VALIDATION_ERROR — tanggal beli tidak boleh melewati hari ini.');
-        }
-      } else {
-        leaseAmount = parseAmount(draft.leaseAmount);
-        if (leaseAmount === null) throw new Error('422 VALIDATION_ERROR — nilai sewa wajib untuk aset sewaan.');
-        if (!draft.leaseStartDate || !draft.leaseEndDate) {
-          throw new Error('422 VALIDATION_ERROR — tanggal mulai dan akhir sewa wajib diisi.');
-        }
-        if (draft.leaseEndDate < draft.leaseStartDate) {
-          throw new Error('422 VALIDATION_ERROR — akhir sewa tidak boleh sebelum mulai sewa.');
-        }
-        if (!draft.leaseContractNumber.trim())
-          throw new Error('422 VALIDATION_ERROR — nomor kontrak sewa wajib diisi.');
-        if (!draft.vendorId) throw new Error('422 VALIDATION_ERROR — vendor wajib untuk aset sewaan.');
-      }
-
+      const branch = branchFields(draft);
       const row: Asset = {
         id: nextId('as'),
         assetCode: code,
         assetName: name,
         serialNumber: serial,
-        assetCategoryId: draft.assetCategoryId || null,
-        branchId: draft.branchId || null,
-        ownershipType: draft.ownershipType,
+        ...branch,
         photo1: draft.photo1 || null,
         photo1Note: null,
-        purchaseDate: owned ? draft.purchaseDate : null,
-        purchasePrice,
-        purchaseInvoiceNumber: owned ? draft.purchaseInvoiceNumber.trim() : null,
         purchaseInvoiceFile: null,
-        leaseAmount,
-        leaseStartDate: owned ? null : draft.leaseStartDate,
-        leaseEndDate: owned ? null : draft.leaseEndDate,
-        leaseContractNumber: owned ? null : draft.leaseContractNumber.trim(),
-        vendorId: owned ? null : draft.vendorId,
         currentLeaseContractFile: null,
         lastAssetStatus: 'AVAILABLE',
         currentHandoverStatus: 'NONE',
         employeeId: null,
         employeeInfo: null,
-        currentResidualValue: purchasePrice,
+        currentResidualValue: branch.purchasePrice,
         nextMaintenanceDate: null,
         createdAt: now(),
       };
@@ -275,6 +285,30 @@ export const assetService = {
       return { ...row };
     }
     const { data } = await api.post<Asset>('/assets', draft);
+    return data;
+  },
+
+  /**
+   * Layar Edit Aset / Lengkapi — `PUT /assets/{id}` pembaruan penuh (FSD-COMPANY 0.38 §7.3).
+   * `asset_code` immutable: nilai kiriman diabaikan tanpa galat. Status naik AVAILABLE hanya bila
+   * cabang, kategori, dan foto ketiganya terisi.
+   */
+  async update(actor: AssetActor, id: string, draft: AssetDraft): Promise<Asset> {
+    if (MOCK) {
+      await delay(300);
+      requireWrite(actor);
+      const row = findAsset(id);
+      if (isTerminal(row.lastAssetStatus)) throw new Error('422 — aset terminal tidak dapat diubah.');
+      const name = draft.assetName.trim();
+      const serial = draft.serialNumber.trim();
+      if (!name) throw new Error('422 VALIDATION_ERROR — nama aset wajib diisi.');
+      if (!serial) throw new Error('422 VALIDATION_ERROR — serial number wajib diisi.');
+      Object.assign(row, { assetName: name, serialNumber: serial, ...branchFields(draft), photo1: draft.photo1 || null });
+      settleAvailability(row);
+      return { ...row };
+    }
+    const { assetCode: _immutable, ...body } = draft;
+    const { data } = await api.put<Asset>(`/assets/${id}`, body);
     return data;
   },
 

@@ -75,11 +75,13 @@ export function AssetDetailPage() {
     const open = !isTerminal(row.lastAssetStatus);
     if (canAssign(row)) lifecycleActions.push({ label: 'Serahkan', onSelect: () => setAction('assign') });
     if (canReturn(row)) lifecycleActions.push({ label: 'Terima kembali', onSelect: () => setAction('return') });
-    if (canTransfer(row)) lifecycleActions.push({ label: 'Pindahkan', onSelect: () => setAction('transfer') });
-    if (open) lifecycleActions.push({ label: 'Maintenance', onSelect: () => setAction('maintain') });
+    // FSD-COMPANY 0.38 §8: Transfer/Maintenance/Residual tetap tampil, NON-AKTIF pada status akhir.
+    lifecycleActions.push({ label: 'Pindahkan', disabled: !canTransfer(row), onSelect: () => setAction('transfer') });
+    lifecycleActions.push({ label: 'Maintenance', disabled: !open, onSelect: () => setAction('maintain') });
     if (canLease(row)) lifecycleActions.push({ label: 'Sewa', onSelect: () => setAction('lease') });
-    if (open) lifecycleActions.push({ label: 'Nilai residu', onSelect: () => setAction('residual') });
-    if (canDispose(row)) lifecycleActions.push({ label: 'Lepas aset', danger: true, onSelect: () => setDisposing(true) });
+    lifecycleActions.push({ label: 'Nilai residu', disabled: !open, onSelect: () => setAction('residual') });
+    // Dispose tampil, NON-AKTIF selain AVAILABLE.
+    lifecycleActions.push({ label: 'Lepas aset', danger: true, disabled: !canDispose(row), onSelect: () => setDisposing(true) });
   }
 
   return (
