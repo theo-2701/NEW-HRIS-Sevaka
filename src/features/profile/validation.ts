@@ -3,7 +3,7 @@ import * as Yup from 'yup';
 /**
  * Skema validasi Employee Profile.
  * Aturan bersyarat yang mengikat kontrak:
- *  • `passportNumber` wajib bila `nationality = FOREIGNER` (MbV).
+ *  • Identitas (KTP/Paspor/Visa) baca-saja di Edit — tidak divalidasi di sini (FSD-PROFILE 0.13).
  *  • `domicileAddress` wajib bila domisili ≠ alamat KTP.
  *  • Kategori training divalidasi terhadap enum; field lain opsional.
  */
@@ -17,11 +17,6 @@ export const basicInfoSchema = Yup.object({
   npwpName: Yup.string(),
   bpjsTenagaKerjaNumber: Yup.string().matches(/^\d{0,20}$/, 'Hanya angka, maksimal 20 digit.'),
   bpjsKesehatanNumber: Yup.string().matches(/^\d{0,20}$/, 'Hanya angka, maksimal 20 digit.'),
-  passportNumber: Yup.string().when('nationality', {
-    is: 'FOREIGNER',
-    then: (schema) => schema.required('Paspor wajib diisi untuk warga negara asing.'),
-    otherwise: (schema) => schema,
-  }),
   motherMaidenName: Yup.string(),
   dateOfBirth: Yup.string().required('Tanggal lahir wajib diisi.'),
   placeOfBirth: Yup.string().required('Tempat lahir wajib diisi.'),

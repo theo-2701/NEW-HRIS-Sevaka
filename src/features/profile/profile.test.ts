@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { profileService, revealAuditTrail } from '@/features/profile/services/profile.service';
-import { REVEAL_FIELDS } from '@/features/profile/types';
+import { REVEAL_FIELDS, revealFieldsFor } from '@/features/profile/types';
 import {
   basicInfoSchema,
   relativeSchema,
@@ -36,10 +36,8 @@ describe('basic info — aturan bersyarat kontrak', () => {
     await expect(basicInfoSchema.validate(baseProfile)).resolves.toBeTruthy();
   });
 
-  it('paspor wajib saat kewarganegaraan Foreigner (MbV)', async () => {
-    await expect(
-      basicInfoSchema.validate({ ...baseProfile, nationality: 'FOREIGNER' }),
-    ).rejects.toThrow(/Paspor wajib/);
+  it('identitas baca-saja di Edit tidak divalidasi form (FSD-PROFILE 0.13)', async () => {
+    await expect(basicInfoSchema.validate({ ...baseProfile, nationality: 'FOREIGNER' })).resolves.toBeTruthy();
   });
 
   it('alamat domisili wajib saat berbeda dari KTP', async () => {
@@ -106,10 +104,22 @@ describe('server profile — gerbang UIC-PROFILE-0.2', () => {
     await expect(profileService.updateProfile({ personalEmail: 'budi@mail.com' }, 'HR_STAFF')).resolves.toBeUndefined();
   });
 
-  it('FOREIGNER tanpa paspor ditolak 422 (MbV)', async () => {
-    await expect(
-      profileService.updateProfile({ nationality: 'FOREIGNER', passportNumber: '' }, 'HR_MANAGER'),
-    ).rejects.toThrow(/422/);
+  it('R11: WNI tidak dapat diubah menjadi WNA lewat Edit (422); identitas tidak ikut permintaan ubah', async () => {
+    await expect(profileService.updateProfile({ nationality: 'FOREIGNER' }, 'HR_MANAGER')).rejects.toThrow(/422/);
+    await profileService.updateProfile({ idCardNumber: '9999999999999999' }, 'HR_MANAGER');
+    expect((await profileService.get()).profile.idCardNumber).toBe('3171021505900012');
+  });
+
+  it('R14: isi Reveal mengikuti cabang bendera (WNI 5 field, WNA 6 field)', () => {
+    expect(revealFieldsFor('CITIZEN').map((item) => item.key)).toEqual([
+      'idCardNumber',
+      'motherMaidenName',
+      'npwp',
+      'bpjsTenagaKerjaNumber',
+      'bpjsKesehatanNumber',
+    ]);
+    expect(revealFieldsFor('FOREIGNER')).toHaveLength(6);
+    expect(revealFieldsFor('FOREIGNER').some((item) => item.key === 'idCardNumber')).toBe(false);
   });
 
   it('pengalaman kerja wajib presisi bulan-tahun dan leave ≥ join', async () => {

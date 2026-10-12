@@ -860,3 +860,18 @@ Baseline FSD 0.14 / UIC 0.19. Fokus perubahan tampilan (sapuan routing komponen 
 - **Logout (topnav + tombol Keluar sidebar):** sesi lokal dibersihkan hanya bila server sukses; gagal ⇒ toast jujur.
 - **Activity Log:** rentang tanggal sudah tidak bisa terbalik (DateRangePicker) dan ganti Jenis mempertahankan
   tanggal — sudah sesuai.
+
+## 31. Employee Profile — FSD-001-PROFILE 0.14 / UIC-001-PROFILE 0.16 (rilis FE-261008, 13 Oktober 2026)
+
+Baseline FSD 0.10 / UIC 0.12. Basic Info §1.5 (matriks WNI/WNA R1–R15).
+
+- **Detail (R8):** WNI menampilkan KTP; WNA menampilkan Paspor + **Nomor Visa** (baru), tanpa KTP. Label
+  "Nomor Pajak (NPWP)" / "Nama NPWP" untuk kedua bendera.
+- **Reveal (R13/R14):** tombol Reveal tidak dirender bagi HR Staff/ESS (nilai tetap bertopeng); isi modal
+  mengikuti bendera — WNI 5 field, WNA 6 field (tanpa KTP, + Paspor + Visa).
+- **Edit (0.13 + R11/R12):** KTP/Paspor/Visa tampil BACA-SAJA bertopeng dengan keterangan "Tidak dapat diubah di
+  profil. Koreksi dilakukan lewat New Joiner selagi calon masih Draf."; tidak pernah ikut payload. Kewarganegaraan:
+  WNI terkunci (WNI → WNA lewat New Joiner, server 422); WNA → WNI hanya HR Manager, server mengosongkan
+  Paspor/Visa. Status Perkawinan disabled + keterangan "Hanya HR Manager ke atas yang dapat mengubah".
+- **GAP:** layar Create profil (A3, R10 KTP kosong) belum ada di repo; mock hanya satu profil WNI sehingga cabang WNA
+  belum dapat didemokan tanpa data tambahan.

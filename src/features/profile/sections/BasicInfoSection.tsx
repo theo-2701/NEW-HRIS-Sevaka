@@ -35,8 +35,9 @@ import {
   MARITAL_OPTIONS,
   NATIONALITY_OPTIONS,
   RELIGION_OPTIONS,
-  REVEAL_FIELDS,
   canManageBiodata,
+  canRevealPii,
+  revealFieldsFor,
   canUpdateRestricted,
   labelOf,
 } from '@/features/profile/types';
@@ -55,6 +56,7 @@ const MASK: Record<RevealField, (value: string) => ReactNode> = {
   bpjsTenagaKerjaNumber: (value) => <span className={monoClass}>{`${value.slice(0, 4)}••••${value.slice(-2)}`}</span>,
   bpjsKesehatanNumber: (value) => <span className={monoClass}>{`${value.slice(0, 4)}••••${value.slice(-2)}`}</span>,
   passportNumber: (value) => <span className={monoClass}>{`${value.slice(0, 1)}•••••${value.slice(-2)}`}</span>,
+  visaNumber: (value) => <span className={monoClass}>{`${value.slice(0, 2)}•••••${value.slice(-2)}`}</span>,
 };
 
 const chipClass =
@@ -69,6 +71,7 @@ function SensitiveValue({
   onReveal,
   onHide,
   empty,
+  canReveal,
 }: {
   field: RevealField;
   value: string;
@@ -77,8 +80,11 @@ function SensitiveValue({
   onReveal: () => void;
   onHide: () => void;
   empty?: ReactNode;
+  /** R13: tanpa scope reveal (HR Staff, ESS) tombol Reveal tidak dirender sama sekali. */
+  canReveal: boolean;
 }) {
   if (!value) return <Empty>{empty}</Empty>;
+  if (!canReveal) return <>{MASK[field](value)}</>;
 
   if (shown && revealed) {
     return (
@@ -103,15 +109,17 @@ function SensitiveValue({
   );
 }
 
-/** R1 — konfirmasi sebelum membuka keenam field sensitif. */
+/** R1 — konfirmasi sebelum membuka field sensitif; isinya mengikuti cabang bendera (R14). */
 function RevealConfirmModal({
   open,
   pending,
+  fields,
   onCancel,
   onConfirm,
 }: {
   open: boolean;
   pending: boolean;
+  fields: { key: RevealField; label: string }[];
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -120,7 +128,7 @@ function RevealConfirmModal({
       open={open}
       onOpenChange={(next) => !next && onCancel()}
       title="Buka data sensitif?"
-      description="Keenam field berikut akan ditampilkan penuh. Akses ini tercatat di read-audit sistem."
+      description={`${fields.length} field berikut akan ditampilkan penuh. Akses ini tercatat di read-audit sistem.`}
       footer={
         <>
           <Button variant="secondary" onClick={onCancel}>
@@ -133,7 +141,7 @@ function RevealConfirmModal({
       }
     >
       <ul className="m-0 grid list-none gap-1.5 rounded-md border border-border-1 bg-cloud p-3.5 font-body text-[13px] font-semibold text-fg-1 sm:grid-cols-2">
-        {REVEAL_FIELDS.map((item) => (
+        {fields.map((item) => (
           <li key={item.key} className="flex items-center gap-2">
             <Lock className="size-3.5 shrink-0 text-fg-3" />
             {item.label}
@@ -151,6 +159,34 @@ function LockedNote() {
       <Lock className="size-3" />
       HR Manager only
     </span>
+  );
+}
+
+/**
+ * Identitas BACA-SAJA bertopeng di Edit (FSD-PROFILE 0.13 §1.5): tidak pernah ikut permintaan ubah.
+ * Cabang mengikuti bendera di form (R2) — naturalisasi WNA → WNI menyembunyikan Paspor/Visa.
+ */
+function IdentityReadOnly({ values }: { values: PersonalProfile }) {
+  const rows: [string, RevealField][] =
+    values.nationality === 'CITIZEN'
+      ? [['Nomor KTP (16 digit)', 'idCardNumber']]
+      : [
+          ['Nomor Paspor', 'passportNumber'],
+          ['Nomor Visa', 'visaNumber'],
+        ];
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-border-1 bg-cloud p-3.5 md:col-span-2">
+      <KeyValueList>
+        {rows.map(([label, field]) => (
+          <KeyValueRow key={field} label={label}>
+            {values[field] ? MASK[field](values[field]) : <Empty />}
+          </KeyValueRow>
+        ))}
+      </KeyValueList>
+      <span className="font-body text-xs font-medium text-fg-3">
+        Tidak dapat diubah di profil. Koreksi dilakukan lewat New Joiner selagi calon masih Draf.
+      </span>
+    </div>
   );
 }
 
@@ -184,6 +220,9 @@ export function BasicInfoSection({
   const revealed = reveal.data ?? null;
   const update = useUpdateProfile(actor);
   const hrLocked = !canUpdateRestricted(actor);
+  const canReveal = canRevealPii(actor);
+  const citizen = profile.nationality === 'CITIZEN';
+  const revealFields = revealFieldsFor(profile.nationality);
 
   const openReveal = () => setConfirmingReveal(true);
   const hide = (field: RevealField) =>
@@ -201,6 +240,7 @@ export function BasicInfoSection({
       onReveal={openReveal}
       onHide={() => hide(field)}
       empty={empty}
+      canReveal={canReveal}
     />
   );
 
@@ -230,8 +270,14 @@ export function BasicInfoSection({
           </Note>
         ) : (
           <Note icon={<Lock />}>
-            Data sensitif (nomor KTP, nama ibu kandung, NPWP, nomor BPJS, nomor paspor) disamarkan. Tekan{' '}
-            <strong>Reveal</strong> untuk melihat nilai lengkap — setiap pembukaan tercatat.
+            Data sensitif disamarkan.{' '}
+            {canReveal ? (
+              <>
+                Tekan <strong>Reveal</strong> untuk melihat nilai lengkap — setiap pembukaan tercatat.
+              </>
+            ) : (
+              'Membuka nilai penuh hanya untuk HR Manager ke atas.'
+            )}
           </Note>
         )}
 
@@ -241,9 +287,10 @@ export function BasicInfoSection({
               <KeyValueRow label="Nationality">
                 <StatusBadge tone="info">{labelOf(NATIONALITY_OPTIONS, profile.nationality)}</StatusBadge>
               </KeyValueRow>
-              <KeyValueRow label="KTP number">{sensitive('idCardNumber', profile.idCardNumber)}</KeyValueRow>
-              <KeyValueRow label="NPWP">{sensitive('npwp', profile.npwp)}</KeyValueRow>
-              <KeyValueRow label="NPWP name">{profile.npwpName || <Empty />}</KeyValueRow>
+              {/* R8: Detail hanya menampilkan cabang aktif. */}
+              {citizen && <KeyValueRow label="KTP number">{sensitive('idCardNumber', profile.idCardNumber)}</KeyValueRow>}
+              <KeyValueRow label="Nomor Pajak (NPWP)">{sensitive('npwp', profile.npwp)}</KeyValueRow>
+              <KeyValueRow label="Nama NPWP">{profile.npwpName || <Empty />}</KeyValueRow>
               <KeyValueRow label="BPJS Ketenagakerjaan">
                 {sensitive('bpjsTenagaKerjaNumber', profile.bpjsTenagaKerjaNumber)}
               </KeyValueRow>
@@ -267,9 +314,12 @@ export function BasicInfoSection({
 
           <DetailBlock icon={<UserRound />} title="Personal Data" variant="cold">
             <KeyValueList>
-              <KeyValueRow label="Passport number">
-                {sensitive('passportNumber', profile.passportNumber, '— (hanya untuk WNA)')}
-              </KeyValueRow>
+              {!citizen && (
+                <>
+                  <KeyValueRow label="Passport number">{sensitive('passportNumber', profile.passportNumber)}</KeyValueRow>
+                  <KeyValueRow label="Visa number">{sensitive('visaNumber', profile.visaNumber)}</KeyValueRow>
+                </>
+              )}
               <KeyValueRow label="Mother's maiden name">
                 {sensitive('motherMaidenName', profile.motherMaidenName)}
               </KeyValueRow>
@@ -332,14 +382,16 @@ export function BasicInfoSection({
             <Form className="grid gap-4 md:grid-cols-2">
               <DomicileMirror />
 
+              {/* R7/R11: bendera terkunci bagi ESS & HR Staff; HR Manager hanya boleh WNA → WNI. */}
               <SelectField
                 name="nationality"
                 label={
                   <span className="inline-flex items-center gap-2">Nationality {hrLocked && <LockedNote />}</span>
                 }
                 required
-                disabled={hrLocked}
-                options={NATIONALITY_OPTIONS}
+                disabled={hrLocked || citizen}
+                options={citizen ? NATIONALITY_OPTIONS.filter((option) => option.value === 'CITIZEN') : NATIONALITY_OPTIONS}
+                hint={citizen && !hrLocked ? 'WNI menjadi WNA ditempuh lewat New Joiner.' : undefined}
               />
               <SelectField
                 name="maritalStatus"
@@ -349,21 +401,17 @@ export function BasicInfoSection({
                 required
                 disabled={hrLocked}
                 options={MARITAL_OPTIONS}
+                hint={hrLocked ? 'Hanya HR Manager ke atas yang dapat mengubah' : undefined}
               />
 
-              <TextField name="npwp" label="NPWP" placeholder="01.234.567.8-901.000" />
-              <TextField name="npwpName" label="NPWP name" />
+              <IdentityReadOnly values={values} />
+
+              <TextField name="npwp" label="Nomor Pajak (NPWP)" placeholder="01.234.567.8-901.000" />
+              <TextField name="npwpName" label="Nama NPWP" />
               <TextField name="bpjsTenagaKerjaNumber" label="BPJS Ketenagakerjaan" maxLength={20} placeholder="Nomor kepesertaan" />
               <TextField name="bpjsKesehatanNumber" label="BPJS Kesehatan" maxLength={20} placeholder="Nomor kepesertaan" />
 
-              <TextField
-                name="passportNumber"
-                label="Passport number"
-                placeholder="A1234567"
-                required={values.nationality === 'FOREIGNER'}
-                hint="Wajib bila kewarganegaraan = Foreigner."
-              />
-              <TextField name="motherMaidenName" label="Mother's maiden name" />
+              <TextField name="motherMaidenName" label="Mother's maiden name" containerClassName="md:col-span-2" />
 
               <DateField name="dateOfBirth" label="Date of birth" required />
               <TextField name="placeOfBirth" label="Place of birth" required />
@@ -416,10 +464,11 @@ export function BasicInfoSection({
       <RevealConfirmModal
         open={confirmingReveal}
         pending={reveal.isPending}
+        fields={revealFields}
         onCancel={() => setConfirmingReveal(false)}
         onConfirm={() =>
           reveal.mutate(undefined, {
-            onSuccess: () => setShown(new Set(REVEAL_FIELDS.map((item) => item.key))),
+            onSuccess: () => setShown(new Set(revealFields.map((item) => item.key))),
             onSettled: () => setConfirmingReveal(false),
           })
         }

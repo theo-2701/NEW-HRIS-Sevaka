@@ -82,6 +82,8 @@ export interface PersonalProfile {
 
   // ---- COLD · mst_employee_personal ----
   passportNumber: string;
+  /** `visa_number` — cabang WNA (FSD-PROFILE 0.11 §1.5). */
+  visaNumber: string;
   motherMaidenName: string;
   dateOfBirth: string;
   placeOfBirth: string;
@@ -248,6 +250,7 @@ export interface ProfileReveal {
   bpjsTenagaKerjaNumber: string;
   bpjsKesehatanNumber: string;
   passportNumber: string;
+  visaNumber: string;
 }
 
 export type RevealField = keyof ProfileReveal;
@@ -260,4 +263,17 @@ export const REVEAL_FIELDS: { key: RevealField; label: string }[] = [
   { key: 'bpjsTenagaKerjaNumber', label: 'BPJS Ketenagakerjaan' },
   { key: 'bpjsKesehatanNumber', label: 'BPJS Kesehatan' },
   { key: 'passportNumber', label: 'Passport number' },
+  { key: 'visaNumber', label: 'Visa number' },
 ];
+
+/**
+ * Isi modal Reveal mengikuti cabang bendera (FSD-PROFILE 0.14 R14): WNI = KTP + 4 field umum (5);
+ * WNA = tanpa KTP, + Paspor + Visa (6).
+ */
+export const revealFieldsFor = (nationality: Nationality) =>
+  REVEAL_FIELDS.filter((item) =>
+    nationality === 'CITIZEN' ? !['passportNumber', 'visaNumber'].includes(item.key) : item.key !== 'idCardNumber',
+  );
+
+/** Identitas yang tidak pernah ikut permintaan ubah profil (FSD-PROFILE 0.13 §1.5). */
+export const IDENTITY_FIELDS = ['idCardNumber', 'passportNumber', 'visaNumber'] as const;

@@ -53,6 +53,7 @@ let mockData: EmployeeProfileData = {
     photoRef: '7c1f9b6e-doc',
     idCardNumber: '3171021505900012',
     passportNumber: '',
+    visaNumber: '',
     motherMaidenName: 'Siti Aminah',
     dateOfBirth: '1990-05-12',
     placeOfBirth: 'Bandung',
@@ -200,10 +201,14 @@ export const profileService = {
           throw new Error(`403 — ${touched.join(', ')} hanya boleh diubah HR Manager ke atas.`);
         }
       }
-      const next = { ...current, ...patch };
-      if (next.nationality === 'FOREIGNER' && !next.passportNumber.trim()) {
-        throw new Error('422 — passport_number wajib untuk FOREIGNER (MbV).');
+      // Identitas tidak pernah ikut permintaan ubah (FSD-PROFILE 0.13); nilai di patch diabaikan.
+      const { idCardNumber: _ktp, passportNumber: _passport, visaNumber: _visa, ...editable } = patch;
+      if (current.nationality === 'CITIZEN' && editable.nationality === 'FOREIGNER') {
+        throw new Error('422 — WNI menjadi WNA ditempuh lewat New Joiner, bukan Edit profil (R11).');
       }
+      const next = { ...current, ...editable };
+      // Naturalisasi WNA → WNI: server mengosongkan Paspor + Visa saat Simpan (R11).
+      if (next.nationality === 'CITIZEN') Object.assign(next, { passportNumber: '', visaNumber: '' });
       if (!next.isDomicileSameAsIdCard && !next.domicileAddress.trim()) {
         throw new Error('422 — domicile_address wajib bila domisili berbeda dari alamat KTP.');
       }
@@ -216,7 +221,8 @@ export const profileService = {
       mockData = { ...mockData, profile: next };
       return;
     }
-    await api.put(`/employee-profiles/${employeeId}`, patch);
+    const { idCardNumber: _k, passportNumber: _p, visaNumber: _v, ...body } = patch;
+    await api.put(`/employee-profiles/${employeeId}`, body);
   },
 
   /**
@@ -227,10 +233,10 @@ export const profileService = {
     if (MOCK) {
       await delay(200);
       if (!canRevealPii(actor)) throw new Error('403 — Anda tidak berwenang membuka data sensitif ini.');
-      const { idCardNumber, motherMaidenName, npwp, bpjsTenagaKerjaNumber, bpjsKesehatanNumber, passportNumber } =
+      const { idCardNumber, motherMaidenName, npwp, bpjsTenagaKerjaNumber, bpjsKesehatanNumber, passportNumber, visaNumber } =
         mockData.profile;
       revealAudit = [...revealAudit, { employeeId, revealedAt: new Date().toISOString() }];
-      return { idCardNumber, motherMaidenName, npwp, bpjsTenagaKerjaNumber, bpjsKesehatanNumber, passportNumber };
+      return { idCardNumber, motherMaidenName, npwp, bpjsTenagaKerjaNumber, bpjsKesehatanNumber, passportNumber, visaNumber };
     }
     const { data } = await api.get<ProfileReveal>(`/employee-profiles/${employeeId}/reveal`);
     return data;
