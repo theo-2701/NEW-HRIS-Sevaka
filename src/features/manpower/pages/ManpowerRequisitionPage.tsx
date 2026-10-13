@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal';
 import { Pagination } from '@/components/Pagination';
 import { Segmented } from '@/components/Segmented';
 import { TableToolbar } from '@/components/TableToolbar';
+import { TabMenu } from '@/components/TabMenu';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RowActions, RowButton } from '@/components/RowActions';
@@ -35,6 +36,7 @@ import {
 import type { Requisition, RequisitionStatus } from '@/features/manpower/types';
 
 type View = 'activity' | 'information';
+type Bucket = 'approve' | 'mine';
 const ALL = 'ALL';
 
 /**
@@ -54,6 +56,9 @@ export function ManpowerRequisitionPage() {
   const checker = isRequisitionChecker(role);
 
   const [view, setView] = useState<View>('activity');
+  const [bucket, setBucket] = useState<Bucket>('approve');
+  // Peran yang bukan checker tidak punya antrean persetujuan — langsung ke pengajuannya sendiri.
+  const activeBucket: Bucket = checker ? bucket : 'mine';
   const [status, setStatus] = useState<RequisitionStatus | typeof ALL>(ALL);
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
@@ -187,39 +192,43 @@ export function ManpowerRequisitionPage() {
             <StatCard label="Fulfilled" value={fulfilled} footer="Every requested seat filled" />
           </div>
 
-          <Segmented<View>
+          {/* Muka halaman = TabMenu (angka pending di tab); isi Activity dipilih lewat Segmented — satu tabel. */}
+          <TabMenu<View>
             value={view}
             onChange={setView}
-            options={[
-              { value: 'activity', label: `Activity (${toApprove.length})` },
-              { value: 'information', label: 'Information' },
+            items={[
+              { value: 'activity', label: 'Activity', count: toApprove.length + mine.length },
+              { value: 'information', label: 'Information', count: requisitions.length },
             ]}
           />
 
           {view === 'activity' && (
             <>
               <Card>
-                <CardHead
-                  title="Waiting for your approval"
-                  sub="Requisitions made by others, oldest first. Your own requests never appear here."
-                />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Segmented<Bucket>
+                    value={activeBucket}
+                    onChange={setBucket}
+                    options={[
+                      ...(checker ? [{ value: 'approve' as const, label: `To approve (${toApprove.length})` }] : []),
+                      { value: 'mine', label: `My requests (${mine.length})` },
+                    ]}
+                  />
+                  <span className="font-body text-xs font-medium text-fg-3">
+                    {activeBucket === 'approve'
+                      ? 'Made by others, oldest first. Your own requests never appear here.'
+                      : 'Waiting for a checker, or approved and still open.'}
+                  </span>
+                </div>
                 <DataTable<Requisition>
-                  rows={toApprove}
+                  rows={activeBucket === 'approve' ? toApprove : mine}
                   rowKey={(row) => row.id}
                   loading={isLoading}
-                  empty={checker ? 'Nothing is waiting for your approval.' : 'Your role does not approve requisitions.'}
-                  columns={columns}
-                  actions={renderActions}
-                />
-              </Card>
-
-              <Card>
-                <CardHead title="Your requests in progress" sub="Waiting for a checker or approved and still open." />
-                <DataTable<Requisition>
-                  rows={mine}
-                  rowKey={(row) => row.id}
-                  loading={isLoading}
-                  empty="You have no requisition in progress."
+                  empty={
+                    activeBucket === 'approve'
+                      ? 'Nothing is waiting for your approval.'
+                      : 'You have no requisition in progress.'
+                  }
                   columns={columns}
                   actions={renderActions}
                 />
