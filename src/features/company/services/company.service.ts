@@ -431,6 +431,10 @@ export const companyService = {
       if (groupLevels.some((row) => row.id !== id && row.groupStructId === draft.groupStructId && row.levelOrder === order)) {
         throw new Error(`409 — urutan ${order} sudah dipakai level lain pada group ini.`);
       }
+      const sameName = (row: GroupLevel) => row.levelName.trim().toLowerCase() === name.toLowerCase();
+      if (groupLevels.some((row) => row.id !== id && row.groupStructId === draft.groupStructId && sameName(row))) {
+        throw new Error(`409 — level "${name}" sudah ada pada group ini.`);
+      }
       if (id) {
         const row = groupLevels.find((item) => item.id === id);
         if (!row) throw new Error('404 NOT_FOUND — level tidak ditemukan.');

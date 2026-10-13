@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/input';
 import { DataTable } from '@/components/DataTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { CreatableSelect } from '@/components/CreatableSelect';
 import { EmployeeRow, Field, FieldGrid, SelectRow, TextRow } from '@/features/company/components/CompanyBits';
 import { PEOPLE_SOURCE, personName } from '@/features/company/mock-data';
 import { deriveZip, isCompanyAdmin } from '@/features/company/rules';
@@ -14,6 +15,7 @@ import {
   useSaveBranchGroup,
   useSaveCostCenter,
   useSaveCostCenterCategory,
+  useGroupLevels,
   useSaveGroupLevel,
   useSaveGroupStruct,
   useSaveJobGrade,
@@ -428,6 +430,7 @@ export function GroupLevelFormModal({
   onClose: () => void;
 }) {
   const save = useSaveGroupLevel();
+  const allLevels = useGroupLevels('');
   const [draft, setDraft] = useState<GroupLevelDraft>(EMPTY_GROUP_LEVEL);
 
   useEffect(() => {
@@ -460,7 +463,16 @@ export function GroupLevelFormModal({
         onChange={(groupStructId) => setDraft({ ...draft, groupStructId })}
         options={structs.map((row) => ({ value: row.id, label: row.name }))}
       />
-      <TextRow label="Nama level" required value={draft.levelName} onChange={(levelName) => setDraft({ ...draft, levelName })} />
+      {/* Notulen 12 Okt 2026 #1: pilih nama level yang sudah dipakai (semua group) atau tambah baru —
+          supaya penulisan seragam; urutan tetap boleh berbeda per group (HQ vs cabang). */}
+      <Field label="Job level" required hint="Pick an existing name to keep naming consistent across groups.">
+        <CreatableSelect
+          noun="job level"
+          value={draft.levelName}
+          onChange={(levelName) => setDraft({ ...draft, levelName })}
+          options={(allLevels.data ?? []).map((row) => row.levelName)}
+        />
+      </Field>
       <TextRow
         label="Urutan"
         required
