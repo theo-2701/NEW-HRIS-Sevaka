@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Info } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +19,11 @@ export interface Column<T> {
   /** Paksa satu baris. Otomatis aktif untuk semua kolom saat tabel dibekukan. */
   nowrap?: boolean;
   className?: string;
+  /**
+   * Ikon info di samping judul kolom yang membuka penjelasan (mis. legend status) — tekan, lalu modal
+   * milik halaman terbuka. Pakai ini alih-alih kartu/tombol "Status reference" terpisah.
+   */
+  info?: { label: string; onClick: () => void };
 }
 
 interface DataTableProps<T> {
@@ -139,6 +144,17 @@ export function DataTable<T>({
                     </button>
                   ) : (
                     col.header
+                  )}
+                  {col.info && (
+                    <button
+                      type="button"
+                      aria-label={col.info.label}
+                      title={col.info.label}
+                      onClick={col.info.onClick}
+                      className="-my-1 ml-1.5 inline-flex size-6 items-center justify-center rounded-md align-middle text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                    >
+                      <Info className="size-[15px]" />
+                    </button>
                   )}
                 </th>
               ))}

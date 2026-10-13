@@ -8,7 +8,6 @@ import { DataTable, CellIdentity } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { FilterModal } from '@/components/FilterModal';
-import { InfoButton } from '@/components/InfoButton';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,6 +52,7 @@ export function LoanPage() {
   const [acking, setAcking] = useState<Loan | null>(null);
   const [exiting, setExiting] = useState<{ loan: Loan; mode: 'cancel' | 'withdraw' } | null>(null);
   const [legendOpen, setLegendOpen] = useState(false);
+  const statusInfo = { label: 'Status reference', onClick: () => setLegendOpen(true) };
 
   const { data: config } = useLoanConfig();
   const { data: exposure } = useLoanExposure();
@@ -214,7 +214,12 @@ export function LoanPage() {
                         align: 'right',
                         render: (row) => <Money value={row.totalObligation} />,
                       },
-                      { key: 'status', header: 'Status', render: (row) => <LoanStatusBadge status={row.status} /> },
+                      {
+                        key: 'status',
+                        header: 'Status',
+                        info: statusInfo,
+                        render: (row) => <LoanStatusBadge status={row.status} />,
+                      },
                       {
                         key: 'submitted',
                         header: 'Submitted',
@@ -286,7 +291,12 @@ export function LoanPage() {
                       align: 'right',
                       render: (row) => <ReservationCell amount={row.principalAmount} status={row.status} />,
                     },
-                    { key: 'status', header: 'Status', render: (row) => <LoanStatusBadge status={row.status} /> },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      info: statusInfo,
+                      render: (row) => <LoanStatusBadge status={row.status} />,
+                    },
                     {
                       key: 'submitted',
                       header: 'Submitted',
@@ -378,7 +388,6 @@ export function LoanPage() {
                     },
                     placeholder: 'Search request no.',
                   }}
-                  actions={<InfoButton label="Status reference" onClick={() => setLegendOpen(true)} />}
                 />
 
                 <DataTable<Loan>
@@ -433,7 +442,12 @@ export function LoanPage() {
                       align: 'right',
                       render: (row) => <ReservationCell amount={row.principalAmount} status={row.status} />,
                     },
-                    { key: 'status', header: 'Status', render: (row) => <LoanStatusBadge status={row.status} /> },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      info: statusInfo,
+                      render: (row) => <LoanStatusBadge status={row.status} />,
+                    },
                     {
                       key: 'source',
                       header: 'Schedule Source',
