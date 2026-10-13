@@ -31,6 +31,7 @@ function candidate(patch: Partial<Candidate>): Candidate {
     intendedJoinDate: '2099-01-01',
     status: 'SUBMITTED',
     maker: 'Rina Hartono',
+    makerId: 'usr-rina-hartono',
     ...patch,
   };
 }

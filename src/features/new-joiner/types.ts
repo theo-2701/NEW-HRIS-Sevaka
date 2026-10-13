@@ -8,14 +8,7 @@ import type { SelectOption } from '@/components/form/SelectField';
  * di posisi yang sama otomatis REJECTED.
  */
 export type CandidateStatus =
-  | 'DRAFT'
-  | 'SUBMITTED'
-  | 'IN_APPROVAL'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'MATERIALIZED'
-  | 'CANCELLED'
-  | 'EXPIRED';
+  'DRAFT' | 'SUBMITTED' | 'IN_APPROVAL' | 'APPROVED' | 'REJECTED' | 'MATERIALIZED' | 'CANCELLED' | 'EXPIRED';
 
 /** MbV (UIC §1.7): identitas bercabang mengikuti kewarganegaraan. */
 export type Nationality = 'CITIZEN' | 'FOREIGNER';
@@ -40,6 +33,13 @@ export interface Candidate {
   intendedJoinDate: string;
   status: CandidateStatus;
   maker: string;
+  /**
+   * ID pembuat — `created by` lama hanya snapshot nama, jadi SoD & bucket "My candidates" dicocokkan
+   * lewat ID (Notulen 12 Okt 2026 §3).
+   */
+  makerId: string;
+  /** Waktu diajukan (ISO) — antrean persetujuan diurutkan terlama dulu; kosong selama DRAFT. */
+  submittedAt?: string;
   /** Diisi saat APPROVED — kursi ditahan sampai tanggal ini. */
   seatExpiry?: string;
   checkerNote?: string;
@@ -122,3 +122,7 @@ export function labelOf(options: SelectOption[], value: string): string {
 
 /** Aktor yang sedang login — dipakai untuk aturan SoD (maker ≠ checker). */
 export const CURRENT_USER = 'Tony Stark';
+export const CURRENT_USER_ID = 'usr-tony-stark';
+
+/** Kandidat buatan akun login — dicocokkan lewat ID. */
+export const isOwnCandidate = (row: Pick<Candidate, 'makerId'>) => row.makerId === CURRENT_USER_ID;

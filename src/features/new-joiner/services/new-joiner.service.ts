@@ -2,7 +2,7 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
-import { CURRENT_USER } from '@/features/new-joiner/types';
+import { CURRENT_USER, CURRENT_USER_ID } from '@/features/new-joiner/types';
 import type { Candidate, CandidateDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
 import type { Requisition } from '@/features/manpower/types';
@@ -43,146 +43,159 @@ function addDays(days: number): string {
   return toIsoDate(date);
 }
 
-let mockRows: Candidate[] = [
-  {
-    id: 'nj-1',
-    name: 'Putri Maharani',
-    email: 'putri.m@email.com',
-    phone: '+628120000010',
-    positionId: 'pos-be',
-    requisitionId: 'REQ-0230',
-    nationality: 'CITIZEN',
-    idCardLast4: '0012',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-11-01',
-    status: 'SUBMITTED',
-    maker: 'Rina Hartono',
-  },
-  {
-    id: 'nj-2',
-    name: 'James Okafor',
-    email: 'j.okafor@email.com',
-    phone: '+628120000011',
-    positionId: 'pos-be',
-    requisitionId: 'REQ-0230',
-    nationality: 'FOREIGNER',
-    idCardLast4: '',
-    passportNumber: 'A1234567',
-    visaNumber: 'VA12345679',
-    intendedJoinDate: '2026-11-01',
-    status: 'SUBMITTED',
-    maker: 'Rina Hartono',
-  },
-  {
-    id: 'nj-3',
-    name: 'Andi Wijaya',
-    email: 'andi.w@email.com',
-    phone: '+628120000012',
-    positionId: 'pos-fin',
-    requisitionId: 'REQ-0231',
-    nationality: 'CITIZEN',
-    idCardLast4: '7781',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-10-28',
-    status: 'IN_APPROVAL',
-    maker: 'Dewi Anggraini',
-  },
-  {
-    id: 'nj-4',
-    name: 'Siti Nurhaliza',
-    email: 'siti.n@email.com',
-    phone: '+628120000013',
-    positionId: 'pos-hrbp',
-    requisitionId: 'REQ-0229',
-    nationality: 'CITIZEN',
-    idCardLast4: '4410',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-10-20',
-    status: 'APPROVED',
-    maker: 'Rina Hartono',
-    seatExpiry: addDays(4),
-  },
-  {
-    id: 'nj-5',
-    name: 'Rudi Santoso',
-    email: 'rudi.s@email.com',
-    phone: '+628120000014',
-    positionId: 'pos-sales',
-    requisitionId: 'REQ-0228',
-    nationality: 'CITIZEN',
-    idCardLast4: '9032',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-10-18',
-    status: 'APPROVED',
-    maker: 'Bagus Pratama',
-    seatExpiry: addDays(11),
-  },
-  {
-    id: 'nj-6',
-    name: 'Maya Kusuma',
-    email: 'maya.k@email.com',
-    phone: '+628120000015',
-    positionId: 'pos-fin',
-    requisitionId: 'REQ-0231',
-    nationality: 'CITIZEN',
-    idCardLast4: '1187',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-09-15',
-    status: 'MATERIALIZED',
-    maker: 'Rina Hartono',
-    jobGradeId: 'gr-3a',
-  },
-  {
-    id: 'nj-7',
-    name: 'Bima Sakti',
-    email: 'bima.s@email.com',
-    phone: '+628120000016',
-    positionId: 'pos-sales',
-    requisitionId: 'REQ-0228',
-    nationality: 'CITIZEN',
-    idCardLast4: '5520',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-09-10',
-    status: 'REJECTED',
-    maker: 'Bagus Pratama',
-  },
-  {
-    id: 'nj-8',
-    name: 'Clara Dubois',
-    email: 'clara.d@email.com',
-    phone: '+628120000017',
-    positionId: 'pos-hrbp',
-    requisitionId: 'REQ-0229',
-    nationality: 'FOREIGNER',
-    idCardLast4: '',
-    passportNumber: 'FR889201',
-    visaNumber: 'VFR8892019',
-    intendedJoinDate: '2026-08-30',
-    status: 'EXPIRED',
-    maker: 'Dewi Anggraini',
-  },
-  {
-    id: 'nj-9',
-    name: 'Yoga Pratama',
-    email: 'yoga.p@email.com',
-    phone: '+628120000018',
-    positionId: 'pos-be',
-    requisitionId: 'REQ-0230',
-    nationality: 'CITIZEN',
-    idCardLast4: '3345',
-    passportNumber: '',
-    visaNumber: '',
-    intendedJoinDate: '2026-12-01',
-    status: 'DRAFT',
-    maker: CURRENT_USER,
-  },
-];
+type SeedRow = Omit<Candidate, 'makerId'>;
+
+/** Data contoh: ID pembuat dari nama; yang sudah diajukan diberi waktu ajuan 3 minggu sebelum tanggal masuk. */
+function seed(row: SeedRow): Candidate {
+  const makerId = row.maker === CURRENT_USER ? CURRENT_USER_ID : `usr-${row.maker.toLowerCase().replace(/\s+/g, '-')}`;
+  if (row.status === 'DRAFT') return { ...row, makerId };
+  const submitted = new Date(`${row.intendedJoinDate}T09:00:00+07:00`);
+  submitted.setDate(submitted.getDate() - 21);
+  return { ...row, makerId, submittedAt: submitted.toISOString() };
+}
+
+let mockRows: Candidate[] = (
+  [
+    {
+      id: 'nj-1',
+      name: 'Putri Maharani',
+      email: 'putri.m@email.com',
+      phone: '+628120000010',
+      positionId: 'pos-be',
+      requisitionId: 'REQ-0230',
+      nationality: 'CITIZEN',
+      idCardLast4: '0012',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-11-01',
+      status: 'SUBMITTED',
+      maker: 'Rina Hartono',
+    },
+    {
+      id: 'nj-2',
+      name: 'James Okafor',
+      email: 'j.okafor@email.com',
+      phone: '+628120000011',
+      positionId: 'pos-be',
+      requisitionId: 'REQ-0230',
+      nationality: 'FOREIGNER',
+      idCardLast4: '',
+      passportNumber: 'A1234567',
+      visaNumber: 'VA12345679',
+      intendedJoinDate: '2026-11-01',
+      status: 'SUBMITTED',
+      maker: 'Rina Hartono',
+    },
+    {
+      id: 'nj-3',
+      name: 'Andi Wijaya',
+      email: 'andi.w@email.com',
+      phone: '+628120000012',
+      positionId: 'pos-fin',
+      requisitionId: 'REQ-0231',
+      nationality: 'CITIZEN',
+      idCardLast4: '7781',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-10-28',
+      status: 'IN_APPROVAL',
+      maker: 'Dewi Anggraini',
+    },
+    {
+      id: 'nj-4',
+      name: 'Siti Nurhaliza',
+      email: 'siti.n@email.com',
+      phone: '+628120000013',
+      positionId: 'pos-hrbp',
+      requisitionId: 'REQ-0229',
+      nationality: 'CITIZEN',
+      idCardLast4: '4410',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-10-20',
+      status: 'APPROVED',
+      maker: 'Rina Hartono',
+      seatExpiry: addDays(4),
+    },
+    {
+      id: 'nj-5',
+      name: 'Rudi Santoso',
+      email: 'rudi.s@email.com',
+      phone: '+628120000014',
+      positionId: 'pos-sales',
+      requisitionId: 'REQ-0228',
+      nationality: 'CITIZEN',
+      idCardLast4: '9032',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-10-18',
+      status: 'APPROVED',
+      maker: 'Bagus Pratama',
+      seatExpiry: addDays(11),
+    },
+    {
+      id: 'nj-6',
+      name: 'Maya Kusuma',
+      email: 'maya.k@email.com',
+      phone: '+628120000015',
+      positionId: 'pos-fin',
+      requisitionId: 'REQ-0231',
+      nationality: 'CITIZEN',
+      idCardLast4: '1187',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-09-15',
+      status: 'MATERIALIZED',
+      maker: 'Rina Hartono',
+      jobGradeId: 'gr-3a',
+    },
+    {
+      id: 'nj-7',
+      name: 'Bima Sakti',
+      email: 'bima.s@email.com',
+      phone: '+628120000016',
+      positionId: 'pos-sales',
+      requisitionId: 'REQ-0228',
+      nationality: 'CITIZEN',
+      idCardLast4: '5520',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-09-10',
+      status: 'REJECTED',
+      maker: 'Bagus Pratama',
+    },
+    {
+      id: 'nj-8',
+      name: 'Clara Dubois',
+      email: 'clara.d@email.com',
+      phone: '+628120000017',
+      positionId: 'pos-hrbp',
+      requisitionId: 'REQ-0229',
+      nationality: 'FOREIGNER',
+      idCardLast4: '',
+      passportNumber: 'FR889201',
+      visaNumber: 'VFR8892019',
+      intendedJoinDate: '2026-08-30',
+      status: 'EXPIRED',
+      maker: 'Dewi Anggraini',
+    },
+    {
+      id: 'nj-9',
+      name: 'Yoga Pratama',
+      email: 'yoga.p@email.com',
+      phone: '+628120000018',
+      positionId: 'pos-be',
+      requisitionId: 'REQ-0230',
+      nationality: 'CITIZEN',
+      idCardLast4: '3345',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '2026-12-01',
+      status: 'DRAFT',
+      maker: CURRENT_USER,
+    },
+  ] as SeedRow[]
+).map(seed);
 
 /** Kandidat lain yang masih memperebutkan posisi yang sama. */
 export function rivalsOf(rows: Candidate[], candidate: Candidate): Candidate[] {
@@ -202,7 +215,7 @@ function find(id: string): Candidate {
 
 /** SoD (FSD §4.2): maker tidak boleh menjadi checker atas pengajuannya sendiri. */
 function assertChecker(row: Candidate) {
-  if (row.maker === CURRENT_USER) {
+  if (row.makerId === CURRENT_USER_ID) {
     throw new Error('409 — Anda pengaju kandidat ini, jadi tidak boleh memutuskan sendiri.');
   }
 }
@@ -224,8 +237,7 @@ export function isPickableRequisition(row: Requisition, today = toIsoDate(new Da
 /** L2: payload hanya memuat identitas cabang kewarganegaraan yang terpilih. */
 function toBody(draft: CandidateDraft) {
   const { idCardNumber, passportNumber, visaNumber, ...rest } = draft;
-  const identity =
-    draft.nationality === 'CITIZEN' ? { idCardNumber } : { passportNumber, visaNumber };
+  const identity = draft.nationality === 'CITIZEN' ? { idCardNumber } : { passportNumber, visaNumber };
   return { ...rest, ...identity, phone: normalizePhone(draft.phone) };
 }
 
@@ -291,6 +303,7 @@ export const newJoinerService = {
         intendedJoinDate: draft.intendedJoinDate,
         status: 'DRAFT',
         maker: CURRENT_USER,
+        makerId: CURRENT_USER_ID,
       };
       mockRows = [row, ...mockRows];
       return { ...row };
@@ -329,6 +342,7 @@ export const newJoinerService = {
       const row = find(id);
       assertStatus(row, ['DRAFT'], 'submit');
       row.status = 'SUBMITTED';
+      row.submittedAt = new Date().toISOString();
       return;
     }
     await api.post(`/new-joiners/${id}/submit`);
@@ -397,7 +411,8 @@ export const newJoinerService = {
       if (row.status === 'MATERIALIZED') throw new Error('409 — kandidat ini sudah dimaterialisasi.');
       const today = toIsoDate(new Date());
       if (row.status === 'APPROVED' && row.seatExpiry && row.seatExpiry < today) row.status = 'EXPIRED';
-      if (row.status === 'EXPIRED') throw new Error('410 — kursi kandidat sudah kedaluwarsa (approved_expiry_date lewat).');
+      if (row.status === 'EXPIRED')
+        throw new Error('410 — kursi kandidat sudah kedaluwarsa (approved_expiry_date lewat).');
       assertStatus(row, ['APPROVED'], 'materialize');
       if (!payload.joinDate) throw new Error('422 — join_date wajib diisi.');
       if (!payload.jobGradeId) throw new Error('422 — job_grade_id wajib (tingkat Class).');
