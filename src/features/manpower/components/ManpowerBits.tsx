@@ -18,12 +18,7 @@ const REQUISITION_TONE: Record<RequisitionStatus, BadgeTone> = {
   CLOSED: 'mute',
 };
 
-const PLAN_TONE: Record<PlanStatus, BadgeTone> = {
-  DRAFT: 'mute',
-  ACTIVE: 'ok',
-  CLOSED: 'info',
-  ARCHIVED: 'mute',
-};
+const PLAN_TONE: Record<PlanStatus, BadgeTone> = { DRAFT: 'mute', ACTIVE: 'ok', CLOSED: 'info', ARCHIVED: 'mute' };
 
 export function RequisitionStatusBadge({ status }: { status: RequisitionStatus }) {
   return <StatusBadge tone={REQUISITION_TONE[status]}>{REQUISITION_STATUS_LABEL[status]}</StatusBadge>;

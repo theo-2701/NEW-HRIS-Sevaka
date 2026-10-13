@@ -9,15 +9,11 @@ import type { SelectOption } from '@/components/form/SelectField';
  * APPROVED ditutup maker lewat dialog alasan → CLOSED.
  */
 export type RequisitionStatus =
-  | 'DRAFT'
-  | 'IN_APPROVAL'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'FULFILLED'
-  | 'CANCELLED'
-  | 'CLOSED';
+  'DRAFT' | 'IN_APPROVAL' | 'APPROVED' | 'REJECTED' | 'FULFILLED' | 'CANCELLED' | 'CLOSED';
 
 export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED' | 'ARCHIVED';
+
+export type PositionMode = 'NEW' | 'EXISTING';
 
 export interface Requisition {
   id: string;
@@ -29,6 +25,16 @@ export interface Requisition {
   headcount: number;
   status: RequisitionStatus;
   maker: string;
+  /** ID pembuat — SoD dicocokkan lewat ID, bukan snapshot nama (Notulen 12 Okt 2026 §3). */
+  makerId: string;
+  /** Waktu diajukan (ISO) — antrean persetujuan diurutkan terlama dulu. */
+  submittedAt: string;
+  /**
+   * Kursi baru (`NEW`) atau tambah kursi pada posisi yang sudah ada (`EXISTING`, Notulen 12 Okt 2026
+   * keputusan #2). `positionId` terisi untuk `EXISTING`.
+   */
+  positionMode: PositionMode;
+  positionId?: string;
   /** `emp_requisition.reason` — DTO `justification`→`reason` sejak TSD-EMPLOYEE 0.17 (audit 23 September 2026). */
   reason: string;
   planId?: string;
@@ -65,6 +71,9 @@ export interface ManpowerPlan {
 
 export interface RequisitionDraft {
   planId: string;
+  positionMode: PositionMode;
+  /** Wajib bila `positionMode = EXISTING`. */
+  positionId: string;
   unitId: string;
   parentPositionId: string;
   title: string;
@@ -135,3 +144,76 @@ export function planTotals(plan: ManpowerPlan): { target: number; actual: number
 
 /** Aktor yang sedang login — dipakai untuk aturan SoD maker ≠ checker. */
 export const CURRENT_USER = 'Tony Stark';
+export const CURRENT_USER_ID = 'usr-tony-stark';
+
+/** Pembuat = akun login, dicocokkan lewat ID (bukan nama snapshot). */
+export const isOwnRequisition = (row: Pick<Requisition, 'makerId'>) => row.makerId === CURRENT_USER_ID;
+
+/** Posisi (kursi) yang sudah ada di struktur — sumber pilihan requisition `EXISTING` (dummy company-service). */
+export interface ExistingPosition {
+  id: string;
+  title: string;
+  unitId: string;
+  parentPositionId: string;
+  filled: number;
+  seats: number;
+}
+
+export const EXISTING_POSITIONS: ExistingPosition[] = [
+  {
+    id: 'pos-fin-staff-papua',
+    title: 'Staff Finance',
+    unitId: 'unit-fin-papua',
+    parentPositionId: 'pos-fin-mgr',
+    filled: 10,
+    seats: 10,
+  },
+  {
+    id: 'pos-ops-wh-jkt',
+    title: 'Warehouse Staff',
+    unitId: 'unit-ops-jkt',
+    parentPositionId: 'pos-ops-lead',
+    filled: 14,
+    seats: 15,
+  },
+  {
+    id: 'pos-eng-be-hq',
+    title: 'Backend Engineer',
+    unitId: 'unit-eng-hq',
+    parentPositionId: 'pos-eng-mgr',
+    filled: 6,
+    seats: 6,
+  },
+  {
+    id: 'pos-people-hrbp-hq',
+    title: 'HR Business Partner',
+    unitId: 'unit-people-hq',
+    parentPositionId: 'pos-head-people',
+    filled: 2,
+    seats: 2,
+  },
+  {
+    id: 'pos-sales-exec-sby',
+    title: 'Sales Executive',
+    unitId: 'unit-sales-sby',
+    parentPositionId: 'pos-ops-lead',
+    filled: 12,
+    seats: 12,
+  },
+];
+
+export const POSITION_MODE_LABEL: Record<PositionMode, string> = {
+  NEW: 'New position',
+  EXISTING: 'Existing position (add seats)',
+};
+
+/** Arti tiap status — isi modal legend di header kolom Status. */
+export const REQUISITION_STATUS_MEANING: Record<RequisitionStatus, string> = {
+  DRAFT: 'Not used on screen — a requisition is created directly as In approval.',
+  IN_APPROVAL: 'Waiting for a checker other than the maker. The maker can still edit or cancel it.',
+  APPROVED: 'Seats are open and ready to be filled through New Joiner. The maker can close it with a reason.',
+  REJECTED: 'Declined by the checker. Read-only.',
+  FULFILLED: 'Every requested seat has been filled. Read-only.',
+  CANCELLED: 'Cancelled by the maker before a decision. Read-only.',
+  CLOSED: 'Closed by the maker while approved; reason, actor and time are recorded. Read-only.',
+};

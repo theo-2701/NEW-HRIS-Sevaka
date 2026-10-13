@@ -1,12 +1,7 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { CURRENT_USER } from '@/features/manpower/types';
-import type {
-  ManpowerPlan,
-  PlanDraft,
-  Requisition,
-  RequisitionDraft,
-} from '@/features/manpower/types';
+import { CURRENT_USER, CURRENT_USER_ID } from '@/features/manpower/types';
+import type { ManpowerPlan, PlanDraft, Requisition, RequisitionDraft } from '@/features/manpower/types';
 
 /**
  * API service Manpower & Requisition.
@@ -28,104 +23,142 @@ import type {
  */
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
-let mockRequisitions: Requisition[] = [
-  {
-    id: 'REQ-0231',
-    title: 'Staff Finance',
-    unitId: 'unit-fin-papua',
-    parentPositionId: 'pos-fin-mgr',
-    headcount: 2,
-    status: 'IN_APPROVAL',
-    maker: 'Rina Hartono',
-    reason: 'Ekspansi wilayah Papua; dua staf finance untuk menutup ledger cabang baru.',
-    planId: 'plan-2026',
-    activeFrom: '2026-10-01',
-    activeUntil: '2026-12-31',
-    filledCount: 0,
-  },
-  {
-    id: 'REQ-0230',
-    title: 'Backend Engineer',
-    unitId: 'unit-eng-hq',
-    parentPositionId: 'pos-eng-mgr',
-    headcount: 1,
-    status: 'APPROVED',
-    maker: 'Dewi Anggraini',
-    reason: 'Backfill backend engineer yang mengundurkan diri.',
-    planId: 'plan-2026',
-    activeFrom: '2026-09-01',
-    activeUntil: '2026-12-31',
-    filledCount: 0,
-  },
-  {
-    id: 'REQ-0229',
-    title: 'HR Business Partner',
-    unitId: 'unit-people-hq',
-    parentPositionId: 'pos-head-people',
-    headcount: 1,
-    status: 'APPROVED',
-    maker: 'Rina Hartono',
-    reason: 'HRBP untuk headcount Jakarta yang bertambah.',
-    activeFrom: '2026-08-01',
-    activeUntil: '2026-11-30',
-    filledCount: 0,
-  },
-  {
-    id: 'REQ-0228',
-    title: 'Sales Executive',
-    unitId: 'unit-sales-sby',
-    parentPositionId: 'pos-ops-lead',
-    headcount: 3,
-    status: 'FULFILLED',
-    maker: 'Bagus Pratama',
-    reason: 'Ramp-up penjualan Q1 — ketiga kursi sudah terisi.',
-    activeFrom: '2026-01-05',
-    activeUntil: '2026-03-31',
-    filledCount: 3,
-  },
-  {
-    id: 'REQ-0227',
-    title: 'Warehouse Coordinator',
-    unitId: 'unit-ops-jkt',
-    parentPositionId: 'pos-ops-lead',
-    headcount: 1,
-    status: 'IN_APPROVAL',
-    maker: CURRENT_USER,
-    reason: 'Koordinator gudang untuk gudang Cakung.',
-    activeFrom: '2026-10-15',
-    activeUntil: '2027-01-31',
-    filledCount: 0,
-  },
-  {
-    id: 'REQ-0226',
-    title: 'Staff Finance',
-    unitId: 'unit-fin-papua',
-    parentPositionId: 'pos-fin-mgr',
-    headcount: 1,
-    status: 'REJECTED',
-    maker: 'Bagus Pratama',
-    reason: 'Duplikat REQ-0231 — ditolak checker.',
-    activeFrom: '2026-09-15',
-    activeUntil: '2026-12-31',
-    filledCount: 0,
-  },
-  {
-    id: 'REQ-0225',
-    title: 'Driver',
-    unitId: 'unit-ops-jkt',
-    parentPositionId: 'pos-ops-lead',
-    headcount: 2,
-    status: 'CLOSED',
-    maker: 'Rina Hartono',
-    reason: 'Armada tambahan untuk rute timur.',
-    activeFrom: '2026-06-01',
-    activeUntil: '2026-09-30',
-    filledCount: 1,
-    closedReason: 'Posisi dibekukan',
-    closedByName: 'Rina Hartono',
-    closedAt: '2026-09-02T10:15:00+07:00',
-  },
-];
+type SeedRow = Omit<Requisition, 'makerId' | 'submittedAt' | 'positionMode'> &
+  Partial<Pick<Requisition, 'positionMode' | 'positionId'>>;
+
+const makerIdOf = (name: string) =>
+  name === CURRENT_USER ? CURRENT_USER_ID : `usr-${name.toLowerCase().replace(/\s+/g, '-')}`;
+
+/** Data contoh: ID pembuat dari nama, waktu ajuan 2 minggu sebelum masa aktif (mode dummy). */
+function seed(row: SeedRow): Requisition {
+  const submitted = new Date(`${row.activeFrom}T09:00:00+07:00`);
+  submitted.setDate(submitted.getDate() - 14);
+  return {
+    ...row,
+    makerId: makerIdOf(row.maker),
+    submittedAt: submitted.toISOString(),
+    positionMode: row.positionMode ?? 'NEW',
+  };
+}
+
+let mockRequisitions: Requisition[] = (
+  [
+    {
+      id: 'REQ-0231',
+      title: 'Staff Finance',
+      unitId: 'unit-fin-papua',
+      parentPositionId: 'pos-fin-mgr',
+      headcount: 2,
+      status: 'IN_APPROVAL',
+      maker: 'Rina Hartono',
+      reason: 'Ekspansi wilayah Papua; dua staf finance untuk menutup ledger cabang baru.',
+      planId: 'plan-2026',
+      activeFrom: '2026-10-01',
+      activeUntil: '2026-12-31',
+      filledCount: 0,
+    },
+    {
+      id: 'REQ-0230',
+      title: 'Backend Engineer',
+      unitId: 'unit-eng-hq',
+      parentPositionId: 'pos-eng-mgr',
+      headcount: 1,
+      status: 'APPROVED',
+      maker: 'Dewi Anggraini',
+      reason: 'Backfill backend engineer yang mengundurkan diri.',
+      planId: 'plan-2026',
+      activeFrom: '2026-09-01',
+      activeUntil: '2026-12-31',
+      filledCount: 0,
+      positionMode: 'EXISTING',
+      positionId: 'pos-eng-be-hq',
+    },
+    {
+      id: 'REQ-0229',
+      title: 'HR Business Partner',
+      unitId: 'unit-people-hq',
+      parentPositionId: 'pos-head-people',
+      headcount: 1,
+      status: 'APPROVED',
+      maker: 'Rina Hartono',
+      reason: 'HRBP untuk headcount Jakarta yang bertambah.',
+      activeFrom: '2026-08-01',
+      activeUntil: '2026-11-30',
+      filledCount: 0,
+    },
+    {
+      id: 'REQ-0228',
+      title: 'Sales Executive',
+      unitId: 'unit-sales-sby',
+      parentPositionId: 'pos-ops-lead',
+      headcount: 3,
+      status: 'FULFILLED',
+      maker: 'Bagus Pratama',
+      reason: 'Ramp-up penjualan Q1 — ketiga kursi sudah terisi.',
+      activeFrom: '2026-01-05',
+      activeUntil: '2026-03-31',
+      filledCount: 3,
+    },
+    {
+      id: 'REQ-0227',
+      title: 'Warehouse Coordinator',
+      unitId: 'unit-ops-jkt',
+      parentPositionId: 'pos-ops-lead',
+      headcount: 1,
+      status: 'IN_APPROVAL',
+      maker: CURRENT_USER,
+      reason: 'Koordinator gudang untuk gudang Cakung.',
+      activeFrom: '2026-10-15',
+      activeUntil: '2027-01-31',
+      filledCount: 0,
+    },
+    {
+      id: 'REQ-0226',
+      title: 'Staff Finance',
+      unitId: 'unit-fin-papua',
+      parentPositionId: 'pos-fin-mgr',
+      headcount: 1,
+      status: 'REJECTED',
+      maker: 'Bagus Pratama',
+      reason: 'Duplikat REQ-0231 — ditolak checker.',
+      activeFrom: '2026-09-15',
+      activeUntil: '2026-12-31',
+      filledCount: 0,
+    },
+    {
+      id: 'REQ-0225',
+      title: 'Driver',
+      unitId: 'unit-ops-jkt',
+      parentPositionId: 'pos-ops-lead',
+      headcount: 2,
+      status: 'CLOSED',
+      maker: 'Rina Hartono',
+      reason: 'Armada tambahan untuk rute timur.',
+      activeFrom: '2026-06-01',
+      activeUntil: '2026-09-30',
+      filledCount: 1,
+      closedReason: 'Posisi dibekukan',
+      closedByName: 'Rina Hartono',
+      closedAt: '2026-09-02T10:15:00+07:00',
+    },
+    {
+      id: 'REQ-0232',
+      title: 'Warehouse Staff',
+      unitId: 'unit-ops-jkt',
+      parentPositionId: 'pos-ops-lead',
+      headcount: 2,
+      status: 'IN_APPROVAL',
+      maker: 'Bagus Pratama',
+      reason: 'Two more seats on the existing warehouse position for the year-end peak.',
+      planId: 'plan-2026',
+      activeFrom: '2026-10-20',
+      activeUntil: '2026-12-31',
+      filledCount: 0,
+      positionMode: 'EXISTING',
+      positionId: 'pos-ops-wh-jkt',
+    },
+  ] as SeedRow[]
+).map(seed);
 
 let mockPlans: ManpowerPlan[] = [
   {
@@ -192,9 +225,9 @@ function find(id: string): Requisition {
   return row;
 }
 
-/** SoD (FSD §3.3): pembuat requisition tidak boleh memutuskan sendiri. */
+/** SoD (FSD §3.3): pembuat requisition tidak boleh memutuskan sendiri — dicocokkan lewat ID. */
 function assertChecker(row: Requisition) {
-  if (row.maker === CURRENT_USER) {
+  if (row.makerId === CURRENT_USER_ID) {
     throw new Error('409 — segregation of duties: Anda pembuat requisition ini dan tidak boleh memutuskannya.');
   }
 }
@@ -202,7 +235,9 @@ function assertChecker(row: Requisition) {
 /** Guard status (FSD 0.24 §3.1): urutan galat 404 → 403 → 409 SoD → 422 status. */
 function assertStatus(row: Requisition, allowed: Requisition['status'][], action: string) {
   if (!allowed.includes(row.status)) {
-    throw new Error(`422 — requisition ${row.id} berstatus ${row.status}; ${action} hanya sah dari ${allowed.join('/')}.`);
+    throw new Error(
+      `422 — requisition ${row.id} berstatus ${row.status}; ${action} hanya sah dari ${allowed.join('/')}.`,
+    );
   }
 }
 
@@ -215,6 +250,8 @@ function assertDraft(draft: RequisitionDraft, checkPast: boolean) {
   }
   if (!draft.reason.trim()) throw new Error('422 — reason wajib diisi.');
   if (!draft.unitId || !draft.parentPositionId) throw new Error('422 — unit dan atasan posisi wajib dipilih.');
+  if (draft.positionMode === 'EXISTING' && !draft.positionId)
+    throw new Error('422 — position_id wajib untuk kursi yang sudah ada.');
   if (!draft.activeFrom || !draft.activeUntil) throw new Error('422 — active_from dan active_until wajib diisi.');
   if (draft.activeUntil < draft.activeFrom) throw new Error('422 — active_until tidak boleh sebelum active_from.');
   if (checkPast && draft.activeUntil < new Date().toISOString().slice(0, 10)) {
@@ -254,6 +291,10 @@ export const manpowerService = {
         headcount: Number(draft.headcount),
         status: 'IN_APPROVAL',
         maker: CURRENT_USER,
+        makerId: CURRENT_USER_ID,
+        submittedAt: new Date().toISOString(),
+        positionMode: draft.positionMode,
+        positionId: draft.positionMode === 'EXISTING' ? draft.positionId : undefined,
         reason: draft.reason.trim(),
         planId: draft.planId || undefined,
         activeFrom: draft.activeFrom,
@@ -280,6 +321,7 @@ export const manpowerService = {
         reason: draft.reason.trim(),
         headcount: Number(draft.headcount),
         planId: draft.planId || undefined,
+        positionId: draft.positionMode === 'EXISTING' ? draft.positionId : undefined,
       });
       return;
     }

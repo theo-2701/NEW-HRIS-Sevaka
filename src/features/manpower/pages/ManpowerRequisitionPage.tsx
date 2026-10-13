@@ -1,199 +1,277 @@
 import { useMemo, useState } from 'react';
-import { Info } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
-import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead, StatCard } from '@/components/Card';
-import { DataTable } from '@/components/DataTable';
+import { DataTable, type Column } from '@/components/DataTable';
+import { Modal } from '@/components/Modal';
 import { Pagination } from '@/components/Pagination';
+import { Segmented } from '@/components/Segmented';
+import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RowActions, RowButton } from '@/components/RowActions';
 import type { RowAction } from '@/components/RowActions';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { formatDateRange } from '@/lib/format';
+import { formatDate, formatDateRange } from '@/lib/format';
 import { useAuthStore } from '@/store/auth.store';
 import { usePagedRows } from '@/hooks/usePagedRows';
-import { Note, RequisitionStatusBadge } from '@/features/manpower/components/ManpowerBits';
-import { PlanCard } from '@/features/manpower/components/PlanCard';
-import { CreatePlanModal } from '@/features/manpower/components/CreatePlanModal';
+import { RequisitionStatusBadge } from '@/features/manpower/components/ManpowerBits';
 import {
   CloseRequisitionDialog,
   CreateRequisitionModal,
   ReviewRequisitionModal,
 } from '@/features/manpower/components/RequisitionModals';
+import { useCancelRequisition, useManpowerPlans, useRequisitions } from '@/features/manpower/hooks/useManpower';
 import {
-  useCancelRequisition,
-  useManpowerPlans,
-  useRequisitions,
-} from '@/features/manpower/hooks/useManpower';
-import {
-  CURRENT_USER,
   PARENT_POSITION_OPTIONS,
+  REQUISITION_STATUS_LABEL,
+  REQUISITION_STATUS_MEANING,
   TERMINAL_REQUISITION,
   UNIT_OPTIONS,
+  isOwnRequisition,
   isRequisitionChecker,
   isRequisitionMaker,
   labelOf,
-  planTotals,
 } from '@/features/manpower/types';
-import type { Requisition } from '@/features/manpower/types';
+import type { Requisition, RequisitionStatus } from '@/features/manpower/types';
 
-type Tab = 'plans' | 'requisitions';
+type View = 'activity' | 'information';
+const ALL = 'ALL';
 
 /**
- * Manpower & Requisition — port `_prototype/manpower-requisition.html`
- * (FSD §3 · UIC §3). Rencana menetapkan target; requisition mengubah gap
- * menjadi kursi yang disetujui.
+ * Requisition — dipisah dari Manpower Planning (Notulen 12 Okt 2026 §2 & §4).
+ *
+ * Pengguna langsung tahu pekerjaannya: dashboard ringkas di atas, lalu dua tab —
+ * **Activity** = yang menunggu keputusan Anda (pengajuan sendiri tidak ikut, urut terlama dulu) dan
+ * pengajuan Anda yang masih berjalan; **Information** = seluruh requisition perusahaan.
+ * Tombol keputusan disembunyikan bagi pembuat (dicocokkan lewat ID, bukan nama).
  */
 export function ManpowerRequisitionPage() {
-  const { data: plans = [], isLoading: plansLoading } = useManpowerPlans();
-  const { data: requisitions = [], isLoading: reqLoading } = useRequisitions();
+  const { data: plans = [] } = useManpowerPlans();
+  const { data: requisitions = [], isLoading } = useRequisitions();
   const cancel = useCancelRequisition();
   const role = useAuthStore((s) => s.user?.role);
   const maker = isRequisitionMaker(role);
   const checker = isRequisitionChecker(role);
 
-  const [tab, setTab] = useState<Tab>('plans');
-  const [creatingPlan, setCreatingPlan] = useState(false);
-  const [creatingReq, setCreatingReq] = useState(false);
+  const [view, setView] = useState<View>('activity');
+  const [status, setStatus] = useState<RequisitionStatus | typeof ALL>(ALL);
+  const [search, setSearch] = useState('');
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Requisition | null>(null);
   const [reviewing, setReviewing] = useState<Requisition | null>(null);
   const [cancelling, setCancelling] = useState<Requisition | null>(null);
   const [closing, setClosing] = useState<Requisition | null>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
+
+  const byOldest = (a: Requisition, b: Requisition) => a.submittedAt.localeCompare(b.submittedAt);
+  const toApprove = useMemo(
+    () =>
+      checker
+        ? requisitions.filter((row) => row.status === 'IN_APPROVAL' && !isOwnRequisition(row)).sort(byOldest)
+        : [],
+    [requisitions, checker],
+  );
+  const mine = useMemo(
+    () =>
+      requisitions.filter((row) => isOwnRequisition(row) && !TERMINAL_REQUISITION.includes(row.status)).sort(byOldest),
+    [requisitions],
+  );
+  const information = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return requisitions
+      .filter((row) => status === ALL || row.status === status)
+      .filter((row) => !keyword || `${row.id} ${row.title}`.toLowerCase().includes(keyword))
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  }, [requisitions, status, search]);
+  const paged = usePagedRows(information);
+
+  const inApproval = requisitions.filter((row) => row.status === 'IN_APPROVAL').length;
+  const openSeats = requisitions
+    .filter((row) => row.status === 'APPROVED')
+    .reduce((sum, row) => sum + row.headcount - row.filledCount, 0);
+  const fulfilled = requisitions.filter((row) => row.status === 'FULFILLED').length;
 
   /** Aksi baris per status × peran (FSD 0.24 §3.1); yang tak berhak disembunyikan (L1). */
   const rowActions = (row: Requisition): RowAction[] => {
     const open = row.status === 'IN_APPROVAL';
+    const own = isOwnRequisition(row);
     return [
-      { label: open && checker ? 'Review' : 'View Detail', onSelect: () => setReviewing(row) },
-      ...(open && maker
+      { label: open && checker && !own ? 'Review' : 'View Detail', onSelect: () => setReviewing(row) },
+      ...(open && maker && own
         ? [
-            { label: 'Ubah', onSelect: () => setEditing(row) },
-            { label: 'Batalkan', danger: true, onSelect: () => setCancelling(row) },
+            { label: 'Edit', onSelect: () => setEditing(row) },
+            { label: 'Cancel', danger: true, onSelect: () => setCancelling(row) },
           ]
         : []),
-      ...(row.status === 'APPROVED' && maker ? [{ label: 'Tutup', danger: true, onSelect: () => setClosing(row) }] : []),
+      ...(row.status === 'APPROVED' && maker
+        ? [{ label: 'Close', danger: true, onSelect: () => setClosing(row) }]
+        : []),
     ];
   };
+  const renderActions = (row: Requisition) => {
+    const actions = rowActions(row);
+    return actions.length === 1 ? (
+      <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>
+    ) : (
+      <RowActions actions={actions} />
+    );
+  };
 
-  const paged = usePagedRows(requisitions);
-
-  const activePlan = useMemo(() => plans.find((plan) => plan.status === 'ACTIVE'), [plans]);
-  const activeTotals = activePlan ? planTotals(activePlan) : null;
-  const openRequisitions = requisitions.filter((row) => !TERMINAL_REQUISITION.includes(row.status)).length;
-  const inApproval = requisitions.filter((row) => row.status === 'IN_APPROVAL');
-  /** Yang benar-benar bisa Anda putuskan — pengajuan sendiri tidak dihitung. */
-  const awaitingMyReview = inApproval.filter((row) => row.maker !== CURRENT_USER).length;
+  const columns: Column<Requisition>[] = [
+    { key: 'id', header: 'Requisition', strong: true, nowrap: true, render: (row) => row.id },
+    {
+      key: 'title',
+      header: 'Position',
+      render: (row) => (
+        <span className="flex flex-col gap-0.5">
+          <span>{row.title}</span>
+          <span className="font-body text-[11px] font-medium text-fg-3">
+            {row.positionMode === 'EXISTING' ? 'Existing position · add seats' : 'New position'}
+          </span>
+        </span>
+      ),
+    },
+    { key: 'unit', header: 'Unit', render: (row) => labelOf(UNIT_OPTIONS, row.unitId) },
+    {
+      key: 'parent',
+      header: 'Reports to',
+      muted: true,
+      render: (row) => labelOf(PARENT_POSITION_OPTIONS, row.parentPositionId),
+    },
+    { key: 'headcount', header: 'Seats', align: 'center', strong: true, render: (row) => row.headcount },
+    {
+      key: 'filled',
+      header: 'Filled',
+      align: 'center',
+      nowrap: true,
+      render: (row) => `${row.filledCount} / ${row.headcount}`,
+    },
+    {
+      key: 'active',
+      header: 'Active period',
+      nowrap: true,
+      render: (row) => formatDateRange(row.activeFrom, row.activeUntil),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      info: { label: 'Status reference', onClick: () => setLegendOpen(true) },
+      render: (row) => <RequisitionStatusBadge status={row.status} />,
+    },
+    {
+      key: 'maker',
+      header: 'Requestor',
+      muted: true,
+      nowrap: true,
+      render: (row) => `${row.maker} · ${formatDate(row.submittedAt)}`,
+    },
+  ];
 
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Manpower & Requisition' }]}
-        title="Manpower & Requisition"
-        description="Rencanakan headcount per unit dan ajukan requisition posisi lewat tinjauan maker→checker. Requisition yang disetujui menyiapkan kursi terbuka di hilir."
-        actions={
-          <>
-            <Button variant="secondary" onClick={() => setCreatingPlan(true)}>
-              New plan
-            </Button>
-            {maker && <Button onClick={() => setCreatingReq(true)}>New requisition</Button>}
-          </>
-        }
+        crumbs={[{ label: 'Employee Management' }, { label: 'Manpower Planning' }, { label: 'Requisition' }]}
+        title="Requisition"
+        description="Request new positions or more seats on an existing one. A maker submits, a different checker decides; approved seats open for New Joiner."
+        actions={maker && <Button onClick={() => setCreating(true)}>New requisition</Button>}
       >
         <div className="flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Active plan"
-              value={activePlan ? activePlan.periodStart.slice(0, 4) : '—'}
-              footer={<Foot>{activePlan ? activePlan.title : 'Belum ada rencana aktif'}</Foot>}
+              label="Waiting for you"
+              value={checker ? toApprove.length : '—'}
+              footer={checker ? 'To approve as checker, oldest first' : 'Only HR Manager and Super Admin decide'}
             />
-            <StatCard
-              label="Target headcount"
-              value={activeTotals?.target ?? '—'}
-              footer={<Foot>{activePlan ? `Di ${activePlan.lines.length} unit` : 'Menunggu rencana aktif'}</Foot>}
-            />
-            <StatCard
-              label="Open requisitions"
-              value={openRequisitions}
-              footer={<Foot>{inApproval.length} menunggu persetujuan</Foot>}
-            />
-            <StatCard
-              label="Awaiting your review"
-              value={awaitingMyReview}
-              footer={<Foot>Sebagai checker (bukan pengajuan sendiri)</Foot>}
-            />
+            <StatCard label="In approval" value={inApproval} footer={`${mine.length} of them are your requests`} />
+            <StatCard label="Open seats" value={openSeats} footer="Approved and not filled yet" />
+            <StatCard label="Fulfilled" value={fulfilled} footer="Every requested seat filled" />
           </div>
 
-          <TabMenu<Tab>
-            value={tab}
-            onChange={setTab}
-            items={[
-              { value: 'plans', label: 'Manpower plans', count: plans.length },
-              { value: 'requisitions', label: 'Requisitions', count: requisitions.length },
+          <Segmented<View>
+            value={view}
+            onChange={setView}
+            options={[
+              { value: 'activity', label: `Activity (${toApprove.length})` },
+              { value: 'information', label: 'Information' },
             ]}
           />
 
-          {tab === 'plans' && (
-            <div className="flex flex-col gap-4">
-              {plansLoading && (
-                <p className="py-6 text-center font-body text-[13px] font-medium text-fg-3">Memuat rencana…</p>
-              )}
-              {plans.map((plan) => (
-                <PlanCard key={plan.id} plan={plan} />
-              ))}
+          {view === 'activity' && (
+            <>
+              <Card>
+                <CardHead
+                  title="Waiting for your approval"
+                  sub="Requisitions made by others, oldest first. Your own requests never appear here."
+                />
+                <DataTable<Requisition>
+                  rows={toApprove}
+                  rowKey={(row) => row.id}
+                  loading={isLoading}
+                  empty={checker ? 'Nothing is waiting for your approval.' : 'Your role does not approve requisitions.'}
+                  columns={columns}
+                  actions={renderActions}
+                />
+              </Card>
 
-              <Note icon={<Info />}>
-                <strong>Actual</strong> dan <strong>Gap</strong> dihitung dari jumlah posisi yang terisi di struktur organisasi.
-              </Note>
-            </div>
+              <Card>
+                <CardHead title="Your requests in progress" sub="Waiting for a checker or approved and still open." />
+                <DataTable<Requisition>
+                  rows={mine}
+                  rowKey={(row) => row.id}
+                  loading={isLoading}
+                  empty="You have no requisition in progress."
+                  columns={columns}
+                  actions={renderActions}
+                />
+              </Card>
+            </>
           )}
 
-          {tab === 'requisitions' && (
+          {view === 'information' && (
             <Card>
-              <CardHead title="Requisitions" sub="Maker→checker · SoD ditegakkan" />
-
+              <CardHead title="All requisitions" sub="Every requisition in this company, newest first." />
               <div className="flex flex-col">
+                <TableToolbar
+                  filters={
+                    <Select
+                      value={status}
+                      onValueChange={(value) => {
+                        setStatus(value as RequisitionStatus | typeof ALL);
+                        paged.resetPage();
+                      }}
+                    >
+                      <SelectTrigger className="h-10 w-[200px]" aria-label="Status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL}>All statuses</SelectItem>
+                        {(Object.keys(REQUISITION_STATUS_LABEL) as RequisitionStatus[])
+                          .filter((value) => value !== 'DRAFT')
+                          .map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {REQUISITION_STATUS_LABEL[value]}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  }
+                  search={{
+                    value: search,
+                    onChange: (value) => {
+                      setSearch(value);
+                      paged.resetPage();
+                    },
+                    placeholder: 'Search ID or position',
+                  }}
+                />
                 <DataTable<Requisition>
                   rows={paged.rows}
                   rowKey={(row) => row.id}
-                  loading={reqLoading}
-                  empty="Belum ada requisition."
-                  columns={[
-                    { key: 'id', header: 'Requisition', strong: true, nowrap: true, render: (row) => row.id },
-                    { key: 'title', header: 'Position title', render: (row) => row.title },
-                    { key: 'unit', header: 'Unit', render: (row) => labelOf(UNIT_OPTIONS, row.unitId) },
-                    {
-                      key: 'parent',
-                      header: 'Reports to',
-                      muted: true,
-                      render: (row) => labelOf(PARENT_POSITION_OPTIONS, row.parentPositionId),
-                    },
-                    { key: 'headcount', header: 'Headcount', align: 'center', strong: true, render: (row) => row.headcount },
-                    {
-                      key: 'filled',
-                      header: 'Terisi',
-                      align: 'center',
-                      nowrap: true,
-                      render: (row) => `${row.filledCount} / ${row.headcount}`,
-                    },
-                    {
-                      key: 'active',
-                      header: 'Masa Aktif',
-                      nowrap: true,
-                      render: (row) => formatDateRange(row.activeFrom, row.activeUntil),
-                    },
-                    { key: 'status', header: 'Status', render: (row) => <RequisitionStatusBadge status={row.status} /> },
-                    { key: 'maker', header: 'Pengaju', muted: true, render: (row) => row.maker },
-                  ]}
-                  actions={(row) => {
-                    const actions = rowActions(row);
-                    return actions.length === 1 ? (
-                      <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>
-                    ) : (
-                      <RowActions actions={actions} />
-                    );
-                  }}
+                  loading={isLoading}
+                  empty="No requisition matches the filter."
+                  columns={columns}
+                  actions={renderActions}
                 />
-
                 <Pagination
                   page={paged.page}
                   pageSize={paged.pageSize}
@@ -208,29 +286,54 @@ export function ManpowerRequisitionPage() {
         </div>
       </PageShell>
 
-      <CreatePlanModal open={creatingPlan} onClose={() => setCreatingPlan(false)} />
       <CreateRequisitionModal
-        open={creatingReq || Boolean(editing)}
+        open={creating || Boolean(editing)}
         plans={plans}
         editing={editing}
-        onClose={() => (setCreatingReq(false), setEditing(null))}
+        onClose={() => (setCreating(false), setEditing(null))}
       />
       <ReviewRequisitionModal requisition={reviewing} canCheck={checker} onClose={() => setReviewing(null)} />
       <CloseRequisitionDialog key={closing?.id} requisition={closing} onClose={() => setClosing(null)} />
       <ConfirmDialog
         open={Boolean(cancelling)}
         onOpenChange={(open) => !open && setCancelling(null)}
-        title={`Batalkan ${cancelling?.id ?? ''}?`}
-        description="Requisition berhenti menunggu keputusan checker dan menjadi CANCELLED."
-        confirmLabel="Batalkan requisition"
-        cancelLabel="Kembali"
+        title={`Cancel ${cancelling?.id ?? ''}?`}
+        description="The requisition stops waiting for a checker decision and becomes Cancelled."
+        confirmLabel="Cancel requisition"
+        cancelLabel="Back"
         loading={cancel.isPending}
         onConfirm={() => cancelling && cancel.mutate({ id: cancelling.id }, { onSuccess: () => setCancelling(null) })}
       />
+
+      <Modal
+        open={legendOpen}
+        onOpenChange={setLegendOpen}
+        size="wide"
+        title="Status reference"
+        description="What each requisition status means."
+        footer={
+          <Button variant="secondary" onClick={() => setLegendOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <DataTable<{ status: RequisitionStatus }>
+          rows={(Object.keys(REQUISITION_STATUS_MEANING) as RequisitionStatus[])
+            .filter((value) => value !== 'DRAFT')
+            .map((value) => ({ status: value }))}
+          rowKey={(row) => row.status}
+          columns={[
+            { key: 'status', header: 'Status', render: (row) => <RequisitionStatusBadge status={row.status} /> },
+            {
+              key: 'meaning',
+              header: 'Meaning',
+              render: (row) => (
+                <span className="block whitespace-normal">{REQUISITION_STATUS_MEANING[row.status]}</span>
+              ),
+            },
+          ]}
+        />
+      </Modal>
     </>
   );
-}
-
-function Foot({ children }: { children: React.ReactNode }) {
-  return <span className="font-body text-[11.5px] font-medium leading-[1.4] text-fg-3">{children}</span>;
 }

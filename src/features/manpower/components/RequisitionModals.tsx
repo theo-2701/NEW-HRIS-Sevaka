@@ -4,19 +4,14 @@ import { ShieldCheck } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DateRangeField } from '@/components/form/DateRangeField';
-import { formatDate, formatDateRange } from '@/lib/format';
+import { formatDate, formatDateRange, formatDateTime } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
 import { TextField } from '@/components/form/TextField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
-import {
-  KeyValueList,
-  KeyValueRow,
-  Note,
-  RequisitionStatusBadge,
-} from '@/features/manpower/components/ManpowerBits';
+import { KeyValueList, KeyValueRow, Note, RequisitionStatusBadge } from '@/features/manpower/components/ManpowerBits';
 import {
   useApproveRequisition,
   useCloseRequisition,
@@ -25,11 +20,21 @@ import {
   useUpdateRequisition,
 } from '@/features/manpower/hooks/useManpower';
 import { requisitionSchema } from '@/features/manpower/validation';
-import { PARENT_POSITION_OPTIONS, UNIT_OPTIONS, labelOf } from '@/features/manpower/types';
-import type { ManpowerPlan, Requisition, RequisitionDraft } from '@/features/manpower/types';
+import {
+  EXISTING_POSITIONS,
+  PARENT_POSITION_OPTIONS,
+  POSITION_MODE_LABEL,
+  UNIT_OPTIONS,
+  isOwnRequisition,
+  labelOf,
+} from '@/features/manpower/types';
+import type { ManpowerPlan, PositionMode, Requisition, RequisitionDraft } from '@/features/manpower/types';
+import { Segmented } from '@/components/Segmented';
 
 const EMPTY: RequisitionDraft = {
   planId: '',
+  positionMode: 'NEW',
+  positionId: '',
   unitId: '',
   parentPositionId: '',
   title: '',
@@ -66,6 +71,8 @@ export function CreateRequisitionModal({
   const initial: RequisitionDraft = editing
     ? {
         planId: editing.planId ?? '',
+        positionMode: editing.positionMode,
+        positionId: editing.positionId ?? '',
         unitId: editing.unitId,
         parentPositionId: editing.parentPositionId,
         title: editing.title,
@@ -88,10 +95,31 @@ export function CreateRequisitionModal({
         else create.mutate(values, done);
       }}
     >
-      {({ submitForm, resetForm }) => {
+      {({ submitForm, resetForm, values, setFieldValue }) => {
         const close = () => {
           resetForm();
           onClose();
+        };
+        const existing = values.positionMode === 'EXISTING';
+        const seat = EXISTING_POSITIONS.find((row) => row.id === values.positionId);
+        /** Kursi yang sudah ada mewarisi unit, atasan, dan nama posisinya — maker hanya menambah jumlah. */
+        const pickSeat = (positionId: string) => {
+          const picked = EXISTING_POSITIONS.find((row) => row.id === positionId);
+          void setFieldValue('positionId', positionId);
+          if (!picked) return;
+          void setFieldValue('unitId', picked.unitId);
+          void setFieldValue('parentPositionId', picked.parentPositionId);
+          void setFieldValue('title', picked.title);
+        };
+        const switchMode = (mode: PositionMode) => {
+          void setFieldValue('positionMode', mode);
+          // Field yang tidak berlaku dikosongkan supaya tidak terkirim diam-diam.
+          void setFieldValue('positionId', '');
+          if (mode === 'EXISTING') {
+            void setFieldValue('unitId', '');
+            void setFieldValue('parentPositionId', '');
+            void setFieldValue('title', '');
+          }
         };
 
         return (
@@ -99,74 +127,128 @@ export function CreateRequisitionModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             size="wide"
-            title={editing ? `Ubah ${editing.id}` : 'New requisition'}
-            description="Anda berperan sebagai maker. HR Manager yang berbeda harus menyetujuinya (segregation of duties)."
+            title={editing ? `Edit ${editing.id}` : 'New requisition'}
+            description="You are the maker. A different HR Manager must approve it (segregation of duties)."
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
                   Cancel
                 </Button>
                 <Button onClick={() => void submitForm()} disabled={pending}>
-                  {pending ? 'Menyimpan…' : editing ? 'Save changes' : 'Submit for approval'}
+                  {pending ? 'Saving…' : editing ? 'Save changes' : 'Submit for approval'}
                 </Button>
               </>
             }
           >
             <Form className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label>Position</Label>
+                <Segmented<PositionMode>
+                  value={values.positionMode}
+                  onChange={switchMode}
+                  options={[
+                    { value: 'NEW', label: POSITION_MODE_LABEL.NEW },
+                    { value: 'EXISTING', label: POSITION_MODE_LABEL.EXISTING },
+                  ]}
+                />
+                <span className="font-body text-xs font-medium text-fg-3">
+                  {existing
+                    ? 'Request more seats on a position that already exists in the structure.'
+                    : 'Request a position that does not exist yet in the structure.'}
+                </span>
+              </div>
+
               <SelectField
                 name="planId"
-                label="Rencana"
-                placeholder="Ad-hoc (tanpa rencana)"
+                label="Plan"
+                placeholder="Ad-hoc (no plan)"
                 options={planOptions}
-                hint="Opsional — kosongkan untuk requisition ad-hoc."
+                hint="Optional — leave empty for an ad-hoc requisition."
               />
 
+              {existing && (
+                <div className="flex flex-col gap-1">
+                  <SelectField
+                    name="positionId"
+                    label="Existing position"
+                    required
+                    placeholder="Select a position"
+                    options={EXISTING_POSITIONS.map((row) => ({
+                      value: row.id,
+                      label: `${row.title} — ${labelOf(UNIT_OPTIONS, row.unitId)}`,
+                    }))}
+                    onValueChange={pickSeat}
+                  />
+                  {seat && (
+                    <span className="font-body text-xs font-medium text-fg-3">
+                      Currently {seat.filled} of {seat.seats} seats filled · reports to{' '}
+                      {labelOf(PARENT_POSITION_OPTIONS, seat.parentPositionId)}.
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="grid gap-4 md:grid-cols-2">
-                <SelectField name="unitId" label="Unit" required placeholder="Pilih unit" options={UNIT_OPTIONS} />
+                <SelectField
+                  name="unitId"
+                  label="Unit"
+                  required
+                  disabled={existing}
+                  placeholder="Select a unit"
+                  options={UNIT_OPTIONS}
+                />
                 <SelectField
                   name="parentPositionId"
                   label="Reports to"
                   required
-                  placeholder="Pilih posisi atasan"
+                  disabled={existing}
+                  placeholder="Select the supervising position"
                   options={PARENT_POSITION_OPTIONS}
                 />
               </div>
 
               <TextField
                 name="title"
-                label="Nama posisi"
+                label="Position title"
                 required
+                disabled={existing}
                 maxLength={150}
-                placeholder="mis. Staff Finance"
-                hint="Maksimal 150 karakter."
+                placeholder="e.g. Finance Staff"
+                hint={existing ? 'Taken from the existing position.' : 'Maximum 150 characters.'}
               />
 
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField name="headcount" type="number" min={1} label="Headcount" required />
+                <TextField
+                  name="headcount"
+                  type="number"
+                  min={1}
+                  label={existing ? 'Additional seats' : 'Headcount'}
+                  required
+                />
               </div>
 
               <DateRangeField
                 fromName="activeFrom"
                 toName="activeUntil"
-                label="Masa aktif (Tanggal Mulai – Tanggal Batas)"
+                label="Active period (start – end)"
                 required
                 min={editing ? undefined : today}
-                hint="Tanggal batas tidak sebelum tanggal mulai dan tidak di masa lampau."
+                hint="The end date cannot be earlier than the start date or in the past."
               />
 
               <TextAreaField
                 name="reason"
-                label="Justifikasi"
+                label="Justification"
                 required
-                rows={3}
+                rows={4}
                 maxLength={150}
-                placeholder="Kenapa posisi ini dibutuhkan?"
-                hint="Maksimal 150 karakter."
+                placeholder="Why is this position needed?"
+                hint="Maximum 150 characters."
               />
 
               <Note icon={<ShieldCheck />}>
-                Requisition langsung berstatus <strong>IN APPROVAL</strong>. Keputusannya diambil HR Manager yang
-                berbeda.
+                The requisition goes straight to <strong>In approval</strong>. A different HR Manager makes the
+                decision.
               </Note>
             </Form>
           </Modal>
@@ -188,109 +270,135 @@ export function ReviewRequisitionModal({
   onClose: () => void;
 }) {
   const [note, setNote] = useState('');
+  const [confirming, setConfirming] = useState(false);
   const approve = useApproveRequisition();
   const reject = useRejectRequisition();
 
   useEffect(() => {
-    if (requisition) setNote('');
+    if (requisition) {
+      setNote('');
+      setConfirming(false);
+    }
   }, [requisition]);
 
-  const canDecide = canCheck && requisition?.status === 'IN_APPROVAL';
+  const own = requisition ? isOwnRequisition(requisition) : false;
+  // Tombol keputusan disembunyikan bagi pembuatnya (Notulen 12 Okt 2026 #4, dicocokkan lewat ID).
+  const canDecide = canCheck && !own && requisition?.status === 'IN_APPROVAL';
   const pending = approve.isPending || reject.isPending;
+  const seat = EXISTING_POSITIONS.find((row) => row.id === requisition?.positionId);
 
   return (
-    <Modal
-      open={Boolean(requisition)}
-      onOpenChange={(open) => !open && onClose()}
-      size="wide"
-      title={canDecide ? 'Review requisition' : 'Requisition detail'}
-      description={
-        canDecide
-          ? 'Keputusan checker. Anda tidak bisa menyetujui requisition yang Anda buat sendiri.'
-          : 'Read-only — requisition ini sudah tidak menunggu keputusan.'
-      }
-      footer={
-        canDecide ? (
-          <>
-            <Button
-              variant="danger"
-              disabled={pending}
-              onClick={() =>
-                requisition &&
-                reject.mutate({ id: requisition.id, note: note.trim() }, { onSuccess: onClose })
-              }
-            >
-              Reject
+    <>
+      <Modal
+        open={Boolean(requisition)}
+        onOpenChange={(open) => !open && onClose()}
+        size="wide"
+        title={canDecide ? 'Review requisition' : 'Requisition detail'}
+        description={
+          canDecide
+            ? 'Checker decision. Approval opens the requested seats and cannot be undone.'
+            : own && requisition?.status === 'IN_APPROVAL'
+              ? 'You created this requisition, so a different checker has to decide it.'
+              : 'Read-only.'
+        }
+        footer={
+          canDecide ? (
+            <>
+              <Button
+                variant="danger"
+                disabled={pending}
+                onClick={() =>
+                  requisition && reject.mutate({ id: requisition.id, note: note.trim() }, { onSuccess: onClose })
+                }
+              >
+                Reject
+              </Button>
+              <Button disabled={pending} onClick={() => setConfirming(true)}>
+                Approve
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={onClose}>
+              Close
             </Button>
-            <Button
-              disabled={pending}
-              onClick={() =>
-                requisition &&
-                approve.mutate(
-                  { id: requisition.id, unitId: requisition.unitId, note: note.trim() },
-                  { onSuccess: onClose },
-                )
-              }
-            >
-              {approve.isPending ? 'Memproses…' : 'Approve requisition'}
-            </Button>
-          </>
-        ) : (
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-        )
-      }
-    >
-      {requisition && (
-        <div className="flex flex-col gap-4">
-          <KeyValueList>
-            <KeyValueRow label="Requisition">{requisition.id}</KeyValueRow>
-            <KeyValueRow label="Nama posisi">{requisition.title}</KeyValueRow>
-            <KeyValueRow label="Unit">{labelOf(UNIT_OPTIONS, requisition.unitId)}</KeyValueRow>
-            <KeyValueRow label="Reports to">
-              {labelOf(PARENT_POSITION_OPTIONS, requisition.parentPositionId)}
-            </KeyValueRow>
-            <KeyValueRow label="Headcount">{requisition.headcount} posisi</KeyValueRow>
-            <KeyValueRow label="Status">
-              <RequisitionStatusBadge status={requisition.status} />
-            </KeyValueRow>
-            <KeyValueRow label="Masa aktif">{formatDateRange(requisition.activeFrom, requisition.activeUntil)}</KeyValueRow>
-            <KeyValueRow label="Terisi">{`${requisition.filledCount} / ${requisition.headcount}`}</KeyValueRow>
-            <KeyValueRow label="Pengaju">{requisition.maker}</KeyValueRow>
-            <KeyValueRow label="Justifikasi">{requisition.reason}</KeyValueRow>
-            {requisition.status === 'CLOSED' && (
-              <>
-                <KeyValueRow label="Alasan penutupan">{requisition.closedReason}</KeyValueRow>
-                <KeyValueRow label="Ditutup oleh">
-                  {requisition.closedByName} · {formatDate(requisition.closedAt)}
-                </KeyValueRow>
-              </>
-            )}
-          </KeyValueList>
-
-          {canDecide && (
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="checker-note">Catatan checker</Label>
-              <Textarea
-                id="checker-note"
-                rows={2}
-                maxLength={150}
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                placeholder="Catatan yang tersimpan bersama keputusan"
-              />
-            </div>
-          )}
-
-          {!canDecide && requisition.checkerNote && (
+          )
+        }
+      >
+        {requisition && (
+          <div className="flex flex-col gap-4">
             <KeyValueList>
-              <KeyValueRow label="Catatan checker">{requisition.checkerNote}</KeyValueRow>
+              <KeyValueRow label="Requisition">{requisition.id}</KeyValueRow>
+              <KeyValueRow label="Position">{POSITION_MODE_LABEL[requisition.positionMode]}</KeyValueRow>
+              <KeyValueRow label="Position title">{requisition.title}</KeyValueRow>
+              {seat && <KeyValueRow label="Current seats">{`${seat.filled} of ${seat.seats} filled`}</KeyValueRow>}
+              <KeyValueRow label="Unit">{labelOf(UNIT_OPTIONS, requisition.unitId)}</KeyValueRow>
+              <KeyValueRow label="Reports to">
+                {labelOf(PARENT_POSITION_OPTIONS, requisition.parentPositionId)}
+              </KeyValueRow>
+              <KeyValueRow label={requisition.positionMode === 'EXISTING' ? 'Additional seats' : 'Headcount'}>
+                {requisition.headcount}
+              </KeyValueRow>
+              <KeyValueRow label="Status">
+                <RequisitionStatusBadge status={requisition.status} />
+              </KeyValueRow>
+              <KeyValueRow label="Active period">
+                {formatDateRange(requisition.activeFrom, requisition.activeUntil)}
+              </KeyValueRow>
+              <KeyValueRow label="Filled">{`${requisition.filledCount} / ${requisition.headcount}`}</KeyValueRow>
+              <KeyValueRow label="Requestor">
+                {requisition.maker} · {formatDateTime(requisition.submittedAt)}
+              </KeyValueRow>
+              <KeyValueRow label="Justification">{requisition.reason}</KeyValueRow>
+              {requisition.status === 'CLOSED' && (
+                <>
+                  <KeyValueRow label="Close reason">{requisition.closedReason}</KeyValueRow>
+                  <KeyValueRow label="Closed by">
+                    {requisition.closedByName} · {formatDate(requisition.closedAt)}
+                  </KeyValueRow>
+                </>
+              )}
             </KeyValueList>
-          )}
-        </div>
-      )}
-    </Modal>
+
+            {canDecide && (
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="checker-note">Checker note</Label>
+                <Textarea
+                  id="checker-note"
+                  rows={2}
+                  maxLength={150}
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Saved together with the decision"
+                />
+              </div>
+            )}
+
+            {!canDecide && requisition.checkerNote && (
+              <KeyValueList>
+                <KeyValueRow label="Checker note">{requisition.checkerNote}</KeyValueRow>
+              </KeyValueList>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={`Approve ${requisition?.id ?? ''}?`}
+        description={`${requisition?.headcount ?? 0} seat(s) for ${requisition?.title ?? ''} will be opened for New Joiner. This cannot be undone.`}
+        confirmLabel="Yes, approve"
+        cancelLabel="Back"
+        loading={approve.isPending}
+        onConfirm={() =>
+          requisition &&
+          approve.mutate(
+            { id: requisition.id, unitId: requisition.unitId, note: note.trim() },
+            { onSuccess: () => (setConfirming(false), onClose()) },
+          )
+        }
+      />
+    </>
   );
 }
 

@@ -133,8 +133,8 @@ export const NAV: NavSection[] = [
         label: 'Manpower Planning',
         icon: 'clipboard-list',
         children: [
-          { label: 'Overview' },
-          { label: 'Planning History' },
+          { label: 'Overview', path: '/employees/manpower/planning', source: 'manpower-requisition.html', status: 'done' },
+          { label: 'Planning History', path: '/employees/manpower/history', source: 'manpower-requisition.html', status: 'done' },
           { label: 'Requisition', path: '/employees/manpower/requisition', source: 'manpower-requisition.html', status: 'done' },
         ],
       },

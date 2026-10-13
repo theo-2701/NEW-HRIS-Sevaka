@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { planSchema, requisitionSchema } from '@/features/manpower/validation';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
-import { CURRENT_USER, planTotals } from '@/features/manpower/types';
-import type { ManpowerPlan } from '@/features/manpower/types';
+import { CURRENT_USER, isOwnRequisition, planTotals } from '@/features/manpower/types';
+import type { ManpowerPlan, RequisitionDraft } from '@/features/manpower/types';
 
-const validRequisition = {
+const validRequisition: RequisitionDraft = {
   planId: '',
+  positionMode: 'NEW',
+  positionId: '',
   unitId: 'unit-fin-papua',
   parentPositionId: 'pos-fin-mgr',
   title: 'Staff Finance',
@@ -17,18 +19,27 @@ const validRequisition = {
 
 describe('REQ-CREATE — validasi', () => {
   it('menolak headcount di bawah 1', async () => {
-    await expect(
-      requisitionSchema.validateAt('headcount', { ...validRequisition, headcount: 0 }),
-    ).rejects.toThrow(/minimal 1/);
+    await expect(requisitionSchema.validateAt('headcount', { ...validRequisition, headcount: 0 })).rejects.toThrow(
+      /at least 1/,
+    );
   });
 
   it('menolak justifikasi kosong dan judul lebih dari 150 karakter', async () => {
-    await expect(
-      requisitionSchema.validateAt('reason', { ...validRequisition, reason: '  ' }),
-    ).rejects.toThrow(/Justifikasi wajib/);
+    await expect(requisitionSchema.validateAt('reason', { ...validRequisition, reason: '  ' })).rejects.toThrow(
+      /Justification is required/,
+    );
     await expect(
       requisitionSchema.validateAt('title', { ...validRequisition, title: 'x'.repeat(151) }),
-    ).rejects.toThrow(/150 karakter/);
+    ).rejects.toThrow(/150 characters/);
+  });
+
+  it('kursi yang sudah ada wajib memilih posisinya (Notulen 12 Okt 2026 #2)', async () => {
+    await expect(
+      requisitionSchema.validateAt('positionId', { ...validRequisition, positionMode: 'EXISTING', positionId: '' }),
+    ).rejects.toThrow(/existing position/);
+    await expect(
+      manpowerService.createRequisition({ ...validRequisition, positionMode: 'EXISTING', positionId: '' }),
+    ).rejects.toThrow(/position_id/);
   });
 
   it('menerima requisition yang lengkap', async () => {
@@ -45,7 +56,7 @@ describe('REQ-CREATE — lahir IN_APPROVAL (FSD 0.24 §3.1)', () => {
   it('tanggal batas sebelum mulai ditolak skema; batas di masa lampau ditolak server', async () => {
     await expect(
       requisitionSchema.validateAt('activeUntil', { ...validRequisition, activeUntil: '2098-12-31' }),
-    ).rejects.toThrow(/tidak boleh sebelum/);
+    ).rejects.toThrow(/cannot be earlier/);
     await expect(
       manpowerService.createRequisition({ ...validRequisition, activeFrom: '2020-01-01', activeUntil: '2020-02-01' }),
     ).rejects.toThrow(/masa lampau/);
@@ -74,14 +85,14 @@ describe('REQ — Ubah · Batalkan · Tutup', () => {
 describe('REQ-APPROVE — SoD', () => {
   it('menolak 409 bila maker memutuskan pengajuannya sendiri', async () => {
     const rows = await manpowerService.requisitions();
-    const own = rows.find((row) => row.maker === CURRENT_USER && row.status === 'IN_APPROVAL')!;
+    const own = rows.find((row) => isOwnRequisition(row) && row.status === 'IN_APPROVAL')!;
     await expect(manpowerService.approveRequisition(own.id, '')).rejects.toThrow(/409/);
     await expect(manpowerService.rejectRequisition(own.id, '')).rejects.toThrow(/409/);
   });
 
   it('menyetujui requisition milik maker lain', async () => {
     const rows = await manpowerService.requisitions();
-    const other = rows.find((row) => row.status === 'IN_APPROVAL' && row.maker !== CURRENT_USER)!;
+    const other = rows.find((row) => row.status === 'IN_APPROVAL' && !isOwnRequisition(row))!;
     await manpowerService.approveRequisition(other.id, 'Disetujui');
     const after = await manpowerService.requisitions();
     expect(after.find((row) => row.id === other.id)!.status).toBe('APPROVED');
@@ -94,9 +105,7 @@ describe('REQ — guard state (UIC-EMPLOYEE §1.6)', () => {
   });
 
   it('server menolak requisition tanpa justifikasi (422)', async () => {
-    await expect(
-      manpowerService.createRequisition({ ...validRequisition, reason: '  ' }),
-    ).rejects.toThrow(/422/);
+    await expect(manpowerService.createRequisition({ ...validRequisition, reason: '  ' })).rejects.toThrow(/422/);
   });
 });
 

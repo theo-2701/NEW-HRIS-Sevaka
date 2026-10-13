@@ -81,6 +81,7 @@ import { TimeOffRequestPage } from '@/features/time-off/pages/TimeOffRequestPage
 import { ReprimandPage } from '@/features/reprimand/pages/ReprimandPage';
 import { ReprimandTypeSettingPage } from '@/features/reprimand/pages/ReprimandTypeSettingPage';
 import { ManpowerRequisitionPage } from '@/features/manpower/pages/ManpowerRequisitionPage';
+import { ManpowerPlanningPage } from '@/features/manpower/pages/ManpowerPlanningPage';
 import { PtkpAdjustmentPage } from '@/features/ptkp/pages/PtkpAdjustmentPage';
 import { MassResignationPage } from '@/features/mass-resignation/pages/MassResignationPage';
 import { TransitionsPage } from '@/features/transitions/pages/TransitionsPage';
@@ -124,6 +125,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/transfer/dashboard', element: <TransitionDetailPage /> },
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/ptkp-adjustment', element: <PtkpAdjustmentPage /> },
+  { path: 'employees/manpower/planning', element: <ManpowerPlanningPage /> },
+  { path: 'employees/manpower/history', element: <ManpowerPlanningPage history /> },
   { path: 'employees/manpower/requisition', element: <ManpowerRequisitionPage /> },
   { path: 'employees/reprimand', element: <ReprimandPage /> },
   { path: 'employees/reprimand/type-setting', element: <ReprimandTypeSettingPage /> },
@@ -250,6 +253,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/transfer/dashboard',
   '/employees/mass-resignation',
   '/employees/ptkp-adjustment',
+  '/employees/manpower/planning',
+  '/employees/manpower/history',
   '/employees/manpower/requisition',
   '/employees/reprimand',
   '/employees/reprimand/type-setting',

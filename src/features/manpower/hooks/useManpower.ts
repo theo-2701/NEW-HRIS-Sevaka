@@ -38,21 +38,21 @@ function useManpowerMutation<TVars, TResult = void>(
 export const useCreateRequisition = () =>
   useManpowerMutation<RequisitionDraft, Requisition>(
     (draft) => manpowerService.createRequisition(draft),
-    (row) => ({ text: `${row.id} diajukan untuk persetujuan. Menunggu HR Manager lain (SoD).`, tone: 'info' }),
+    (row) => ({ text: `${row.id} submitted. Waiting for a different HR Manager to decide.` }),
     manpowerKeys.requisitions,
   );
 
 export const useUpdateRequisition = () =>
   useManpowerMutation<{ id: string; draft: RequisitionDraft }>(
     ({ id, draft }) => manpowerService.updateRequisition(id, draft),
-    (_result, { id }) => ({ text: `${id} diperbarui.` }),
+    (_result, { id }) => ({ text: `${id} updated.` }),
     manpowerKeys.requisitions,
   );
 
 export const useCancelRequisition = () =>
   useManpowerMutation<{ id: string }>(
     ({ id }) => manpowerService.cancelRequisition(id),
-    (_result, { id }) => ({ text: `${id} dibatalkan.`, tone: 'warn' }),
+    (_result, { id }) => ({ text: `${id} cancelled.`, tone: 'warn' }),
     manpowerKeys.requisitions,
   );
 
@@ -62,7 +62,7 @@ export function useCloseRequisition() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => manpowerService.closeRequisition(id, reason),
     onSuccess: (_result, { id }) => {
-      toast(`${id} ditutup.`, 'ok');
+      toast(`${id} closed.`, 'ok');
       void queryClient.invalidateQueries({ queryKey: manpowerKeys.requisitions });
     },
   });
@@ -72,7 +72,7 @@ export const useApproveRequisition = () =>
   useManpowerMutation<{ id: string; unitId: string; note: string }>(
     ({ id, note }) => manpowerService.approveRequisition(id, note),
     (_result, { id, unitId }) => ({
-      text: `${id} disetujui. Kursi terbuka disiapkan untuk ${labelOf(UNIT_OPTIONS, unitId)}.`,
+      text: `${id} approved. Open seats are prepared for ${labelOf(UNIT_OPTIONS, unitId)}.`,
     }),
     manpowerKeys.requisitions,
   );
@@ -80,13 +80,13 @@ export const useApproveRequisition = () =>
 export const useRejectRequisition = () =>
   useManpowerMutation<{ id: string; note: string }>(
     ({ id, note }) => manpowerService.rejectRequisition(id, note),
-    (_result, { id }) => ({ text: `${id} ditolak.`, tone: 'warn' }),
+    (_result, { id }) => ({ text: `${id} rejected.`, tone: 'warn' }),
     manpowerKeys.requisitions,
   );
 
 export const useCreatePlan = () =>
   useManpowerMutation<PlanDraft, ManpowerPlan>(
     (draft) => manpowerService.createPlan(draft),
-    (row) => ({ text: `${row.title} tersimpan sebagai draft dengan ${row.lines.length} baris target.` }),
+    (row) => ({ text: `${row.title} saved as a draft with ${row.lines.length} target line(s).` }),
     manpowerKeys.plans,
   );
