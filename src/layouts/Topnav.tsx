@@ -7,13 +7,10 @@ import {
   Check,
   ChevronDown,
   HelpCircle,
-  LayoutGrid,
   LineChart,
   LogOut,
-  Plus,
   Search,
   Settings,
-  Sparkles,
   User,
   Users,
 } from 'lucide-react';
@@ -129,17 +126,7 @@ export function Topnav() {
 
       {/* ---- Right cluster ---- */}
       <div className="flex items-center gap-2.5">
-        <button
-          type="button"
-          className="inline-flex h-7 items-center gap-1.5 rounded-pill px-3 font-body text-[10px] font-bold leading-none tracking-[0.02em] text-cloud shadow-[inset_0_2px_16px_0_rgba(0,0,0,.25)] transition-[filter] duration-200 ease-standard hover:brightness-110 [background:linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.2)),linear-gradient(rgba(255,255,255,0)_0%,rgba(255,255,255,.16)_100%),linear-gradient(var(--color-secondary-600)_0%,var(--color-primary-600)_50%,var(--color-primary-200)_75%,var(--color-primary-700)_100%)]"
-        >
-          <Sparkles className="size-3.5" />
-          SUMMARIZE DATA
-        </button>
-
-        <IconButton label="Tambah">
-          <Plus className="size-[18px]" />
-        </IconButton>
+        {/* Summarize Data, Tambah (+), dan Aplikasi dihapus atas permintaan Theo (13 Okt 2026) — tanpa fungsi. */}
         <IconButton label="Cari">
           <Search className="size-[18px]" />
         </IconButton>
@@ -156,9 +143,6 @@ export function Topnav() {
           )}
         </Link>
 
-        <IconButton label="Aplikasi">
-          <LayoutGrid className="size-[18px]" />
-        </IconButton>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
