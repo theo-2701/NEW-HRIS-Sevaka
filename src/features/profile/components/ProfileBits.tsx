@@ -92,7 +92,6 @@ export function IdentityCard({
         >
           HR Manager · restricted fields &amp; reveal
         </ScopePill>
-
       </div>
     </section>
   );
@@ -265,7 +264,9 @@ export function DetailBlock({
       <h3 className="mb-3 flex flex-wrap items-center gap-2 font-body text-[11px] font-bold uppercase leading-none tracking-[0.06em] text-fg-3">
         <span className="text-secondary-500 [&_svg]:size-[15px]">{icon}</span>
         {title}
-        {table && <span className="font-mono text-[10.5px] font-medium normal-case tracking-normal text-fg-4">· {table}</span>}
+        {table && (
+          <span className="font-mono text-[10.5px] font-medium normal-case tracking-normal text-fg-4">· {table}</span>
+        )}
       </h3>
       {children}
     </div>
@@ -292,6 +293,29 @@ export function KeyValueRow({ label, children }: { label: string; children: Reac
       <dt className="font-body text-[12.5px] font-medium text-fg-3">{label}</dt>
       <dd className="m-0 font-body text-[13px] font-medium text-fg-1">{children}</dd>
     </>
+  );
+}
+
+/**
+ * Watermark latar kartu saat data sensitif dibuka (Notulen 12 Okt 2026 §12): nama pengguna login +
+ * tanggal/jam, diulang miring di seluruh kartu sebagai efek jera foto/screenshot. Hanya kartu itu,
+ * bukan seluruh layar; tidak menghalangi klik.
+ */
+export function Watermark({ text }: { text: string }) {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 select-none overflow-hidden">
+      <div className="absolute -inset-1/2 flex rotate-[-24deg] flex-col justify-center gap-10">
+        {Array.from({ length: 14 }, (_, row) => (
+          <div key={row} className={cn('flex gap-14 whitespace-nowrap', row % 2 === 1 && 'translate-x-24')}>
+            {Array.from({ length: 8 }, (_, col) => (
+              <span key={col} className="font-body text-[13px] font-bold tracking-[0.04em] text-fg-1/[0.07]">
+                {text}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Formik, useFormikContext } from 'formik';
-import { Eye, EyeOff, IdCard, Lock, ShieldAlert, User, UserRound } from 'lucide-react';
+import { Eye, IdCard, Lock, ShieldAlert, User } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { PanelActionButton } from '@/components/RowActions';
@@ -14,15 +14,15 @@ import { SelectField } from '@/components/form/SelectField';
 import { ToggleField } from '@/components/form/ToggleField';
 import {
   CertMark,
-  DetailBlock,
   Empty,
   KeyValueList,
   KeyValueRow,
   Note,
   PiiHidden,
   SectionCard,
-  TwoCol,
-  monoClass } from '@/features/profile/components/ProfileBits';
+  Watermark,
+  monoClass,
+} from '@/features/profile/components/ProfileBits';
 import { EmployeePickerModal } from '@/features/profile/components/EmployeePickerModal';
 import { useRevealProfile, useUpdateProfile } from '@/features/profile/hooks/useProfile';
 import { basicInfoSchema } from '@/features/profile/validation';
@@ -42,7 +42,8 @@ import {
   labelOf,
 } from '@/features/profile/types';
 import type { PersonalProfile, ProfileActor, ProfileReveal, RevealField } from '@/features/profile/types';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatDateTime } from '@/lib/format';
+import { useAuthStore } from '@/store/auth.store';
 
 /** Bentuk mask detail (UIC-001-PROFILE §2.2); nilai penuh hanya lewat Reveal. */
 const MASK: Record<RevealField, (value: string) => ReactNode> = {
@@ -59,57 +60,40 @@ const MASK: Record<RevealField, (value: string) => ReactNode> = {
   visaNumber: (value) => <span className={monoClass}>{`${value.slice(0, 2)}•••••${value.slice(-2)}`}</span>,
 };
 
-const chipClass =
-  'inline-flex h-[26px] items-center gap-1.5 rounded-[7px] border border-fog bg-white px-2.5 font-body text-[11px] font-bold text-secondary-700 transition-colors hover:border-secondary-500 hover:bg-primary-50';
+/** Field pribadi yang ikut disamarkan di kartu (Notulen 12 Okt 2026 §12) — nilainya sudah ada di klien. */
+const MASKED_PERSONAL = ['Date & place of birth', 'Marital status', 'Blood type', 'Religion', 'KTP & domicile address'];
 
-/** Satu field sensitif: ter-mask + Reveal, atau penuh + Sembunyikan (FSD-001-PROFILE §1.4, R1/R2). */
+/** Nilai pribadi tersamar — semua field sensitif tampil seragam sampai kartu dibuka. */
+function Masked() {
+  return <span className={`${monoClass} text-fg-4`}>••••••••</span>;
+}
+
+/**
+ * Satu field sensitif ber-kontrak reveal (FSD-001-PROFILE §1.4): bentuk mask resmi sampai kartu dibuka.
+ * Tanpa scope reveal (R13) nilainya tetap bentuk mask walau kartu dibuka — server tidak memberi nilai penuh.
+ */
 function SensitiveValue({
   field,
   value,
   revealed,
-  shown,
-  onReveal,
-  onHide,
+  open,
   empty,
-  canReveal,
 }: {
   field: RevealField;
   value: string;
   revealed: ProfileReveal | null;
-  shown: boolean;
-  onReveal: () => void;
-  onHide: () => void;
+  open: boolean;
   empty?: ReactNode;
-  /** R13: tanpa scope reveal (HR Staff, ESS) tombol Reveal tidak dirender sama sekali. */
-  canReveal: boolean;
 }) {
   if (!value) return <Empty>{empty}</Empty>;
-  if (!canReveal) return <>{MASK[field](value)}</>;
-
-  if (shown && revealed) {
-    return (
-      <span className="inline-flex flex-wrap items-center gap-2">
-        <span className={monoClass}>{revealed[field] || '—'}</span>
-        <button type="button" onClick={onHide} className={chipClass}>
-          <EyeOff className="size-3" />
-          Sembunyikan
-        </button>
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex flex-wrap items-center gap-2">
-      {MASK[field](value)}
-      <button type="button" onClick={onReveal} className={chipClass}>
-        <Eye className="size-3" />
-        Reveal
-      </button>
-    </span>
-  );
+  if (open && revealed) return <span className={monoClass}>{revealed[field] || '—'}</span>;
+  return <>{MASK[field](value)}</>;
 }
 
-/** R1 — konfirmasi sebelum membuka field sensitif; isinya mengikuti cabang bendera (R14). */
+/**
+ * Konfirmasi sebelum membuka kartu (R1 + Notulen 12 Okt 2026 §12): data tampil penuh, watermark muncul,
+ * dan akses tercatat. Daftar field mengikuti cabang bendera (R14).
+ */
 function RevealConfirmModal({
   open,
   pending,
@@ -119,7 +103,7 @@ function RevealConfirmModal({
 }: {
   open: boolean;
   pending: boolean;
-  fields: { key: RevealField; label: string }[];
+  fields: string[];
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -127,28 +111,37 @@ function RevealConfirmModal({
     <Modal
       open={open}
       onOpenChange={(next) => !next && onCancel()}
-      title="Buka data sensitif?"
-      description={`${fields.length} field berikut akan ditampilkan penuh. Akses ini tercatat di read-audit sistem.`}
+      title="Show sensitive data?"
+      description="The fields below will be shown in full with a watermark of your name and the time. This access is recorded in the audit trail."
       footer={
         <>
           <Button variant="secondary" onClick={onCancel}>
-            Batal
+            Cancel
           </Button>
           <Button onClick={onConfirm} disabled={pending}>
-            {pending ? 'Membuka…' : 'Buka'}
+            {pending ? 'Opening…' : 'Show data'}
           </Button>
         </>
       }
     >
       <ul className="m-0 grid list-none gap-1.5 rounded-md border border-border-1 bg-cloud p-3.5 font-body text-[13px] font-semibold text-fg-1 sm:grid-cols-2">
-        {fields.map((item) => (
-          <li key={item.key} className="flex items-center gap-2">
+        {fields.map((label) => (
+          <li key={label} className="flex items-center gap-2">
             <Lock className="size-3.5 shrink-0 text-fg-3" />
-            {item.label}
+            {label}
           </li>
         ))}
       </ul>
     </Modal>
+  );
+}
+
+/** Sub-judul kelompok di dalam kartu gabungan. */
+function GroupTitle({ children }: { children: ReactNode }) {
+  return (
+    <h4 className="m-0 mb-2.5 font-body text-[11px] font-bold uppercase leading-none tracking-[0.06em] text-fg-3">
+      {children}
+    </h4>
   );
 }
 
@@ -215,7 +208,9 @@ export function BasicInfoSection({
   const [editing, setEditing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [confirmingReveal, setConfirmingReveal] = useState(false);
-  const [shown, setShown] = useState<Set<RevealField>>(new Set());
+  /** Waktu kartu dibuka — terisi = data tampil penuh + watermark. Satu tombol untuk seluruh kartu. */
+  const [openedAt, setOpenedAt] = useState<string | null>(null);
+  const viewer = useAuthStore((s) => s.user);
   const reveal = useRevealProfile(actor, employeeId);
   const revealed = reveal.data ?? null;
   const update = useUpdateProfile(actor);
@@ -223,31 +218,21 @@ export function BasicInfoSection({
   const canReveal = canRevealPii(actor);
   const citizen = profile.nationality === 'CITIZEN';
   const revealFields = revealFieldsFor(profile.nationality);
+  const open = Boolean(openedAt);
+  const confirmFields = [...(canReveal ? revealFields.map((item) => item.label) : []), ...MASKED_PERSONAL];
 
-  const openReveal = () => setConfirmingReveal(true);
-  const hide = (field: RevealField) =>
-    setShown((current) => {
-      const next = new Set(current);
-      next.delete(field);
-      return next;
-    });
   const sensitive = (field: RevealField, value: string, empty?: ReactNode) => (
-    <SensitiveValue
-      field={field}
-      value={value}
-      revealed={revealed}
-      shown={shown.has(field)}
-      onReveal={openReveal}
-      onHide={() => hide(field)}
-      empty={empty}
-      canReveal={canReveal}
-    />
+    <SensitiveValue field={field} value={value} revealed={revealed} open={open} empty={empty} />
   );
+  /** Field pribadi biasa: tersamar sampai kartu dibuka. */
+  const personal = (value: ReactNode) => (open ? value : <Masked />);
+  const openCard = () => setOpenedAt(new Date().toISOString());
 
   return (
     <>
       <Note tone="warn" icon={<ShieldAlert />}>
-        <strong>Field khusus HR Manager.</strong> Kewarganegaraan dan status pernikahan hanya bisa diubah HR Manager. Selebihnya bisa Anda ubah sendiri.
+        <strong>Field khusus HR Manager.</strong> Kewarganegaraan dan status pernikahan hanya bisa diubah HR Manager.
+        Selebihnya bisa Anda ubah sendiri.
       </Note>
 
       <SectionCard
@@ -263,91 +248,140 @@ export function BasicInfoSection({
           </div>
         }
       >
-        {revealed && shown.size > 0 ? (
-          <Note tone="warn" icon={<Eye />}>
-            Data sensitif sedang ditampilkan penuh. Pembukaan ini sudah tercatat di read-audit — tekan{' '}
-            <strong>Sembunyikan</strong> untuk menyamarkannya kembali.
-          </Note>
-        ) : (
-          <Note icon={<Lock />}>
-            Data sensitif disamarkan.{' '}
-            {canReveal ? (
-              <>
-                Tekan <strong>Reveal</strong> untuk melihat nilai lengkap — setiap pembukaan tercatat.
-              </>
+        {/* Satu kartu Identitas + Data Pribadi (Notulen 12 Okt 2026 §12): disamarkan, satu tombol membuka
+            seluruh kartu dan langsung memunculkan watermark pengguna login + waktu di latar kartu. */}
+        <div className="relative overflow-hidden rounded-xl border border-border-1 bg-bg-surface px-[18px] py-4">
+          {open && openedAt && <Watermark text={`${viewer?.name ?? 'User'} · ${formatDateTime(openedAt)}`} />}
+
+          <div className="relative flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="m-0 flex items-center gap-2 font-body text-[11px] font-bold uppercase leading-none tracking-[0.06em] text-fg-3">
+                <IdCard className="size-[15px] text-secondary-500" />
+                Identity &amp; Personal Data
+              </h3>
+              <div className="ml-auto">
+                <PanelActionButton onClick={() => (open ? setOpenedAt(null) : setConfirmingReveal(true))}>
+                  {open ? 'Hide data' : 'Show data'}
+                </PanelActionButton>
+              </div>
+            </div>
+
+            {open ? (
+              <Note tone="warn" icon={<Eye />}>
+                Sensitive data is shown in full. This access has been recorded with your name and time — press{' '}
+                <strong>Hide data</strong> to mask it again.
+              </Note>
             ) : (
-              'Membuka nilai penuh hanya untuk HR Manager ke atas.'
+              <Note icon={<Lock />}>
+                Personal data is masked. Press <strong>Show data</strong> to view it — every access is recorded.
+                {!canReveal && ' Full ID numbers are only available to HR Manager and above.'}
+              </Note>
             )}
-          </Note>
-        )}
 
-        <TwoCol>
-          <DetailBlock icon={<IdCard />} title="Identity &amp; Residence">
-            <KeyValueList>
-              <KeyValueRow label="Nationality">
-                <StatusBadge tone="info">{labelOf(NATIONALITY_OPTIONS, profile.nationality)}</StatusBadge>
-              </KeyValueRow>
-              {/* R8: Detail hanya menampilkan cabang aktif. */}
-              {citizen && <KeyValueRow label="KTP number">{sensitive('idCardNumber', profile.idCardNumber)}</KeyValueRow>}
-              <KeyValueRow label="Nomor Pajak (NPWP)">{sensitive('npwp', profile.npwp)}</KeyValueRow>
-              <KeyValueRow label="Nama NPWP">{profile.npwpName || <Empty />}</KeyValueRow>
-              <KeyValueRow label="BPJS Ketenagakerjaan">
-                {sensitive('bpjsTenagaKerjaNumber', profile.bpjsTenagaKerjaNumber)}
-              </KeyValueRow>
-              <KeyValueRow label="BPJS Kesehatan">
-                {sensitive('bpjsKesehatanNumber', profile.bpjsKesehatanNumber)}
-              </KeyValueRow>
-              <KeyValueRow label="Domicile = KTP">{profile.isDomicileSameAsIdCard ? 'Ya' : 'Tidak'}</KeyValueRow>
-              <KeyValueRow label="KTP address">{profile.idCardAddress}</KeyValueRow>
-              <KeyValueRow label="Domicile address">{profile.domicileAddress}</KeyValueRow>
-              <KeyValueRow label="KTP postal code">
-                <span className={monoClass}>{profile.idCardZip.zip}</span> · {profile.idCardZip.timezone}
-              </KeyValueRow>
-              <KeyValueRow label="Domicile postal code">
-                <span className={monoClass}>{profile.domicileZip.zip}</span> · {profile.domicileZip.timezone}
-              </KeyValueRow>
-              <KeyValueRow label="Profile photo">
-                <CertMark present={Boolean(profile.photoRef)} />
-              </KeyValueRow>
-            </KeyValueList>
-          </DetailBlock>
+            <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
+              <div>
+                <GroupTitle>Identity</GroupTitle>
+                <KeyValueList>
+                  <KeyValueRow label="Nationality">
+                    <StatusBadge tone="info">{labelOf(NATIONALITY_OPTIONS, profile.nationality)}</StatusBadge>
+                  </KeyValueRow>
+                  {/* R8: Detail hanya menampilkan cabang aktif. */}
+                  {citizen ? (
+                    <KeyValueRow label="KTP number">{sensitive('idCardNumber', profile.idCardNumber)}</KeyValueRow>
+                  ) : (
+                    <>
+                      <KeyValueRow label="Passport number">
+                        {sensitive('passportNumber', profile.passportNumber)}
+                      </KeyValueRow>
+                      <KeyValueRow label="Visa number">{sensitive('visaNumber', profile.visaNumber)}</KeyValueRow>
+                    </>
+                  )}
+                  <KeyValueRow label="Tax number (NPWP)">{sensitive('npwp', profile.npwp)}</KeyValueRow>
+                  <KeyValueRow label="NPWP name">{profile.npwpName || <Empty />}</KeyValueRow>
+                  <KeyValueRow label="BPJS Ketenagakerjaan">
+                    {sensitive('bpjsTenagaKerjaNumber', profile.bpjsTenagaKerjaNumber)}
+                  </KeyValueRow>
+                  <KeyValueRow label="BPJS Kesehatan">
+                    {sensitive('bpjsKesehatanNumber', profile.bpjsKesehatanNumber)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Mother's maiden name">
+                    {sensitive('motherMaidenName', profile.motherMaidenName)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Profile photo">
+                    <CertMark present={Boolean(profile.photoRef)} />
+                  </KeyValueRow>
+                </KeyValueList>
+              </div>
 
-          <DetailBlock icon={<UserRound />} title="Personal Data" variant="cold">
-            <KeyValueList>
-              {!citizen && (
-                <>
-                  <KeyValueRow label="Passport number">{sensitive('passportNumber', profile.passportNumber)}</KeyValueRow>
-                  <KeyValueRow label="Visa number">{sensitive('visaNumber', profile.visaNumber)}</KeyValueRow>
-                </>
-              )}
-              <KeyValueRow label="Mother's maiden name">
-                {sensitive('motherMaidenName', profile.motherMaidenName)}
-              </KeyValueRow>
-              <KeyValueRow label="Date of birth">{formatDate(profile.dateOfBirth)}</KeyValueRow>
-              <KeyValueRow label="Place of birth">{profile.placeOfBirth}</KeyValueRow>
-              <KeyValueRow label="Gender">{labelOf(GENDER_OPTIONS, profile.gender)}</KeyValueRow>
-              <KeyValueRow label="Last education">{labelOf(LAST_EDUCATION_OPTIONS, profile.lastEducation)}</KeyValueRow>
-              <KeyValueRow label="Blood type">{profile.bloodType}</KeyValueRow>
-              <KeyValueRow label="Religion">{labelOf(RELIGION_OPTIONS, profile.religion)}</KeyValueRow>
-              <KeyValueRow label="Home ownership">
-                {labelOf(HOME_OWNERSHIP_OPTIONS, profile.homeOwnershipStatus)}
-              </KeyValueRow>
-              <KeyValueRow label="Disability status">
-                {labelOf(DISABILITY_OPTIONS, profile.disabilityStatus)}
-              </KeyValueRow>
-              <KeyValueRow label="Marital status">
-                <StatusBadge tone="info">{labelOf(MARITAL_OPTIONS, profile.maritalStatus)}</StatusBadge>
-              </KeyValueRow>
-              <KeyValueRow label="Personal phone">
-                <span className={monoClass}>{profile.personalPhone}</span>
-              </KeyValueRow>
-              <KeyValueRow label="Personal email">{profile.personalEmail || <Empty />}</KeyValueRow>
-              <KeyValueRow label="Other NIK">
-                {profile.otherNik ? <span className={monoClass}>{profile.otherNik}</span> : <Empty />}
-              </KeyValueRow>
-            </KeyValueList>
-          </DetailBlock>
-        </TwoCol>
+              <div>
+                <GroupTitle>Personal</GroupTitle>
+                <KeyValueList>
+                  <KeyValueRow label="Place, date of birth">
+                    {personal(`${profile.placeOfBirth}, ${formatDate(profile.dateOfBirth)}`)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Gender">{labelOf(GENDER_OPTIONS, profile.gender)}</KeyValueRow>
+                  <KeyValueRow label="Marital status">
+                    {personal(<StatusBadge tone="info">{labelOf(MARITAL_OPTIONS, profile.maritalStatus)}</StatusBadge>)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Blood type">{personal(profile.bloodType)}</KeyValueRow>
+                  <KeyValueRow label="Religion">{personal(labelOf(RELIGION_OPTIONS, profile.religion))}</KeyValueRow>
+                  <KeyValueRow label="Last education">
+                    {labelOf(LAST_EDUCATION_OPTIONS, profile.lastEducation)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Disability status">
+                    {labelOf(DISABILITY_OPTIONS, profile.disabilityStatus)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Home ownership">
+                    {labelOf(HOME_OWNERSHIP_OPTIONS, profile.homeOwnershipStatus)}
+                  </KeyValueRow>
+                  <KeyValueRow label="Personal phone">
+                    <span className={monoClass}>{profile.personalPhone}</span>
+                  </KeyValueRow>
+                  <KeyValueRow label="Personal email">{profile.personalEmail || <Empty />}</KeyValueRow>
+                  <KeyValueRow label="Other NIK">
+                    {profile.otherNik ? <span className={monoClass}>{profile.otherNik}</span> : <Empty />}
+                  </KeyValueRow>
+                </KeyValueList>
+              </div>
+
+              {/* Alamat KTP vs domisili dipisah tegas (Notulen §11) — domisili yang sama tidak diulang. */}
+              <div>
+                <GroupTitle>KTP address</GroupTitle>
+                <KeyValueList>
+                  <KeyValueRow label="Address">{personal(profile.idCardAddress)}</KeyValueRow>
+                  <KeyValueRow label="Postal code">
+                    {personal(
+                      <>
+                        <span className={monoClass}>{profile.idCardZip.zip}</span> · {profile.idCardZip.timezone}
+                      </>,
+                    )}
+                  </KeyValueRow>
+                </KeyValueList>
+              </div>
+
+              <div>
+                <GroupTitle>Domicile address</GroupTitle>
+                <KeyValueList>
+                  {profile.isDomicileSameAsIdCard ? (
+                    <KeyValueRow label="Address">Same as KTP address</KeyValueRow>
+                  ) : (
+                    <>
+                      <KeyValueRow label="Address">{personal(profile.domicileAddress)}</KeyValueRow>
+                      <KeyValueRow label="Postal code">
+                        {personal(
+                          <>
+                            <span className={monoClass}>{profile.domicileZip.zip}</span> ·{' '}
+                            {profile.domicileZip.timezone}
+                          </>,
+                        )}
+                      </KeyValueRow>
+                    </>
+                  )}
+                </KeyValueList>
+              </div>
+            </div>
+          </div>
+        </div>
       </SectionCard>
 
       <Formik
@@ -385,12 +419,12 @@ export function BasicInfoSection({
               {/* R7/R11: bendera terkunci bagi ESS & HR Staff; HR Manager hanya boleh WNA → WNI. */}
               <SelectField
                 name="nationality"
-                label={
-                  <span className="inline-flex items-center gap-2">Nationality {hrLocked && <LockedNote />}</span>
-                }
+                label={<span className="inline-flex items-center gap-2">Nationality {hrLocked && <LockedNote />}</span>}
                 required
                 disabled={hrLocked || citizen}
-                options={citizen ? NATIONALITY_OPTIONS.filter((option) => option.value === 'CITIZEN') : NATIONALITY_OPTIONS}
+                options={
+                  citizen ? NATIONALITY_OPTIONS.filter((option) => option.value === 'CITIZEN') : NATIONALITY_OPTIONS
+                }
                 hint={citizen && !hrLocked ? 'WNI menjadi WNA ditempuh lewat New Joiner.' : undefined}
               />
               <SelectField
@@ -408,8 +442,18 @@ export function BasicInfoSection({
 
               <TextField name="npwp" label="Nomor Pajak (NPWP)" placeholder="01.234.567.8-901.000" />
               <TextField name="npwpName" label="Nama NPWP" />
-              <TextField name="bpjsTenagaKerjaNumber" label="BPJS Ketenagakerjaan" maxLength={20} placeholder="Nomor kepesertaan" />
-              <TextField name="bpjsKesehatanNumber" label="BPJS Kesehatan" maxLength={20} placeholder="Nomor kepesertaan" />
+              <TextField
+                name="bpjsTenagaKerjaNumber"
+                label="BPJS Ketenagakerjaan"
+                maxLength={20}
+                placeholder="Nomor kepesertaan"
+              />
+              <TextField
+                name="bpjsKesehatanNumber"
+                label="BPJS Kesehatan"
+                maxLength={20}
+                placeholder="Nomor kepesertaan"
+              />
 
               <TextField name="motherMaidenName" label="Mother's maiden name" containerClassName="md:col-span-2" />
 
@@ -464,14 +508,17 @@ export function BasicInfoSection({
       <RevealConfirmModal
         open={confirmingReveal}
         pending={reveal.isPending}
-        fields={revealFields}
+        fields={confirmFields}
         onCancel={() => setConfirmingReveal(false)}
-        onConfirm={() =>
-          reveal.mutate(undefined, {
-            onSuccess: () => setShown(new Set(revealFields.map((item) => item.key))),
-            onSettled: () => setConfirmingReveal(false),
-          })
-        }
+        onConfirm={() => {
+          // Tanpa scope reveal (R13) nomor identitas tetap bentuk mask; field pribadi lain tetap terbuka.
+          if (!canReveal) {
+            openCard();
+            setConfirmingReveal(false);
+            return;
+          }
+          reveal.mutate(undefined, { onSuccess: openCard, onSettled: () => setConfirmingReveal(false) });
+        }}
       />
 
       <EmployeePickerModal
