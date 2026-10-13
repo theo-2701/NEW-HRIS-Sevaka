@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Topnav } from '@/layouts/Topnav';
 import { Sidebar } from '@/layouts/Sidebar';
 import { Toaster } from '@/components/Toaster';
+import { ResultDialog } from '@/components/ResultDialog';
 
 /**
  * Shell aplikasi — port `.app` / `.app__body` / `.app__scroll` (`css/app.css`).
@@ -23,6 +24,7 @@ export function AppLayout() {
         </main>
       </div>
       <Toaster />
+      <ResultDialog />
     </div>
   );
 }

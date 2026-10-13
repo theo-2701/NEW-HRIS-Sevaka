@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from '@/components/Toaster';
+import { ResultDialog } from '@/components/ResultDialog';
 import { SevakaLogo } from '@/components/brand/SevakaLogo';
 import { AuthSplash } from '@/features/auth/components/AuthSplash';
 import { hasSeenSplash } from '@/features/auth/splash';
@@ -53,6 +54,7 @@ export function AuthLayout() {
       </footer>
 
       <Toaster />
+      <ResultDialog />
     </div>
   );
 }
