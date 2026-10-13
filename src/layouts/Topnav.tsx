@@ -21,12 +21,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar } from '@/components/Avatar';
 import { SevakaLogo } from '@/components/brand/SevakaLogo';
-import { useAuthStore } from '@/store/auth.store';
+import { MOCK } from '@/services/mock';
+import { DEMO_ROLES, roleLabel, useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/features/auth/hooks/useAuth';
 import { useHasUnread } from '@/features/notification/hooks/useNotification';
 import { NOTIFICATION_PATH } from '@/features/notification/types';
@@ -44,7 +46,13 @@ interface ProductEntry {
 /** Produk SEVAKA — port array `PRODUCTS` di `js/shell.js`. */
 const PRODUCTS: ProductEntry[] = [
   { id: 'HRIS', icon: Users, name: 'HRIS', desc: 'Human Resource Information System', route: '/' },
-  { id: 'Recruitment', icon: Briefcase, name: 'Recruitment', desc: 'Talent pipeline & assessments', route: '/recruitment' },
+  {
+    id: 'Recruitment',
+    icon: Briefcase,
+    name: 'Recruitment',
+    desc: 'Talent pipeline & assessments',
+    route: '/recruitment',
+  },
   {
     id: 'Performance',
     icon: Award,
@@ -60,6 +68,7 @@ export function Topnav() {
   const navigate = useNavigate();
   const { data: hasUnread } = useHasUnread();
   const user = useAuthStore((s) => s.user);
+  const setRole = useAuthStore((s) => s.setRole);
   const logout = useLogout();
   const product = productForPath(useLocation().pathname);
 
@@ -160,13 +169,25 @@ export function Topnav() {
                   {user?.name ?? 'Tony Stark'}
                 </span>
                 <span className="mt-0.5 font-body text-[11px] font-medium leading-tight text-fg-3">
-                  {user?.role ?? 'Administrator'}
+                  {roleLabel(user?.role)}
                 </span>
               </span>
               <ChevronDown className="size-4 text-fg-3" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="min-w-[220px]">
+            {MOCK && user && (
+              <>
+                <DropdownMenuLabel>Demo role</DropdownMenuLabel>
+                {DEMO_ROLES.map((role) => (
+                  <DropdownMenuItem key={role} onSelect={() => setRole(role)}>
+                    <span className="flex-1">{roleLabel(role)}</span>
+                    {user.role === role && <Check className="text-secondary-500" />}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onSelect={() => navigate('/me/profile')}>
               <User />
               My profile
@@ -180,10 +201,7 @@ export function Topnav() {
               Help &amp; support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              danger
-              onSelect={() => logout.mutate()}
-            >
+            <DropdownMenuItem danger onSelect={() => logout.mutate()}>
               <LogOut />
               Sign out
             </DropdownMenuItem>
