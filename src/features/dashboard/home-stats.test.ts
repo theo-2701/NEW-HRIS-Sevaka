@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { dashboardService } from '@/features/dashboard/services/dashboard.service';
-import { arrangeMyRequests } from '@/features/dashboard/home/myRequestRules';
+import { MY_REQUESTS_PANEL_LIMIT, arrangeMyRequests } from '@/features/dashboard/home/myRequestRules';
 import { attendanceMeMonthly, attendanceTodayOverview } from '@/features/attendance/services/attendance.service';
 import { leaveBalanceMeSummary } from '@/features/time-off/services/balance.service';
 
@@ -22,11 +22,33 @@ describe('Kartu HOME dua lapis (FSD-AUTH 0.7 §2.9)', () => {
     expect(await leaveBalanceMeSummary('emp-budi', 2026)).toMatchObject({ leaveCode: 'CUTI-TAHUNAN', balanceDays: 7 });
   });
 
-  it('Pengajuan saya: milik pemanggil saja, yang masih berjalan di atas, maks. 5', async () => {
+  it('Pengajuan saya: 10 data → daftar lengkap 10, panel memotong ke batasnya', () => {
+    const now = new Date('2026-10-14T00:00:00Z');
+    const ten = Array.from({ length: 10 }, (_, i) => ({
+      id: `r${i}`,
+      kind: 'LEAVE' as const,
+      title: 'x',
+      detail: 'x',
+      statusLabel: 'x',
+      tone: 'warn' as const,
+      open: true,
+      submittedAt: `2026-10-${String(i + 1).padStart(2, '0')}T00:00:00Z`,
+      to: '/',
+    }));
+    expect(arrangeMyRequests(ten, now)).toHaveLength(10);
+    expect(arrangeMyRequests(ten, now, MY_REQUESTS_PANEL_LIMIT).map((row) => row.id)).toEqual([
+      'r9',
+      'r8',
+      'r7',
+      'r6',
+      'r5',
+    ]);
+  });
+
+  it('Pengajuan saya: milik pemanggil saja, yang masih berjalan di atas', async () => {
     const { rows, partial } = await dashboardService.getMyRequests(new Date('2026-10-14T09:00:00+07:00'));
     expect(partial).toBe(false);
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows.length).toBeLessThanOrEqual(5);
     const firstDone = rows.findIndex((row) => !row.open);
     if (firstDone >= 0) expect(rows.slice(firstDone).every((row) => !row.open)).toBe(true);
   });
@@ -42,6 +64,7 @@ describe('Kartu HOME dua lapis (FSD-AUTH 0.7 §2.9)', () => {
       new Date('2026-10-14T00:00:00Z'),
     );
     expect(rows.map((row) => row.id)).toEqual(['running', 'recent']);
+    expect(arrangeMyRequests(rows, new Date('2026-10-14T00:00:00Z'), 1).map((row) => row.id)).toEqual(['running']);
   });
 
   it('lima nilai kartu dirakit dari modul Time & Employee', async () => {

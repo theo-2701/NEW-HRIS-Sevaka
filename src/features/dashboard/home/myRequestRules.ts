@@ -127,8 +127,14 @@ export const fromLoan = (row: Loan): MyRequest => ({
   to: MY_REQUEST_ROUTES.LOAN,
 });
 
-/** Yang masih berjalan di atas (terbaru dulu), lalu yang sudah final ≤ 30 hari terakhir. */
-export function arrangeMyRequests(rows: MyRequest[], now: Date, limit = 5): MyRequest[] {
+/** Jumlah baris di panel Pengajuan saya; sisanya dibuka lewat "Lihat semua". */
+export const MY_REQUESTS_PANEL_LIMIT = 5;
+
+/**
+ * Yang masih berjalan di atas (terbaru dulu), lalu yang sudah final ≤ 30 hari terakhir.
+ * Tanpa `limit` = seluruh daftar (dipakai modal "Lihat semua").
+ */
+export function arrangeMyRequests(rows: MyRequest[], now: Date, limit?: number): MyRequest[] {
   const cutoff = now.getTime() - 30 * 86_400_000;
   const newest = (a: MyRequest, b: MyRequest) => b.submittedAt.localeCompare(a.submittedAt);
   const open = rows.filter((row) => row.open).sort(newest);
