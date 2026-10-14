@@ -9,7 +9,6 @@ import { ActionQueue, type QueueItem } from '@/features/dashboard/home/ActionQue
 import { HomeHeader } from '@/features/dashboard/home/HomeHeader';
 import { AnnouncementsPanel, ContractsModal, QuickAccessPanel } from '@/features/dashboard/home/SideColumn';
 import { MyRequestsPanel } from '@/features/dashboard/home/MyRequestsPanel';
-import { NotificationsPanel } from '@/features/dashboard/home/NotificationsPanel';
 import { TodayLedger } from '@/features/dashboard/home/TodayLedger';
 import { WorkforcePanel } from '@/features/dashboard/home/WorkforcePanel';
 import { canSeeCompanyLayer, daysUntil } from '@/features/dashboard/home/homeRules';
@@ -125,18 +124,17 @@ export function DashboardHomePage() {
       </HomeHeader>
 
       {/*
-        Tiga sudut pandang: yang harus SAYA putuskan (antrean, HR/manajemen), yang SAYA ajukan
-        (Pengajuan saya), dan yang terjadi pada saya (Notifikasi) — dua yang terakhir untuk semua peran.
+        Kiri = pekerjaan saya: yang harus SAYA putuskan (antrean, HR/manajemen) dan yang SAYA ajukan
+        (Pengajuan saya, semua peran). Kanan = jalan pintas & info: Akses cepat + Pengumuman.
         Panel terakhir tiap kolom melar (flex-1) supaya dasar kedua kolom rata.
       */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-4">
           {companyLayer && <ActionQueue items={queue} />}
-          <MyRequestsPanel />
-          <QuickAccessPanel className="flex-1" />
+          <MyRequestsPanel className="flex-1" />
         </div>
         <div className="flex min-w-0 flex-col gap-4">
-          <NotificationsPanel />
+          <QuickAccessPanel />
           <AnnouncementsPanel className="flex-1" />
         </div>
       </div>
