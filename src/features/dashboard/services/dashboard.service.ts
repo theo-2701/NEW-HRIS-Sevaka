@@ -4,9 +4,22 @@ import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
 import { attendanceMeMonthly, attendanceTodayOverview } from '@/features/attendance/services/attendance.service';
 import { activeEmployeeCount } from '@/features/employees/services/employee.service';
 import { leaveBalanceMeSummary } from '@/features/time-off/services/balance.service';
+import { timeOffService } from '@/features/time-off/services/time-off.service';
+import { overtimeService } from '@/features/overtime/services/overtime.service';
+import { benefitService } from '@/features/benefit/services/benefit.service';
+import { cashAdvanceService } from '@/features/cash-advance/services/cash-advance.service';
+import { loanService } from '@/features/loan/services/loan.service';
+import {
+  arrangeMyRequests,
+  fromAdvance,
+  fromClaim,
+  fromLeave,
+  fromLoan,
+  fromOvertime,
+} from '@/features/dashboard/home/myRequestRules';
 import { useAuthStore } from '@/store/auth.store';
 import { toIsoDate } from '@/lib/format';
-import type { AuthMe, DashboardSummary, HomeStats, LockedAccount } from '@/features/dashboard/types';
+import type { AuthMe, DashboardSummary, HomeStats, LockedAccount, MyRequests } from '@/features/dashboard/types';
 
 /**
  * Service dashboard. Sama seperti modul auth: memakai data contoh selama
@@ -144,6 +157,40 @@ export const dashboardService = {
       workDate,
       presentToday: settled(today)?.presentCount ?? null,
       onLeaveToday: settled(today)?.onLeaveCount ?? null,
+    };
+  },
+
+  /**
+   * Panel "Pengajuan saya": pengajuan milik pemanggil dari lima modul, lewat service yang sudah ada
+   * dalam cakupan karyawan (pola layar ESS). Satu modul gagal tidak menggagalkan panel (`partial`).
+   */
+  async getMyRequests(now = new Date()): Promise<MyRequests> {
+    const employeeId = HOME_EMPLOYEE_ID;
+    const results = await Promise.allSettled([
+      Promise.all([
+        timeOffService.requests({ employeeId, roles: ['ROLE_EMPLOYEE'] }),
+        timeOffService.leaveTypes(),
+      ]).then(([rows, types]) => {
+        const names = Object.fromEntries(types.map((type) => [type.id, type.name]));
+        return rows.map((row) => fromLeave(row, names));
+      }),
+      overtimeService.requests({ employeeId, role: 'EMPLOYEE' }).then((rows) => rows.map(fromOvertime)),
+      benefitService
+        .claims()
+        .then((rows) =>
+          rows
+            .filter((row) => row.employeeId === employeeId)
+            .map((row) => fromClaim(benefitService.asApplicantView(row))),
+        ),
+      cashAdvanceService.advances({ employeeId, role: 'ROLE_EMPLOYEE' }).then((rows) => rows.map(fromAdvance)),
+      loanService.loans().then((rows) => rows.filter((row) => row.employeeId === employeeId).map(fromLoan)),
+    ]);
+    return {
+      rows: arrangeMyRequests(
+        results.flatMap((result) => settled(result) ?? []),
+        now,
+      ),
+      partial: results.some((result) => result.status === 'rejected'),
     };
   },
 

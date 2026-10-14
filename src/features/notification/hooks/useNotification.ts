@@ -22,7 +22,7 @@ export const useMarkRead = () => {
     // Varian toast dari status baris di grid SEBELUM klik, bukan dari respons — kedua panggilan sama-sama
     // 200 berbentuk sama (FSD-NOTIFICATION 0.6 §1.2).
     onSuccess: (_result, { wasRead }) => {
-      toast(wasRead ? 'Already read — nothing changed.' : 'Marked as read.', wasRead ? 'info' : 'ok');
+      toast(wasRead ? 'Already read — nothing changed.' : 'Marked as read.', 'info');
       void queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
     onError: (error: Error) => toast(error.message, 'danger'),

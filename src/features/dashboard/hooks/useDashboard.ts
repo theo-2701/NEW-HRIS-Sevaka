@@ -7,13 +7,11 @@ export const dashboardKeys = {
   lockedAccounts: ['dashboard', 'locked-accounts'] as const,
   homeStats: ['dashboard', 'home-stats'] as const,
   me: ['dashboard', 'me'] as const,
+  myRequests: ['dashboard', 'my-requests'] as const,
 };
 
 export function useDashboardSummary() {
-  return useQuery({
-    queryKey: dashboardKeys.summary,
-    queryFn: () => dashboardService.getSummary(),
-  });
+  return useQuery({ queryKey: dashboardKeys.summary, queryFn: () => dashboardService.getSummary() });
 }
 
 export function useLockedAccounts(enabled = true) {
@@ -40,6 +38,10 @@ export function useUnlockAccount() {
 
 export function useHomeStats() {
   return useQuery({ queryKey: dashboardKeys.homeStats, queryFn: () => dashboardService.getHomeStats() });
+}
+
+export function useMyRequests() {
+  return useQuery({ queryKey: dashboardKeys.myRequests, queryFn: () => dashboardService.getMyRequests() });
 }
 
 export function useMe() {

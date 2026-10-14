@@ -1,7 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
-import { Activity, ArrowLeftRight, Building2, FileClock, Megaphone, Rocket, UserRound, Users } from 'lucide-react';
+import { Activity, ArrowLeftRight, Building2, Megaphone, Rocket, UserRound, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '@/components/Avatar';
+import { Modal } from '@/components/Modal';
+import { Button } from '@/components/ui/button';
 import { StatusBadge, toneForStatus } from '@/components/StatusBadge';
 import { Panel, PanelLink } from '@/features/dashboard/home/Panel';
 import { daysUntil } from '@/features/dashboard/home/homeRules';
@@ -14,7 +16,7 @@ import { cn } from '@/lib/utils';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
 /** Tiga pengumuman terbit terbaru — blok tanggal bertint biru supaya mudah dipindai. */
-export function AnnouncementsPanel() {
+export function AnnouncementsPanel({ className }: { className?: string }) {
   const navigate = useNavigate();
   const { data: rows = [], isLoading } = useMyAnnouncements('ROLE_EMPLOYEE');
 
@@ -23,6 +25,7 @@ export function AnnouncementsPanel() {
       title="Pengumuman"
       meta="Terbaru untuk Anda"
       icon={Megaphone}
+      className={className}
       action={<PanelLink onClick={() => navigate(MY_ANNOUNCEMENTS_PATH)}>Lihat semua</PanelLink>}
     >
       {isLoading ? (
@@ -73,23 +76,47 @@ const CONTRACT_LABEL: Record<ContractRow['status'], string> = {
   PERMANENT: 'Tetap',
 };
 
-/** Kontrak & probation yang paling dekat berakhir — urut tanggal, sisa hari sebagai pil berwarna. */
-export function ContractsPanel({
+/**
+ * Kontrak & probation terdekat — dibuka dari baris antrean "Kontrak & probation ≤ 30 hari", bukan
+ * panel tetap (panelnya di-cut: tanpa kontrak data FSD-AUTH §2.9 dan isinya sudah diwakili antrean).
+ */
+export function ContractsModal({
+  open,
+  onOpenChange,
   contracts,
   now,
-  className,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   contracts: ContractRow[];
   now: Date;
-  className?: string;
 }) {
+  return (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Kontrak & probation berakhir"
+      description="Kontrak dan masa probation terdekat, urut tanggal berakhir."
+      footer={
+        <Button variant="secondary" onClick={() => onOpenChange(false)}>
+          Tutup
+        </Button>
+      }
+    >
+      <ContractsList contracts={contracts} now={now} />
+    </Modal>
+  );
+}
+
+/** Daftar kontrak non-permanen — urut tanggal, sisa hari sebagai pil berwarna. */
+function ContractsList({ contracts, now }: { contracts: ContractRow[]; now: Date }) {
   const rows = [...contracts]
     .filter((row) => row.status !== 'PERMANENT')
     .sort((a, b) => a.endDate.localeCompare(b.endDate))
-    .slice(0, 5);
+    .slice(0, 10);
 
   return (
-    <Panel title="Kontrak berakhir" meta="Kontrak & probation terdekat" icon={FileClock} className={className}>
+    <>
       {rows.length === 0 ? (
         <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Tidak ada kontrak yang akan berakhir.</p>
       ) : (
@@ -128,7 +155,7 @@ export function ContractsPanel({
           })}
         </ul>
       )}
-    </Panel>
+    </>
   );
 }
 

@@ -7,7 +7,9 @@ import { usePendingInvitations } from '@/features/auth/hooks/useAuth';
 import { useDashboardSummary, useHomeStats, useMe } from '@/features/dashboard/hooks/useDashboard';
 import { ActionQueue, type QueueItem } from '@/features/dashboard/home/ActionQueue';
 import { HomeHeader } from '@/features/dashboard/home/HomeHeader';
-import { AnnouncementsPanel, ContractsPanel, QuickAccessPanel } from '@/features/dashboard/home/SideColumn';
+import { AnnouncementsPanel, ContractsModal, QuickAccessPanel } from '@/features/dashboard/home/SideColumn';
+import { MyRequestsPanel } from '@/features/dashboard/home/MyRequestsPanel';
+import { NotificationsPanel } from '@/features/dashboard/home/NotificationsPanel';
 import { TodayLedger } from '@/features/dashboard/home/TodayLedger';
 import { WorkforcePanel } from '@/features/dashboard/home/WorkforcePanel';
 import { canSeeCompanyLayer, daysUntil } from '@/features/dashboard/home/homeRules';
@@ -43,6 +45,7 @@ export function DashboardHomePage() {
   const companyLayer = canSeeCompanyLayer(user?.role);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [contractsOpen, setContractsOpen] = useState(false);
 
   const { data: me } = useMe();
   const summary = useDashboardSummary();
@@ -89,7 +92,8 @@ export function DashboardHomePage() {
       count: summary.data ? endingSoon : null,
       title: 'Kontrak & probation berakhir ≤ 30 hari',
       icon: FileClock,
-      detail: 'Rinciannya ada di panel Kontrak berakhir.',
+      detail: 'Perpanjang, angkat, atau akhiri sebelum tanggalnya lewat.',
+      action: { label: 'Lihat', onClick: () => setContractsOpen(true) },
     },
     {
       key: 'drafts',
@@ -120,27 +124,26 @@ export function DashboardHomePage() {
         <TodayLedger stats={stats.data} loading={stats.isLoading} companyLayer={companyLayer} />
       </HomeHeader>
 
-      {/* Dua kolom setinggi: panel terakhir tiap kolom melar (flex-1) supaya dasar keduanya rata. */}
-      {companyLayer ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="flex min-w-0 flex-col gap-4">
-            <ActionQueue items={queue} />
-            <QuickAccessPanel className="flex-1" />
-          </div>
-          <div className="flex min-w-0 flex-col gap-4">
-            <AnnouncementsPanel />
-            <ContractsPanel contracts={contracts} now={now} className="flex-1" />
-          </div>
+      {/*
+        Tiga sudut pandang: yang harus SAYA putuskan (antrean, HR/manajemen), yang SAYA ajukan
+        (Pengajuan saya), dan yang terjadi pada saya (Notifikasi) — dua yang terakhir untuk semua peran.
+        Panel terakhir tiap kolom melar (flex-1) supaya dasar kedua kolom rata.
+      */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
+          {companyLayer && <ActionQueue items={queue} />}
+          <MyRequestsPanel />
+          <QuickAccessPanel className="flex-1" />
         </div>
-      ) : (
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          <AnnouncementsPanel />
-          <QuickAccessPanel />
+        <div className="flex min-w-0 flex-col gap-4">
+          <NotificationsPanel />
+          <AnnouncementsPanel className="flex-1" />
         </div>
-      )}
+      </div>
 
       <WorkforcePanel summary={summary.data} />
 
+      <ContractsModal open={contractsOpen} onOpenChange={setContractsOpen} contracts={contracts} now={now} />
       <UnlockAccountModal open={unlockOpen} onOpenChange={setUnlockOpen} />
       <ResendInvitationModal open={inviteOpen} onOpenChange={setInviteOpen} />
     </>

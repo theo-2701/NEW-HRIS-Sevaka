@@ -59,6 +59,29 @@ export interface HomeStats {
   onLeaveToday: number | null;
 }
 
+export type MyRequestKind = 'LEAVE' | 'OVERTIME' | 'CLAIM' | 'CASH_ADVANCE' | 'LOAN';
+
+/** Satu pengajuan milik pemanggil di panel "Pengajuan saya" — dinormalkan dari lima modul. */
+export interface MyRequest {
+  id: string;
+  kind: MyRequestKind;
+  title: string;
+  detail: string;
+  statusLabel: string;
+  tone: 'ok' | 'warn' | 'err' | 'mute';
+  /** Belum final (menunggu keputusan, atau disetujui tapi masih berjalan mis. belum dipertanggungjawabkan). */
+  open: boolean;
+  submittedAt: string;
+  /** Halaman modul tempat pengajuan dikelola. */
+  to: string;
+}
+
+export interface MyRequests {
+  rows: MyRequest[];
+  /** Ada sumber yang gagal dimuat — panel tetap tampil, kosong-berketerangan untuk sisanya. */
+  partial: boolean;
+}
+
 /** Bagian `GET /api/v1/auth/me` yang dipakai sapaan HOME. */
 export interface AuthMe {
   fullName: string;
