@@ -4,8 +4,8 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * Bingkai section Home. Chip ikon memakai gradasi yang sama dengan hero (`secondary-700 → 500`)
- * supaya panel di bawah hero terasa satu keluarga dengannya.
+ * Bingkai section Home. Hero sudah memikul satu-satunya gradien di halaman; panel di bawahnya
+ * sengaja tenang — ikon garis polos di samping judul, tanpa ubin bergradien.
  */
 export function Panel({
   title,
@@ -24,13 +24,9 @@ export function Panel({
 }) {
   return (
     <section className={cn('flex flex-col rounded-xl border border-border-1 bg-bg-surface shadow-card-sm', className)}>
-      <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-4">
-        <div className="flex min-w-0 items-center gap-3">
-          {Icon && (
-            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-135 from-secondary-700 to-secondary-500 text-white shadow-card-sm">
-              <Icon className="size-[18px]" strokeWidth={1.75} />
-            </span>
-          )}
+      <header className="flex items-start justify-between gap-3 px-5 pb-2 pt-4">
+        <div className="flex min-w-0 items-start gap-2.5">
+          {Icon && <Icon className="mt-0.5 size-[18px] shrink-0 text-secondary-600" strokeWidth={1.75} />}
           <div className="flex min-w-0 flex-col gap-0.5">
             <h2 className="m-0 font-display text-[15px] font-bold leading-tight text-fg-1">{title}</h2>
             {meta && <span className="truncate font-body text-xs font-medium text-fg-3">{meta}</span>}

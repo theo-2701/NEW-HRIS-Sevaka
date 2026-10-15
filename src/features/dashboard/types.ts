@@ -74,7 +74,11 @@ export interface MyRequest {
   submittedAt: string;
   /** Halaman modul tempat pengajuan dikelola. */
   to: string;
+  /** Pengajuan ini menuntut tindakan SAYA — ikut dihitung di "Perlu tindak lanjut" (tugas pribadi). */
+  todo?: MyRequestTodo;
 }
+
+export type MyRequestTodo = 'ACK_LOAN' | 'SETTLE_ADVANCE' | 'RESUBMIT_CLAIM';
 
 export interface MyRequests {
   rows: MyRequest[];

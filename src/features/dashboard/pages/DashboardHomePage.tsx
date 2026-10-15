@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, FileClock, LockKeyhole, MailPlus, Megaphone } from 'lucide-react';
+import { Banknote, CalendarClock, FileClock, LockKeyhole, MailPlus, Megaphone, Receipt, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UnlockAccountModal } from '@/features/dashboard/components/UnlockAccountModal';
 import { ResendInvitationModal } from '@/features/dashboard/components/ResendInvitationModal';
 import { usePendingInvitations } from '@/features/auth/hooks/useAuth';
-import { useDashboardSummary, useHomeStats, useMe } from '@/features/dashboard/hooks/useDashboard';
+import { useDashboardSummary, useHomeStats, useMe, useMyRequests } from '@/features/dashboard/hooks/useDashboard';
+import { MY_REQUEST_ROUTES } from '@/features/dashboard/home/myRequestRules';
+import type { MyRequestTodo } from '@/features/dashboard/types';
 import { ActionQueue, type QueueItem } from '@/features/dashboard/home/ActionQueue';
 import { HomeHeader } from '@/features/dashboard/home/HomeHeader';
-import { AnnouncementsPanel, ContractsModal, QuickAccessPanel } from '@/features/dashboard/home/SideColumn';
+import { AnnouncementsPanel, ContractsModal } from '@/features/dashboard/home/SideColumn';
 import { MyRequestsPanel } from '@/features/dashboard/home/MyRequestsPanel';
 import { TodayLedger } from '@/features/dashboard/home/TodayLedger';
 import { WorkforcePanel } from '@/features/dashboard/home/WorkforcePanel';
@@ -59,9 +61,44 @@ export function DashboardHomePage() {
     return row.status !== 'PERMANENT' && left >= 0 && left <= 30;
   }).length;
 
-  const queue: QueueItem[] = [
+  /** Tugas pribadi diturunkan dari pengajuan sendiri yang menuntut tindakan (berlaku semua peran). */
+  const myRequests = useMyRequests();
+  const todoCount = (todo: MyRequestTodo) =>
+    myRequests.data ? myRequests.data.rows.filter((row) => row.todo === todo).length : null;
+  const personal: QueueItem[] = [
+    {
+      key: 'ack-loan',
+      group: 'mine',
+      count: todoCount('ACK_LOAN'),
+      title: 'Jadwal pinjaman perlu Anda setujui',
+      icon: Banknote,
+      detail: 'Periksa cicilan dan bunga, lalu setujui atau tolak jadwalnya.',
+      action: { label: 'Buka', onClick: () => navigate(MY_REQUEST_ROUTES.LOAN) },
+    },
+    {
+      key: 'settle-advance',
+      group: 'mine',
+      count: todoCount('SETTLE_ADVANCE'),
+      title: 'Cash advance perlu dipertanggungjawabkan',
+      icon: Wallet,
+      detail: 'Unggah nota pemakaian uang muka yang sudah cair.',
+      action: { label: 'Buka', onClick: () => navigate(MY_REQUEST_ROUTES.CASH_ADVANCE) },
+    },
+    {
+      key: 'resubmit-claim',
+      group: 'mine',
+      count: todoCount('RESUBMIT_CLAIM'),
+      title: 'Klaim dikembalikan untuk dilengkapi',
+      icon: Receipt,
+      detail: 'Lengkapi kekurangannya lalu ajukan kembali.',
+      action: { label: 'Buka', onClick: () => navigate(MY_REQUEST_ROUTES.CLAIM) },
+    },
+  ];
+
+  const companyQueue: QueueItem[] = [
     {
       key: 'leave',
+      group: 'decide',
       count: leave.data
         ? leave.data.filter((row) => row.status === 'PENDING_APPROVAL' && row.employeeId !== APPROVER.employeeId).length
         : null,
@@ -72,6 +109,7 @@ export function DashboardHomePage() {
     },
     {
       key: 'locked',
+      group: 'decide',
       count: summary.data ? summary.data.lockedAccounts.length : null,
       title: 'Akun karyawan terkunci',
       icon: LockKeyhole,
@@ -80,6 +118,7 @@ export function DashboardHomePage() {
     },
     {
       key: 'invitations',
+      group: 'decide',
       count: invitations.data ? invitations.data.length : null,
       title: 'Akun menunggu aktivasi',
       detail: 'Undangan belum dipakai pemiliknya; kirim ulang bila tautannya hilang atau kedaluwarsa.',
@@ -88,6 +127,7 @@ export function DashboardHomePage() {
     },
     {
       key: 'contracts',
+      group: 'decide',
       count: summary.data ? endingSoon : null,
       title: 'Kontrak & probation berakhir ≤ 30 hari',
       icon: FileClock,
@@ -96,6 +136,7 @@ export function DashboardHomePage() {
     },
     {
       key: 'drafts',
+      group: 'decide',
       count: drafts.data ? drafts.data.totalData : null,
       title: 'Rancangan pengumuman belum terbit',
       icon: Megaphone,
@@ -104,11 +145,11 @@ export function DashboardHomePage() {
     },
   ];
 
-  const pendingCount = companyLayer
-    ? queue.some((item) => item.count === null)
-      ? null
-      : queue.reduce((sum, item) => sum + (item.count ?? 0), 0)
-    : 0;
+  // Baris approval/checker hanya untuk HR/manajemen; tugas pribadi untuk semua peran.
+  const queue = companyLayer ? [...companyQueue, ...personal] : personal;
+  const pendingCount = queue.some((item) => item.count === null)
+    ? null
+    : queue.reduce((sum, item) => sum + (item.count ?? 0), 0);
 
   return (
     <>
@@ -124,22 +165,18 @@ export function DashboardHomePage() {
       </HomeHeader>
 
       {/*
-        Kiri = pekerjaan saya: yang harus SAYA putuskan (antrean, HR/manajemen) dan yang SAYA ajukan
-        (Pengajuan saya, semua peran). Kanan = jalan pintas & info: Akses cepat + Pengumuman.
-        Panel terakhir tiap kolom melar (flex-1) supaya dasar kedua kolom rata.
+        Tiga kartu, dua baris. Perlu tindak lanjut selebar halaman: isinya bisa puluhan jenis dari
+        seluruh modul, jadi barisnya mengalir dua kolom dan menyusut jadi satu kalimat bila kosong.
+        Di bawahnya Pengajuan saya (daftar lebar, 7/12) bersanding Pengumuman (ringkas, 5/12).
       */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-4">
-          {companyLayer && <ActionQueue items={queue} />}
-          <MyRequestsPanel className="flex-1" />
-        </div>
-        <div className="flex min-w-0 flex-col gap-4">
-          <QuickAccessPanel />
-          <AnnouncementsPanel className="flex-1" />
-        </div>
+      <ActionQueue items={queue} />
+      <div className="grid gap-4 lg:grid-cols-12">
+        <MyRequestsPanel className="lg:col-span-7" />
+        <AnnouncementsPanel className="lg:col-span-5" />
       </div>
 
-      <WorkforcePanel summary={summary.data} />
+      {/* Data tenaga kerja = data perusahaan → hanya HR/manajemen (koreksi DB-10 paket 05). */}
+      {companyLayer && <WorkforcePanel summary={summary.data} />}
 
       <ContractsModal open={contractsOpen} onOpenChange={setContractsOpen} contracts={contracts} now={now} />
       <UnlockAccountModal open={unlockOpen} onOpenChange={setUnlockOpen} />

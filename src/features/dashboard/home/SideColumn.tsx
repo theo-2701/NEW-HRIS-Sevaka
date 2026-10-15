@@ -1,5 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
-import { Activity, ArrowLeftRight, Building2, Megaphone, Rocket, UserRound, Users } from 'lucide-react';
+import { Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '@/components/Avatar';
 import { Modal } from '@/components/Modal';
@@ -156,42 +155,5 @@ function ContractsList({ contracts, now }: { contracts: ContractRow[]; now: Date
         </ul>
       )}
     </>
-  );
-}
-
-const QUICK_LINKS: { label: string; to: string; icon: LucideIcon }[] = [
-  { label: 'Profil saya', to: '/me/profile', icon: UserRound },
-  { label: 'Employee Directory', to: '/employees/directory', icon: Users },
-  { label: 'Employee Transfer', to: '/employees/transfer', icon: ArrowLeftRight },
-  { label: 'Company settings', to: '/company/branch', icon: Building2 },
-  { label: 'Announcement', to: '/company-management/announcements', icon: Megaphone },
-  { label: 'Activity Log', to: '/company-management/activity-log', icon: Activity },
-];
-
-/** Akses cepat sebagai ubin berikon — lebih mudah dibidik daripada deret tautan teks. */
-export function QuickAccessPanel({ className }: { className?: string }) {
-  const navigate = useNavigate();
-  return (
-    <Panel title="Akses cepat" icon={Rocket} className={className}>
-      <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3">
-        {QUICK_LINKS.map((link) => {
-          const Icon = link.icon;
-          return (
-            <li key={link.to}>
-              <button
-                type="button"
-                onClick={() => navigate(link.to)}
-                className="flex h-full w-full items-center gap-2.5 rounded-lg border border-border-1 bg-bg-surface px-2.5 py-2.5 text-left transition duration-200 ease-standard hover:border-secondary-200 hover:bg-secondary-50"
-              >
-                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-secondary-50 text-secondary-700">
-                  <Icon className="size-4" strokeWidth={1.75} />
-                </span>
-                <span className="font-body text-[13px] font-semibold leading-tight text-fg-1">{link.label}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
   );
 }

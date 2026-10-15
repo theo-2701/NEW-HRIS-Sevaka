@@ -103,6 +103,7 @@ export const fromClaim = (row: BenefitClaim): MyRequest => ({
   ...CLAIM_SHAPE[row.status],
   submittedAt: row.submittedAt,
   to: MY_REQUEST_ROUTES.CLAIM,
+  todo: row.status === 'AWAITING_RESUBMIT' ? 'RESUBMIT_CLAIM' : undefined,
 });
 
 export const fromAdvance = (row: CashAdvance): MyRequest => ({
@@ -114,6 +115,7 @@ export const fromAdvance = (row: CashAdvance): MyRequest => ({
   ...ADVANCE_SHAPE[row.status],
   submittedAt: row.createdAt,
   to: MY_REQUEST_ROUTES.CASH_ADVANCE,
+  todo: row.status === 'APPROVED' ? 'SETTLE_ADVANCE' : undefined,
 });
 
 export const fromLoan = (row: Loan): MyRequest => ({
@@ -125,6 +127,7 @@ export const fromLoan = (row: Loan): MyRequest => ({
   ...LOAN_SHAPE[row.status],
   submittedAt: row.submittedAt,
   to: MY_REQUEST_ROUTES.LOAN,
+  todo: row.status === 'AWAITING_ACKNOWLEDGEMENT' ? 'ACK_LOAN' : undefined,
 });
 
 /** Jumlah baris di panel Pengajuan saya; sisanya dibuka lewat "Lihat semua". */
