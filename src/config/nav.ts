@@ -125,6 +125,7 @@ export const NAV: NavSection[] = [
           // menu: layar itu selalu dibuka lewat "View Detail" dari daftar transfer.
           { label: 'Employee Transfer', path: '/employees/transfer', source: 'transition.html', status: 'done' },
           { label: 'Mass Resignation', path: '/employees/mass-resignation', source: 'mass-resignation.html', status: 'done' },
+          { label: 'Bulk Import Karyawan', path: '/employees/bulk-import', source: 'FSD-001-EMPLOYEE §8', status: 'done' },
           { label: 'Import/Export Prorate' },
           { label: 'PTKP Status Adjustment', path: '/employees/ptkp-adjustment', source: 'ptkp-adjustment.html', status: 'done' },
         ],
