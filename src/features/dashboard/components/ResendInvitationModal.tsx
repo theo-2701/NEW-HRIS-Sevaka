@@ -17,9 +17,9 @@ import { formatDateTime } from '@/lib/format';
 
 function expiryLabel(expiresAt: string, now: number) {
   const hours = Math.round((new Date(expiresAt).getTime() - now) / (60 * 60 * 1000));
-  if (hours > 0) return `${hours} jam lagi`;
-  if (hours === 0) return 'kurang dari 1 jam';
-  return `${Math.abs(hours)} jam lalu`;
+  if (hours > 0) return `in ${hours} h`;
+  if (hours === 0) return 'less than 1 h';
+  return `${Math.abs(hours)} h ago`;
 }
 
 /**
@@ -43,7 +43,7 @@ export function ResendInvitationModal({ open, onOpenChange }: { open: boolean; o
       authService.resendInvitation(row.employeeId, force),
     onSuccess: (row) => {
       setConfirming(null);
-      setDone(`Undangan berhasil dikirim ulang — ${row.name} akan menerima tautan aktivasi baru via email.`);
+      setDone(`Invitation resent — ${row.name} will receive a new activation link by email.`);
       void queryClient.invalidateQueries({ queryKey: pendingInvitationKeys });
     },
     onError: (error: Error, { row }) => {
@@ -66,11 +66,11 @@ export function ResendInvitationModal({ open, onOpenChange }: { open: boolean; o
           onOpenChange(next);
         }}
         size="wide"
-        title="Kirim Ulang Undangan"
-        description="Akun yang sudah dibuat tetapi belum diaktifkan pemiliknya. Hanya satu tautan aktivasi yang berlaku dalam satu waktu."
+        title="Resend Invitation"
+        description="Accounts created but not yet activated by their owner. Only one activation link is valid at a time."
         footer={
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Tutup
+            Close
           </Button>
         }
       >
@@ -80,18 +80,18 @@ export function ResendInvitationModal({ open, onOpenChange }: { open: boolean; o
           </p>
         )}
         <TableToolbar
-          search={{ value: search, onChange: setSearch, placeholder: 'Cari nama atau email' }}
-          summary={`${data.length} akun menunggu aktivasi`}
+          search={{ value: search, onChange: setSearch, placeholder: 'Search name or email' }}
+          summary={`${data.length} accounts awaiting activation`}
         />
         <DataTable<PendingInvitation>
           rows={rows}
           loading={isLoading}
           rowKey={(row) => row.employeeId}
-          empty="Tidak ada akun yang menunggu aktivasi."
+          empty="No accounts awaiting activation."
           columns={[
             {
               key: 'employee',
-              header: 'Nama akun',
+              header: 'Account name',
               render: (row) => <CellIdentity name={row.name} leading={<Avatar name={row.name} size="sm" />} />,
             },
             { key: 'email', header: 'Email', muted: true, nowrap: true, render: (row) => row.email },
@@ -101,14 +101,14 @@ export function ResendInvitationModal({ open, onOpenChange }: { open: boolean; o
               header: 'Status',
               render: (row) =>
                 new Date(row.expiresAt).getTime() > now ? (
-                  <StatusBadge tone="ok">Aktif</StatusBadge>
+                  <StatusBadge tone="ok">Active</StatusBadge>
                 ) : (
-                  <StatusBadge tone="mute">Kedaluwarsa</StatusBadge>
+                  <StatusBadge tone="mute">Expired</StatusBadge>
                 ),
             },
             {
               key: 'expires',
-              header: 'Kedaluwarsa',
+              header: 'Expires',
               muted: true,
               nowrap: true,
               render: (row) => expiryLabel(row.expiresAt, now),
@@ -116,7 +116,7 @@ export function ResendInvitationModal({ open, onOpenChange }: { open: boolean; o
           ]}
           actions={(row) => (
             <RowButton disabled={resend.isPending} onClick={() => resend.mutate({ row, force: false })}>
-              Kirim Ulang
+              Resend
             </RowButton>
           )}
         />
@@ -124,14 +124,14 @@ export function ResendInvitationModal({ open, onOpenChange }: { open: boolean; o
 
       <ConfirmDialog
         open={Boolean(confirming)}
-        title="Undangan aktif masih ada"
+        title="An active invitation still exists"
         description={
           confirming
-            ? `Undangan untuk ${confirming.name} masih berlaku dan belum kedaluwarsa. Kirim ulang akan membatalkan tautan lama dan menerbitkan tautan baru.`
+            ? `The invitation for ${confirming.name} is still valid. Resending cancels the old link and issues a new one.`
             : undefined
         }
-        confirmLabel="Kirim Ulang Paksa"
-        cancelLabel="Batal"
+        confirmLabel="Force Resend"
+        cancelLabel="Cancel"
         loading={resend.isPending}
         onOpenChange={(next) => !next && setConfirming(null)}
         onConfirm={() => confirming && resend.mutate({ row: confirming, force: true })}

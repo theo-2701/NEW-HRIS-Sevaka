@@ -1,19 +1,25 @@
 const MONTHS = [
-  'Januari',
-  'Februari',
-  'Maret',
+  'January',
+  'February',
+  'March',
   'April',
-  'Mei',
-  'Juni',
-  'Juli',
-  'Agustus',
+  'May',
+  'June',
+  'July',
+  'August',
   'September',
-  'Oktober',
+  'October',
   'November',
-  'Desember',
+  'December',
 ];
 
-const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** Dashboard memakai bahasa Inggris; `lib/format` (bahasa Indonesia) tetap untuk modul lain. */
+const EN_DATE = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+export const formatDateEn = (iso: string) => EN_DATE.format(new Date(iso.length === 10 ? `${iso}T00:00:00` : iso));
+export const formatDateRangeEn = (from: string, to: string) =>
+  from === to ? formatDateEn(from) : `${formatDateEn(from)} – ${formatDateEn(to)}`;
 
 /**
  * Lapis Perusahaan hanya untuk SUPER_ADMIN · HR_MANAGER · HR_STAFF · Dept Manager (dua ejaan) — FSD-AUTH 0.18
@@ -24,10 +30,9 @@ export const canSeeCompanyLayer = (role: string | undefined) => COMPANY_LAYER_RO
 
 export function greetingFor(date: Date): string {
   const hour = date.getHours();
-  if (hour < 11) return 'Selamat pagi';
-  if (hour < 15) return 'Selamat siang';
-  if (hour < 18) return 'Selamat sore';
-  return 'Selamat malam';
+  if (hour < 11) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export const dayLine = (date: Date) =>

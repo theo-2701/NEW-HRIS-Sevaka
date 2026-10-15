@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { dashboardService } from '@/features/dashboard/services/dashboard.service';
 import { MY_REQUESTS_PANEL_LIMIT, arrangeMyRequests } from '@/features/dashboard/home/myRequestRules';
-import { ACTION_QUEUE_PANEL_LIMIT, arrangeQueue } from '@/features/dashboard/home/queueRules';
+import { ACTION_QUEUE_PANEL_LIMIT, arrangeQueue, groupQueue } from '@/features/dashboard/home/queueRules';
 import { ListChecks } from 'lucide-react';
 import { attendanceMeMonthly, attendanceTodayOverview } from '@/features/attendance/services/attendance.service';
 import { leaveBalanceMeSummary } from '@/features/time-off/services/balance.service';
@@ -50,7 +50,8 @@ describe('Kartu HOME dua lapis (FSD-AUTH 0.7 §2.9)', () => {
   it('Pengajuan saya: milik pemanggil saja, yang masih berjalan di atas', async () => {
     const { rows, partial } = await dashboardService.getMyRequests(new Date('2026-10-14T09:00:00+07:00'));
     expect(partial).toBe(false);
-    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.length).toBeGreaterThan(MY_REQUESTS_PANEL_LIMIT);
+    expect(rows.some((row) => row.id === 'demo-a2')).toBe(false);
     const firstDone = rows.findIndex((row) => !row.open);
     if (firstDone >= 0) expect(rows.slice(firstDone).every((row) => !row.open)).toBe(true);
   });
@@ -69,17 +70,12 @@ describe('Kartu HOME dua lapis (FSD-AUTH 0.7 §2.9)', () => {
     expect(arrangeMyRequests(rows, new Date('2026-10-14T00:00:00Z'), 1).map((row) => row.id)).toEqual(['running']);
   });
 
-  it('Perlu tindak lanjut: jenis 0 dibuang, keputusan dulu lalu tugas, angka terbesar dulu', () => {
-    const row = (key: string, group: 'decide' | 'mine', count: number | null) =>
-      ({ key, group, count, title: key, detail: '', icon: ListChecks }) as const;
-    const keys = arrangeQueue([
-      row('tugas-3', 'mine', 3),
-      row('nol', 'decide', 0),
-      row('putus-1', 'decide', 1),
-      row('memuat', 'decide', null),
-      row('putus-5', 'decide', 5),
-    ]).map((item) => item.key);
-    expect(keys).toEqual(['putus-5', 'putus-1', 'memuat', 'tugas-3']);
+  it('Perlu tindak lanjut: jenis 0 dibuang, angka terbesar dulu, yang memuat di akhir', () => {
+    const row = (key: string, count: number | null) => ({ key, count, title: key, detail: '', icon: ListChecks });
+    const keys = arrangeQueue([row('tugas-3', 3), row('nol', 0), row('putus-1', 1), row('memuat', null), row('putus-5', 5)]).map(
+      (item) => item.key,
+    );
+    expect(keys).toEqual(['putus-5', 'tugas-3', 'putus-1', 'memuat']);
     expect(ACTION_QUEUE_PANEL_LIMIT).toBe(6);
   });
 
@@ -88,5 +84,19 @@ describe('Kartu HOME dua lapis (FSD-AUTH 0.7 §2.9)', () => {
     expect(stats.leaveBalanceDays).toBe(7);
     expect(stats.activeEmployees).toBeGreaterThan(0);
     expect(stats.onLeaveToday).not.toBeNull();
+  });
+});
+
+describe('groupQueue (modal View all)', () => {
+  const item = (key: string, count: number | null) => ({ key, count, title: key, detail: '', icon: ListChecks });
+
+  it('keeps a fixed group order, drops empty groups, sums counts and parks unknown keys in Other', () => {
+    const sections = groupQueue(arrangeQueue([item('ack-loan', 1), item('claims', 2), item('leave', 4), item('x', 1)]));
+    expect(sections.map((s) => s.id)).toEqual(['time', 'finance', 'personal', 'other']);
+    expect(sections.map((s) => s.total)).toEqual([4, 2, 1, 1]);
+  });
+
+  it('reports a null total while any item in the group is still loading', () => {
+    expect(groupQueue([item('leave', 2), item('overtime', null)])[0].total).toBeNull();
   });
 });

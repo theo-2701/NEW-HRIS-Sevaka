@@ -9,7 +9,8 @@ import type { CashAdvance } from '@/features/cash-advance/types';
 import { LOAN_STATUS_LABEL } from '@/features/loan/types';
 import type { Loan } from '@/features/loan/types';
 import type { MyRequest } from '@/features/dashboard/types';
-import { formatCurrency, formatDate, formatDateRange } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
+import { formatDateEn as formatDate, formatDateRangeEn as formatDateRange } from '@/features/dashboard/home/homeRules';
 
 /** Route modul = tujuan yang sama dengan item "More Request" di hero. */
 export const MY_REQUEST_ROUTES = {
@@ -75,8 +76,8 @@ const LOAN_SHAPE: Record<Loan['status'], Shape> = {
 export const fromLeave = (row: LeaveRequest, typeNames: Record<string, string> = {}): MyRequest => ({
   id: `leave-${row.id}`,
   kind: 'LEAVE',
-  title: typeNames[row.leaveTypeId] ?? 'Cuti',
-  detail: `${formatDateRange(row.startDate, row.endDate)} · ${row.totalDays} hari`,
+  title: typeNames[row.leaveTypeId] ?? 'Leave',
+  detail: `${formatDateRange(row.startDate, row.endDate)} · ${row.totalDays} ${row.totalDays === 1 ? 'day' : 'days'}`,
   statusLabel: REQUEST_STATUS_LABEL[row.status],
   ...TIME_SHAPE[row.status],
   submittedAt: row.submittedAt,
@@ -86,8 +87,8 @@ export const fromLeave = (row: LeaveRequest, typeNames: Record<string, string> =
 export const fromOvertime = (row: OvertimeRequest): MyRequest => ({
   id: `overtime-${row.id}`,
   kind: 'OVERTIME',
-  title: 'Lembur',
-  detail: `${formatDate(row.overtimeDate)}${row.requestedHours ? ` · ${row.requestedHours} jam` : ''}`,
+  title: 'Overtime',
+  detail: `${formatDate(row.overtimeDate)}${row.requestedHours ? ` · ${row.requestedHours} h` : ''}`,
   statusLabel: OVERTIME_STATUS_LABEL[row.overtimeStatus],
   ...TIME_SHAPE[row.overtimeStatus],
   submittedAt: row.submittedAt,
@@ -121,8 +122,8 @@ export const fromAdvance = (row: CashAdvance): MyRequest => ({
 export const fromLoan = (row: Loan): MyRequest => ({
   id: `loan-${row.id}`,
   kind: 'LOAN',
-  title: 'Pinjaman',
-  detail: `${row.requestNo} · ${formatCurrency(row.principalAmount)} · ${row.tenorMonths} bulan`,
+  title: 'Loan',
+  detail: `${row.requestNo} · ${formatCurrency(row.principalAmount)} · ${row.tenorMonths} months`,
   statusLabel: LOAN_STATUS_LABEL[row.status],
   ...LOAN_SHAPE[row.status],
   submittedAt: row.submittedAt,

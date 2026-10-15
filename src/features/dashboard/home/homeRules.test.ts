@@ -3,10 +3,9 @@ import { canSeeCompanyLayer, dayLine, daysUntil, greetingFor, monthLabel } from 
 
 describe('Home — aturan tampilan', () => {
   it('sapaan mengikuti jam', () => {
-    expect(greetingFor(new Date(2026, 8, 24, 8))).toBe('Selamat pagi');
-    expect(greetingFor(new Date(2026, 8, 24, 13))).toBe('Selamat siang');
-    expect(greetingFor(new Date(2026, 8, 24, 16))).toBe('Selamat sore');
-    expect(greetingFor(new Date(2026, 8, 24, 20))).toBe('Selamat malam');
+    expect(greetingFor(new Date(2026, 8, 24, 8))).toBe('Good morning');
+    expect(greetingFor(new Date(2026, 8, 24, 13))).toBe('Good afternoon');
+    expect(greetingFor(new Date(2026, 8, 24, 20))).toBe('Good evening');
   });
 
   it('lapis Perusahaan hanya untuk HR/manajemen (FSD-AUTH §2.9)', () => {
@@ -25,8 +24,8 @@ describe('Home — aturan tampilan', () => {
     expect(daysUntil('2026-09-20', now)).toBe(-4);
   });
 
-  it('label tanggal & bulan berbahasa Indonesia', () => {
-    expect(dayLine(new Date(2026, 8, 24))).toBe('Kamis, 24 September 2026');
-    expect(monthLabel('2026-07')).toBe('Juli 2026');
+  it('label tanggal & bulan berbahasa Inggris (dashboard)', () => {
+    expect(dayLine(new Date(2026, 8, 24))).toBe('Thursday, 24 September 2026');
+    expect(monthLabel('2026-07')).toBe('July 2026');
   });
 });

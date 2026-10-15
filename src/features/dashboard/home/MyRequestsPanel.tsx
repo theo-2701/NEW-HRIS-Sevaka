@@ -3,14 +3,13 @@ import type { LucideIcon } from 'lucide-react';
 import { Banknote, CalendarDays, ClipboardList, Clock3, Receipt, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '@/components/Modal';
-import { Segmented } from '@/components/Segmented';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Panel, PanelLink } from '@/features/dashboard/home/Panel';
+import { ListSection, Panel, PanelLink } from '@/features/dashboard/home/Panel';
+import { formatDateEn } from '@/features/dashboard/home/homeRules';
 import { MY_REQUESTS_PANEL_LIMIT } from '@/features/dashboard/home/myRequestRules';
 import { useMyRequests } from '@/features/dashboard/hooks/useDashboard';
 import type { MyRequest, MyRequestKind } from '@/features/dashboard/types';
-import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const KIND_ICON: Record<MyRequestKind, LucideIcon> = {
@@ -19,14 +18,6 @@ const KIND_ICON: Record<MyRequestKind, LucideIcon> = {
   CLAIM: Receipt,
   CASH_ADVANCE: Wallet,
   LOAN: Banknote,
-};
-
-const KIND_LABEL: Record<MyRequestKind, string> = {
-  LEAVE: 'Cuti',
-  OVERTIME: 'Lembur',
-  CLAIM: 'Reimbursement',
-  CASH_ADVANCE: 'Cash advance',
-  LOAN: 'Pinjaman',
 };
 
 /** Satu baris pengajuan — dipakai bersama panel dan modal "Lihat semua". */
@@ -52,7 +43,7 @@ function MyRequestRow({ row, onOpen }: { row: MyRequest; onOpen: (row: MyRequest
             {row.title}
           </span>
           <span className="truncate font-body text-xs font-medium text-fg-3">
-            {row.detail} · diajukan {formatDate(row.submittedAt)}
+            {row.detail} · submitted {formatDateEn(row.submittedAt)}
           </span>
         </span>
         <StatusBadge tone={row.tone}>{row.statusLabel}</StatusBadge>
@@ -61,9 +52,11 @@ function MyRequestRow({ row, onOpen }: { row: MyRequest; onOpen: (row: MyRequest
   );
 }
 
-type KindFilter = MyRequestKind | 'ALL';
-
-/** Daftar lengkap pengajuan saya, disaring per jenis. Jenis tanpa data tidak ditawarkan. */
+/**
+ * Daftar lengkap pengajuan saya — tanpa saring per jenis (ikon + judul sudah membedakan jenisnya).
+ * Dibelah dua kelompok sesuai urutan yang sudah ada: yang masih berjalan (perlu dipantau) di atas,
+ * yang selesai 30 hari terakhir di bawah, masing-masing berjudul + jumlah.
+ */
 function MyRequestsModal({
   open,
   onOpenChange,
@@ -75,42 +68,36 @@ function MyRequestsModal({
   rows: MyRequest[];
   onOpen: (row: MyRequest) => void;
 }) {
-  const [kind, setKind] = useState<KindFilter>('ALL');
-  const kinds = (Object.keys(KIND_LABEL) as MyRequestKind[]).filter((value) => rows.some((row) => row.kind === value));
-  const shown = kind === 'ALL' ? rows : rows.filter((row) => row.kind === kind);
+  const inProgress = rows.filter((row) => row.open);
+  const finished = rows.filter((row) => !row.open);
+  const sections = [
+    { id: 'open', label: 'In progress', rows: inProgress },
+    { id: 'done', label: 'Completed · last 30 days', rows: finished },
+  ].filter((section) => section.rows.length > 0);
 
   return (
     <Modal
       open={open}
-      onOpenChange={(next) => {
-        if (!next) setKind('ALL');
-        onOpenChange(next);
-      }}
+      onOpenChange={onOpenChange}
       size="wide"
-      title="Pengajuan saya"
-      description="Semua pengajuan Anda yang masih berjalan dan yang selesai dalam 30 hari terakhir."
+      className="max-w-[880px]"
+      title="My requests"
+      description={`${rows.length} requests: ${inProgress.length} in progress, ${finished.length} completed in the last 30 days.`}
       footer={
         <Button variant="secondary" onClick={() => onOpenChange(false)}>
-          Tutup
+          Close
         </Button>
       }
     >
-      <Segmented<KindFilter>
-        value={kind}
-        onChange={setKind}
-        options={[
-          { value: 'ALL', label: `Semua (${rows.length})` },
-          ...kinds.map((value) => ({
-            value,
-            label: `${KIND_LABEL[value]} (${rows.filter((row) => row.kind === value).length})`,
-          })),
-        ]}
-      />
-      <ul className="m-0 flex list-none flex-col gap-1 p-0">
-        {shown.map((row) => (
-          <MyRequestRow key={row.id} row={row} onOpen={onOpen} />
-        ))}
-      </ul>
+      {sections.map((section) => (
+        <ListSection key={section.id} label={section.label} count={section.rows.length}>
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
+            {section.rows.map((row) => (
+              <MyRequestRow key={row.id} row={row} onOpen={onOpen} />
+            ))}
+          </ul>
+        </ListSection>
+      ))}
     </Modal>
   );
 }
@@ -134,21 +121,21 @@ export function MyRequestsPanel({ className }: { className?: string }) {
 
   return (
     <Panel
-      title="Pengajuan saya"
-      meta={isLoading ? 'Memuat…' : openCount ? `${openCount} masih berjalan` : 'Tidak ada yang masih berjalan'}
+      title="My requests"
+      meta={isLoading ? 'Loading…' : openCount ? `${openCount} in progress` : 'Nothing in progress'}
       icon={ClipboardList}
       className={className}
       action={
         rows.length > MY_REQUESTS_PANEL_LIMIT && (
-          <PanelLink onClick={() => setAllOpen(true)}>Lihat semua ({rows.length})</PanelLink>
+          <PanelLink onClick={() => setAllOpen(true)}>View all ({rows.length})</PanelLink>
         )
       }
     >
       {isLoading ? (
-        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Memuat pengajuan…</p>
+        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Loading requests…</p>
       ) : rows.length === 0 ? (
         <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">
-          {data?.partial ? 'Data pengajuan belum tersedia.' : 'Belum ada pengajuan. Ajukan lewat tombol More Request.'}
+          {data?.partial ? 'Request data is not available yet.' : 'No requests yet. Submit one from More Request.'}
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
@@ -158,7 +145,7 @@ export function MyRequestsPanel({ className }: { className?: string }) {
         </ul>
       )}
       {data?.partial && rows.length > 0 && (
-        <p className="m-0 pt-2 font-body text-xs font-medium text-fg-4">Sebagian data pengajuan belum tersedia.</p>
+        <p className="m-0 pt-2 font-body text-xs font-medium text-fg-4">Some request data is not available yet.</p>
       )}
 
       <MyRequestsModal open={allOpen} onOpenChange={setAllOpen} rows={rows} onOpen={openRow} />

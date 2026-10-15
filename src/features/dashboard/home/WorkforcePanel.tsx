@@ -47,7 +47,7 @@ function HeadcountBars({ data }: { data: SeriesPoint[] }) {
         preserveAspectRatio="none"
         className="min-h-[88px] w-full flex-1"
         role="img"
-        aria-label={`Karyawan aktif per bulan: ${data.map((d) => `${d.label} ${d.value}`).join(', ')}`}
+        aria-label={`Active employees per month: ${data.map((d) => `${d.label} ${d.value}`).join(', ')}`}
       >
         <line
           x1="0"
@@ -109,7 +109,7 @@ function TurnoverLine({ data, average }: { data: SeriesPoint[]; average: number 
           preserveAspectRatio="none"
           className="absolute inset-0 size-full"
           role="img"
-          aria-label={`Turnover bulanan: ${data.map((d) => `${d.label} ${d.value}%`).join(', ')}`}
+          aria-label={`Monthly turnover: ${data.map((d) => `${d.label} ${d.value}%`).join(', ')}`}
         >
           <line
             x1="0"
@@ -240,7 +240,7 @@ function JobLevelRanks({ data }: { data: JobLevelSlice[] }) {
       {rows.map((d) => (
         <li
           key={d.label}
-          title={`${d.label}: ${number(d.count)} karyawan (${percent(d.percent)})`}
+          title={`${d.label}: ${number(d.count)} employees (${percent(d.percent)})`}
           className="grid grid-cols-[64px_minmax(0,1fr)_30px_38px] items-center gap-2 font-body text-xs"
         >
           <span className="truncate font-medium text-fg-2">{d.label}</span>
@@ -259,8 +259,8 @@ function JobLevelRanks({ data }: { data: JobLevelSlice[] }) {
 export function WorkforcePanel({ summary }: { summary: DashboardSummary | undefined }) {
   if (!summary) {
     return (
-      <Panel title="Tenaga kerja" icon={ChartColumn}>
-        <p className="m-0 py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat data…</p>
+      <Panel title="Workforce" icon={ChartColumn}>
+        <p className="m-0 py-10 text-center font-body text-[13px] font-medium text-fg-3">Loading data…</p>
       </Panel>
     );
   }
@@ -273,38 +273,38 @@ export function WorkforcePanel({ summary }: { summary: DashboardSummary | undefi
   const average = turnover.reduce((sum, d) => sum + d.value, 0) / Math.max(turnover.length, 1);
 
   return (
-    <Panel title="Tenaga kerja" icon={ChartColumn} meta={`${staff[0]?.label ?? ''} – ${staff.at(-1)?.label ?? ''}`}>
+    <Panel title="Workforce" icon={ChartColumn} meta={`${staff[0]?.label ?? ''} – ${staff.at(-1)?.label ?? ''}`}>
       {/* Empat bacaan memanjang ke samping; di layar sempit turun jadi 2 lalu 1 kolom. */}
       <div className="grid gap-y-8 md:grid-cols-2 md:gap-x-10 xl:grid-cols-[1fr_1fr_1fr_1.15fr] xl:gap-x-0 xl:divide-x xl:divide-border-1 [&>*]:xl:px-6 [&>*:first-child]:xl:pl-0 [&>*:last-child]:xl:pr-0">
         <Block
-          title="Karyawan aktif"
+          title="Active employees"
           value={number(latest)}
           note={
             delta === 0
-              ? 'sama dengan bulan lalu'
-              : `${delta > 0 ? '+' : '−'}${number(Math.abs(delta))} dari bulan lalu`
+              ? 'same as last month'
+              : `${delta > 0 ? '+' : '−'}${number(Math.abs(delta))} from last month`
           }
         >
           <HeadcountBars data={staff} />
         </Block>
 
         <Block
-          title="Turnover bulanan"
+          title="Monthly turnover"
           value={percent(turnover.at(-1)?.value ?? 0)}
-          note={`rata-rata 6 bulan ${percent(average)}`}
+          note={`6-month average ${percent(average)}`}
         >
           <TurnoverLine data={turnover} average={average} />
         </Block>
 
         <Block
-          title="Komposisi gender"
+          title="Gender composition"
           value={percent(summary.gender[0]?.value ?? 0)}
-          note={`${summary.gender[0]?.label ?? ''} dari karyawan aktif`}
+          note={`${summary.gender[0]?.label ?? ''} of active employees`}
         >
           <GenderDonut data={summary.gender} />
         </Block>
 
-        <Block title="Jenjang jabatan" value={number(summary.totalEmployees)} note="total karyawan">
+        <Block title="Job levels" value={number(summary.totalEmployees)} note="total employees">
           <JobLevelRanks data={summary.jobLevels} />
         </Block>
       </div>

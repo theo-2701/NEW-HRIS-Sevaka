@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
+import { demoMyRequests } from '@/features/dashboard/mock-data';
 import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
 import { attendanceMeMonthly, attendanceTodayOverview } from '@/features/attendance/services/attendance.service';
 import { activeEmployeeCount } from '@/features/employees/services/employee.service';
@@ -36,18 +37,18 @@ const MOCK_SUMMARY: DashboardSummary = {
   staffActive: [
     { label: 'Jun', value: 220 },
     { label: 'Jul', value: 375 },
-    { label: 'Agu', value: 330 },
+    { label: 'Aug', value: 330 },
     { label: 'Sep', value: 450 },
-    { label: 'Okt', value: 330 },
+    { label: 'Oct', value: 330 },
     { label: 'Nov', value: 450 },
   ],
   /* Turnover dalam PERSEN — sumbu kartu berskala 0–10%. */
   turnover: [
     { label: 'Jun', value: 2.5 },
     { label: 'Jul', value: 5 },
-    { label: 'Agu', value: 5 },
+    { label: 'Aug', value: 5 },
     { label: 'Sep', value: 6.5 },
-    { label: 'Okt', value: 5 },
+    { label: 'Oct', value: 5 },
     { label: 'Nov', value: 5 },
   ],
   jobLevels: [
@@ -187,7 +188,7 @@ export const dashboardService = {
     ]);
     return {
       rows: arrangeMyRequests(
-        results.flatMap((result) => settled(result) ?? []),
+        [...results.flatMap((result) => settled(result) ?? []), ...(MOCK ? demoMyRequests(now) : [])],
         now,
       ),
       partial: results.some((result) => result.status === 'rejected'),

@@ -42,7 +42,7 @@ export function HomeHeader({
   return (
     <section
       className="relative isolate overflow-hidden rounded-xl bg-linear-120 from-secondary-700 via-secondary-600 to-secondary-500 px-5 py-6 text-white shadow-card-sm md:px-7 md:py-7"
-      aria-label="Ringkasan hari ini"
+      aria-label="Today's summary"
     >
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-linear-to-b from-white/12 to-transparent" />
@@ -63,16 +63,16 @@ export function HomeHeader({
           </h1>
           <p className="m-0 font-body text-sm font-medium text-white/75">
             {pendingCount === null ? (
-              'Ringkasan hari ini sedang dimuat.'
+              "Loading today's summary."
             ) : pendingCount === 0 ? (
-              'Tidak ada yang menunggu tindak lanjut Anda hari ini.'
+              'Nothing on your to-do list today.'
             ) : (
               <>
-                Ada{' '}
+                You have{' '}
                 <span className="rounded-full bg-white/15 px-2 py-0.5 font-bold text-white ring-1 ring-inset ring-white/20">
-                  {pendingCount} hal
+                  {pendingCount} {pendingCount === 1 ? 'item' : 'items'}
                 </span>{' '}
-                yang menunggu tindak lanjut Anda hari ini.
+                on your to-do list today.
               </>
             )}
           </p>
@@ -81,7 +81,7 @@ export function HomeHeader({
         <div className="flex flex-wrap items-center gap-2">
           {onUnlock && (
             <Button variant="secondary" onClick={onUnlock}>
-              Buka Kunci Akun
+              Unlock Account
               {lockedCount ? (
                 <span className="rounded-full bg-error-500 px-1.5 font-body text-[11px] font-bold leading-[18px] text-white tabular-nums ring-2 ring-white">
                   {lockedCount}

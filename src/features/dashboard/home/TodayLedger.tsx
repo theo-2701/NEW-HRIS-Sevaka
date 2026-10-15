@@ -1,9 +1,8 @@
 import type { LucideIcon } from 'lucide-react';
 import { ArrowRight, CalendarCheck, CalendarDays, Palmtree, UserCheck, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { monthLabel } from '@/features/dashboard/home/homeRules';
+import { formatDateEn, monthLabel } from '@/features/dashboard/home/homeRules';
 import type { HomeStats } from '@/features/dashboard/types';
-import { formatDate } from '@/lib/format';
 
 interface Figure {
   label: string;
@@ -39,7 +38,7 @@ function FigureCard({ figure, loading }: { figure: Figure; loading: boolean }) {
           <small className="ml-1.5 font-body text-sm font-medium tracking-normal text-white/70">{figure.unit}</small>
         )}
       </span>
-      <span className="font-body text-xs font-medium text-white/65">{empty ? 'Data belum tersedia' : figure.foot}</span>
+      <span className="font-body text-xs font-medium text-white/65">{empty ? 'Data not available yet' : figure.foot}</span>
       <span className="mt-1.5 inline-flex w-fit items-center gap-1 font-body text-[13px] font-semibold text-primary-200 transition-colors group-hover:text-white">
         {figure.cta}
         <ArrowRight
@@ -92,20 +91,20 @@ export function TodayLedger({
 }) {
   const mine: Figure[] = [
     {
-      label: 'Sisa cuti saya',
+      label: 'My leave balance',
       value: stats?.leaveBalanceDays ?? null,
-      unit: 'hari',
-      foot: `Cuti tahunan · periode ${stats?.periodYear ?? ''}`,
-      cta: 'Ajukan cuti',
+      unit: 'days',
+      foot: `Annual leave · period ${stats?.periodYear ?? ''}`,
+      cta: 'Request leave',
       to: '/me/time/time-off',
       icon: CalendarDays,
     },
     {
-      label: 'Kehadiran saya bulan ini',
+      label: 'My attendance this month',
       value: stats?.presentDays ?? null,
-      unit: 'hari',
-      foot: `Hadir atau terlambat · ${stats ? monthLabel(stats.month) : 'bulan berjalan'}`,
-      cta: 'Lihat kehadiran',
+      unit: 'days',
+      foot: `Present or late · ${stats ? monthLabel(stats.month) : 'this month'}`,
+      cta: 'View attendance',
       to: '/me/time/attendance',
       icon: CalendarCheck,
     },
@@ -113,26 +112,26 @@ export function TodayLedger({
 
   const company: Figure[] = [
     {
-      label: 'Karyawan aktif',
+      label: 'Active employees',
       value: stats?.activeEmployees ?? null,
-      foot: 'Status kerja Active',
-      cta: 'Lihat direktori',
+      foot: 'Employment status Active',
+      cta: 'View directory',
       to: '/employees/directory',
       icon: Users,
     },
     {
-      label: 'Hadir hari ini',
+      label: 'Present today',
       value: stats?.presentToday ?? null,
-      foot: stats ? formatDate(stats.workDate) : 'Hari ini',
-      cta: 'Lihat kehadiran',
+      foot: stats ? formatDateEn(stats.workDate) : 'Today',
+      cta: 'View attendance',
       to: '/time/attendance',
       icon: UserCheck,
     },
     {
-      label: 'Sedang cuti hari ini',
+      label: 'On leave today',
       value: stats?.onLeaveToday ?? null,
-      foot: 'Cuti atau sakit',
-      cta: 'Lihat pengajuan cuti',
+      foot: 'Leave or sick',
+      cta: 'View leave requests',
       to: '/time/time-off/requests',
       icon: Palmtree,
     },
@@ -140,8 +139,8 @@ export function TodayLedger({
 
   return (
     <div className={companyLayer ? 'grid gap-5 lg:grid-cols-[2fr_3fr]' : 'grid gap-5'}>
-      <Group title="Milik saya" figures={mine} loading={loading} columns="sm:grid-cols-2" />
-      {companyLayer && <Group title="Perusahaan" figures={company} loading={loading} columns="sm:grid-cols-3" />}
+      <Group title="Mine" figures={mine} loading={loading} columns="sm:grid-cols-2" />
+      {companyLayer && <Group title="Company" figures={company} loading={loading} columns="sm:grid-cols-3" />}
     </div>
   );
 }

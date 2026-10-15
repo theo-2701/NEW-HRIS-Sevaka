@@ -52,3 +52,21 @@ export function PanelLink({ onClick, children }: { onClick: () => void; children
     </button>
   );
 }
+
+
+/**
+ * Kelompok di dalam modal "View all": judul kecil + jumlah di kanan, garis tipis di bawahnya.
+ * Judul menempel di atas saat body modal di-scroll (body modal ber-padding atas 20px → `-top-5`),
+ * jadi pengguna selalu tahu sedang membaca kelompok mana.
+ */
+export function ListSection({ label, count, children }: { label: string; count: ReactNode; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-1">
+      <header className="sticky -top-5 z-10 flex items-baseline justify-between gap-3 border-b border-border-1 bg-bg-surface pb-1.5 pt-1">
+        <h3 className="m-0 font-body text-xs font-bold uppercase tracking-[0.06em] text-fg-3">{label}</h3>
+        <span className="font-body text-xs font-medium text-fg-3 tabular-nums">{count}</span>
+      </header>
+      {children}
+    </section>
+  );
+}

@@ -5,48 +5,50 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { StatusBadge, toneForStatus } from '@/components/StatusBadge';
 import { Panel, PanelLink } from '@/features/dashboard/home/Panel';
-import { daysUntil } from '@/features/dashboard/home/homeRules';
+import { daysUntil, formatDateEn } from '@/features/dashboard/home/homeRules';
 import { useMyAnnouncements } from '@/features/announcement/hooks/useAnnouncement';
 import { MY_ANNOUNCEMENTS_PATH } from '@/features/announcement/types';
 import type { ContractRow } from '@/features/dashboard/types';
-import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** Tiga pengumuman terbit terbaru — blok tanggal bertint biru supaya mudah dipindai. */
+/** Sama dengan batas "My requests" supaya dua panel bersanding setinggi. */
+const ANNOUNCEMENTS_PANEL_LIMIT = 5;
+
+/** Lima pengumuman terbit terbaru — blok tanggal bertint biru supaya mudah dipindai. */
 export function AnnouncementsPanel({ className }: { className?: string }) {
   const navigate = useNavigate();
   const { data: rows = [], isLoading } = useMyAnnouncements('ROLE_EMPLOYEE');
 
   return (
     <Panel
-      title="Pengumuman"
-      meta="Terbaru untuk Anda"
+      title="Announcements"
+      meta="Latest for you"
       icon={Megaphone}
       className={className}
-      action={<PanelLink onClick={() => navigate(MY_ANNOUNCEMENTS_PATH)}>Lihat semua</PanelLink>}
+      action={<PanelLink onClick={() => navigate(MY_ANNOUNCEMENTS_PATH)}>View all</PanelLink>}
     >
       {isLoading ? (
-        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Memuat pengumuman…</p>
+        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Loading announcements…</p>
       ) : rows.length === 0 ? (
-        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Belum ada pengumuman untuk Anda.</p>
+        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">No announcements for you yet.</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
-          {rows.slice(0, 3).map((row) => {
+          {rows.slice(0, ANNOUNCEMENTS_PANEL_LIMIT).map((row) => {
             const date = new Date(row.publishedAt);
             return (
               <li key={row.id}>
                 <button
                   type="button"
                   onClick={() => navigate(`${MY_ANNOUNCEMENTS_PATH}?id=${row.id}`)}
-                  className="group flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-secondary-50"
+                  className="group grid w-full grid-cols-[36px_minmax(0,1fr)] items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-secondary-50"
                 >
-                  <span className="flex size-11 shrink-0 flex-col items-center justify-center rounded-lg bg-secondary-50 ring-1 ring-inset ring-secondary-100">
-                    <span className="font-display text-base font-bold leading-none text-secondary-700 tabular-nums">
+                  <span className="flex size-9 flex-col items-center justify-center rounded-lg bg-secondary-50 ring-1 ring-inset ring-secondary-100">
+                    <span className="font-display text-sm font-bold leading-none text-secondary-700 tabular-nums">
                       {date.getDate()}
                     </span>
-                    <span className="font-body text-[10px] font-bold uppercase tracking-[0.06em] text-secondary-600">
+                    <span className="font-body text-[9px] font-bold uppercase leading-tight tracking-[0.06em] text-secondary-600">
                       {MONTHS[date.getMonth()]}
                     </span>
                   </span>
@@ -54,9 +56,9 @@ export function AnnouncementsPanel({ className }: { className?: string }) {
                     <span className="truncate font-body text-sm font-semibold text-fg-1 group-hover:text-fg-link">
                       {row.title}
                     </span>
-                    <span className="font-body text-xs font-medium text-fg-3">
-                      {String(date.getHours()).padStart(2, '0')}:{String(date.getMinutes()).padStart(2, '0')} ·{' '}
-                      {date.getFullYear()}
+                    <span className="truncate font-body text-xs font-medium text-fg-3">
+                      Published {formatDateEn(row.publishedAt)} · {String(date.getHours()).padStart(2, '0')}:
+                      {String(date.getMinutes()).padStart(2, '0')}
                     </span>
                   </span>
                 </button>
@@ -71,8 +73,8 @@ export function AnnouncementsPanel({ className }: { className?: string }) {
 
 const CONTRACT_LABEL: Record<ContractRow['status'], string> = {
   PROBATION: 'Probation',
-  CONTRACT: 'Kontrak',
-  PERMANENT: 'Tetap',
+  CONTRACT: 'Contract',
+  PERMANENT: 'Permanent',
 };
 
 /**
@@ -94,11 +96,11 @@ export function ContractsModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Kontrak & probation berakhir"
-      description="Kontrak dan masa probation terdekat, urut tanggal berakhir."
+      title="Contracts & probation ending"
+      description="Nearest contract and probation end dates, sorted by end date."
       footer={
         <Button variant="secondary" onClick={() => onOpenChange(false)}>
-          Tutup
+          Close
         </Button>
       }
     >
@@ -117,7 +119,7 @@ function ContractsList({ contracts, now }: { contracts: ContractRow[]; now: Date
   return (
     <>
       {rows.length === 0 ? (
-        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Tidak ada kontrak yang akan berakhir.</p>
+        <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">No contracts ending soon.</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {rows.map((row) => {
@@ -133,7 +135,7 @@ function ContractsList({ contracts, now }: { contracts: ContractRow[]; now: Date
                   <span className="flex items-center gap-2">
                     <StatusBadge tone={toneForStatus(row.status)}>{CONTRACT_LABEL[row.status]}</StatusBadge>
                     <span className="whitespace-nowrap font-body text-xs font-medium text-fg-3">
-                      {formatDate(row.endDate)}
+                      {formatDateEn(row.endDate)}
                     </span>
                   </span>
                 </span>
@@ -147,7 +149,7 @@ function ContractsList({ contracts, now }: { contracts: ContractRow[]; now: Date
                         : 'bg-vapor text-fg-3',
                   )}
                 >
-                  {left < 0 ? 'Lewat' : left === 0 ? 'Hari ini' : `${left} hari`}
+                  {left < 0 ? 'Overdue' : left === 0 ? 'Today' : `${left} ${left === 1 ? 'day' : 'days'}`}
                 </span>
               </li>
             );

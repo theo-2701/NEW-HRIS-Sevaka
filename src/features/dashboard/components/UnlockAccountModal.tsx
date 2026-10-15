@@ -37,11 +37,11 @@ export function UnlockAccountModal({ open, onOpenChange }: UnlockAccountModalPro
       open={open}
       onOpenChange={onOpenChange}
       size="wide"
-      title="Buka Kunci Akun"
-      description="Akun terkunci otomatis setelah 5× gagal login. Membuka kunci di sini melewati auto-unlock 15 menit."
+      title="Unlock Account"
+      description="Accounts lock automatically after 5 failed logins. Unlocking here skips the 15-minute auto-unlock."
       footer={
         <Button variant="secondary" onClick={() => onOpenChange(false)}>
-          Tutup
+          Close
         </Button>
       }
     >
@@ -49,20 +49,20 @@ export function UnlockAccountModal({ open, onOpenChange }: UnlockAccountModalPro
         search={{
           value: search,
           onChange: setSearch,
-          placeholder: 'Cari nama, username, atau email',
+          placeholder: 'Search name, username, or email',
         }}
-        summary={`${data.length} akun terkunci`}
+        summary={`${data.length} locked accounts`}
       />
 
       <DataTable<LockedAccount>
         rows={rows}
         loading={isLoading}
         rowKey={(row) => row.id}
-        empty="Tidak ada akun yang terkunci."
+        empty="No locked accounts."
         columns={[
           {
             key: 'employee',
-            header: 'Karyawan',
+            header: 'Employee',
             render: (row) => (
               <CellIdentity name={row.name} sub={row.username} leading={<Avatar name={row.name} size="sm" />} />
             ),
@@ -70,14 +70,14 @@ export function UnlockAccountModal({ open, onOpenChange }: UnlockAccountModalPro
           { key: 'email', header: 'Email', muted: true, nowrap: true, render: (row) => row.email },
           {
             key: 'lockedAt',
-            header: 'Terkunci sejak',
+            header: 'Locked since',
             muted: true,
             nowrap: true,
             render: (row) => formatDateTime(row.lockedAt),
           },
           {
             key: 'attempts',
-            header: 'Gagal login',
+            header: 'Failed logins',
             align: 'right',
             muted: true,
             nowrap: true,
@@ -86,7 +86,7 @@ export function UnlockAccountModal({ open, onOpenChange }: UnlockAccountModalPro
         ]}
         actions={(row) => (
           <RowButton disabled={unlock.isPending} onClick={() => unlock.mutate(row.id)}>
-            Buka Kunci
+            Unlock
           </RowButton>
         )}
       />
