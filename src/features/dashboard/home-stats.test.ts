@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { dashboardService } from '@/features/dashboard/services/dashboard.service';
 import { MY_REQUESTS_PANEL_LIMIT, arrangeMyRequests } from '@/features/dashboard/home/myRequestRules';
+import { ACTION_QUEUE_PANEL_LIMIT, arrangeQueue } from '@/features/dashboard/home/queueRules';
+import { ListChecks } from 'lucide-react';
 import { attendanceMeMonthly, attendanceTodayOverview } from '@/features/attendance/services/attendance.service';
 import { leaveBalanceMeSummary } from '@/features/time-off/services/balance.service';
 
@@ -65,6 +67,20 @@ describe('Kartu HOME dua lapis (FSD-AUTH 0.7 §2.9)', () => {
     );
     expect(rows.map((row) => row.id)).toEqual(['running', 'recent']);
     expect(arrangeMyRequests(rows, new Date('2026-10-14T00:00:00Z'), 1).map((row) => row.id)).toEqual(['running']);
+  });
+
+  it('Perlu tindak lanjut: jenis 0 dibuang, keputusan dulu lalu tugas, angka terbesar dulu', () => {
+    const row = (key: string, group: 'decide' | 'mine', count: number | null) =>
+      ({ key, group, count, title: key, detail: '', icon: ListChecks }) as const;
+    const keys = arrangeQueue([
+      row('tugas-3', 'mine', 3),
+      row('nol', 'decide', 0),
+      row('putus-1', 'decide', 1),
+      row('memuat', 'decide', null),
+      row('putus-5', 'decide', 5),
+    ]).map((item) => item.key);
+    expect(keys).toEqual(['putus-5', 'putus-1', 'memuat', 'tugas-3']);
+    expect(ACTION_QUEUE_PANEL_LIMIT).toBe(6);
   });
 
   it('lima nilai kartu dirakit dari modul Time & Employee', async () => {

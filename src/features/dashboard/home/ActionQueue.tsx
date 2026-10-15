@@ -1,17 +1,14 @@
-import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { ArrowRight, ListChecks } from 'lucide-react';
-import { Panel } from '@/features/dashboard/home/Panel';
-
-export interface QueueItem {
-  key: string;
-  count: number | null;
-  title: string;
-  detail: string;
-  icon: LucideIcon;
-  /** `decide` = menunggu keputusan saya sebagai approver/checker; `mine` = tugas pribadi saya. */
-  group: 'decide' | 'mine';
-  action?: { label: string; onClick: () => void };
-}
+import { Modal } from '@/components/Modal';
+import { Button } from '@/components/ui/button';
+import { Panel, PanelLink } from '@/features/dashboard/home/Panel';
+import {
+  ACTION_QUEUE_PANEL_LIMIT,
+  GROUP_ORDER,
+  arrangeQueue,
+  type QueueItem,
+} from '@/features/dashboard/home/queueRules';
 
 const GROUP_TITLE: Record<QueueItem['group'], string> = { decide: 'Menunggu keputusan Anda', mine: 'Tugas Anda' };
 
@@ -68,37 +65,71 @@ function QueueRow({ item }: { item: QueueItem }) {
  * approver/checker, dan tugas pribadi (berlaku untuk semua peran). Baris dua kolom di layar lebar.
  */
 export function ActionQueue({ items }: { items: QueueItem[] }) {
-  const waiting = items.filter((item) => item.count !== 0);
-  const hidden = items.length - waiting.length;
-  const groups = (['decide', 'mine'] as const)
-    .map((group) => ({ group, rows: waiting.filter((item) => item.group === group) }))
-    .filter((entry) => entry.rows.length > 0);
+  const [allOpen, setAllOpen] = useState(false);
+  const waiting = arrangeQueue(items);
+  // Di modal, aksi menutup modal dulu supaya layar tujuan (atau modal lain) tidak tertumpuk.
+  const inModal = waiting.map((item) =>
+    item.action
+      ? { ...item, action: { ...item.action, onClick: () => (setAllOpen(false), item.action!.onClick()) } }
+      : item,
+  );
 
   return (
-    <Panel title="Perlu tindak lanjut" meta="Pekerjaan yang menunggu Anda" icon={ListChecks}>
-      {groups.length === 0 ? (
+    <Panel
+      title="Perlu tindak lanjut"
+      meta="Pekerjaan yang menunggu Anda"
+      icon={ListChecks}
+      action={
+        waiting.length > ACTION_QUEUE_PANEL_LIMIT && (
+          <PanelLink onClick={() => setAllOpen(true)}>Lihat semua ({waiting.length})</PanelLink>
+        )
+      }
+    >
+      {waiting.length === 0 ? (
         <p className="m-0 py-4 font-body text-[13px] font-medium text-fg-3">Tidak ada yang menunggu Anda saat ini.</p>
       ) : (
-        <div className="flex flex-col gap-5">
-          {groups.map(({ group, rows }) => (
-            <section key={group} className="flex flex-col">
-              {groups.length > 1 && (
-                <h3 className="m-0 border-b border-border-1 pb-2 font-body text-[11px] font-bold uppercase tracking-[0.08em] text-fg-3">
-                  {GROUP_TITLE[group]}
-                </h3>
-              )}
-              <ul className="m-0 grid list-none gap-x-8 p-0 lg:grid-cols-2">
-                {rows.map((item) => (
-                  <QueueRow key={item.key} item={item} />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <QueueGroups items={waiting.slice(0, ACTION_QUEUE_PANEL_LIMIT)} />
       )}
-      {hidden > 0 && groups.length > 0 && (
-        <p className="m-0 pt-3 font-body text-xs font-medium text-fg-4">Jenis lain: tidak ada yang menunggu.</p>
-      )}
+
+      <Modal
+        open={allOpen}
+        onOpenChange={setAllOpen}
+        size="wide"
+        title="Perlu tindak lanjut"
+        description={`${waiting.length} jenis pekerjaan menunggu Anda.`}
+        footer={
+          <Button variant="secondary" onClick={() => setAllOpen(false)}>
+            Tutup
+          </Button>
+        }
+      >
+        <QueueGroups items={inModal} />
+      </Modal>
     </Panel>
+  );
+}
+
+/** Baris dikelompokkan; judul kelompok hanya bila kedua kelompok hadir. */
+function QueueGroups({ items }: { items: QueueItem[] }) {
+  const groups = GROUP_ORDER.map((group) => ({ group, rows: items.filter((item) => item.group === group) })).filter(
+    (entry) => entry.rows.length > 0,
+  );
+  return (
+    <div className="flex flex-col gap-5">
+      {groups.map(({ group, rows }) => (
+        <section key={group} className="flex flex-col">
+          {groups.length > 1 && (
+            <h3 className="m-0 border-b border-border-1 pb-2 font-body text-[11px] font-bold uppercase tracking-[0.08em] text-fg-3">
+              {GROUP_TITLE[group]}
+            </h3>
+          )}
+          <ul className="m-0 grid list-none gap-x-8 p-0 lg:grid-cols-2">
+            {rows.map((item) => (
+              <QueueRow key={item.key} item={item} />
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
   );
 }
