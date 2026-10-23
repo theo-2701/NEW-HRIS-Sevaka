@@ -42,8 +42,7 @@ function ExtraLayerNote({ row }: { row: OvertimeRequest }) {
   if (!row.requiresExtraApprovalReason) return null;
   return (
     <Note tone="warn" icon={<TriangleAlert />}>
-      {EXTRA_REASON_LABEL[row.requiresExtraApprovalReason]} — kelebihannya tetap dicatat apa adanya; pemicu ini
-      menaikkan pengajuan ke lapis approval berikutnya dan <strong>tidak pernah</strong> jadi alasan menolaknya.
+      {EXTRA_REASON_LABEL[row.requiresExtraApprovalReason]} — the excess is still recorded as is; this trigger raises the request to the next approval layer and is <strong>never</strong> a reason to reject it.
     </Note>
   );
 }
@@ -86,16 +85,12 @@ function DerivedPreview({
       />
       {derived.extraApprovalReason && (
         <Note tone="warn" icon={<TriangleAlert />}>
-          {formatNumber(derived.alreadyApproved)} jam sudah disetujui pada tanggal ini ditambah{' '}
-          {formatNumber(requested || 0)} jam yang diminta menembus plafon harian {formatNumber(DAILY_HOUR_CAP)} jam.
-          Ini <strong>menaikkan</strong> pengajuan ke lapis approval lain; ia tidak pernah jadi penolakan, dan
-          kelebihannya tetap dicatat apa adanya.
+          {formatNumber(derived.alreadyApproved)} hours already approved on this date plus{' '}
+          {formatNumber(requested || 0)} requested hours exceed the daily cap of {formatNumber(DAILY_HOUR_CAP)} hours. This <strong>raises</strong> the request to another approval layer; it is never a rejection, and the excess is still recorded as is.
         </Note>
       )}
       <span className="font-body text-xs font-normal leading-[1.45] text-fg-3">
-        Apa pun yang klien kirim untuk ketiga field ini diabaikan seluruhnya. Kategori di sini adalah indikasi untuk
-        approver, bukan fakta final — ringkasan harian yang membawa fakta finalnya, dan nilainya bisa berbeda bila
-        status hari itu berubah kemudian.
+        Whatever the client sends for these three fields is ignored entirely. The category here is a hint for the approver, not the final fact — the daily summary carries the final fact, and its value can differ if the day's status changes later.
       </span>
     </div>
   );
@@ -125,8 +120,8 @@ function ReasonField({
       placeholder="Input text here"
       hint={
         retro
-          ? `Wajib untuk pengajuan susulan, dan tanggalnya harus di dalam jendela ${RETRO_WINDOW_DAYS} hari (sejak ${formatDate(retroWindowStart())}).`
-          : 'Opsional untuk pengajuan di muka; wajib begitu tanggalnya jatuh di masa lalu.'
+          ? `Required for a retroactive request, and the date must be within the ${RETRO_WINDOW_DAYS}-day window (since ${formatDate(retroWindowStart())}).`
+          : 'Optional for an advance request; required once the date is in the past.'
       }
     />
   );
@@ -195,7 +190,7 @@ export function OvertimeFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Edit overtime request' : 'Request overtime'}
-            description="Lembur selalu diajukan untuk diri sendiri."
+            description="Overtime is always filed for yourself."
             size="wide"
             footer={
               <>
@@ -219,7 +214,7 @@ export function OvertimeFormModal({
                 </Label>
                 <Input id="requester" readOnly tabIndex={-1} value={employeeName(session.employeeId)} />
                 <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">
-                  Diambil dari token sesi — lembur tidak pernah bisa diajukan atas nama orang lain.
+                  Taken from the session token — overtime can never be filed on behalf of someone else.
                 </span>
               </div>
 
@@ -292,7 +287,7 @@ export function OvertimeApproveModal({
           open={Boolean(row)}
           onOpenChange={(next) => !next && onClose()}
           title="Approve overtime"
-          description="Jam yang disetujui boleh dipangkas di bawah permintaan — tidak pernah dinaikkan di atasnya."
+          description="Approved hours can be trimmed below the request — never raised above it."
           size="wide"
           footer={
             <>
@@ -313,7 +308,7 @@ export function OvertimeApproveModal({
               <DecisionHead row={row} />
               {sod && (
                 <Note tone="danger" icon={<ShieldCheck />}>
-                  Anda tidak dapat memutuskan pengajuan Anda sendiri.
+                  You can't decide your own request.
                 </Note>
               )}
               <TextField
@@ -323,7 +318,7 @@ export function OvertimeApproveModal({
                 min="0"
                 label="Hours approved"
                 required
-                hint={`Maksimal ${hours(row.requestedHours)} jam — persis yang diminta atau kurang.`}
+                hint={`At most ${hours(row.requestedHours)} hours — exactly what was requested or less.`}
               />
             </Form>
           )}
@@ -350,7 +345,7 @@ export function OvertimeRejectModal({
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Reject overtime"
-      description="Menolak membuat jam itu tidak pernah bisa dibayar; tidak ada apa pun yang perlu dipulihkan."
+      description="Rejecting means those hours can never be paid; nothing needs to be restored."
       size="wide"
       footer={
         <>
@@ -374,7 +369,7 @@ export function OvertimeRejectModal({
           <DecisionHead row={row} />
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              Anda tidak dapat memutuskan pengajuan Anda sendiri.
+              You can't decide your own request.
             </Note>
           )}
         </div>
@@ -389,7 +384,7 @@ export function OvertimeDetailModal({ row, onClose }: { row: OvertimeRequest | n
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Overtime request detail"
-      description="Read-only — layar ini tidak mengubah apa pun."
+      description="Read-only — this screen doesn't change anything."
       size="wide"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -410,7 +405,7 @@ export function OvertimeDetailModal({ row, onClose }: { row: OvertimeRequest | n
             {hours(row.approvedHours)}
             {row.isAuto && (
               <span className="ml-1.5 font-normal text-fg-3">
-                — mengikuti batas jam jendela siaga yang berlaku saat itu
+                — follows the standby window hour limit in effect at the time
               </span>
             )}
           </KeyValueRow>
@@ -419,7 +414,7 @@ export function OvertimeDetailModal({ row, onClose }: { row: OvertimeRequest | n
           <KeyValueRow label="Workflow instance">
             {row.workflowInstanceId ?? (
               <span className="font-normal text-fg-3">
-                — baris call-out tidak menjalankan workflow approval; otorisasinya sudah diberikan di muka pada roster
+                — call-out rows run no approval workflow; authorization was given in advance on the roster
               </span>
             )}
           </KeyValueRow>
@@ -458,7 +453,7 @@ export function OvertimeWithdrawModal({
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Withdraw overtime request"
-      description="Menarik bukan menghapus: barisnya tetap terbaca sebagai Cancelled."
+      description="Withdrawing is not deleting: the row still reads as Cancelled."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -477,7 +472,7 @@ export function OvertimeWithdrawModal({
       {row && (
         <div className="flex flex-col gap-4">
           <Note tone="warn" icon={<TriangleAlert />}>
-            Jam yang sudah terlanjur dikerjakan terhadap pengajuan ini tidak akan jadi lembur terbayar.
+            Hours already worked against this request will not become paid overtime.
           </Note>
           <KeyValueList>
             <KeyValueRow label="Request">{row.id}</KeyValueRow>

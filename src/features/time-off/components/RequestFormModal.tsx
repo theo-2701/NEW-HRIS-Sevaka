@@ -73,7 +73,7 @@ function DynamicSection({
       {type?.requiresDocument && (
         <>
           <CheckboxField name="hasDoctorNote">
-            Surat dokter tersedia untuk pengajuan ini (disyaratkan jenis cuti ini).
+            A doctor's note is attached to this request (required by this leave type).
           </CheckboxField>
         </>
       )}
@@ -147,15 +147,15 @@ export function RequestFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             size="wide"
-            title={editing ? `Ubah pengajuan — ${editing.id}` : 'New time off request'}
-            description="Diajukan untuk diri sendiri saja — karyawannya diambil dari sesi, tidak pernah dari form."
+            title={editing ? `Edit request — ${editing.id}` : 'New time off request'}
+            description="Filed for yourself only — the employee is taken from the session, never from the form."
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
                   Cancel
                 </Button>
                 <Button onClick={submitForm} disabled={submit.isPending}>
-                  {submit.isPending ? 'Mengirim…' : editing ? 'Simpan perubahan' : 'Submit request'}
+                  {submit.isPending ? 'Mengirim…' : editing ? 'Save changes' : 'Submit request'}
                 </Button>
               </>
             }
@@ -164,15 +164,15 @@ export function RequestFormModal({
               <div className="grid gap-4 md:grid-cols-2">
                 <SelectField
                   name="leaveTypeId"
-                  label="Jenis cuti"
+                  label="Leave type"
                   required
-                  placeholder="Pilih jenis cuti"
+                  placeholder="Select leave type"
                   options={typeOptions}
-                  hint="Hanya jenis yang aktif yang muncul di sini."
+                  hint="Only active types appear here."
                 />
                 <SelectField
                   name="daySession"
-                  label="Sesi hari"
+                  label="Day session"
                   required
                   // Mulai ≠ Selesai ⇒ opsi Setengah disembunyikan, hanya Penuh (FSD-TIME 0.13 #12).
                   options={
@@ -180,21 +180,21 @@ export function RequestFormModal({
                       ? SESSION_OPTIONS.filter((option) => option.value === 'FULL')
                       : SESSION_OPTIONS
                   }
-                  hint="Setengah hari hanya tersedia bila tanggal mulai dan selesai sama."
+                  hint="Half day is only available when the start and end dates are the same."
                 />
               </div>
 
               <DateRangeField
                 fromName="startDate"
                 toName="endDate"
-                label="Tanggal cuti"
+                label="Leave dates"
                 required
-                hint="Klik satu tanggal saja untuk cuti satu hari."
+                hint="Click a single date for a one-day leave."
               />
 
               <div className="flex flex-col gap-1">
                 <Label htmlFor="requester">
-                  Pemohon
+                  Applicant
                   <span className="ml-1.5 inline-flex items-center gap-1 align-middle font-body text-[10px] font-bold uppercase tracking-[0.05em] text-fg-4 [&_svg]:size-3">
                     <Lock />
                     terkunci
@@ -202,18 +202,18 @@ export function RequestFormModal({
                 </Label>
                 <Input id="requester" readOnly tabIndex={-1} value={employeeName(session.employeeId)} />
                 <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">
-                  Diambil dari token sesi — cuti tidak pernah bisa diajukan atas nama orang lain.
+                  Taken from the session token — leave can never be filed on behalf of someone else.
                 </span>
               </div>
 
               <TextAreaField
                 name="reason"
-                label="Alasan"
+                label="Reason"
                 required={!type || type.requiresApproval}
                 rows={3}
                 maxLength={500}
-                placeholder="Tulis alasannya di sini"
-                hint="Wajib untuk semua jenis kecuali cuti sakit. Setelah disetujui, teks ini mengalir ke ledger saldo sebagai alasan mutasi."
+                placeholder="Write the reason here"
+                hint="Required for every type except sick leave. Once approved, this text flows into the balance ledger as the mutation reason."
               />
 
               <DynamicSection session={session} existing={existing} editingId={editing?.id} />

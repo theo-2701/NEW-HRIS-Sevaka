@@ -52,19 +52,19 @@ export function EssDelegationPage() {
         { label: 'Delegation' },
       ]}
       title="Delegation"
-      description="Penitipan kewenangan approval selama pemberi delegasi cuti."
+      description="Approval authority handed over while the delegator is on leave."
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
         <Card>
           <CardHead
-            title="Kewenangan yang saya titipkan"
-            sub="Masa berlakunya mengikuti tanggal cuti induk; status di sini adalah status persetujuan penunjukan"
+            title="Authority I have delegated"
+            sub="Validity follows the parent leave dates; the status here is the approval status of the appointment"
           />
           <TableToolbar
             actions={
               <AddButton disabled={!actor.isApprover} onClick={() => setForm(true)}>
-                Titipkan kewenangan
+                Delegate authority
               </AddButton>
             }
           />
@@ -72,41 +72,41 @@ export function EssDelegationPage() {
             rows={rows}
             rowKey={(row) => row.id}
             loading={delegations.isLoading}
-            empty="Anda belum menitipkan kewenangan approval."
+            empty="You haven't delegated any approval authority."
             columns={[
               {
                 key: 'counterpart',
-                header: 'Pengganti',
+                header: 'Substitute',
                 strong: true,
                 render: (row) => essName(row.substituteId),
               },
               {
                 key: 'leave',
-                header: 'Cuti induk',
+                header: 'Parent leave',
                 muted: true,
                 nowrap: true,
                 render: (row) => <span className="font-mono text-xs">{row.leaveRequestId}</span>,
               },
-              { key: 'scope', header: 'Cakupan', render: () => 'Seluruh task approval' },
+              { key: 'scope', header: 'Cakupan', render: () => 'All approval tasks' },
               {
                 key: 'status',
-                header: 'Status penunjukan',
+                header: 'Appointment status',
                 render: (row) => <StatusBadge tone={TONE[row.status]}>{DELEGATION_STATUS_LABEL[row.status]}</StatusBadge>,
               },
-              { key: 'created', header: 'Diajukan', muted: true, nowrap: true, render: (row) => formatDate(row.createdAt) },
+              { key: 'created', header: 'Submitted', muted: true, nowrap: true, render: (row) => formatDate(row.createdAt) },
             ]}
             actions={(row) =>
               row.status === 'PENDING_APPROVAL' ? (
                 <RowActions
                   actions={[
                     {
-                      label: 'Ganti pengganti',
+                      label: 'Change substitute',
                       onSelect: () => {
                         setEditing(row);
                         setForm(true);
                       },
                     },
-                    { label: 'Batalkan', danger: true, onSelect: () => setCancelling(row) },
+                    { label: 'Cancel', danger: true, onSelect: () => setCancelling(row) },
                   ]}
                 />
               ) : null
@@ -114,8 +114,7 @@ export function EssDelegationPage() {
           />
           {!actor.isApprover && (
             <p className="mt-2 font-body text-xs font-medium text-fg-4">
-              Anda tidak memegang peran approver, jadi tidak pernah perlu menitipkan kewenangan — daftar ini memang
-              kosong untuk identitas ini.
+              You don't hold an approver role, so you never need to delegate authority — this list is empty for this identity.
             </p>
           )}
         </Card>
@@ -132,9 +131,9 @@ export function EssDelegationPage() {
       />
       <ConfirmDialog
         open={Boolean(cancelling)}
-        title="Batalkan penitipan ini?"
-        description="Pembatalan hanya sah selagi penunjukan masih menunggu persetujuan; setelah disetujui, penunjukan terkunci."
-        confirmLabel="Batalkan"
+        title="Cancel this delegation?"
+        description="Cancelling is only valid while the appointment awaits approval; once approved, it is locked."
+        confirmLabel="Cancel"
         loading={cancel.isPending}
         onOpenChange={(open) => !open && setCancelling(null)}
         onConfirm={() => cancelling && cancel.mutate({ id: cancelling.id }, { onSuccess: () => setCancelling(null) })}

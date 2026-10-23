@@ -69,7 +69,7 @@ function DateRange({
   onChange: (next: { from: string; to: string }) => void;
 }) {
   return (
-    <Field label="Tanggal">
+    <Field label="Date">
       <DateRangePicker value={{ from, to }} onChange={onChange} />
     </Field>
   );

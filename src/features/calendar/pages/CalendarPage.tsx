@@ -160,7 +160,7 @@ export function CalendarPage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Calendar' }]}
         title="Calendar"
-        description="Dua sumber daya menjawab satu pertanyaan — apakah tanggal ini hari kerja? Libur punya dua lapis: lapis nasional yang disemai otomatis dari keputusan pemerintah, dan lapis regional/company yang diisi HR dan baru berlaku setelah approval maker–checker. Pola kerja menetapkan minggu kerja dan selalu berlaku ke depan."
+        description="Two resources answer one question — is this date a working day? Holidays have two layers: the national layer seeded automatically from government decrees, and the regional/company layer filled by HR that only applies after maker–checker approval. Work patterns set the working week and always apply forward."
         actions={
           tab === 'holiday' ? (
             <Button onClick={() => openHolidayForm(null)}>New holiday</Button>
@@ -181,7 +181,7 @@ export function CalendarPage() {
 
           {tab === 'holiday' && (
             <Card>
-              <CardHead title="Holidays" sub="Satu slot per tanggal × tipe × scope" />
+              <CardHead title="Holidays" sub="One slot per date × type × scope" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -257,7 +257,7 @@ export function CalendarPage() {
 
               {subTab === 'patterns' && (
                 <Card>
-                  <CardHead title="Working patterns" sub="Selalu berlaku ke depan" />
+                  <CardHead title="Working patterns" sub="Always applies forward" />
 
                   <div className="flex flex-col">
                     <TableToolbar
@@ -345,17 +345,14 @@ export function CalendarPage() {
                   </div>
 
                   <Note icon={<Info />}>
-                    Hanya nama pola dan tanggal akhir yang bisa diubah setelah tersimpan. Scope, tujuh sakelar hari,
-                    dan tanggal mulai beku — mengubah cara satu minggu bekerja berarti baris baru yang berlaku dari
-                    tanggal ke depan, sehingga penilaian lampau tidak pernah ditulis ulang. Dua pola aktif pada scope
-                    yang sama tidak boleh bertindih.
+                    Only the pattern name and end date can be changed once saved. Scope, the seven day toggles and the start date are frozen — changing how a week works means a new row effective from a future date, so past verdicts are never rewritten. Two active patterns on the same scope can't overlap.
                   </Note>
                 </Card>
               )}
 
               {subTab === 'effective' && (
                 <Card>
-                  <CardHead title="Effective calendar" sub="Lapis mana yang berlaku di tiap hari" />
+                  <CardHead title="Effective calendar" sub="Which layer applies on each day" />
                   <EffectiveCalendar holidays={allHolidays} calendars={allPatterns} />
                 </Card>
               )}
@@ -367,7 +364,7 @@ export function CalendarPage() {
       <FilterModal
         open={holidayFilterOpen}
         title="Filter holidays"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setHolidayFilterOpen}
         onReset={() => {
           setHolidayFilter(EMPTY_HOLIDAY_FILTER);

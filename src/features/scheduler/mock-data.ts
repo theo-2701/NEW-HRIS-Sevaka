@@ -4,10 +4,10 @@ import type { SchedulerRole, Shift, ShiftAssignment, ShiftSwap } from '@/feature
 /** Dataset Skenario Positif Scheduler (UIC-001-TIME §9) — disalin apa adanya. */
 
 export const SHIFTS: Shift[] = [
-  { id: 'sh-1', shiftCode: 'PAGI', shiftName: 'Shift Pagi', shiftType: 'FIXED', startTime: '08:00', endTime: '17:00', crossesMidnight: false, breakMinutes: 60, isActive: true, usedByRoster: true },
-  { id: 'sh-2', shiftCode: 'MALAM', shiftName: 'Shift Malam', shiftType: 'FIXED', startTime: '22:00', endTime: '06:00', crossesMidnight: true, breakMinutes: 45, isActive: true, usedByRoster: true },
-  { id: 'sh-3', shiftCode: 'FLEX', shiftName: 'Jam Fleksibel', shiftType: 'FLEXIBLE', startTime: null, endTime: null, crossesMidnight: false, breakMinutes: 60, isActive: true, usedByRoster: false },
-  { id: 'sh-4', shiftCode: 'ROT-3', shiftName: 'Rotasi 3 Hari', shiftType: 'ROTATING', startTime: null, endTime: null, crossesMidnight: false, breakMinutes: 0, isActive: false, usedByRoster: false },
+  { id: 'sh-1', shiftCode: 'PAGI', shiftName: 'Morning Shift', shiftType: 'FIXED', startTime: '08:00', endTime: '17:00', crossesMidnight: false, breakMinutes: 60, isActive: true, usedByRoster: true },
+  { id: 'sh-2', shiftCode: 'MALAM', shiftName: 'Night Shift', shiftType: 'FIXED', startTime: '22:00', endTime: '06:00', crossesMidnight: true, breakMinutes: 45, isActive: true, usedByRoster: true },
+  { id: 'sh-3', shiftCode: 'FLEX', shiftName: 'Flexible Hours', shiftType: 'FLEXIBLE', startTime: null, endTime: null, crossesMidnight: false, breakMinutes: 60, isActive: true, usedByRoster: false },
+  { id: 'sh-4', shiftCode: 'ROT-3', shiftName: '3-Day Rotation', shiftType: 'ROTATING', startTime: null, endTime: null, crossesMidnight: false, breakMinutes: 0, isActive: false, usedByRoster: false },
 ];
 
 export const ASSIGNMENTS: ShiftAssignment[] = [
@@ -52,5 +52,5 @@ export { EMPLOYEES };
 export const SCHEDULER_ROLES: { value: SchedulerRole; label: string }[] = [
   { value: 'ROLE_HR_MANAGER', label: 'HR Manager' },
   { value: 'ROLE_SUPER_ADMIN', label: 'Super Admin' },
-  { value: 'ROLE_HR_STAFF', label: 'HR Staff (tanpa bulk)' },
+  { value: 'ROLE_HR_STAFF', label: 'HR Staff (no bulk)' },
 ];

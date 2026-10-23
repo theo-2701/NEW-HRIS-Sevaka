@@ -46,8 +46,8 @@ export const useSaveOncall = (session: OncallSession) =>
     },
     (result, { id }) => ({
       text: id
-        ? `200 — jendela siaga diperbarui.${result.extra ? ' Lapis approval tambahan tetap menyala.' : ' Lapis approval tambahan padam.'}`
-        : `201 — jendela siaga tersimpan sebagai Pending approval.${result.extra ? ' Pagunya melewati plafon harian, jadi lapis HR diperlukan.' : ''}`,
+        ? `Standby window updated.${result.extra ? ' The extra approval layer stays on.' : ' The extra approval layer is off.'}`
+        : `Standby window saved as Pending approval.${result.extra ? ' Its cap exceeds the daily cap, so the HR layer is required.' : ''}`,
     }),
   );
 
@@ -60,12 +60,12 @@ export function useDecideOncall(session: OncallSession) {
       return kind;
     },
     onSuccess: async (kind, { id }) => {
-      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      toast('Decision received and passed on to the approval process.', 'info');
       await oncallService.completeOncallWorkflow(session, id, kind);
       toast(
         kind === 'APPROVED'
-          ? 'workflow.process.completed — jendela kini Scheduled dan mengotorisasi call-out sampai setinggi pagunya.'
-          : 'workflow.process.completed — jendela Ditolak dan tidak akan pernah menerbitkan call-out.',
+          ? 'The window is now Scheduled and authorizes call-outs up to its cap.'
+          : 'The window was Rejected and will never issue call-outs.',
         kind === 'APPROVED' ? 'ok' : 'warn',
       );
       void queryClient.invalidateQueries();
@@ -77,5 +77,5 @@ export function useDecideOncall(session: OncallSession) {
 export const useCancelOncall = () =>
   useOncallMutation<{ id: string }>(
     ({ id }) => oncallService.cancel(id).then(() => undefined),
-    () => ({ text: '200 — jendela dibatalkan; barisnya tetap tinggal di catatan, bukan menghilang.', tone: 'warn' }),
+    () => ({ text: 'Window cancelled; the row stays on record and does not disappear.', tone: 'warn' }),
   );

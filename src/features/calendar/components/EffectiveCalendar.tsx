@@ -68,7 +68,7 @@ export function EffectiveCalendar({
           </SelectContent>
         </Select>
         <span className="font-body text-xs font-medium text-fg-3">
-          Urutan penyelesaian: roster pribadi → pola unit / lokasi → pola company, dikurangi libur yang berlaku.
+          Resolution order: personal roster → unit / location pattern → company pattern, minus effective holidays.
         </span>
       </div>
 
@@ -76,7 +76,7 @@ export function EffectiveCalendar({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            aria-label="Bulan sebelumnya"
+            aria-label="Previous month"
             onClick={() => step(-1)}
             className="inline-flex size-8 items-center justify-center rounded-md border border-silver bg-cloud text-fg-2 transition-colors duration-200 ease-standard hover:bg-vapor [&_svg]:size-4"
           >
@@ -87,14 +87,14 @@ export function EffectiveCalendar({
           </span>
           <button
             type="button"
-            aria-label="Bulan berikutnya"
+            aria-label="Next month"
             onClick={() => step(1)}
             className="inline-flex size-8 items-center justify-center rounded-md border border-silver bg-cloud text-fg-2 transition-colors duration-200 ease-standard hover:bg-vapor [&_svg]:size-4"
           >
             <ChevronRight />
           </button>
           <span className="ml-auto font-body text-xs font-medium text-fg-3">
-            Pola yang berlaku: <strong className="text-fg-1">{pattern?.calendarName ?? 'tidak ada yang terselesaikan'}</strong>
+            Effective pattern: <strong className="text-fg-1">{pattern?.calendarName ?? 'nothing resolved'}</strong>
           </span>
         </div>
 
@@ -135,7 +135,7 @@ export function EffectiveCalendar({
           <LegendDot className="border-border-1 bg-vapor">Non-working day</LegendDot>
           <LegendDot className="border-error-200 bg-error-50">Holiday in force</LegendDot>
           <span className="font-body text-[11.5px] font-medium text-fg-3">
-            Tiap sel menyebut lapis yang menang. Cuti yang disetujui bukan bagian dari penyelesaian ini.
+            Each cell names the winning layer. Approved leave is not part of this resolution.
           </span>
         </div>
       </div>

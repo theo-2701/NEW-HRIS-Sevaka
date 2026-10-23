@@ -145,7 +145,7 @@ export function TimeOffRequestPage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Time Off Request' }]}
         title="Time Off Request"
-        description="Cuti selalu diajukan untuk diri sendiri. Cuti biasa menunggu keputusan dan belum mengubah apa pun sampai diputuskan; cuti sakit berlaku seketika dan sebagai gantinya membuka jendela terbatas untuk ditolak. Setiap pengajuan melewati empat gerbang sebelum barisnya dibuat."
+        description="Leave is always filed for yourself. Regular leave waits for a decision and changes nothing until decided; sick leave applies immediately and in return opens a limited window for rejection. Every request passes four gates before its row is created."
         actions={<Button onClick={() => openForm(null)}>New request</Button>}
       >
         <div className="flex flex-col gap-5">
@@ -190,19 +190,19 @@ export function TimeOffRequestPage() {
                   {
                     label: 'Awaiting my decision',
                     value: awaitingMe,
-                    foot: 'Baris yang boleh Anda putuskan — pengajuan sendiri dikecualikan oleh pemisahan tugas.',
+                    foot: 'Rows you can decide — your own requests are excluded by separation of duties.',
                   },
                   {
                     label: 'Sick — reject window open',
                     value: sickOpen,
-                    foot: 'Sudah berlaku; hanya bisa ditolak sampai tenggat yang dibekukan.',
+                    foot: 'Already in effect; can only be rejected until the frozen deadline.',
                   },
                   {
                     label: 'Extra approval layer',
                     value: extraLayer,
-                    foot: 'Terangkat otomatis saat submit — mengangkat pengajuan, tidak pernah memblokirnya.',
+                    foot: 'Raised automatically on submit — it escalates the request, never blocks it.',
                   },
-                  { label: 'My requests', value: mine.length, foot: 'Bisa diubah hanya selagi masih menunggu.' },
+                  { label: 'My requests', value: mine.length, foot: 'Can be edited only while still pending.' },
                 ]}
               />
 
@@ -259,7 +259,7 @@ export function TimeOffRequestPage() {
                         setQuery(value);
                         paged.resetPage();
                       },
-                      placeholder: 'Cari karyawan…',
+                      placeholder: 'Search employee…',
                     }}
                   />
 
@@ -267,7 +267,7 @@ export function TimeOffRequestPage() {
                     rows={paged.rows}
                     rowKey={(row) => row.id}
                     loading={isLoading}
-                    empty="Tidak ada pengajuan yang cocok dengan filter."
+                    empty="No request matches the filter."
                     columns={[
                       { key: 'id', header: 'Request', strong: true, nowrap: true, render: (row) => row.id },
                       {
@@ -326,7 +326,7 @@ export function TimeOffRequestPage() {
             <Card>
               <CardHead
                 title="Approval delegation"
-                sub="Hanya diajukan pemegang peran approver atas cuti hidup miliknya sendiri"
+                sub="Only filed by approver role holders, for their own live leave"
                 action={
                   approver ? (
                     <PanelActionButton
@@ -343,14 +343,14 @@ export function TimeOffRequestPage() {
 
               {!approver && (
                 <Note tone="warn" icon={<UserRound />}>
-                  Anda tidak memegang peran approver, jadi tidak ada task persetujuan yang bisa didelegasikan.
+                  You don't hold an approver role, so there are no approval tasks to delegate.
                 </Note>
               )}
 
               <DataTable<Delegation>
                 rows={delegations}
                 rowKey={(row) => row.id}
-                empty="Belum ada delegasi."
+                empty="No delegation yet."
                 columns={[
                   { key: 'id', header: 'Delegation', strong: true, nowrap: true, render: (row) => row.id },
                   { key: 'leave', header: 'Delegated leave', muted: true, render: (row) => row.leaveRequestId },
@@ -364,7 +364,7 @@ export function TimeOffRequestPage() {
                     <RowActions
                       actions={[
                         {
-                          label: 'Ganti pengganti',
+                          label: 'Change substitute',
                           onSelect: () => {
                             setEditingDelegation(row);
                             setDelegationOpen(true);
@@ -374,7 +374,7 @@ export function TimeOffRequestPage() {
                       ]}
                     />
                   ) : (
-                    <span className="font-body text-xs font-medium text-fg-4">Tidak ada aksi</span>
+                    <span className="font-body text-xs font-medium text-fg-4">No action</span>
                   )
                 }
               />
@@ -408,8 +408,8 @@ export function TimeOffRequestPage() {
 
       <ConfirmDialog
         open={Boolean(cancellingDelegation)}
-        title="Batalkan delegasi ini?"
-        description="Hanya boleh selagi delegasi masih menunggu persetujuan."
+        title="Cancel this delegation?"
+        description="Only allowed while the delegation still awaits approval."
         confirmLabel="Cancel delegation"
         loading={cancelDelegation.isPending}
         onOpenChange={(open) => !open && setCancellingDelegation(null)}

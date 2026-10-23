@@ -28,7 +28,7 @@ export function useCreateAdjustment(session: Session) {
   return useMutation({
     mutationFn: (draft: AdjustmentDraft) => balanceService.createAdjustment(session, draft),
     onSuccess: () => {
-      toast('201 — penyesuaian ditulis; saldo berjalan dihitung ulang dari ledger.', 'ok');
+      toast('Adjustment written. The running balance is recalculated from the ledger.', 'ok');
       void queryClient.invalidateQueries({ queryKey: balanceKeys.all });
     },
     onError: (error: Error) => toast(error.message, 'danger'),

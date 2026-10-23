@@ -74,19 +74,19 @@ function swapBusy(assignmentId: string): boolean {
 
 function findShift(id: string): Shift {
   const row = mockShifts.find((item) => item.id === id);
-  if (!row) throw new Error('404 — pola shift tidak ditemukan.');
+  if (!row) throw new Error('404 — Shift pattern not found.');
   return row;
 }
 
 function findAssignment(id: string): ShiftAssignment {
   const row = mockAssignments.find((item) => item.id === id);
-  if (!row) throw new Error('404 — baris roster tidak ditemukan.');
+  if (!row) throw new Error('404 — Roster row not found.');
   return row;
 }
 
 function findSwap(id: string): ShiftSwap {
   const row = mockSwaps.find((item) => item.id === id);
-  if (!row) throw new Error('404 — permintaan tukar tidak ditemukan.');
+  if (!row) throw new Error('404 — Swap request not found.');
   return row;
 }
 
@@ -138,29 +138,29 @@ export const schedulerService = {
       const breakMinutes = Number(draft.breakMinutes);
 
       if (!code || !name || !draft.shiftType) {
-        throw new Error('422 — kode, nama, dan tipe shift wajib diisi.');
+        throw new Error('422 — Shift code, name and type are required.');
       }
       if (draft.shiftType === 'FIXED' && (!draft.startTime || !draft.endTime)) {
-        throw new Error('422 — pola tetap butuh jam mulai dan jam selesai sekaligus.');
+        throw new Error('422 — A fixed pattern needs both a start time and an end time.');
       }
       if (draft.shiftType !== 'FIXED' && (draft.startTime || draft.endTime)) {
-        throw new Error('422 — jam mulai dan selesai harus kosong untuk pola non-tetap.');
+        throw new Error('422 — Start and end times must be empty for a non-fixed pattern.');
       }
       if (!Number.isInteger(breakMinutes) || breakMinutes < 0) {
-        throw new Error('422 — jeda harus bilangan bulat menit, 0 atau lebih.');
+        throw new Error('422 — Break must be a whole number of minutes, 0 or more.');
       }
       if (draft.shiftType === 'ROTATING' && breakMinutes !== 0) {
-        throw new Error('422 — pola siklus harus berjeda 0.');
+        throw new Error('422 — A cycle pattern must have a 0-minute break.');
       }
       if (draft.shiftType === 'ROTATING' && !draft.cycleDef.trim()) {
-        throw new Error('422 — pola siklus butuh definisi siklusnya.');
+        throw new Error('422 — A cycle pattern needs its cycle definition.');
       }
       if (draft.shiftType === 'FLEXIBLE' && !draft.flexBand.trim()) {
-        throw new Error('422 — pola fleksibel butuh definisi band-nya.');
+        throw new Error('422 — A flexible pattern needs its band definition.');
       }
 
       const clash = mockShifts.some((row) => row.isActive && row.shiftCode === code && row.id !== id);
-      if (clash) throw new Error('409 — kode shift itu sudah dipakai pola yang aktif.');
+      if (clash) throw new Error('409 — That shift code is already used by an active pattern.');
 
       const patch = {
         shiftCode: code,
@@ -209,7 +209,7 @@ export const schedulerService = {
       const row = findShift(id);
       const used = mockAssignments.some((item) => item.shiftId === row.id);
       if (used) {
-        throw new Error('409 — pola ini masih dirujuk baris roster; pensiunkan lewat Deactivate.');
+        throw new Error('409 — This pattern is still referenced by roster rows; retire it with Deactivate.');
       }
       mockShifts = mockShifts.filter((item) => item.id !== id);
       return;
@@ -239,18 +239,18 @@ export const schedulerService = {
     if (MOCK) {
       await delay(350);
       if (!draft.employeeId || !draft.workDate) {
-        throw new Error('422 — karyawan dan tanggal kerja dua-duanya wajib diisi.');
+        throw new Error('422 — Employee and work date are both required.');
       }
       if (!draft.isOffDay && !draft.shiftId) {
-        throw new Error('422 — pilih pola shift, atau tandai tanggal itu sebagai hari libur terjadwal.');
+        throw new Error('422 — Choose a shift pattern, or mark the date as a scheduled day off.');
       }
       if (!draft.isOffDay && !findShift(draft.shiftId).isActive) {
-        throw new Error('422 — pola shift itu sudah tidak aktif; pilih pola yang aktif.');
+        throw new Error('422 — That shift pattern is no longer active; choose an active one.');
       }
       const clash = mockAssignments.some(
         (row) => row.employeeId === draft.employeeId && row.workDate === draft.workDate && row.id !== id,
       );
-      if (clash) throw new Error('409 — karyawan itu sudah punya baris roster pada tanggal ini.');
+      if (clash) throw new Error('409 — That employee already has a roster row on this date.');
 
       const patch = {
         workDate: draft.workDate,
@@ -286,7 +286,7 @@ export const schedulerService = {
       await delay(250);
       const row = findAssignment(id);
       if (swapBusy(row.id)) {
-        throw new Error('409 — baris ini bagian dari permintaan tukar yang belum diputuskan.');
+        throw new Error('409 — This row is part of an undecided swap request.');
       }
       mockAssignments = mockAssignments.filter((item) => item.id !== id);
       return;
@@ -320,12 +320,12 @@ export const schedulerService = {
     if (MOCK) {
       await delay(450);
       if (!canBulkAssign(role)) {
-        throw new Error('403 — Assign Massal hanya untuk Super Admin dan HR Manager.');
+        throw new Error('403 — Bulk assign is only for Super Admin and HR Manager.');
       }
-      if (!draft.employeeIds.length) throw new Error('422 — pilih minimal satu karyawan.');
-      if (!draft.from || !draft.to) throw new Error('422 — kedua tanggal rentang wajib diisi.');
-      if (draft.to < draft.from) throw new Error('422 — akhir rentang tidak boleh mendahului awalnya.');
-      if (!draft.shiftId && !draft.isOffDay) throw new Error('422 — pilih pola shift yang akan diterapkan.');
+      if (!draft.employeeIds.length) throw new Error('422 — Choose at least one employee.');
+      if (!draft.from || !draft.to) throw new Error('422 — Both range dates are required.');
+      if (draft.to < draft.from) throw new Error("422 — The end of the range can't be earlier than its start.");
+      if (!draft.shiftId && !draft.isOffDay) throw new Error('422 — Choose the shift pattern to apply.');
       const shiftId = draft.isOffDay ? null : draft.shiftId;
       const isOffDay = Boolean(draft.isOffDay);
 
@@ -388,18 +388,18 @@ export const schedulerService = {
     if (MOCK) {
       await delay(350);
       if (!requesterAssignmentId || !counterpartAssignmentId) {
-        throw new Error('422 — kedua baris roster wajib dipilih.');
+        throw new Error('422 — Both roster rows are required.');
       }
       if (requesterAssignmentId === counterpartAssignmentId) {
-        throw new Error('422 — pasangannya harus baris yang berbeda.');
+        throw new Error('422 — The pair must be different rows.');
       }
       const mine = findAssignment(requesterAssignmentId);
       const other = findAssignment(counterpartAssignmentId);
       if (mine.workDate !== other.workDate) {
-        throw new Error('422 — tukar shift hanya sah pada tanggal kerja yang sama.');
+        throw new Error('422 — A shift swap is only valid on the same work date.');
       }
       if (swapBusy(mine.id) || swapBusy(other.id)) {
-        throw new Error('409 — salah satu baris masih terikat permintaan tukar yang belum diputuskan.');
+        throw new Error('409 — One of the rows is still tied to an undecided swap request.');
       }
 
       const row: ShiftSwap = {
@@ -425,11 +425,11 @@ export const schedulerService = {
       await delay(400);
       const row = findSwap(id);
       if (row.swapStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — hanya permintaan yang masih menunggu keputusan yang bisa diputuskan.');
+        throw new Error('422 — Only a request awaiting a decision can be decided.');
       }
       const requester = findAssignment(row.requesterAssignmentId);
       if (requester.employeeId === ME) {
-        throw new Error('403 — pemisahan tugas: pengaju tidak pernah memutuskan tukarnya sendiri.');
+        throw new Error('403 — Separation of duties: the requester never decides their own swap.');
       }
       // K9 (UIC-TIME §10.3.4): keputusan diterima; roster bergerak saat workflow selesai.
       void kind;
@@ -472,10 +472,10 @@ export const schedulerService = {
       const row = findSwap(id);
       const requester = findAssignment(row.requesterAssignmentId);
       if (requester.employeeId !== ME) {
-        throw new Error('403 — hanya pengaju yang bisa menarik permintaannya sendiri.');
+        throw new Error('403 — Only the requester can withdraw their own request.');
       }
       if (row.swapStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — hanya permintaan yang masih menunggu keputusan yang bisa ditarik.');
+        throw new Error('422 — Only a request awaiting a decision can be withdrawn.');
       }
       row.swapStatus = 'CANCELLED';
       return { ...row };

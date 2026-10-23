@@ -59,7 +59,7 @@ export function Pagination({
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          aria-label="Halaman sebelumnya"
+          aria-label="Previous page"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           className="inline-flex size-8 items-center justify-center rounded-md text-fg-2 transition-colors duration-200 ease-standard enabled:hover:bg-mist enabled:hover:text-secondary-700 disabled:cursor-not-allowed disabled:text-fg-4"
@@ -72,7 +72,7 @@ export function Pagination({
         <span className="mx-1.5 font-body text-[13px] font-medium leading-none text-fg-3">of {totalPages}</span>
         <button
           type="button"
-          aria-label="Halaman berikutnya"
+          aria-label="Next page"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
           className="inline-flex size-8 items-center justify-center rounded-md text-fg-2 transition-colors duration-200 ease-standard enabled:hover:bg-mist enabled:hover:text-secondary-700 disabled:cursor-not-allowed disabled:text-fg-4"

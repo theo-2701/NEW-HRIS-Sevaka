@@ -27,7 +27,7 @@ export function SelectField({
   label,
   hint,
   required,
-  placeholder = 'Pilih salah satu',
+  placeholder = 'Select one',
   options,
   disabled,
   containerClassName,

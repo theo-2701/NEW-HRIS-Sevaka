@@ -36,7 +36,7 @@ export function summarizeFilter(value: LedgerFilterState | BalanceFilterState): 
   }
   if (value.leaveTypeId !== 'ALL') parts.push(leaveTypeOf(value.leaveTypeId)?.name ?? value.leaveTypeId);
   if (value.periodYear !== 'ALL') parts.push(value.periodYear);
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }
 
 export function countActive(value: LedgerFilterState | BalanceFilterState): number {

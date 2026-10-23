@@ -47,7 +47,7 @@ export function EssTimeOffTakenPage() {
         { label: 'Time Off Taken' },
       ]}
       title="Time Off Taken"
-      description="Cuti yang sudah terpakai dan riwayat mutasi saldo Anda."
+      description="Leave you have used and the history of your balance mutations."
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
@@ -55,32 +55,32 @@ export function EssTimeOffTakenPage() {
           value={tab}
           onChange={setTab}
           items={[
-            { value: 'taken', label: 'Cuti terpakai', count: taken.length },
-            { value: 'ledger', label: 'Riwayat saldo', count: rows.length },
+            { value: 'taken', label: 'Leave taken', count: taken.length },
+            { value: 'ledger', label: 'Balance history', count: rows.length },
           ]}
         />
 
         {tab === 'taken' && (
           <Card>
             <CardHead
-              title="Cuti terpakai"
-              sub={`${taken.length} pengajuan disetujui · total ${usedDays} hari`}
+              title="Leave taken"
+              sub={`${taken.length} approved requests · ${usedDays} days in total`}
             />
             <DataTable
               rows={taken}
               rowKey={(row) => row.id}
               loading={requests.isLoading}
-              empty="Belum ada cuti yang disetujui."
+              empty="No approved leave yet."
               columns={[
                 {
                   key: 'type',
-                  header: 'Jenis',
+                  header: 'Type',
                   strong: true,
                   render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
                 },
                 {
                   key: 'range',
-                  header: 'Tanggal',
+                  header: 'Date',
                   nowrap: true,
                   render: (row) =>
                     row.startDate === row.endDate
@@ -91,7 +91,7 @@ export function EssTimeOffTakenPage() {
                   key: 'days',
                   header: 'Jumlah',
                   align: 'right',
-                  render: (row) => <span className="tabular-nums">{row.totalDays} hari</span>,
+                  render: (row) => <span className="tabular-nums">{row.totalDays} days</span>,
                 },
                 {
                   key: 'status',
@@ -108,35 +108,35 @@ export function EssTimeOffTakenPage() {
         {tab === 'ledger' && (
           <Card>
             <CardHead
-              title="Riwayat mutasi saldo"
-              sub="Setiap baris adalah satu peristiwa; baris lama tidak pernah diubah, koreksi selalu ditulis sebagai baris baru"
+              title="Balance mutation history"
+              sub="Each row is one event; old rows are never changed, corrections are always written as new rows"
             />
             <div>
               <DataTable<LedgerEntry>
                 rows={paged.rows}
                 rowKey={(row) => row.id}
                 loading={ledger.isLoading}
-                empty="Belum ada mutasi saldo."
+                empty="No balance mutation yet."
                 columns={[
-                  { key: 'date', header: 'Tanggal mutasi', strong: true, nowrap: true, render: (row) => formatDate(row.mutationDate) },
+                  { key: 'date', header: 'Mutation date', strong: true, nowrap: true, render: (row) => formatDate(row.mutationDate) },
                   {
                     key: 'type',
-                    header: 'Jenis cuti',
+                    header: 'Leave type',
                     render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
                   },
                   {
                     key: 'delta',
-                    header: 'Perubahan',
+                    header: 'Change',
                     align: 'right',
                     render: (row) => (
                       <span className={row.deltaDays < 0 ? 'tabular-nums text-error-600' : 'tabular-nums text-success-800'}>
                         {row.deltaDays > 0 ? '+' : ''}
-                        {row.deltaDays} hari
+                        {row.deltaDays} days
                       </span>
                     ),
                   },
                   { key: 'source', header: 'Sumber', render: (row) => MUTATION_SOURCE_LABEL[row.source] },
-                  { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.reason || '—' },
+                  { key: 'reason', header: 'Reason', muted: true, render: (row) => row.reason || '—' },
                 ]}
               />
               <Pagination

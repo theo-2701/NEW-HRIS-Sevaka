@@ -166,7 +166,7 @@ export function OvertimePage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Overtime' }]}
         title="Overtime"
-        description="Pengajuan lembur dan ringkasan jam lembur harian. Jam terbayar adalah yang lebih kecil antara jam aktual dan jam yang disetujui."
+        description="Overtime requests and daily overtime summary. Paid hours are the smaller of actual hours and approved hours."
         actions={filer ? <Button onClick={() => openForm(null)}>Request overtime</Button> : undefined}
       >
         <div className="flex flex-col gap-5">
@@ -313,7 +313,7 @@ export function OvertimePage() {
 
           {tab === 'daily' && (
             <Card>
-              <CardHead title="Daily summary" sub="Jam terbayar per hari" />
+              <CardHead title="Daily summary" sub="Paid hours per day" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -394,7 +394,7 @@ export function OvertimePage() {
       <FilterModal
         open={requestFilterOpen}
         title="Filter requests"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setRequestFilterOpen}
         onReset={() => {
           setRequestFilter(EMPTY_REQUEST_FILTER);
@@ -413,7 +413,7 @@ export function OvertimePage() {
       <FilterModal
         open={dailyFilterOpen}
         title="Filter daily summary"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setDailyFilterOpen}
         onReset={() => {
           setDailyFilter(EMPTY_DAILY_FILTER);

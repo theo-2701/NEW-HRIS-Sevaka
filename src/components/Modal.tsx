@@ -48,7 +48,7 @@ export function Modal({
             )}
           </div>
           <DialogClose
-            aria-label="Tutup"
+            aria-label="Close"
             className="ml-auto inline-flex size-[34px] flex-shrink-0 items-center justify-center rounded-md text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1"
           >
             <X className="size-5" />

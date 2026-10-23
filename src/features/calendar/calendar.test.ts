@@ -173,7 +173,7 @@ describe('Work calendar', () => {
   it('pola company aktif terakhir tidak bisa diakhiri maupun dihapus', async () => {
     await expect(
       calendarService.saveWorkCalendar({ ...patternDraft, scopeLevel: 'COMPANY', scopeRef: '', effectiveUntil: '2027-01-01' }, 'wc-1'),
-    ).rejects.toThrow(/terakhir/);
+    ).rejects.toThrow(/last active/);
     await expect(calendarService.deleteWorkCalendar('wc-1')).rejects.toThrow(/422/);
   });
 });
@@ -206,7 +206,7 @@ describe('Kalender efektif — FC-01', () => {
     // 27 Juli 2026: Rina punya roster shift pagi.
     const shift = resolveDay(HOLIDAYS, WORK_CALENDARS, 'emp-rina', '2026-07-27');
     expect(shift.source).toBe('ROSTER');
-    expect(shift.label).toBe('Shift Pagi');
+    expect(shift.label).toBe('Morning Shift');
 
     // 17 Agustus 2026: tanpa roster, libur nasional menang.
     const holiday = resolveDay(HOLIDAYS, WORK_CALENDARS, 'emp-rina', '2026-08-17');

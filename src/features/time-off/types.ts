@@ -49,22 +49,22 @@ export type RejectReasonCode =
   | 'SUBJECT_DATA_ERASED';
 
 export const REJECT_REASON_LABEL: Record<RejectReasonCode, string> = {
-  INCOMPLETE_PROOF: 'Bukti pendukung tidak lengkap',
-  LATE_SUBMISSION: 'Pengajuan terlambat',
-  POLICY_MISMATCH: 'Tidak sesuai kebijakan',
-  DATA_MISMATCH: 'Data tidak sesuai',
-  DUPLICATE_CLAIM: 'Pengajuan ganda',
-  EXCEEDS_QUOTA: 'Melebihi kuota',
-  UNAUTHORIZED_CLINIC: 'Klinik penerbit surat tidak diakui',
-  INCONSISTENT_HISTORY: 'Riwayat tidak konsisten',
-  WRONG_LEAVE_TYPE: 'Jenis cuti keliru',
-  RETROACTIVE_LIMIT: 'Melewati batas pengajuan mundur',
-  MISSING_APPROVAL_STEP: 'Tahap persetujuan belum lengkap',
+  INCOMPLETE_PROOF: 'Incomplete supporting evidence',
+  LATE_SUBMISSION: 'Late submission',
+  POLICY_MISMATCH: 'Does not match policy',
+  DATA_MISMATCH: 'Data mismatch',
+  DUPLICATE_CLAIM: 'Duplicate request',
+  EXCEEDS_QUOTA: 'Exceeds quota',
+  UNAUTHORIZED_CLINIC: 'Issuing clinic not recognised',
+  INCONSISTENT_HISTORY: 'Inconsistent history',
+  WRONG_LEAVE_TYPE: 'Wrong leave type',
+  RETROACTIVE_LIMIT: 'Beyond the retroactive limit',
+  MISSING_APPROVAL_STEP: 'Approval step incomplete',
   SUSPECTED_FRAUD: 'Dugaan kecurangan',
-  ALREADY_ON_UNPAID: 'Sudah dalam cuti tanpa upah',
-  EMPLOYMENT_STATUS_INELIGIBLE: 'Status kepegawaian tidak memenuhi syarat',
-  SYSTEM_ERROR_RESUBMIT: 'Kesalahan sistem — ajukan ulang',
-  SUBJECT_DATA_ERASED: 'Alasan asli dihapus (penghapusan data subjek)',
+  ALREADY_ON_UNPAID: 'Already on unpaid leave',
+  EMPLOYMENT_STATUS_INELIGIBLE: 'Employment status not eligible',
+  SYSTEM_ERROR_RESUBMIT: 'System error — resubmit',
+  SUBJECT_DATA_ERASED: 'Original reason erased (data subject erasure)',
 };
 
 /** Pilihan alasan di form penolakan — 15 nilai; `SUBJECT_DATA_ERASED` bukan pilihan approver. */
@@ -326,14 +326,14 @@ export interface LedgerFilter extends BalanceFilter {
 export type CarryOverPolicy = 'FORFEIT' | 'CARRY_CAPPED' | 'CARRY_FULL';
 
 export const CARRY_OVER_LABEL: Record<CarryOverPolicy, string> = {
-  FORFEIT: 'Forfeit — sisanya hangus di akhir tahun',
-  CARRY_CAPPED: 'Carry capped — sebagian hari digulirkan',
-  CARRY_FULL: 'Carry full — seluruh sisa digulirkan',
+  FORFEIT: 'Forfeit — the remainder expires at year end',
+  CARRY_CAPPED: 'Carry capped — some days carry over',
+  CARRY_FULL: 'Carry full — all remaining days carry over',
 };
 
 export const BLACKOUT_MODE_LABEL: Record<'HARD' | 'SOFT', string> = {
-  HARD: 'Machine-rejected — ditolak di gerbang submit, baris tidak pernah dibuat',
-  SOFT: 'Extra approval — pengajuan lewat, tapi harus melewati lapis tambahan',
+  HARD: 'Machine-rejected — refused at the submit gate, the row is never created',
+  SOFT: 'Extra approval — the request passes but must go through an extra layer',
 };
 
 export interface AccrualPolicy {

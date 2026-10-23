@@ -27,10 +27,10 @@ import type {
 /** `reject_reason` wajib dari enum 15 nilai; `reject_note` opsional ≤500 (UIC §3.1.6/§3.1.7). */
 function assertRejectInput(reject: RejectInput | undefined) {
   if (!reject?.reason || !REJECT_REASON_OPTIONS.includes(reject.reason)) {
-    throw new Error('422 — alasan penolakan wajib dipilih dari daftar.');
+    throw new Error('422 — A rejection reason must be chosen from the list.');
   }
   if (reject.note.trim().length > REJECT_NOTE_MAX) {
-    throw new Error(`422 — catatan penolakan maksimal ${REJECT_NOTE_MAX} karakter.`);
+    throw new Error(`422 — The rejection note can be at most ${REJECT_NOTE_MAX} characters.`);
   }
 }
 
@@ -62,7 +62,7 @@ let mockAccess: MedicalAccessLog[] = MEDICAL_ACCESS.map((row) => ({ ...row }));
 
 function findRequest(id: string): LeaveRequest {
   const row = mockRequests.find((item) => item.id === id);
-  if (!row) throw new Error('Pengajuan cuti tidak ditemukan.');
+  if (!row) throw new Error('Leave request not found.');
   return row;
 }
 
@@ -83,7 +83,7 @@ function writeLedger(row: LeaveRequest, source: 'LEAVE_TAKEN' | 'LEAVE_REVERSED'
     deltaDays: source === 'LEAVE_TAKEN' ? -row.totalDays : row.totalDays,
     source,
     refId: row.id,
-    reason: source === 'LEAVE_TAKEN' ? row.reason || 'Cuti disetujui' : 'Pengembalian saldo atas pengajuan yang dibatalkan',
+    reason: source === 'LEAVE_TAKEN' ? row.reason || 'Leave approved' : 'Balance restored for a cancelled request',
     createdAt: now.toISOString(),
     createdBy: actor,
   });
@@ -188,9 +188,9 @@ export const timeOffService = {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
-      if (row.employeeId !== session.employeeId) throw new Error('404 — pengajuan tidak ditemukan atau di luar akses Anda.');
+      if (row.employeeId !== session.employeeId) throw new Error('404 — The request was not found or is outside your access.');
       if (row.status !== 'PENDING_APPROVAL') {
-        throw new Error('422 — pengajuan hanya bisa diubah selagi menunggu persetujuan.');
+        throw new Error('422 — A request can only be edited while it awaits approval.');
       }
       const gate = evaluateGates({
         employeeId: session.employeeId,
@@ -234,10 +234,10 @@ export const timeOffService = {
       await delay();
       const row = findRequest(id);
       if (row.employeeId === session.employeeId) {
-        throw new Error('403 — pemisahan tugas: Anda tidak bisa memutuskan pengajuan sendiri.');
+        throw new Error("403 — Separation of duties: you can't decide your own request.");
       }
-      if (!isApprover(session)) throw new Error('403 — Anda tidak memegang peran approver.');
-      if (row.status !== 'PENDING_APPROVAL') throw new Error('422 — pengajuan ini sudah tidak menunggu keputusan.');
+      if (!isApprover(session)) throw new Error("403 — You don't hold an approver role.");
+      if (row.status !== 'PENDING_APPROVAL') throw new Error('422 — This request is no longer waiting for a decision.');
       if (decision === 'REJECTED') assertRejectInput(input.reject);
       void now;
       return acknowledge(row);
@@ -286,12 +286,12 @@ export const timeOffService = {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
-      if (!isApprover(session)) throw new Error('403 — Anda tidak memegang peran approver.');
+      if (!isApprover(session)) throw new Error("403 — You don't hold an approver role.");
       if (row.employeeId === session.employeeId) {
-        throw new Error('403 — pemisahan tugas: Anda tidak bisa memutuskan pengajuan sendiri.');
+        throw new Error("403 — Separation of duties: you can't decide your own request.");
       }
       if (!sickWindowOpen(row, now)) {
-        throw new Error('422 — jendela tolak sudah tertutup; cuti sakit ini permanen.');
+        throw new Error('422 — The rejection window has closed; this sick leave is final.');
       }
       assertRejectInput(reject);
 
@@ -315,14 +315,14 @@ export const timeOffService = {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
-      if (row.employeeId !== session.employeeId) throw new Error('404 — pengajuan tidak ditemukan atau di luar akses Anda.');
+      if (row.employeeId !== session.employeeId) throw new Error('404 — The request was not found or is outside your access.');
 
       const todayIso = now.toISOString().slice(0, 10);
       const withdrawable =
         row.status === 'PENDING_APPROVAL' ||
         row.status === 'AUTO_APPROVED' ||
         (row.status === 'APPROVED' && row.startDate > todayIso);
-      if (!withdrawable) throw new Error('422 — pengajuan ini sudah tidak bisa ditarik.');
+      if (!withdrawable) throw new Error('422 — This request can no longer be withdrawn.');
 
       const wasEffective = row.status === 'APPROVED' || row.status === 'AUTO_APPROVED';
       row.status = 'CANCELLED';
@@ -352,11 +352,11 @@ export const timeOffService = {
       await delay();
       const row = findRequest(id);
       if (!canOpenMedical(session)) {
-        throw new Error('403 — hanya HR Manager (health data officer) yang boleh membuka surat dokter.');
+        throw new Error("403 — Only the HR Manager (health data officer) can open doctor's notes.");
       }
-      if (!row.hasDoctorNote) throw new Error('404 — pengajuan ini tidak punya surat dokter, atau suratnya di luar akses Anda.');
-      if (row.doctorNotePurged) throw new Error('410 — surat dokter sudah dimusnahkan sesuai masa simpan.');
-      if (!purpose) throw new Error('422 — tujuan akses wajib dipilih.');
+      if (!row.hasDoctorNote) throw new Error("404 — This request has no doctor's note, or the note is outside your access.");
+      if (row.doctorNotePurged) throw new Error("410 — The doctor's note was destroyed per the retention period.");
+      if (!purpose) throw new Error('422 — An access purpose is required.');
 
       const log: MedicalAccessLog = {
         id: `access-${newId().slice(0, 6)}`,
@@ -384,31 +384,31 @@ export const timeOffService = {
     if (MOCK) {
       await delay();
       if (!isApprover(session)) {
-        throw new Error('403 — Anda tidak memegang peran approver, jadi tidak ada task yang bisa didelegasikan.');
+        throw new Error("403 — You don't hold an approver role, so there are no tasks to delegate.");
       }
       if (session.employeeId === payload.substituteId) {
-        throw new Error('422 — pengganti harus orang lain.');
+        throw new Error('422 — The substitute must be someone else.');
       }
 
       if (payload.id) {
         const row = mockDelegations.find((item) => item.id === payload.id);
-        if (!row) throw new Error('Delegasi tidak ditemukan.');
+        if (!row) throw new Error('Delegation not found.');
         if (row.status !== 'PENDING_APPROVAL') {
-          throw new Error('422 — pengganti hanya bisa diganti selagi delegasi masih menunggu persetujuan.');
+          throw new Error('422 — The substitute can only be changed while the delegation awaits approval.');
         }
         row.substituteId = payload.substituteId;
         return;
       }
 
       const leave = findRequest(payload.leaveRequestId);
-      if (leave.employeeId !== session.employeeId) throw new Error('404 — cuti tidak ditemukan atau di luar akses Anda.');
-      if (!LIVE_STATUS.includes(leave.status)) throw new Error('409 — cuti itu sudah tidak hidup.');
+      if (leave.employeeId !== session.employeeId) throw new Error('404 — The leave was not found or is outside your access.');
+      if (!LIVE_STATUS.includes(leave.status)) throw new Error('409 — That leave is no longer live.');
       const duplicate = mockDelegations.some(
         (row) =>
           row.leaveRequestId === payload.leaveRequestId &&
           (row.status === 'PENDING_APPROVAL' || row.status === 'APPROVED'),
       );
-      if (duplicate) throw new Error('409 — cuti itu sudah punya delegasi yang hidup.');
+      if (duplicate) throw new Error('409 — That leave already has a live delegation.');
 
       mockDelegations = [
         {
@@ -435,9 +435,9 @@ export const timeOffService = {
     if (MOCK) {
       await delay(200);
       const row = mockDelegations.find((item) => item.id === id);
-      if (!row) throw new Error('Delegasi tidak ditemukan.');
+      if (!row) throw new Error('Delegation not found.');
       if (row.status !== 'PENDING_APPROVAL') {
-        throw new Error('422 — delegasi hanya bisa dibatalkan selagi masih menunggu persetujuan.');
+        throw new Error('422 — A delegation can only be cancelled while it awaits approval.');
       }
       row.status = 'CANCELLED';
       return;

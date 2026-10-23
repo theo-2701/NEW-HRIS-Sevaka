@@ -119,7 +119,7 @@ export function TimeOffSettingsPage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Time Off' }, { label: 'Settings' }]}
         title="Time Off Settings"
-        description="Tiga aturan yang dipakai menakar sebuah pengajuan cuti: katalog jenis cuti, kebijakan akrual yang memberi hak bulan demi bulan, dan periode blackout yang menahan pengajuan. Jenis cuti statutory disemai sistem dan kebal terhadap kedua mode blackout."
+        description="Three rules weigh a leave request: the leave type catalogue, the accrual policy that grants entitlement month by month, and blackout periods that hold requests. Statutory leave types are seeded by the system and immune to both blackout modes."
         actions={action}
       >
         <div className="flex flex-col gap-5">
@@ -135,14 +135,14 @@ export function TimeOffSettingsPage() {
 
           {tab === 'types' && (
             <Card>
-              <CardHead title="Leave type" sub="Katalog yang dibaca form pengajuan" />
+              <CardHead title="Leave type" sub="The catalogue read by the request form" />
 
               <div className="flex flex-col">
                 <DataTable<LeaveType>
                   rows={pagedTypes.rows}
                   rowKey={(row) => row.id}
                   loading={typesLoading}
-                  empty="Belum ada jenis cuti."
+                  empty="No leave type yet."
                   columns={[
                     { key: 'code', header: 'Code', strong: true, nowrap: true, render: (row) => row.code },
                     { key: 'name', header: 'Leave name', render: (row) => row.name },
@@ -151,7 +151,7 @@ export function TimeOffSettingsPage() {
                       key: 'advance',
                       header: 'Min advance',
                       align: 'right',
-                      render: (row) => `${row.minAdvanceDays} hari`,
+                      render: (row) => `${row.minAdvanceDays} days`,
                     },
                     {
                       key: 'origin',
@@ -199,14 +199,14 @@ export function TimeOffSettingsPage() {
 
           {tab === 'accrual' && (
             <Card>
-              <CardHead title="Accrual policy" sub="Satu kebijakan hidup per jenis cuti × jenis kepegawaian" />
+              <CardHead title="Accrual policy" sub="One live policy per leave type × employment type" />
 
               <div className="flex flex-col">
                 <DataTable<AccrualPolicy>
                   rows={pagedPolicies.rows}
                   rowKey={(row) => row.id}
                   loading={policiesLoading}
-                  empty="Belum ada kebijakan akrual."
+                  empty="No accrual policy yet."
                   columns={[
                     { key: 'type', header: 'Leave type', strong: true, render: (row) => typeName(row.leaveTypeId) },
                     { key: 'employment', header: 'Employment type', render: (row) => row.employmentType },
@@ -227,7 +227,7 @@ export function TimeOffSettingsPage() {
                       header: 'Balance cap',
                       align: 'right',
                       muted: true,
-                      render: (row) => (row.maxBalanceDays === null ? 'Tanpa plafon' : row.maxBalanceDays),
+                      render: (row) => (row.maxBalanceDays === null ? 'No cap' : row.maxBalanceDays),
                     },
                     {
                       key: 'carry',
@@ -235,7 +235,7 @@ export function TimeOffSettingsPage() {
                       render: (row) => (
                         <span className="font-body text-[13px] font-medium text-fg-2">
                           {CARRY_OVER_LABEL[row.carryOverPolicy].split(' — ')[0]}
-                          {row.carryOverMaxDays !== null && ` · ${row.carryOverMaxDays} hari`}
+                          {row.carryOverMaxDays !== null && ` · ${row.carryOverMaxDays} days`}
                           {row.carryOverExpiry && ` · s/d ${row.carryOverExpiry}`}
                         </span>
                       ),
@@ -252,12 +252,12 @@ export function TimeOffSettingsPage() {
                       header: 'Effective until',
                       muted: true,
                       nowrap: true,
-                      render: (row) => (row.effectiveUntil ? formatDate(row.effectiveUntil) : 'Masih berjalan'),
+                      render: (row) => (row.effectiveUntil ? formatDate(row.effectiveUntil) : 'Still running'),
                     },
                   ]}
                   actions={(row) =>
                     row.effectiveUntil ? (
-                      <span className="font-body text-xs font-medium text-fg-4">Sudah berakhir</span>
+                      <span className="font-body text-xs font-medium text-fg-4">Ended</span>
                     ) : (
                       <RowButton onClick={() => setEndingPolicy(row)}>End policy</RowButton>
                     )
@@ -278,14 +278,14 @@ export function TimeOffSettingsPage() {
 
           {tab === 'blackout' && (
             <Card>
-              <CardHead title="Blackout period" sub="Dibaca gerbang submit saat pengajuan masuk" />
+              <CardHead title="Blackout period" sub="Read by the submit gate when a request comes in" />
 
               <div className="flex flex-col">
                 <DataTable<Blackout>
                   rows={pagedBlackouts.rows}
                   rowKey={(row) => row.id}
                   loading={blackoutsLoading}
-                  empty="Belum ada periode blackout."
+                  empty="No blackout period yet."
                   columns={[
                     { key: 'name', header: 'Period name', strong: true, render: (row) => row.name },
                     {
@@ -361,8 +361,8 @@ export function TimeOffSettingsPage() {
 
       <ConfirmDialog
         open={Boolean(deletingType)}
-        title="Hapus jenis cuti ini?"
-        description={`${deletingType?.name ?? ''} akan dihapus. Jenis statutory dan yang masih dipakai tidak bisa dihapus.`}
+        title="Delete this leave type?"
+        description={`${deletingType?.name ?? ''} will be deleted. Statutory types and types still in use can't be deleted.`}
         loading={deleteType.isPending}
         onOpenChange={(open) => !open && setDeletingType(null)}
         onConfirm={() =>
@@ -372,8 +372,8 @@ export function TimeOffSettingsPage() {
 
       <ConfirmDialog
         open={Boolean(deletingBlackout)}
-        title="Hapus periode blackout ini?"
-        description={`${deletingBlackout?.name ?? ''} tidak lagi berlaku untuk pengajuan cuti.`}
+        title="Delete this blackout period?"
+        description={`${deletingBlackout?.name ?? ''} will no longer apply to leave requests.`}
         loading={deleteBlackout.isPending}
         onOpenChange={(open) => !open && setDeletingBlackout(null)}
         onConfirm={() =>

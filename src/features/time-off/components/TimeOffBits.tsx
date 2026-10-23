@@ -35,7 +35,7 @@ export function DelegationStatusBadge({ status }: { status: DelegationStatus }) 
 
 /** Penanda lapis persetujuan tambahan — mengangkat, bukan memblokir. */
 export function ExtraLayerTag({ reason }: { reason: ExtraApprovalReason | null }) {
-  if (!reason) return <span className="font-body text-xs font-medium text-fg-4">Tidak terangkat</span>;
+  if (!reason) return <span className="font-body text-xs font-medium text-fg-4">Not raised</span>;
 
   return (
     <span className="inline-flex h-6 items-center rounded-pill bg-warning-100 px-2.5 font-body text-[10.5px] font-bold uppercase tracking-[0.04em] text-warning-800">
@@ -116,11 +116,11 @@ export function GatePreview({
   return (
     <section className="flex flex-col gap-2 rounded-md border border-border-1 bg-mist p-4">
       <h4 className="m-0 font-body text-xs font-bold uppercase tracking-[0.05em] text-fg-3">
-        Ringkasan pengajuan
+        Request summary
       </h4>
       <div className="flex items-baseline gap-2">
         <span className="font-display text-xl font-bold text-fg-1">{totalDays}</span>
-        <span className="font-body text-xs font-medium text-fg-3">hari kerja bersih</span>
+        <span className="font-body text-xs font-medium text-fg-3">net working days</span>
       </div>
 
       {errors.length > 0 && (
@@ -135,14 +135,14 @@ export function GatePreview({
 
       {errors.length === 0 && extra.length > 0 && (
         <p className="m-0 font-body text-xs font-medium leading-[1.45] text-warning-800">
-          Pengajuan ini butuh persetujuan tambahan:{' '}
+          This request needs extra approval:{' '}
           {extra.map((reason) => EXTRA_REASON_LABEL[reason]).join(', ')}.
         </p>
       )}
 
       {errors.length === 0 && extra.length === 0 && totalDays > 0 && (
         <p className="m-0 font-body text-xs font-medium text-fg-3">
-          Keempat gerbang lolos — pengajuan bisa dikirim.
+          All four gates passed — the request can be submitted.
         </p>
       )}
     </section>

@@ -51,7 +51,7 @@ export function summarizeScheduleFilter(value: ScheduleFilterState): string {
   const parts: string[] = [];
   if (value.oncallStatus !== 'ALL') parts.push(ONCALL_STATUS_LABEL[value.oncallStatus as OncallStatus]);
   if (value.from || value.to) parts.push(rangeLabel(value.from, value.to));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }
 
 export function summarizeActivityFilter(value: ActivityFilterState, windowLabel: (id: string) => string): string {
@@ -62,5 +62,5 @@ export function summarizeActivityFilter(value: ActivityFilterState, windowLabel:
     parts.push(OVERTIME_CATEGORY_LABEL[value.overtimeCategory as OvertimeCategory]);
   }
   if (value.from || value.to) parts.push(rangeLabel(value.from, value.to));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }

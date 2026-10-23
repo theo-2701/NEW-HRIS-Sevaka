@@ -50,7 +50,7 @@ export function HolidayFilterFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label>Tanggal</Label>
+        <Label>Date</Label>
         <DateRangePicker
           value={{ from: value.from, to: value.to }}
           onChange={(range) => onChange({ ...value, ...range })}

@@ -176,7 +176,7 @@ export function RemoveRowButton({
   return (
     <button
       type="button"
-      aria-label="Hapus baris"
+      aria-label="Delete row"
       className={cn(
         'inline-flex size-8 items-center justify-center rounded-md bg-transparent text-silver transition-colors duration-200 ease-standard hover:bg-error-50 hover:text-error-600 [&_svg]:size-4',
         className,

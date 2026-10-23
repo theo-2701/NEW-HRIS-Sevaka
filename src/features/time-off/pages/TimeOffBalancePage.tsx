@@ -109,7 +109,7 @@ export function TimeOffBalancePage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Time Off Balance' }]}
         title="Time Off Balance"
-        description="Saldo tidak pernah tersimpan sebagai angka yang diketik seseorang — ia jumlah setiap mutasi di ledger bawah. Grid-nya read-only dua arah; satu-satunya jalur bertangan manusia adalah HR adjustment, dan itu pun create-only."
+        description="A balance is never stored as a number someone typed — it is the sum of every mutation in the ledger below. The grid is read-only both ways; the only human path is HR adjustment, and even that is create-only."
         actions={<Button onClick={() => setAdjusting(true)}>New HR adjustment</Button>}
       >
         <div className="flex flex-col gap-5">
@@ -124,7 +124,7 @@ export function TimeOffBalancePage() {
 
           {tab === 'balances' && (
             <Card>
-              <CardHead title="Balances" sub="Dijumlahkan dari ledger, bukan disimpan" />
+              <CardHead title="Balances" sub="Summed from the ledger, not stored" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -136,7 +136,7 @@ export function TimeOffBalancePage() {
                   rows={pagedBalances.rows}
                   rowKey={(row) => `${row.employeeId}-${row.leaveTypeId}-${row.periodYear}`}
                   loading={balancesLoading}
-                  empty="Tidak ada baris saldo yang cocok dengan filter ini."
+                  empty="No balance row matches this filter."
                   columns={[
                     {
                       key: 'employee',
@@ -184,7 +184,7 @@ export function TimeOffBalancePage() {
 
           {tab === 'ledger' && (
             <Card>
-              <CardHead title="Mutation ledger" sub="Append-only — tidak ada ubah atau hapus" />
+              <CardHead title="Mutation ledger" sub="Append-only — no edit or delete" />
 
               <div className="flex flex-col">
                 <TableToolbar
@@ -196,7 +196,7 @@ export function TimeOffBalancePage() {
                   rows={pagedLedger.rows}
                   rowKey={(row) => row.id}
                   loading={ledgerLoading}
-                  empty="Tidak ada entri ledger yang cocok dengan filter ini."
+                  empty="No ledger entry matches this filter."
                   columns={[
                     {
                       key: 'date',
@@ -231,7 +231,7 @@ export function TimeOffBalancePage() {
                       key: 'reason',
                       header: 'Reason',
                       muted: true,
-                      render: (row) => row.reason || 'Accrual otomatis — tanpa alasan',
+                      render: (row) => row.reason || 'Automatic accrual — no reason',
                     },
                   ]}
                 />
@@ -253,7 +253,7 @@ export function TimeOffBalancePage() {
       <FilterModal
         open={balanceFilterOpen}
         title="Filter balances"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setBalanceFilterOpen}
         onReset={() => {
           setBalanceFilter(EMPTY_BALANCE_FILTER);
@@ -273,7 +273,7 @@ export function TimeOffBalancePage() {
       <FilterModal
         open={ledgerFilterOpen}
         title="Filter ledger"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setLedgerFilterOpen}
         onReset={() => {
           setLedgerFilter(EMPTY_LEDGER_FILTER);
@@ -296,7 +296,7 @@ export function TimeOffBalancePage() {
         open={Boolean(detail)}
         onOpenChange={(open) => !open && setDetail(null)}
         title="Leave balance detail"
-        description="Read-only — layar ini tidak mengubah apa pun."
+        description="Read-only — this screen doesn't change anything."
         footer={
           <Button variant="secondary" onClick={() => setDetail(null)}>
             Close
@@ -306,22 +306,20 @@ export function TimeOffBalancePage() {
         {detail && (
           <div className="flex flex-col gap-4">
             <KeyValueList>
-              <KeyValueRow label="Karyawan">{employeeName(detail.employeeId)}</KeyValueRow>
-              <KeyValueRow label="Jenis cuti">{leaveTypeOf(detail.leaveTypeId)?.name}</KeyValueRow>
-              <KeyValueRow label="Tahun hak">{detail.periodYear}</KeyValueRow>
-              <KeyValueRow label="Saldo berjalan">
-                <DayNumber value={detail.balanceDays} /> hari
+              <KeyValueRow label="Employee">{employeeName(detail.employeeId)}</KeyValueRow>
+              <KeyValueRow label="Leave type">{leaveTypeOf(detail.leaveTypeId)?.name}</KeyValueRow>
+              <KeyValueRow label="Entitlement year">{detail.periodYear}</KeyValueRow>
+              <KeyValueRow label="Running balance">
+                <DayNumber value={detail.balanceDays} /> days
               </KeyValueRow>
-              <KeyValueRow label="Proyeksi akhir tahun">
-                <DayNumber value={detail.projectedDays} /> hari
+              <KeyValueRow label="Year-end projection">
+                <DayNumber value={detail.projectedDays} /> days
               </KeyValueRow>
-              <KeyValueRow label="Entri ledger di belakangnya">{entriesBehind(detail)}</KeyValueRow>
+              <KeyValueRow label="Ledger entries behind it">{entriesBehind(detail)}</KeyValueRow>
             </KeyValueList>
 
             <Note icon={<Info />}>
-              Proyeksi akhir tahun adalah saldo berjalan ditambah accrual yang masih akan jatuh tahun ini. Angka itu
-              untuk perencanaan saja — <strong>tidak pernah</strong> dipakai sebagai gerbang saat pengajuan cuti baru
-              masuk.
+              The year-end projection is the running balance plus accrual still due this year. It is for planning only — <strong>never</strong> used as a gate when a new leave request comes in.
             </Note>
           </div>
         )}

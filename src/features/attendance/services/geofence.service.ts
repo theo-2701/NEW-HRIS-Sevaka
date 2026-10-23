@@ -103,7 +103,7 @@ export const geofenceService = {
 
       const warning =
         draft.radiusMeters < SMALL_RADIUS_METERS
-          ? 'Radius di bawah akurasi GPS ponsel pada umumnya — tetap tersimpan, tapi tap bisa terbaca di luar radius.'
+          ? 'Radius below typical phone GPS accuracy — still saved, but taps may read as outside the radius.'
           : null;
 
       if (id) {
@@ -179,7 +179,7 @@ export const geofenceService = {
       if (!row) throw new Error('404 — Work point not found.');
       if (row.usedByPunch) {
         throw new Error(
-          `409 — "${row.geofenceName}" tidak bisa dihapus: tap yang sudah terekam masih merujuknya. Pensiunkan lewat Deactivate — barisnya dan riwayatnya tetap apa adanya.`,
+          `409 — "${row.geofenceName}" can't be deleted: recorded taps still reference it. Retire it with Deactivate — the row and its history stay as they are.`,
         );
       }
       mockGeofences = mockGeofences.filter((item) => item.id !== id);

@@ -57,7 +57,7 @@ export function summarizeRequestFilter(value: RequestFilterState): string {
     parts.push(OVERTIME_CATEGORY_LABEL[value.overtimeCategory as OvertimeCategory]);
   }
   if (value.from || value.to) parts.push(rangeLabel(value.from, value.to));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }
 
 export function summarizeDailyFilter(value: DailyFilterState): string {
@@ -66,5 +66,5 @@ export function summarizeDailyFilter(value: DailyFilterState): string {
     parts.push(OVERTIME_CATEGORY_LABEL[value.overtimeCategory as OvertimeCategory]);
   }
   if (value.from || value.to) parts.push(rangeLabel(value.from, value.to));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }

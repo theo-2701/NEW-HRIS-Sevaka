@@ -67,7 +67,7 @@ export function SchedulerIndexPage() {
     <PageShell
       crumbs={[{ label: 'Time Management' }, { label: 'Scheduler' }, { label: 'Index' }]}
       title="Scheduler Index"
-      description="Proyeksi baca murni atas roster sebagai grid tanggal × karyawan. Tidak ada create, update, atau delete sama sekali di layar ini — setiap tulisan ke roster hidup di Scheduler Schedule."
+      description="A pure read projection of the roster as a date × employee grid. No create, update or delete on this screen — every write to the roster lives in Scheduler Schedule."
       actions={
         <Button variant="secondary" asChild>
           <Link to="/time/scheduler/schedule">Go to Scheduler Schedule</Link>
@@ -76,8 +76,7 @@ export function SchedulerIndexPage() {
     >
       <div className="flex flex-col gap-5">
         <Note icon={<Lock />}>
-          Tampilan baca-saja. Setiap sel di sini adalah hasil akhir penugasan yang dibuat di tempat lain — penyesuaian
-          individual, bulk assignment, atau tukar shift yang sudah disetujui.
+          Read-only view. Each cell is the final result of an assignment made elsewhere — an individual adjustment, a bulk assignment, or an approved shift swap.
         </Note>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -132,7 +131,7 @@ export function SchedulerIndexPage() {
 
         {view === 'grid' && (
         <Card>
-          <CardHead title="Roster grid" sub="Hasil akhir per karyawan per tanggal" />
+          <CardHead title="Roster grid" sub="Final result per employee per date" />
 
           <div className="scroll-thin overflow-x-auto rounded-lg border border-border-1 bg-bg-surface">
             <table className="w-full border-separate border-spacing-0">
@@ -193,11 +192,11 @@ export function SchedulerIndexPage() {
               <span className="inline-flex h-6 items-center rounded-md border border-border-1 bg-vapor px-2 font-body text-[11px] font-bold text-fg-3">
                 OFF
               </span>
-              hari libur terjadwal — barisnya ada dan menyatakan orangnya tidak bekerja
+              scheduled day off — the row exists and states the person isn't working
             </span>
             <span className="inline-flex items-center gap-1.5 font-body text-[11.5px] font-medium text-fg-3">
               <span className="text-fg-4">— not assigned</span>
-              tidak ada baris roster sama sekali; ini <em>bukan</em> hari libur
+              no roster row at all; this is <em>not</em> a day off
             </span>
           </div>
         </Card>
@@ -205,10 +204,10 @@ export function SchedulerIndexPage() {
 
         {view === 'rows' && (
         <Card>
-          <CardHead title="Roster rows" sub="Baris mentah minggu ini" />
+          <CardHead title="Roster rows" sub="This week's raw rows" />
 
           <div className="flex flex-col">
-            <TableToolbar summary={`${sorted.length} baris pada minggu terpilih`} />
+            <TableToolbar summary={`${sorted.length} rows in the selected week`} />
 
             <DataTable<ShiftAssignment>
               rows={paged.rows}

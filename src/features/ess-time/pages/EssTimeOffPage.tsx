@@ -53,7 +53,7 @@ export function EssTimeOffPage() {
     <PageShell
       crumbs={[{ label: 'Employee Self-Service' }, { label: 'Time Management' }, { label: 'Time Off' }]}
       title="Time Off"
-      description="Pengajuan cuti dan sakit Anda beserta sisa saldo per jenis cuti."
+      description="Your leave and sick requests, with the remaining balance per leave type."
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
@@ -61,34 +61,34 @@ export function EssTimeOffPage() {
           value={tab}
           onChange={setTab}
           items={[
-            { value: 'requests', label: 'Pengajuan saya', count: rows.length },
-            { value: 'balance', label: 'Saldo cuti', count: balances.data?.length ?? 0 },
+            { value: 'requests', label: 'My requests', count: rows.length },
+            { value: 'balance', label: 'Leave balance', count: balances.data?.length ?? 0 },
           ]}
         />
 
         {tab === 'balance' && (
           <Card>
-            <CardHead title="Saldo cuti" sub="Proyeksi memperhitungkan akrual yang belum jatuh, jadi bisa lebih besar dari saldo" />
+            <CardHead title="Leave balance" sub="The projection includes accrual not yet due, so it can be larger than the balance" />
             <DataTable<LeaveBalance>
               rows={balances.data ?? []}
               rowKey={(row) => `${row.leaveTypeId}-${row.periodYear}`}
               loading={balances.isLoading}
-              empty="Belum ada saldo cuti pada periode ini."
+              empty="No leave balance for this period yet."
               columns={[
                 {
                   key: 'type',
-                  header: 'Jenis cuti',
+                  header: 'Leave type',
                   strong: true,
                   render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
                 },
-                { key: 'year', header: 'Periode', muted: true, render: (row) => row.periodYear },
+                { key: 'year', header: 'Period', muted: true, render: (row) => row.periodYear },
                 {
                   key: 'balance',
-                  header: 'Saldo',
+                  header: 'Balance',
                   align: 'right',
                   render: (row) => (
                     <span className={row.balanceDays < 0 ? 'tabular-nums text-error-600' : 'tabular-nums'}>
-                      {row.balanceDays} hari
+                      {row.balanceDays} days
                     </span>
                   ),
                 },
@@ -97,7 +97,7 @@ export function EssTimeOffPage() {
                   header: 'Proyeksi',
                   align: 'right',
                   muted: true,
-                  render: (row) => <span className="tabular-nums">{row.projectedDays} hari</span>,
+                  render: (row) => <span className="tabular-nums">{row.projectedDays} days</span>,
                 },
               ]}
             />
@@ -106,24 +106,24 @@ export function EssTimeOffPage() {
 
         {tab === 'requests' && (
           <Card>
-            <CardHead title="Pengajuan saya" sub="Seluruh pengajuan cuti dan sakit yang Anda buat" />
+            <CardHead title="My requests" sub="All the leave and sick requests you have filed" />
             <div>
-              <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Ajukan cuti</AddButton>} />
+              <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Request leave</AddButton>} />
               <DataTable<LeaveRequest>
                 rows={paged.rows}
                 rowKey={(row) => row.id}
                 loading={requests.isLoading}
-                empty="Belum ada pengajuan."
+                empty="No request yet."
                 columns={[
                   {
                     key: 'type',
-                    header: 'Jenis',
+                    header: 'Type',
                     strong: true,
                     render: (row) => leaveTypeOf(row.leaveTypeId)?.name ?? row.leaveTypeId,
                   },
                   {
                     key: 'range',
-                    header: 'Tanggal',
+                    header: 'Date',
                     nowrap: true,
                     render: (row) =>
                       row.startDate === row.endDate
@@ -135,20 +135,20 @@ export function EssTimeOffPage() {
                     key: 'days',
                     header: 'Jumlah',
                     align: 'right',
-                    render: (row) => <span className="tabular-nums">{row.totalDays} hari</span>,
+                    render: (row) => <span className="tabular-nums">{row.totalDays} days</span>,
                   },
                   {
                     key: 'status',
                     header: 'Status',
                     render: (row) => <StatusBadge tone={TONE[row.status]}>{REQUEST_STATUS_LABEL[row.status]}</StatusBadge>,
                   },
-                  { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.reason || '—' },
+                  { key: 'reason', header: 'Reason', muted: true, render: (row) => row.reason || '—' },
                 ]}
                 actions={(row) => {
                   const actions = [];
                   if (row.status === 'PENDING_APPROVAL') {
                     actions.push({
-                      label: 'Ubah',
+                      label: 'Edit',
                       onSelect: () => {
                         setEditing(row);
                         setForm(true);
@@ -161,7 +161,7 @@ export function EssTimeOffPage() {
                     row.status === 'AUTO_APPROVED' ||
                     (row.status === 'APPROVED' && row.startDate > toIsoDate(DEMO_NOW));
                   if (withdrawable) {
-                    actions.push({ label: 'Tarik pengajuan', danger: true, onSelect: () => setWithdrawing(row) });
+                    actions.push({ label: 'Withdraw request', danger: true, onSelect: () => setWithdrawing(row) });
                   }
                   return actions.length ? <RowActions actions={actions} /> : null;
                 }}

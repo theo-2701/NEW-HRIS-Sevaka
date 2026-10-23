@@ -19,7 +19,7 @@ function ClearMark({ onClear }: { onClear: () => void }) {
     <span
       role="button"
       tabIndex={-1}
-      aria-label="Hapus tanggal"
+      aria-label="Clear date"
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -63,7 +63,7 @@ export function DatePicker({
   value,
   onChange,
   id,
-  placeholder = 'Pilih tanggal',
+  placeholder = 'Select date',
   min,
   max,
   disabled,
@@ -128,7 +128,7 @@ export function DateRangePicker({
   value,
   onChange,
   id,
-  placeholder = 'Pilih rentang tanggal',
+  placeholder = 'Select date range',
   min,
   max,
   disabled,
@@ -159,7 +159,7 @@ export function DateRangePicker({
   const hasValue = Boolean(value.from || value.to);
   const shown =
     openEnd && value.from && !value.to
-      ? `${formatDate(value.from)} – seterusnya`
+      ? `${formatDate(value.from)} – onwards`
       : formatDateRange(value.from, value.to);
 
   return (

@@ -52,13 +52,13 @@ describe('Pengajuan', () => {
   it('menolak pengajuan susulan tanpa alasan tertulis', async () => {
     await expect(
       overtimeService.save(RINA, { ...draft, overtimeDate: '2026-07-26' }),
-    ).rejects.toThrow(/alasan tertulis/);
+    ).rejects.toThrow(/written reason/);
   });
 
   it('menolak tanggal di luar jendela susulan', async () => {
     await expect(
       overtimeService.save(RINA, { overtimeDate: '2026-07-01', requestedHours: '2', requestReason: 'Telat lapor.' }),
-    ).rejects.toThrow(/jendela susulan/);
+    ).rejects.toThrow(/retroactive window/);
     expect(retroWindowStart()).toBe('2026-07-20');
   });
 
@@ -105,11 +105,11 @@ describe('Keputusan', () => {
   });
 
   it('jam yang disetujui wajib diisi saat menyetujui', async () => {
-    await expect(overtimeService.decide(HENDRA, 'ot-3', 'APPROVED')).rejects.toThrow(/wajib diisi/);
+    await expect(overtimeService.decide(HENDRA, 'ot-3', 'APPROVED')).rejects.toThrow(/required/);
   });
 
   it('jam yang disetujui boleh dipangkas, tidak pernah dinaikkan', async () => {
-    await expect(overtimeService.decide(HENDRA, 'ot-3', 'APPROVED', 5)).rejects.toThrow(/dinaikkan/);
+    await expect(overtimeService.decide(HENDRA, 'ot-3', 'APPROVED', 5)).rejects.toThrow(/raised above/);
     const ack = await overtimeService.decide(HENDRA, 'ot-3', 'APPROVED', 1.5);
     expect(ack).toMatchObject({ overtimeStatus: 'PENDING_APPROVAL', decisionReceived: true });
     const result = await overtimeService.completeOvertimeWorkflow(HENDRA, 'ot-3', 'APPROVED', 1.5);

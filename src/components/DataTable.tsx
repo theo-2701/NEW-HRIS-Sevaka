@@ -77,7 +77,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   actions,
-  empty = 'Belum ada data.',
+  empty = 'No data yet.',
   loading = false,
   sort,
   onSortChange,
@@ -244,7 +244,7 @@ export function SelectionBar({
   return (
     <>
       <Checkbox
-        aria-label="Pilih semua"
+        aria-label="Select all"
         checked={count >= total ? true : 'indeterminate'}
         onCheckedChange={onToggleAll}
       />

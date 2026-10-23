@@ -46,27 +46,27 @@ export const useSaveLeaveType = () =>
     ({ draft, id }) => settingsService.saveLeaveType(draft, id).then(() => undefined),
     (_result, { id }) => ({
       text: id
-        ? '200 — jenis cuti diperbarui; aturan yang diperketat hanya berlaku untuk pengajuan sejak sekarang.'
-        : '201 — jenis cuti tersimpan dan langsung bisa dipilih di form pengajuan.',
+        ? 'Leave type updated. Tightened rules only apply to requests from now on.'
+        : 'Leave type saved and available in the request form right away.',
     }),
   );
 
 export const useDeleteLeaveType = () =>
   useSettingsMutation<{ id: string }>(
     ({ id }) => settingsService.deleteLeaveType(id),
-    () => ({ text: '200 — baris dihapus.', tone: 'warn' }),
+    () => ({ text: 'Row deleted.', tone: 'warn' }),
   );
 
 export const useCreateAccrualPolicy = () =>
   useSettingsMutation<AccrualPolicyDraft>(
     (draft) => settingsService.createAccrualPolicy(draft).then(() => undefined),
-    () => ({ text: '201 — kebijakan akrual tersimpan; proses bulanan membacanya mulai tanggal berlaku.' }),
+    () => ({ text: 'Accrual policy saved. The monthly run reads it from its effective date.' }),
   );
 
 export const useEndAccrualPolicy = () =>
   useSettingsMutation<{ id: string; effectiveUntil: string }>(
     ({ id, effectiveUntil }) => settingsService.endAccrualPolicy(id, effectiveUntil),
-    () => ({ text: '200 — kebijakan dihentikan; akrual berhenti membacanya mulai bulan berikutnya.', tone: 'warn' }),
+    () => ({ text: 'Policy ended. Accrual stops reading it from next month.', tone: 'warn' }),
   );
 
 export const useSaveBlackout = () =>
@@ -74,13 +74,13 @@ export const useSaveBlackout = () =>
     ({ draft, id }) => settingsService.saveBlackout(draft, id).then(() => undefined),
     (_result, { id }) => ({
       text: id
-        ? '200 — periode blackout diperbarui.'
-        : '201 — periode blackout tersimpan; gerbang submit membacanya mulai sekarang.',
+        ? 'Blackout period updated.'
+        : 'Blackout period saved. The submit gate reads it from now on.',
     }),
   );
 
 export const useDeleteBlackout = () =>
   useSettingsMutation<{ id: string }>(
     ({ id }) => settingsService.deleteBlackout(id),
-    () => ({ text: '200 — periode blackout dihapus.', tone: 'warn' }),
+    () => ({ text: 'Blackout period deleted.', tone: 'warn' }),
   );

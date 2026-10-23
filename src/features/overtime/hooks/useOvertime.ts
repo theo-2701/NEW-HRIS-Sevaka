@@ -36,8 +36,8 @@ export function useSaveOvertime(session: OvertimeSession) {
     onSuccess: (_row, { editingId }) => {
       toast(
         editingId
-          ? '200 — pengajuan diperbarui; approver kini melihat angka hasil hitung ulang, bukan yang semula.'
-          : '201 — pengajuan tercatat sebagai Pending approval; jamnya belum bisa dibayar sampai keputusan turun.',
+          ? 'Request updated; the approver now sees the recalculated numbers, not the original ones.'
+          : "Request recorded as Pending approval; its hours can't be paid until a decision is made.",
         'ok',
       );
       invalidate(queryClient);
@@ -51,17 +51,17 @@ export function useDecideOvertime(session: OvertimeSession) {
   return useMutation({
     mutationFn: ({ id, kind, approvedHours }: { id: string; kind: 'APPROVED' | 'REJECTED'; approvedHours?: number }) =>
       overtimeService.decide(session, id, kind, approvedHours).then(() => {
-        toast('200 — keputusan diterima dan diteruskan ke proses persetujuan; status menyusul.', 'info');
+        toast('Decision received and passed on to the approval process; the status follows.', 'info');
         return overtimeService.completeOvertimeWorkflow(session, id, kind, approvedHours);
       }),
     onSuccess: (result: DecisionResult, { kind }) => {
       if (kind === 'REJECTED') {
-        toast('200 — pengajuan ditolak dan jam itu tidak pernah bisa dibayar.', 'warn');
+        toast('Request rejected; those hours can never be paid.', 'warn');
       } else {
         toast(
           result.recomputed
-            ? '200 — ringkasan harian dihitung ulang; jam terbayar adalah yang lebih kecil antara aktual dan pagu yang disetujui.'
-            : '200 — disetujui. Belum ada fakta harian pada tanggal itu: baris proyeksi baru lahir setelah data punch mendarat, tidak pernah dari persetujuan saja.',
+            ? 'Daily summary recalculated; paid hours are the smaller of actual and the approved cap.'
+            : 'Approved. No daily fact exists on that date yet: the projection row only appears after punch data lands, never from the approval alone.',
           'ok',
         );
       }
@@ -77,7 +77,7 @@ export function useWithdrawOvertime(session: OvertimeSession) {
     mutationFn: ({ id }: { id: string }) => overtimeService.withdraw(session, id),
     onSuccess: () => {
       toast(
-        '200 — pengajuan ditarik (soft-delete: barisnya tetap terbaca sebagai Cancelled); jam yang sudah terlanjur dikerjakan tidak jadi lembur terbayar.',
+        "Request withdrawn (soft delete: the row still reads as Cancelled); hours already worked won't become paid overtime.",
         'ok',
       );
       invalidate(queryClient);

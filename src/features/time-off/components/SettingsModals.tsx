@@ -97,7 +97,7 @@ export function LeaveTypeModal({
             onOpenChange={(next) => !next && close()}
             size="wide"
             title={editing ? `Edit leave type — ${editing.code}` : 'New leave type'}
-            description="Jenis yang tersimpan langsung bisa dipilih di form pengajuan, selama flag Active-nya menyala."
+            description="A saved type can be picked in the request form right away, as long as its Active flag is on."
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
@@ -112,10 +112,7 @@ export function LeaveTypeModal({
             <Form className="flex flex-col gap-4">
               {statutory && (
                 <Note tone="warn" icon={<ShieldCheck />}>
-                  Ini jenis cuti <strong>statutory</strong> yang disemai sistem untuk memenuhi undang-undang
-                  ketenagakerjaan. Status statutory dan kodenya tidak bisa diubah di sini, dan barisnya tidak bisa
-                  dihapus — pensiunkan dari pemakaian baru lewat flag Active. Flag lain dan tenggang pengajuan tetap
-                  bisa diubah.
+                  This is a <strong>statutory</strong> leave type seeded by the system to meet labour law. Its statutory status and code cannot be changed here, and the row cannot be deleted — retire it from new use with the Active flag. Other flags and the notice period can still be changed.
                 </Note>
               )}
 
@@ -126,9 +123,9 @@ export function LeaveTypeModal({
                   required
                   disabled={statutory}
                   maxLength={30}
-                  placeholder="mis. CUTI-TAHUNAN"
+                  placeholder="e.g. CUTI-TAHUNAN"
                   className="uppercase"
-                  hint="2–30 karakter huruf kapital, angka, dan tanda hubung. Unik di antara baris aktif."
+                  hint="2–30 characters: capital letters, digits and hyphens. Unique among active rows."
                 />
                 <TextField name="name" label="Leave name" required maxLength={150} />
               </div>
@@ -141,12 +138,12 @@ export function LeaveTypeModal({
                   <CheckboxField name="isPaid">Paid</CheckboxField>
                   <CheckboxField name="affectsBalance">Deducts balance</CheckboxField>
                   <CheckboxField name="requiresDocument">Document required</CheckboxField>
-                  <CheckboxField name="requiresApproval">Maker–checker (tidak dicentang = auto-approve)</CheckboxField>
-                  <CheckboxField name="allowsExtraApproval">Bisa menaikkan lapis persetujuan tambahan</CheckboxField>
+                  <CheckboxField name="requiresApproval">Maker–checker (unchecked = auto-approve)</CheckboxField>
+                  <CheckboxField name="allowsExtraApproval">Can raise an extra approval layer</CheckboxField>
                   <CheckboxField name="isActive">Active</CheckboxField>
                 </div>
                 <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">
-                  Enam flag yang berdiri sendiri. Kombinasi tidak dibayar + memotong saldo ditolak.
+                  Six independent flags. Unpaid + deducts balance together is rejected.
                 </span>
               </fieldset>
 
@@ -158,13 +155,13 @@ export function LeaveTypeModal({
                   step={1}
                   label="Minimum advance days"
                   required
-                  hint="Bilangan bulat ≥ 0 — tenggang minimum sebelum tanggal mulai."
+                  hint="Whole number ≥ 0 — minimum notice before the start date."
                 />
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="statutory-flag">Statutory</Label>
                   <Input id="statutory-flag" readOnly tabIndex={-1} value={statutory ? 'Yes' : 'No'} />
                   <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">
-                    Read-only. Hanya lahir dari penyemaian sistem dan tidak pernah bisa diubah sesudahnya.
+                    Read-only. Only set by system seeding and can never be changed afterwards.
                   </span>
                 </div>
               </div>
@@ -215,7 +212,7 @@ function PolicyConditionalFields() {
             label="Rate per month"
             required
             placeholder="mis. 1.00"
-            hint="Wajib saat entitled."
+            hint="Required when entitled."
           />
         )}
         <TextField
@@ -224,7 +221,7 @@ function PolicyConditionalFields() {
           step={1}
           min={1}
           label="Balance cap"
-          placeholder="Kosongkan bila tanpa plafon"
+          placeholder="Leave empty for no cap"
         />
       </div>
 
@@ -247,7 +244,7 @@ function PolicyConditionalFields() {
             required
             maxLength={5}
             placeholder="MM-DD, mis. 03-31"
-            hint="Bulan dan tanggal saja — tenggat hari gulirannya hangus."
+            hint="Month and day only — on this date the carried-over days expire."
           />
         </div>
       )}
@@ -304,7 +301,7 @@ export function AccrualPolicyModal({
             onOpenChange={(next) => !next && close()}
             size="wide"
             title="New accrual policy"
-            description="Satu kebijakan hidup per jenis cuti × jenis kepegawaian — rentang tanggal yang bertindih pada pasangan yang sama ditolak."
+            description="One live policy per leave type × employment type — overlapping date ranges for the same pair are rejected."
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
@@ -322,23 +319,23 @@ export function AccrualPolicyModal({
                   name="leaveTypeId"
                   label="Leave type"
                   required
-                  placeholder="Pilih jenis cuti"
+                  placeholder="Select leave type"
                   options={leaveTypes
                     .filter((row) => row.affectsBalance)
                     .map((row) => ({ value: row.id, label: row.name }))}
-                  hint="Hanya jenis yang memotong saldo yang muncul — jenis tanpa hak tidak butuh kebijakan."
+                  hint="Only types that deduct balance appear — types without entitlement need no policy."
                 />
                 <SelectField
                   name="employmentType"
                   label="Employment type"
                   required
                   options={EMPLOYMENT_TYPES.map((value) => ({ value, label: value }))}
-                  hint="Katalognya milik personnel service; tenant ini baru mengekspos satu nilai."
+                  hint="The catalogue belongs to the personnel service; this tenant exposes one value so far."
                 />
               </div>
 
               <CheckboxField name="isEligible">
-                Berhak atas akrual — mati secara bawaan; kelompok karyawan baru harus dinyalakan secara sadar.
+                Entitled to accrual — off by default; a new employee group must be switched on deliberately.
               </CheckboxField>
 
               <PolicyConditionalFields />
@@ -374,7 +371,7 @@ export function EndPolicyModal({
       open
       onOpenChange={(next) => !next && onClose()}
       title="End this accrual policy"
-      description="Mengisi tanggal akhir adalah satu-satunya cara sah menghentikan kebijakan — mengubah rate atau cap pada baris yang sedang berjalan bukan."
+      description="Setting an end date is the only valid way to stop a policy — changing the rate or cap on a running row is not."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -396,7 +393,7 @@ export function EndPolicyModal({
             label="Effective until"
             required
             min={policy.effectiveFrom}
-            hint="Tidak boleh mendahului tanggal mulai kebijakan."
+            hint="Can't be earlier than the policy start date."
           />
           {/* Formik di sini hanya untuk memakai DateField; nilainya disalin ke state modal. */}
           <PolicyEndSync onChange={setUntil} />
@@ -476,7 +473,7 @@ export function BlackoutModal({
             onOpenChange={(next) => !next && close()}
             size="wide"
             title={editing ? `Edit blackout — ${editing.name}` : 'New blackout period'}
-            description="Nama periode inilah yang dibaca karyawan sebagai alasan pengajuannya ditahan atau ditolak — tulis kalimat, bukan label."
+            description="Employees read this period name as the reason their request is held or rejected — write a sentence, not a label."
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
@@ -496,7 +493,7 @@ export function BlackoutModal({
                 label="Reason"
                 rows={2}
                 maxLength={300}
-                hint="Opsional; 5–300 karakter bila diisi."
+                hint="Optional; 5–300 characters if filled."
               />
 
               <DateRangeField
@@ -504,7 +501,7 @@ export function BlackoutModal({
                 toName="endDate"
                 label="Period"
                 required
-                hint="Tanggal akhir wajib — periode tanpa ujung sama saja dengan larangan permanen."
+                hint="End date is required — a period without an end is a permanent ban."
               />
 
               <SelectField
@@ -518,8 +515,7 @@ export function BlackoutModal({
               />
 
               <Note icon={<ShieldCheck />}>
-                Jenis cuti <strong>statutory</strong> kebal terhadap kedua mode blackout — keduanya tidak pernah
-                menahan cuti yang dijamin undang-undang.
+                <strong>Statutory</strong> leave types are immune to both blackout modes — neither ever holds leave guaranteed by law.
               </Note>
             </Form>
           </Modal>

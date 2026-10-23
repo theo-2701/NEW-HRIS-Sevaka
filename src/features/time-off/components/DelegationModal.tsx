@@ -58,8 +58,8 @@ export function DelegationModal({
       open={open}
       onOpenChange={(next) => !next && onClose()}
       size="wide"
-      title={editing ? 'Ganti pengganti' : 'Register substitute'}
-      description="Cuti yang didelegasikan datang dari konteks dan tidak bisa diubah; penggantinya masih boleh diganti selagi delegasi menunggu persetujuan."
+      title={editing ? 'Change substitute' : 'Register substitute'}
+      description="The delegated leave comes from context and cannot be changed; the substitute can still be changed while the delegation awaits approval."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -82,8 +82,8 @@ export function DelegationModal({
       <div className="flex flex-col gap-4">
         {editing ? (
           <KeyValueList>
-            <KeyValueRow label="Delegasi">{editing.id}</KeyValueRow>
-            <KeyValueRow label="Cuti">
+            <KeyValueRow label="Delegation">{editing.id}</KeyValueRow>
+            <KeyValueRow label="Leave">
               {editingLeave
                 ? `${editingLeave.id} · ${formatDate(editingLeave.startDate)} – ${formatDate(editingLeave.endDate)}`
                 : editing.leaveRequestId}
@@ -93,11 +93,11 @@ export function DelegationModal({
         ) : (
           <div className="flex flex-col gap-1">
             <Label htmlFor="deleg-leave">
-              Cuti yang didelegasikan<em>*</em>
+              Delegated leave<em>*</em>
             </Label>
             <Select value={leaveRequestId} onValueChange={setLeaveRequestId}>
               <SelectTrigger id="deleg-leave">
-                <SelectValue placeholder="Pilih cuti hidup milik Anda" />
+                <SelectValue placeholder="Select one of your live leaves" />
               </SelectTrigger>
               <SelectContent>
                 {delegatable.map((row) => (
@@ -109,18 +109,18 @@ export function DelegationModal({
               </SelectContent>
             </Select>
             <span className="font-body text-xs font-normal leading-[1.4] text-fg-3">
-              Hanya cuti hidup Anda yang belum punya delegasi hidup yang muncul di sini.
+              Only your live leaves without a live delegation appear here.
             </span>
           </div>
         )}
 
         <div className="flex flex-col gap-1">
           <Label htmlFor="deleg-substitute">
-            Pengganti<em>*</em>
+            Substitute<em>*</em>
           </Label>
           <Select value={substituteId} onValueChange={setSubstituteId}>
             <SelectTrigger id="deleg-substitute">
-              <SelectValue placeholder="Pilih pengganti" />
+              <SelectValue placeholder="Select substitute" />
             </SelectTrigger>
             <SelectContent>
               {substitutes.map((row) => (
@@ -133,7 +133,7 @@ export function DelegationModal({
         </div>
 
         <Note icon={<Info />}>
-          Delegasi mencakup semua persetujuan. Tanpa delegasi, seluruh task persetujuan Anda tertahan selama cuti.
+          The delegation covers all approvals. Without one, all your approval tasks are held during your leave.
         </Note>
       </div>
     </Modal>

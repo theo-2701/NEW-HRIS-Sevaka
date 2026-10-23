@@ -49,7 +49,7 @@ export const useSaveShift = () =>
   useSchedulerMutation<{ draft: ShiftDraft; id?: string }>(
     ({ draft, id }) => schedulerService.saveShift(draft, id).then(() => undefined),
     (_result, { id }) => ({
-      text: id ? '200 — pola shift diperbarui.' : '201 — pola shift tersimpan ke katalog.',
+      text: id ? 'Shift pattern updated.' : 'Shift pattern saved to the catalogue.',
     }),
   );
 
@@ -58,15 +58,15 @@ export const useToggleShift = () =>
     ({ id }) => schedulerService.toggleShift(id),
     (row) => ({
       text: row.isActive
-        ? '200 — pola diaktifkan kembali.'
-        : '200 — pola dipensiunkan; baris roster yang menunjuknya tetap sah.',
+        ? 'Pattern reactivated.'
+        : 'Pattern retired; roster rows pointing to it stay valid.',
     }),
   );
 
 export const useDeleteShift = () =>
   useSchedulerMutation<{ id: string }>(
     ({ id }) => schedulerService.deleteShift(id),
-    () => ({ text: '200 — pola shift dihapus.', tone: 'warn' }),
+    () => ({ text: 'Shift pattern deleted.', tone: 'warn' }),
   );
 
 export const useSaveAssignment = () =>
@@ -74,22 +74,22 @@ export const useSaveAssignment = () =>
     ({ draft, id }) => schedulerService.saveAssignment(draft, id).then(() => undefined),
     (_result, { id }) => ({
       text: id
-        ? '200 — baris roster ditimpa dan dicap sebagai penyesuaian individual.'
-        : '201 — baris roster dibuat; bulk berikutnya akan melangkahinya.',
+        ? 'Roster row overwritten and stamped as an individual adjustment.'
+        : 'Roster row created; the next bulk run will skip it.',
     }),
   );
 
 export const useDeleteAssignment = () =>
   useSchedulerMutation<{ id: string }>(
     ({ id }) => schedulerService.deleteAssignment(id),
-    () => ({ text: '200 — baris roster dihapus.', tone: 'warn' }),
+    () => ({ text: 'Roster row deleted.', tone: 'warn' }),
   );
 
 export const useRunBulk = () =>
   useSchedulerMutation<{ draft: BulkDraft; role: SchedulerRole }, BulkResult>(
     ({ draft, role }) => schedulerService.runBulk(draft, role),
     (result) => ({
-      text: `200 — ${result.created} dibuat, ${result.overwritten} ditulis ulang, ${result.skipped} dilangkahi (${result.skippedIndividual} individual, ${result.skippedSwap} swap) pada ${result.employees} karyawan.`,
+      text: `${result.created} created, ${result.overwritten} overwritten, ${result.skipped} skipped (${result.skippedIndividual} individual, ${result.skippedSwap} swap) across ${result.employees} employees.`,
     }),
   );
 
@@ -97,7 +97,7 @@ export const useCreateSwap = () =>
   useSchedulerMutation<{ requesterAssignmentId: string; counterpartAssignmentId: string }>(
     ({ requesterAssignmentId, counterpartAssignmentId }) =>
       schedulerService.createSwap(requesterAssignmentId, counterpartAssignmentId).then(() => undefined),
-    () => ({ text: '201 — tukar diajukan; tidak ada roster yang berubah sampai supervisor menyetujuinya.' }),
+    () => ({ text: 'Swap requested; no roster changes until a supervisor approves it.' }),
   );
 
 /** Keputusan tukar (K9): 200 diterima, roster bertukar saat workflow selesai. */
@@ -109,12 +109,12 @@ export function useDecideSwap() {
       return kind;
     },
     onSuccess: async (kind, { id }) => {
-      toast('200 — keputusan tukar diterima dan diteruskan ke proses persetujuan.', 'info');
+      toast('Swap decision received and passed on to the approval process.', 'info');
       await schedulerService.completeSwapWorkflow(id, kind);
       toast(
         kind === 'APPROVED'
-          ? 'workflow.process.completed — tukar disetujui; kedua baris roster bertukar pola sebagai satu paket.'
-          : 'workflow.process.completed — tukar ditolak; tidak ada roster yang berubah.',
+          ? 'Swap approved; both roster rows exchanged patterns as one package.'
+          : 'Swap rejected; no roster changed.',
         kind === 'APPROVED' ? 'ok' : 'warn',
       );
       void queryClient.invalidateQueries();
@@ -127,7 +127,7 @@ export const useWithdrawSwap = () =>
   useSchedulerMutation<{ id: string }>(
     ({ id }) => schedulerService.withdrawSwap(id).then(() => undefined),
     () => ({
-      text: '200 — tukar ditarik (status CANCELLED); permintaannya tinggal sebagai jejak dan tidak ada roster yang tersentuh.',
+      text: 'Swap withdrawn (status CANCELLED); the request stays on record and no roster is touched.',
       tone: 'warn',
     }),
   );

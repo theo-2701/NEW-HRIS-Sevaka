@@ -54,7 +54,7 @@ describe('Jendela siaga — pembuatan', () => {
   it('menolak jendela yang berakhir sebelum atau saat ia mulai', async () => {
     await expect(
       oncallService.save(HENDRA, { ...draft, endDate: '2026-09-07', endTime: '21:00' }),
-    ).rejects.toThrow(/berakhir setelah/);
+    ).rejects.toThrow(/end after it starts/);
   });
 
   it('menolak pagu nol atau negatif', async () => {

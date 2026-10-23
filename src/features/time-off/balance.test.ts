@@ -15,11 +15,11 @@ const draft = {
 
 describe('HR adjustment — validasi', () => {
   it('menolak delta nol', async () => {
-    await expect(balanceService.createAdjustment(HR, { ...draft, deltaDays: 0 })).rejects.toThrow(/tidak boleh nol/);
+    await expect(balanceService.createAdjustment(HR, { ...draft, deltaDays: 0 })).rejects.toThrow(/cannot be zero/);
   });
 
   it('menolak tanpa alasan', async () => {
-    await expect(balanceService.createAdjustment(HR, { ...draft, reason: '   ' })).rejects.toThrow(/alasan wajib/i);
+    await expect(balanceService.createAdjustment(HR, { ...draft, reason: '   ' })).rejects.toThrow(/reason is required/i);
   });
 
   it('menolak tahun hak di luar 2000–2999', async () => {
@@ -27,7 +27,7 @@ describe('HR adjustment — validasi', () => {
   });
 
   it('menolak field wajib yang kosong', async () => {
-    await expect(balanceService.createAdjustment(HR, { ...draft, mutationDate: '' })).rejects.toThrow(/wajib diisi/);
+    await expect(balanceService.createAdjustment(HR, { ...draft, mutationDate: '' })).rejects.toThrow(/required/);
   });
 });
 

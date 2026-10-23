@@ -66,8 +66,8 @@ export const useSubmitRequest = (session: Session) =>
     },
     (_result, { editingId }) => ({
       text: editingId
-        ? 'Pengajuan diperbarui — gerbang submit dijalankan ulang.'
-        : 'Pengajuan tersimpan. Cuti sakit langsung berlaku; jenis lain menunggu keputusan.',
+        ? 'Request updated — the submit gates ran again.'
+        : 'Request saved. Sick leave applies right away; other types wait for a decision.',
     }),
   );
 
@@ -92,12 +92,12 @@ export function useDecideRequest(session: Session) {
       return decision;
     },
     onSuccess: async (decision, { id, input }) => {
-      toast('200 diterima — keputusan diteruskan ke proses persetujuan.', 'info');
+      toast('Decision received and passed on to the approval process.', 'info');
       await timeOffService.completeDecision(session, id, decision, input, DEMO_NOW);
       toast(
         decision === 'APPROVED'
-          ? 'workflow.process.completed — cuti disetujui; saldo dipotong lewat entri ledger LEAVE_TAKEN.'
-          : 'workflow.process.completed — pengajuan ditolak, hari itu tetap terhitung absen.',
+          ? 'Leave approved. The balance is deducted through a LEAVE_TAKEN ledger entry.'
+          : 'Request rejected. The day still counts as absent.',
         decision === 'APPROVED' ? 'ok' : 'warn',
       );
       void queryClient.invalidateQueries();
@@ -110,7 +110,7 @@ export const useRejectSick = (session: Session) =>
   useTimeOffMutation<{ id: string; reject: RejectInput }>(
     ({ id, reject }) => timeOffService.rejectSick(session, id, reject, DEMO_NOW),
     () => ({
-      text: 'Penolakan diterima — saldo yang sudah terpotong dikembalikan dan harinya jatuh jadi absen.',
+      text: 'Rejection received — the deducted balance is restored and the days become absences.',
       tone: 'warn',
     }),
   );
@@ -118,23 +118,23 @@ export const useRejectSick = (session: Session) =>
 export const useWithdrawRequest = (session: Session) =>
   useTimeOffMutation<{ id: string }>(
     ({ id }) => timeOffService.withdraw(session, id, DEMO_NOW),
-    () => ({ text: 'Status menjadi CANCELLED; saldo dipulihkan dan delegasi yang menempel ikut dibatalkan.' }),
+    () => ({ text: 'Status is now CANCELLED; the balance is restored and any attached delegation is cancelled too.' }),
   );
 
 export const useOpenDoctorNote = (session: Session) =>
   useTimeOffMutation<{ id: string; purpose: AccessPurpose }, MedicalAccessLog>(
     ({ id, purpose }) => timeOffService.openDoctorNote(session, id, purpose, DEMO_NOW),
-    () => ({ text: 'Jejak akses tercatat lebih dulu, baru isi suratnya ditampilkan.', tone: 'info' }),
+    () => ({ text: "Access trail recorded first, then the note's content is shown.", tone: 'info' }),
   );
 
 export const useSaveDelegation = (session: Session) =>
   useTimeOffMutation<{ id?: string; leaveRequestId: string; substituteId: string }>(
     (payload) => timeOffService.saveDelegation(session, payload, DEMO_NOW),
-    (_result, { id }) => ({ text: id ? 'Pengganti diperbarui.' : 'Delegasi tersimpan, menunggu persetujuan.' }),
+    (_result, { id }) => ({ text: id ? 'Substitute updated.' : 'Delegation saved, awaiting approval.' }),
   );
 
 export const useCancelDelegation = () =>
   useTimeOffMutation<{ id: string }>(
     ({ id }) => timeOffService.cancelDelegation(id),
-    () => ({ text: 'Delegasi dibatalkan.', tone: 'warn' }),
+    () => ({ text: 'Delegation cancelled.', tone: 'warn' }),
   );

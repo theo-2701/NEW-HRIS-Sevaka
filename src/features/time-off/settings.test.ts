@@ -36,13 +36,13 @@ const baseBlackout = {
 
 describe('Leave type — validasi katalog', () => {
   it('menolak kode di luar pola', async () => {
-    await expect(settingsService.saveLeaveType({ ...baseType, code: 'cuti besar' })).rejects.toThrow(/422.*kode/i);
+    await expect(settingsService.saveLeaveType({ ...baseType, code: 'cuti besar' })).rejects.toThrow(/422.*code/i);
   });
 
   it('menolak kombinasi tidak dibayar + memotong saldo', async () => {
     await expect(
       settingsService.saveLeaveType({ ...baseType, code: 'CUTI-X', isPaid: false, affectsBalance: true }),
-    ).rejects.toThrow(/tercharge dua kali/);
+    ).rejects.toThrow(/charged twice/);
   });
 
   it('menolak kode yang sudah dipakai baris aktif', async () => {
@@ -62,7 +62,7 @@ describe('Leave type — perlindungan statutory', () => {
     const statutory = types.find((row) => row.isStatutory)!;
     await expect(
       settingsService.saveLeaveType({ ...baseType, code: 'BARU-SAJA' }, statutory.id),
-    ).rejects.toThrow(/tidak bisa diubah/);
+    ).rejects.toThrow(/can't be changed/);
   });
 
   it('menolak penghapusan jenis statutory', async () => {
@@ -97,19 +97,19 @@ describe('Accrual policy — aturan kontrak', () => {
   it('menolak rate terisi saat tidak entitled', async () => {
     await expect(
       settingsService.createAccrualPolicy({ ...basePolicy, isEligible: false, ratePerMonth: 1 }),
-    ).rejects.toThrow(/rate harus kosong/);
+    ).rejects.toThrow(/Rate must be empty/);
   });
 
   it('menolak carry capped tanpa jumlah hari dan kedaluwarsa', async () => {
     await expect(
       settingsService.createAccrualPolicy({ ...basePolicy, carryOverPolicy: 'CARRY_CAPPED' }),
-    ).rejects.toThrow(/carry capped butuh/);
+    ).rejects.toThrow(/Carry capped needs/);
   });
 
   it('menolak field carry-over terisi di luar carry capped', async () => {
     await expect(
       settingsService.createAccrualPolicy({ ...basePolicy, carryOverMaxDays: 6 }),
-    ).rejects.toThrow(/harus kosong kecuali/);
+    ).rejects.toThrow(/must be empty unless/);
   });
 
   it('menolak rentang yang bertindih pada pasangan yang sama', async () => {
@@ -139,7 +139,7 @@ describe('Accrual policy — hanya berhenti lewat tanggal akhir', () => {
   it('menolak tanggal akhir sebelum tanggal mulai', async () => {
     const policies = await settingsService.accrualPolicies();
     const running = policies.find((row) => row.effectiveUntil === null)!;
-    await expect(settingsService.endAccrualPolicy(running.id, '2000-01-01')).rejects.toThrow(/mendahului/);
+    await expect(settingsService.endAccrualPolicy(running.id, '2000-01-01')).rejects.toThrow(/earlier than/);
   });
 
   it('mengisi tanggal akhir menghentikan kebijakan', async () => {
@@ -158,13 +158,13 @@ describe('Accrual policy — hanya berhenti lewat tanggal akhir', () => {
 
 describe('Blackout period', () => {
   it('menolak tanpa tanggal akhir', async () => {
-    await expect(settingsService.saveBlackout({ ...baseBlackout, endDate: '' })).rejects.toThrow(/wajib diisi/);
+    await expect(settingsService.saveBlackout({ ...baseBlackout, endDate: '' })).rejects.toThrow(/required/);
   });
 
   it('menolak tanggal akhir sebelum tanggal mulai', async () => {
     await expect(
       settingsService.saveBlackout({ ...baseBlackout, endDate: '2028-02-01' }),
-    ).rejects.toThrow(/mendahului/);
+    ).rejects.toThrow(/earlier than/);
   });
 
   it('menolak alasan lebih dari 300 karakter', async () => {

@@ -50,14 +50,14 @@ const TYPE_OPTIONS = (Object.keys(SHIFT_TYPE_LABEL) as ShiftType[]).map((value) 
 }));
 
 const shiftSchema = Yup.object({
-  shiftCode: Yup.string().trim().min(2, 'Kode shift minimal 2 karakter.').required('Kode shift wajib diisi.'),
-  shiftName: Yup.string().trim().min(3, 'Nama shift minimal 3 karakter.').required('Nama shift wajib diisi.'),
-  shiftType: Yup.string().required('Tipe shift wajib dipilih.'),
+  shiftCode: Yup.string().trim().min(2, 'Shift code must be at least 2 characters.').required('Shift code is required.'),
+  shiftName: Yup.string().trim().min(3, 'Shift name must be at least 3 characters.').required('Shift name is required.'),
+  shiftType: Yup.string().required('Choose a shift type.'),
   breakMinutes: Yup.number()
-    .typeError('Jeda wajib diisi.')
-    .integer('Jeda harus bilangan bulat menit.')
-    .min(0, 'Jeda tidak boleh negatif.')
-    .required('Jeda wajib diisi.'),
+    .typeError('Break is required.')
+    .integer('Break must be a whole number of minutes.')
+    .min(0, "Break can't be negative.")
+    .required('Break is required.'),
 });
 
 /** Kotak turunan server — apa yang akan dihitung sistem dari isian form. */
@@ -104,7 +104,7 @@ function ShiftTypeFields() {
       {values.shiftType === 'FIXED' && (
         <div className="grid gap-4 md:grid-cols-2">
           <TextField name="startTime" type="time" label="Start time" required />
-          <TextField name="endTime" type="time" label="End time" required hint="Selesai lebih awal dari mulai berarti pola ini melewati tengah malam." />
+          <TextField name="endTime" type="time" label="End time" required hint="An end earlier than the start means this pattern crosses midnight." />
         </div>
       )}
       {values.shiftType === 'ROTATING' && (
@@ -113,8 +113,8 @@ function ShiftTypeFields() {
           label="Cycle definition"
           required
           rows={3}
-          placeholder='mis. {"cycle":["PAGI","PAGI","OFF"]}'
-          hint="Definisi siklus dalam JSON. Belum tergambar di frame mana pun — bentuk akhirnya menyusul."
+          placeholder={"e.g. {\"cycle\":[\"PAGI\",\"PAGI\",\"OFF\"]}"}
+          hint="Cycle definition in JSON. Not drawn in any frame yet — the final form will follow."
         />
       )}
       {values.shiftType === 'FLEXIBLE' && (
@@ -124,7 +124,7 @@ function ShiftTypeFields() {
           required
           rows={3}
           placeholder='mis. {"core":"10:00-15:00","band":"07:00-19:00"}'
-          hint="Definisi band dalam JSON. Belum tergambar di frame mana pun — bentuk akhirnya menyusul."
+          hint="Band definition in JSON. Not drawn in any frame yet — the final form will follow."
         />
       )}
     </>
@@ -191,7 +191,7 @@ export function ShiftFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Edit shift pattern' : 'New shift pattern'}
-            description="Katalog pola shift. Tipe menentukan field mana yang berlaku — dan apakah pola ini bisa dipilih di roster."
+            description="Shift pattern catalogue. The type decides which fields apply — and whether the pattern can be picked in the roster."
             size="wide"
             footer={
               <>
@@ -207,13 +207,12 @@ export function ShiftFormModal({
             <Form className="flex flex-col gap-4">
               {editing && (
                 <Note icon={<Lock />}>
-                  Tipe shift beku setelah tersimpan — mengubah sifat sebuah pola berarti pola baru, supaya baris
-                  roster yang sudah menunjuknya tidak berubah makna diam-diam.
+                  Shift type is frozen once saved — changing a pattern's nature means a new pattern, so roster rows pointing to it never silently change meaning.
                 </Note>
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField name="shiftCode" label="Shift code" required maxLength={20} placeholder="mis. PAGI" />
+                <TextField name="shiftCode" label="Shift code" required maxLength={20} placeholder="e.g. PAGI" />
                 <TextField name="shiftName" label="Shift name" required maxLength={150} placeholder="Input text here" />
               </div>
 
@@ -234,7 +233,7 @@ export function ShiftFormModal({
                   label="Break (minutes)"
                   required
                   disabled={values.shiftType === 'ROTATING'}
-                  hint={values.shiftType === 'ROTATING' ? 'Pola siklus selalu berjeda 0.' : undefined}
+                  hint={values.shiftType === 'ROTATING' ? 'A cycle pattern always has a 0-minute break.' : undefined}
                 />
               </div>
 
@@ -249,11 +248,11 @@ export function ShiftFormModal({
 }
 
 const assignmentSchema = Yup.object({
-  employeeId: Yup.string().required('Karyawan wajib dipilih.'),
-  workDate: Yup.string().required('Tanggal kerja wajib diisi.'),
+  employeeId: Yup.string().required('Choose an employee.'),
+  workDate: Yup.string().required('Work date is required.'),
   shiftId: Yup.string().when('isOffDay', {
     is: false,
-    then: (schema) => schema.required('Pilih pola shift, atau tandai sebagai hari libur terjadwal.'),
+    then: (schema) => schema.required('Choose a shift pattern, or mark it as a scheduled day off.'),
     otherwise: (schema) => schema,
   }),
 });
@@ -271,7 +270,7 @@ function OffDayToggle() {
         }}
       />
       <span className="font-body text-[13px] font-medium text-fg-2">
-        Scheduled off day — barisnya tetap ada, dan menyatakan orangnya tidak bekerja
+        Scheduled off day — the row still exists and states the person isn't working
       </span>
     </label>
   );
@@ -290,7 +289,7 @@ function ShiftPicker({ shifts }: { shifts: Shift[] }) {
         value: row.id,
         label: `${row.shiftName} · ${row.shiftCode}`,
       }))}
-      hint="Hanya pola aktif non-siklus yang bisa dipasang ke roster."
+      hint="Only active non-cycle patterns can be assigned to the roster."
     />
   );
 }
@@ -344,7 +343,7 @@ export function AssignmentFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Override roster row' : 'Assign roster'}
-            description="Sentuhan tangan selalu dicap penyesuaian individual — bulk berikutnya akan melangkahinya."
+            description="A manual touch is always stamped as an individual adjustment — the next bulk run skips it."
             size="wide"
             footer={
               <>
@@ -411,7 +410,7 @@ export function BulkAssignModal({
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title="Bulk assign roster"
-      description="Satu pola shift dipasang ke banyak karyawan sekaligus sepanjang rentang tanggal."
+      description="One shift pattern assigned to many employees at once across a date range."
       size="wide"
       footer={
         <>
@@ -419,7 +418,7 @@ export function BulkAssignModal({
             Cancel
           </Button>
           <Button disabled={run.isPending} onClick={() => run.mutate({ draft, role }, { onSuccess: onClose })}>
-            {run.isPending ? 'Menjalankan…' : 'Run bulk assignment'}
+            {run.isPending ? 'Running…' : 'Run bulk assignment'}
           </Button>
         </>
       }
@@ -503,8 +502,7 @@ export function BulkAssignModal({
           ]}
         />
         <span className="font-body text-xs font-normal leading-[1.45] text-fg-3">
-          Baris yang sudah dikunci penyesuaian individual atau swap dilangkahi; baris yang cuma hasil bulk sebelumnya
-          ditulis ulang.
+          Rows locked by an individual adjustment or a swap are skipped; rows that only came from a previous bulk run are overwritten.
         </span>
       </div>
     </Modal>
@@ -544,7 +542,7 @@ export function SwapFormModal({
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title="Request shift swap"
-      description="Tukar hanya sah pada tanggal kerja yang sama, dan tidak ada roster yang bergerak sebelum keputusan turun."
+      description="A swap is only valid on the same work date, and no roster moves before a decision is made."
       size="wide"
       footer={
         <>
@@ -578,7 +576,7 @@ export function SwapFormModal({
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder={myRows.length ? 'Select one of my rostered days' : 'Tidak ada hari yang bisa ditukar'} />
+              <SelectValue placeholder={myRows.length ? 'Select one of my rostered days' : 'No day available to swap'} />
             </SelectTrigger>
             <SelectContent>
               {myRows.map((row) => (
@@ -609,7 +607,7 @@ export function SwapFormModal({
             </SelectContent>
           </Select>
           <span className="font-body text-xs font-normal text-fg-3">
-            Hanya baris pada tanggal yang sama milik orang lain yang muncul di sini.
+            Only other people's rows on the same date appear here.
           </span>
         </div>
       </div>
@@ -639,7 +637,7 @@ export function SwapDecisionModal({
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Review shift swap"
-      description="Menyetujui menukar pola kedua baris sebagai satu paket; menolak tidak menyentuh roster sama sekali."
+      description="Approving swaps both rows' patterns as one package; rejecting doesn't touch the roster at all."
       size="wide"
       footer={
         <>
@@ -663,7 +661,7 @@ export function SwapDecisionModal({
         <div className="flex flex-col gap-4">
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              Anda tidak dapat memutuskan tukar shift yang Anda ajukan sendiri.
+              You can't decide a shift swap you requested yourself.
             </Note>
           )}
           <KeyValueList>
@@ -691,7 +689,7 @@ export function SwapWithdrawModal({ row, onClose }: { row: ShiftSwap | null; onC
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Withdraw swap request"
-      description="Permintaannya tinggal sebagai jejak berstatus Cancelled; tidak ada roster yang tersentuh."
+      description="The request stays on record as Cancelled; no roster is touched."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -739,8 +737,8 @@ export function SchedulerDeleteModal({
       title={target?.kind === 'shift' ? 'Delete this shift pattern?' : 'Delete this roster row?'}
       description={
         target?.kind === 'shift'
-          ? 'Hanya untuk pola yang tidak ditunjuk satu pun baris roster.'
-          : 'Ditolak selama barisnya masih terikat tukar yang belum diputuskan.'
+          ? 'Only for patterns not referenced by any roster row.'
+          : 'Refused while the row is still tied to an undecided swap.'
       }
       footer={
         <>
@@ -765,8 +763,8 @@ export function SchedulerDeleteModal({
         <div className="flex flex-col gap-4">
           <Note tone="warn" icon={<TriangleAlert />}>
             {target.kind === 'shift'
-              ? 'Pola yang masih dipakai roster tidak bisa dihapus — nonaktifkan lewat Deactivate.'
-              : 'Baris yang menjadi bagian tukar shift yang belum diputuskan tidak bisa dihapus.'}
+              ? "A pattern still used by the roster can't be deleted — deactivate it instead."
+              : "A row that is part of an undecided shift swap can't be deleted."}
           </Note>
           <KeyValueList>
             {target.kind === 'shift' ? (

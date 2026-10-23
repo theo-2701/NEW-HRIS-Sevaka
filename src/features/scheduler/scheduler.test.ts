@@ -27,16 +27,16 @@ describe('Katalog shift', () => {
   it('menolak jam terisi pada pola non-tetap', async () => {
     await expect(
       schedulerService.saveShift({ ...shiftDraft, shiftType: 'FLEXIBLE', flexBand: '{}' }),
-    ).rejects.toThrow(/harus kosong/);
+    ).rejects.toThrow(/must be empty/);
   });
 
   it('pola siklus wajib berjeda 0 dan punya definisi siklus', async () => {
     await expect(
       schedulerService.saveShift({ ...shiftDraft, shiftType: 'ROTATING', startTime: '', endTime: '', cycleDef: '{}' }),
-    ).rejects.toThrow(/berjeda 0/);
+    ).rejects.toThrow(/0-minute break/);
     await expect(
       schedulerService.saveShift({ ...shiftDraft, shiftType: 'ROTATING', startTime: '', endTime: '', breakMinutes: '0' }),
-    ).rejects.toThrow(/definisi siklus/);
+    ).rejects.toThrow(/cycle definition/);
   });
 
   it('menolak kode yang sudah dipakai pola aktif', async () => {
@@ -147,8 +147,8 @@ describe('Bulk assignment', () => {
 
   it('menolak rentang terbalik dan pilihan kosong', async () => {
     await expect(schedulerService.runBulk({ ...draft, employeeIds: [] })).rejects.toThrow(/422/);
-    await expect(schedulerService.runBulk({ ...draft, to: '2026-07-20' })).rejects.toThrow(/mendahului/);
-    await expect(schedulerService.runBulk({ ...draft, shiftId: '' })).rejects.toThrow(/pola shift/);
+    await expect(schedulerService.runBulk({ ...draft, to: '2026-07-20' })).rejects.toThrow(/earlier than/);
+    await expect(schedulerService.runBulk({ ...draft, shiftId: '' })).rejects.toThrow(/shift pattern/);
   });
 
   it('HR_STAFF tidak memegang scope bulk — 403; SUPER_ADMIN boleh (FSD-TIME 0.5 §9.5)', async () => {
@@ -159,7 +159,7 @@ describe('Bulk assignment', () => {
 
 describe('Tukar shift', () => {
   it('hanya sah pada tanggal kerja yang sama', async () => {
-    await expect(schedulerService.createSwap('as-1', 'as-5')).rejects.toThrow(/tanggal kerja yang sama/);
+    await expect(schedulerService.createSwap('as-1', 'as-5')).rejects.toThrow(/same work date/);
   });
 
   it('menolak baris yang sudah terikat tukar belum diputuskan', async () => {
@@ -231,7 +231,7 @@ describe('Aturan tanggal', () => {
 describe('Shift hari ini untuk kartu tap', () => {
   it('membaca shift dari roster', async () => {
     const roster = await shiftOn('emp-rina', '2026-07-30');
-    expect(roster?.shift?.shiftName).toBe('Shift Pagi');
+    expect(roster?.shift?.shiftName).toBe('Morning Shift');
   });
 
   it('hari libur roster tanpa shift', async () => {

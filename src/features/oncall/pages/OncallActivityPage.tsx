@@ -65,15 +65,15 @@ export function OncallActivityPage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'On Call' }, { label: 'On Call Activity' }]}
         title="On Call Activity"
-        description="Call-out lembur yang tercatat otomatis dari kehadiran di dalam jendela siaga yang disetujui."
+        description="Overtime call-outs recorded automatically from attendance inside an approved standby window."
       >
         <div className="flex flex-col gap-5">
           <Note icon={<Lock />}>
-            Baca saja. Call-out dicatat otomatis dari kehadiran; persetujuannya dilakukan di menu Overtime.
+            Read-only. Call-outs are recorded automatically from attendance; approval happens in the Overtime menu.
           </Note>
 
           <Card>
-            <CardHead title="Call-outs" sub="Lembur otomatis yang terbit dari jendela siaga" />
+            <CardHead title="Call-outs" sub="Automatic overtime issued from standby windows" />
 
             <div className="flex flex-col">
               <TableToolbar
@@ -97,7 +97,7 @@ export function OncallActivityPage() {
                 rows={paged.rows}
                 rowKey={(row) => row.id}
                 loading={isLoading}
-                empty="Belum ada call-out yang terbit dari jendela siaga mana pun. Jendela tanpa call-out memang tidak punya baris di sini."
+                empty="No call-out has been issued from any standby window yet. A window without call-outs has no row here."
                 columns={[
                   {
                     key: 'employee',
@@ -178,7 +178,7 @@ export function OncallActivityPage() {
           </Card>
 
           <Note icon={<Info />}>
-            Jendela siaga tanpa call-out tidak ditampilkan. Kolom <strong>Requested</strong> selalu kosong karena baris dibuat otomatis; <strong>Approved</strong> mengikuti pagu jendelanya.
+            Standby windows without call-outs are not shown. The <strong>Requested</strong> column is always empty because rows are created automatically; <strong>Approved</strong> follows the window's cap.
           </Note>
         </div>
       </PageShell>
@@ -186,7 +186,7 @@ export function OncallActivityPage() {
       <FilterModal
         open={filterOpen}
         title="Filter call-outs"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setFilterOpen}
         onReset={() => {
           setFilter(EMPTY_ACTIVITY_FILTER);

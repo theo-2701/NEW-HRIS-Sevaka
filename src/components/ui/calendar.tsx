@@ -3,20 +3,20 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate, formatDateRange, toIsoDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const WEEKDAYS = ['S', 'S', 'R', 'K', 'J', 'S', 'M'];
+const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTHS = [
-  'Januari',
-  'Februari',
-  'Maret',
+  'January',
+  'February',
+  'March',
   'April',
-  'Mei',
-  'Juni',
-  'Juli',
-  'Agustus',
+  'May',
+  'June',
+  'July',
+  'August',
   'September',
-  'Oktober',
+  'October',
   'November',
-  'Desember',
+  'December',
 ];
 
 type View = 'days' | 'months' | 'years';
@@ -101,7 +101,7 @@ function CalendarFrame({
   return (
     <div className="w-[228px] p-2">
       <header className="mb-1.5 flex items-center justify-between gap-1.5">
-        <button type="button" aria-label="Sebelumnya" onClick={() => step(-1)} className={NAV_BTN}>
+        <button type="button" aria-label="Previous" onClick={() => step(-1)} className={NAV_BTN}>
           <ChevronLeft />
         </button>
         <button
@@ -113,7 +113,7 @@ function CalendarFrame({
           {view === 'months' && year}
           {view === 'years' && `${yearsStart} – ${yearsStart + 11}`}
         </button>
-        <button type="button" aria-label="Berikutnya" onClick={() => step(1)} className={NAV_BTN}>
+        <button type="button" aria-label="Next" onClick={() => step(1)} className={NAV_BTN}>
           <ChevronRight />
         </button>
       </header>
@@ -242,7 +242,7 @@ export function Calendar({
       }}
       footer={
         <>
-          <FooterValue empty={!draft}>{draft ? formatDate(draft) : 'Belum dipilih'}</FooterValue>
+          <FooterValue empty={!draft}>{draft ? formatDate(draft) : 'Not selected'}</FooterValue>
           <button type="button" disabled={!draft} onClick={() => draft && onSelect(draft)} className={SET_BTN}>
             Set Date
           </button>
@@ -300,7 +300,7 @@ export function RangeCalendar({
   };
 
   const label = !draft.from
-    ? 'Pilih tanggal awal'
+    ? 'Select start date'
     : draft.to
       ? formatDateRange(draft.from, draft.to)
       : `${formatDate(draft.from)} – …`;

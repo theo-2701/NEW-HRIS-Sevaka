@@ -67,7 +67,7 @@ export interface DecisionResult {
 
 function findRequest(id: string): OvertimeRequest {
   const row = mockRequests.find((item) => item.id === id);
-  if (!row) throw new Error('404 — pengajuan lembur tidak ditemukan.');
+  if (!row) throw new Error('404 — Overtime request not found.');
   return row;
 }
 
@@ -133,7 +133,7 @@ export const overtimeService = {
     if (MOCK) {
       await delay(350);
       if (!canFileOvertime(session)) {
-        throw new Error('403 — overtime-request:create adalah scope EMPLOYEE; lembur tidak pernah diajukan atas nama orang lain.');
+        throw new Error('403 — overtime-request:create is an EMPLOYEE scope; overtime is never filed on behalf of someone else.');
       }
       const hours = Number(draft.requestedHours);
       const reason = draft.requestReason.trim();
@@ -141,17 +141,17 @@ export const overtimeService = {
       if (editingId) {
         const existing = findRequest(editingId);
         if (existing.overtimeStatus !== 'PENDING_APPROVAL') {
-          throw new Error('422 — keputusan sudah turun; mengubah tidak lagi sah. Ajukan pengajuan baru.');
+          throw new Error('422 — A decision has been made; editing is no longer valid. File a new request.');
         }
       }
-      if (!draft.overtimeDate) throw new Error('422 — tanggal lembur wajib diisi.');
-      if (!Number.isFinite(hours) || hours <= 0) throw new Error('422 — jam yang diminta harus lebih besar dari nol.');
+      if (!draft.overtimeDate) throw new Error('422 — Overtime date is required.');
+      if (!Number.isFinite(hours) || hours <= 0) throw new Error('422 — Requested hours must be greater than zero.');
 
       const derived = derive(mockRequests, session.employeeId, draft.overtimeDate, hours, editingId ?? null);
       if (derived.submissionMode === 'RETROACTIVE') {
-        if (!reason) throw new Error('422 — pengajuan susulan butuh alasan tertulis.');
+        if (!reason) throw new Error('422 — A retroactive request needs a written reason.');
         if (draft.overtimeDate < retroWindowStart()) {
-          throw new Error(`422 — tanggal itu di luar jendela susulan ${RETRO_WINDOW_DAYS} hari.`);
+          throw new Error(`422 — That date is outside the ${RETRO_WINDOW_DAYS}-day retroactive window.`);
         }
       }
 
@@ -163,7 +163,7 @@ export const overtimeService = {
           row.id !== editingId,
       );
       if (clash) {
-        throw new Error('409 — sudah ada pengajuan menunggu keputusan pada tanggal itu; dua approver tidak boleh memutuskan hari yang sama tanpa saling tahu.');
+        throw new Error("409 — A request awaiting a decision already exists on that date; two approvers can't decide the same day without knowing about each other.");
       }
 
       if (editingId) {
@@ -217,20 +217,20 @@ export const overtimeService = {
       await delay(400);
       const row = findRequest(id);
       if (!isOvertimeApprover(session)) {
-        throw new Error('403 — overtime-request:approve tidak dipegang peran ini.');
+        throw new Error("403 — Your role can't decide overtime requests.");
       }
       if (row.employeeId === session.employeeId) {
-        throw new Error('403 — pemisahan tugas: pemutus tidak pernah boleh jadi pengaju.');
+        throw new Error('403 — Separation of duties: the decider can never be the requester.');
       }
       if (row.overtimeStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — hanya pengajuan yang masih menunggu keputusan yang bisa diputuskan.');
+        throw new Error('422 — Only a request awaiting a decision can be decided.');
       }
       if (kind === 'APPROVED') {
         if (!Number.isFinite(approvedHours) || (approvedHours ?? 0) <= 0) {
-          throw new Error('422 — jam yang disetujui wajib diisi saat menyetujui.');
+          throw new Error('422 — Approved hours are required when approving.');
         }
         if ((approvedHours ?? 0) > (row.requestedHours ?? 0)) {
-          throw new Error('422 — jam yang disetujui boleh dipangkas di bawah permintaan, tidak pernah dinaikkan di atasnya.');
+          throw new Error('422 — Approved hours can be trimmed below the request, never raised above it.');
         }
       }
 
@@ -271,10 +271,10 @@ export const overtimeService = {
       await delay(250);
       const row = findRequest(id);
       if (row.employeeId !== session.employeeId) {
-        throw new Error('403 — hanya pengaju yang bisa menarik pengajuannya sendiri.');
+        throw new Error('403 — Only the requester can withdraw their own request.');
       }
       if (row.overtimeStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — keputusan sudah turun; pengajuan yang sudah diputuskan tidak bisa ditarik.');
+        throw new Error("422 — A decision has been made; a decided request can't be withdrawn.");
       }
       row.overtimeStatus = 'CANCELLED';
       return { ...row };

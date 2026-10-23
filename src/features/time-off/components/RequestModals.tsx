@@ -62,7 +62,7 @@ function RejectFields({
         <Label htmlFor="reject-reason">{reasonLabel}</Label>
         <Select value={value.reason} onValueChange={(reason) => onChange({ ...value, reason: reason as RejectReasonCode })}>
           <SelectTrigger id="reject-reason">
-            <SelectValue placeholder="Pilih alasan penolakan" />
+            <SelectValue placeholder="Select rejection reason" />
           </SelectTrigger>
           <SelectContent>
             {REJECT_REASON_OPTIONS.map((code) => (
@@ -74,7 +74,7 @@ function RejectFields({
         </Select>
       </div>
       <div className="flex flex-col gap-1 md:col-span-2">
-        <Label htmlFor="reject-note">Catatan tambahan (opsional)</Label>
+        <Label htmlFor="reject-note">Additional note (optional)</Label>
         <Textarea
           id="reject-note"
           rows={3}
@@ -151,36 +151,36 @@ export function RequestDetailModal({
         {tab === 'detail' && (
           <>
             <KeyValueList>
-              <KeyValueRow label="Karyawan">{employeeName(request.employeeId)}</KeyValueRow>
-              <KeyValueRow label="Jenis cuti">{type?.name ?? request.leaveTypeId}</KeyValueRow>
-              <KeyValueRow label="Tanggal">
+              <KeyValueRow label="Employee">{employeeName(request.employeeId)}</KeyValueRow>
+              <KeyValueRow label="Leave type">{type?.name ?? request.leaveTypeId}</KeyValueRow>
+              <KeyValueRow label="Date">
                 {formatDate(request.startDate)} – {formatDate(request.endDate)}
               </KeyValueRow>
               <KeyValueRow label="Sesi">{SESSION_LABEL[request.daySession]}</KeyValueRow>
-              <KeyValueRow label="Total hari">{request.totalDays}</KeyValueRow>
-              <KeyValueRow label="Alasan">{request.reason || '—'}</KeyValueRow>
-              <KeyValueRow label="Lapis tambahan">
+              <KeyValueRow label="Total days">{request.totalDays}</KeyValueRow>
+              <KeyValueRow label="Reason">{request.reason || '—'}</KeyValueRow>
+              <KeyValueRow label="Extra layer">
                 <ExtraLayerTag reason={request.extraApprovalReason} />
               </KeyValueRow>
               <KeyValueRow label="Status">
                 <RequestStatusBadge status={request.status} />
               </KeyValueRow>
-              <KeyValueRow label="Diajukan">{formatDateTime(request.submittedAt)}</KeyValueRow>
+              <KeyValueRow label="Submitted">{formatDateTime(request.submittedAt)}</KeyValueRow>
               {request.rejectReason && (
-                <KeyValueRow label="Alasan penolakan">{REJECT_REASON_LABEL[request.rejectReason]}</KeyValueRow>
+                <KeyValueRow label="Rejection reason">{REJECT_REASON_LABEL[request.rejectReason]}</KeyValueRow>
               )}
-              {request.rejectNote && <KeyValueRow label="Catatan penolakan">{request.rejectNote}</KeyValueRow>}
+              {request.rejectNote && <KeyValueRow label="Rejection note">{request.rejectNote}</KeyValueRow>}
             </KeyValueList>
 
             {request.rejectDeadlineAt && (
               <Note tone={windowOpen ? 'warn' : 'info'} icon={<Clock />}>
                 {windowOpen ? (
                   <>
-                    Cuti sakit ini masih bisa ditolak sampai <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>. Menolak akan mengembalikan saldo dan status harinya.
+                    This sick leave can still be rejected until <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>. Rejecting restores the balance and the status of those days.
                   </>
                 ) : (
                   <>
-                    Batas penolakan sudah lewat pada <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>. Cuti sakit ini sudah permanen.
+                    The rejection window closed on <strong>{formatDateTime(request.rejectDeadlineAt)}</strong>. This sick leave is now final.
                   </>
                 )}
               </Note>
@@ -193,12 +193,11 @@ export function RequestDetailModal({
             <Note tone={allowed ? 'info' : 'warn'} icon={<ShieldAlert />}>
               {allowed ? (
                 <>
-                  Membuka surat dokter menulis <strong>jejak akses lebih dulu</strong>, baru isinya ditampilkan.
-                  Tujuan akses wajib dipilih.
+                  Opening the doctor's note writes <strong>an access trail first</strong>, then shows the content. An access purpose is required.
                 </>
               ) : (
                 <>
-                  Peran Anda tidak berhak membuka surat dokter.
+                  Your role can't open doctor's notes.
                 </>
               )}
             </Note>
@@ -208,7 +207,7 @@ export function RequestDetailModal({
                 <Label htmlFor="access-purpose">Tujuan akses</Label>
                 <Select value={purpose} onValueChange={(value) => setPurpose(value as AccessPurpose)}>
                   <SelectTrigger id="access-purpose" disabled={!allowed}>
-                    <SelectValue placeholder="Pilih tujuan akses" />
+                    <SelectValue placeholder="Select access purpose" />
                   </SelectTrigger>
                   <SelectContent>
                     {(Object.keys(ACCESS_PURPOSE_LABEL) as AccessPurpose[]).map((value) => (
@@ -234,7 +233,7 @@ export function RequestDetailModal({
             <DataTable<MedicalAccessLog>
               rows={rows}
               rowKey={(row) => row.id}
-              empty="Belum ada jejak akses untuk pengajuan ini."
+              empty="No access trail for this request yet."
               columns={[
                 {
                   key: 'time',
@@ -288,7 +287,7 @@ export function DecisionModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title={`Leave approval — ${request.id}`}
-      description="Pilih keputusan. Menolak wajib memilih alasan penolakan."
+      description="Choose a decision. Rejecting requires a rejection reason."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -319,18 +318,18 @@ export function DecisionModal({
     >
       <div className="flex flex-col gap-4">
         <KeyValueList>
-          <KeyValueRow label="Karyawan">{employeeName(request.employeeId)}</KeyValueRow>
-          <KeyValueRow label="Jenis cuti">{leaveTypeOf(request.leaveTypeId)?.name}</KeyValueRow>
-          <KeyValueRow label="Tanggal">
+          <KeyValueRow label="Employee">{employeeName(request.employeeId)}</KeyValueRow>
+          <KeyValueRow label="Leave type">{leaveTypeOf(request.leaveTypeId)?.name}</KeyValueRow>
+          <KeyValueRow label="Date">
             {formatDate(request.startDate)} – {formatDate(request.endDate)}
           </KeyValueRow>
-          <KeyValueRow label="Total hari">{request.totalDays}</KeyValueRow>
-          <KeyValueRow label="Alasan">{request.reason || '—'}</KeyValueRow>
-          <KeyValueRow label="Lapis tambahan">
+          <KeyValueRow label="Total days">{request.totalDays}</KeyValueRow>
+          <KeyValueRow label="Reason">{request.reason || '—'}</KeyValueRow>
+          <KeyValueRow label="Extra layer">
             <ExtraLayerTag reason={request.extraApprovalReason} />
           </KeyValueRow>
           <KeyValueRow label="Pemisahan tugas">
-            {employeeName(session.employeeId)} ≠ {employeeName(request.employeeId)} — keputusan tersedia
+            {employeeName(session.employeeId)} ≠ {employeeName(request.employeeId)} — decision available
           </KeyValueRow>
         </KeyValueList>
 
@@ -338,13 +337,13 @@ export function DecisionModal({
           value={decision}
           onChange={choose}
           options={[
-            { value: 'APPROVED', label: 'Setujui' },
-            { value: 'REJECTED', label: 'Tolak' },
+            { value: 'APPROVED', label: 'Approve' },
+            { value: 'REJECTED', label: 'Reject' },
           ]}
         />
 
         {decision === 'REJECTED' && (
-          <RejectFields value={reject} onChange={setReject} reasonLabel="Alasan penolakan" />
+          <RejectFields value={reject} onChange={setReject} reasonLabel="Rejection reason" />
         )}
       </div>
     </Modal>
@@ -376,7 +375,7 @@ export function SickRejectModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title="Reject sick leave"
-      description="Menolak membalik apa yang sudah berlaku — saldo dikembalikan dan harinya jatuh jadi absen."
+      description="Rejecting reverses what already applies — the balance is restored and the days become absences."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -395,22 +394,21 @@ export function SickRejectModal({
       <div className="flex flex-col gap-4">
         {request.rejectDeadlineAt && (
           <Note tone="info" icon={<Clock />}>
-            Jendela tolak <strong>masih terbuka</strong> sampai {formatDateTime(request.rejectDeadlineAt)}. Cuti sakit
-            ini sudah disetujui otomatis, jadi yang tersisa hanya pilihan menolak.
+            Rejection window <strong>still open</strong> until {formatDateTime(request.rejectDeadlineAt)}. This sick leave was auto-approved, so the only remaining option is to reject it.
           </Note>
         )}
         <KeyValueList>
-          <KeyValueRow label="Karyawan">{employeeName(request.employeeId)}</KeyValueRow>
-          <KeyValueRow label="Tanggal">
+          <KeyValueRow label="Employee">{employeeName(request.employeeId)}</KeyValueRow>
+          <KeyValueRow label="Date">
             {formatDate(request.startDate)} – {formatDate(request.endDate)}
           </KeyValueRow>
-          <KeyValueRow label="Surat dokter">{request.hasDoctorNote ? 'Tersedia' : '—'}</KeyValueRow>
-          <KeyValueRow label="Jendela tertutup">
+          <KeyValueRow label="Doctor's note">{request.hasDoctorNote ? 'Available' : '—'}</KeyValueRow>
+          <KeyValueRow label="Window closed">
             {request.rejectDeadlineAt ? formatDateTime(request.rejectDeadlineAt) : '—'}
           </KeyValueRow>
         </KeyValueList>
 
-        <RejectFields value={input} onChange={setInput} reasonLabel="Alasan penolakan (wajib)" />
+        <RejectFields value={input} onChange={setInput} reasonLabel="Rejection reason (required)" />
       </div>
     </Modal>
   );
@@ -435,7 +433,7 @@ export function WithdrawModal({
       open
       onOpenChange={(next) => !next && onClose()}
       title="Withdraw this request?"
-      description="Boleh selagi menunggu atau otomatis disetujui, dan — setelah disetujui — hanya sebelum tanggal mulainya tiba."
+      description="Allowed while pending or auto-approved, and — once approved — only before the start date arrives."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -453,8 +451,8 @@ export function WithdrawModal({
     >
       <div className="flex flex-col gap-4">
         <KeyValueList>
-          <KeyValueRow label="Pengajuan">{request.id}</KeyValueRow>
-          <KeyValueRow label="Tanggal">
+          <KeyValueRow label="Request">{request.id}</KeyValueRow>
+          <KeyValueRow label="Date">
             {formatDate(request.startDate)} – {formatDate(request.endDate)}
           </KeyValueRow>
           <KeyValueRow label="Status">
@@ -463,8 +461,7 @@ export function WithdrawModal({
         </KeyValueList>
 
         <Note icon={<Info />}>
-          Penarikan adalah <strong>transisi status</strong>, bukan penghapusan: barisnya tetap ada dengan status
-          CANCELLED, saldo dipulihkan, dan delegasi yang menempel ikut dibatalkan.
+          Withdrawing is a <strong>status transition</strong>, not deletion: the row stays with status CANCELLED, the balance is restored, and any attached delegation is cancelled too.
         </Note>
       </div>
     </Modal>

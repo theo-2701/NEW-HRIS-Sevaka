@@ -64,13 +64,13 @@ export interface WorkCalendarFilter {
 
 function findHoliday(id: string): CalendarHoliday {
   const row = mockHolidays.find((item) => item.id === id);
-  if (!row) throw new Error('404 — baris libur tidak ditemukan.');
+  if (!row) throw new Error('404 — Holiday row not found.');
   return row;
 }
 
 function findCalendar(id: string): WorkCalendar {
   const row = mockCalendars.find((item) => item.id === id);
-  if (!row) throw new Error('404 — pola kerja tidak ditemukan.');
+  if (!row) throw new Error('404 — Work pattern not found.');
   return row;
 }
 
@@ -109,12 +109,12 @@ export const calendarService = {
     if (MOCK) {
       await delay(350);
       const name = draft.holidayName.trim();
-      if (!name) throw new Error('422 — nama libur wajib diisi.');
+      if (!name) throw new Error('422 — Holiday name is required.');
 
       if (id) {
         const row = findHoliday(id);
         if (row.isSystem) {
-          throw new Error('422 — baris nasional disemai sistem dan tidak bisa diubah di layar ini.');
+          throw new Error("422 — National rows are seeded by the system and can't be changed on this screen.");
         }
         // Hanya nama dan sumber yang terbuka; tanggal/tipe/scope beku.
         row.holidayName = name;
@@ -124,13 +124,13 @@ export const calendarService = {
       }
 
       if (!draft.holidayDate || !draft.holidayType) {
-        throw new Error('422 — tanggal, nama, dan tipe libur wajib diisi.');
+        throw new Error('422 — Holiday date, name and type are required.');
       }
       if (draft.holidayType === 'NATIONAL') {
-        throw new Error('422 — layer nasional disemai sistem dan tidak bisa dibuat di sini.');
+        throw new Error("422 — The national layer is seeded by the system and can't be created here.");
       }
       if (draft.holidayType === 'REGIONAL' && (!draft.scopeLevel || !draft.scopeRef)) {
-        throw new Error('422 — libur regional butuh scope level dan scope-nya sekaligus.');
+        throw new Error('422 — A regional holiday needs both a scope level and its scope.');
       }
 
       const scopeRef = draft.holidayType === 'REGIONAL' ? draft.scopeRef : null;
@@ -142,7 +142,7 @@ export const calendarService = {
       );
       if (clash) {
         throw new Error(
-          `409 — baris ${APPROVAL_STATUS_LABEL[clash.approvalStatus].toLowerCase()} "${clash.holidayName}" sudah memegang slot tanggal × tipe × scope ini. Hapus dulu baris itu.`,
+          `409 — The ${APPROVAL_STATUS_LABEL[clash.approvalStatus].toLowerCase()} row "${clash.holidayName}" already holds this date × type × scope slot. Delete that row first.`,
         );
       }
 
@@ -183,10 +183,10 @@ export const calendarService = {
       await delay(400);
       const row = findHoliday(id);
       if (row.createdBy === ME) {
-        throw new Error('403 — pemisahan tugas: pengaju tidak pernah memutuskan barisnya sendiri.');
+        throw new Error('403 — Separation of duties: the submitter never decides their own row.');
       }
       if (row.approvalStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — hanya baris yang menunggu keputusan yang bisa diputuskan.');
+        throw new Error('422 — Only a row awaiting a decision can be decided.');
       }
       void note;
       return acknowledge(cloneHoliday(row));
@@ -213,20 +213,20 @@ export const calendarService = {
       await delay(250);
       const row = findHoliday(id);
       if (row.isSystem) {
-        throw new Error('422 — baris nasional disemai sistem dan tidak bisa dihapus di sini.');
+        throw new Error("422 — National rows are seeded by the system and can't be deleted here.");
       }
       // TSD-TIME §4.6 FC-02: libur berlaku tidak dibatalkan surut; cuti bersama sejak hari-H pun
       // tidak (0.76, E2) karena job pemotong saldo berjalan pada harinya sendiri.
       if (row.approvalStatus === 'APPROVED' && row.isJointLeave && row.holidayDate <= ATTENDANCE_TODAY) {
-        throw new Error('422 — libur cuti bersama ini sudah tiba harinya; tidak bisa dibatalkan lagi.');
+        throw new Error("422 — This joint-leave holiday has already arrived; it can't be cancelled anymore.");
       }
       if (row.approvalStatus === 'APPROVED' && row.holidayDate < ATTENDANCE_TODAY) {
-        throw new Error('422 — tanggal libur ini sudah lewat; pembatalan tidak boleh mengubah hari yang sudah dinilai.');
+        throw new Error("422 — This holiday date has passed; cancelling it can't change days already assessed.");
       }
       // Baris ditolak pun boleh dihapus — justru itu cara membebaskan slotnya.
       const scored = DAILY.filter((day) => day.workDate === row.holidayDate).length;
       if (row.approvalStatus === 'APPROVED' && scored) {
-        throw new Error(`409 — ${scored} hari kehadiran yang sudah dinilai masih merujuk tanggal ini; liburnya tidak bisa dihapus.`);
+        throw new Error(`409 — ${scored} assessed attendance days still reference this date; the holiday can't be deleted.`);
       }
       mockHolidays = mockHolidays.filter((item) => item.id !== id);
       return;
@@ -253,16 +253,16 @@ export const calendarService = {
     if (MOCK) {
       await delay(350);
       const name = draft.calendarName.trim();
-      if (!name) throw new Error('422 — nama pola wajib diisi.');
+      if (!name) throw new Error('422 — Pattern name is required.');
       const until = draft.effectiveUntil || null;
 
       if (id) {
         const row = findCalendar(id);
         if (until && until < row.effectiveFrom) {
-          throw new Error('422 — tanggal akhir tidak boleh mendahului tanggal mulai.');
+          throw new Error("422 — End date can't be earlier than the start date.");
         }
         if (until && row.scopeLevel === 'COMPANY' && liveCompanyPatterns().length === 1) {
-          throw new Error('422 — pola company aktif terakhir tidak bisa diakhiri tanpa penggantinya.');
+          throw new Error("422 — The last active company pattern can't be ended without a replacement.");
         }
         // Scope, tujuh sakelar hari, dan tanggal mulai beku.
         row.calendarName = name;
@@ -271,14 +271,14 @@ export const calendarService = {
       }
 
       if (!draft.scopeLevel || !draft.effectiveFrom) {
-        throw new Error('422 — nama, scope level, dan tanggal mulai wajib diisi.');
+        throw new Error('422 — Name, scope level and start date are required.');
       }
       const scopeRef = draft.scopeLevel === 'COMPANY' ? null : draft.scopeRef || null;
       if (draft.scopeLevel !== 'COMPANY' && !scopeRef) {
-        throw new Error('422 — pola unit atau lokasi butuh scope-nya.');
+        throw new Error('422 — A unit or location pattern needs its scope.');
       }
       if (until && until < draft.effectiveFrom) {
-        throw new Error('422 — tanggal akhir tidak boleh mendahului tanggal mulai.');
+        throw new Error("422 — End date can't be earlier than the start date.");
       }
 
       // Dua rentang [from, until] beririsan bila masing-masing mulai sebelum yang lain berakhir.
@@ -288,7 +288,7 @@ export const calendarService = {
         return row.effectiveFrom <= (until ?? OPEN_END) && draft.effectiveFrom <= (row.effectiveUntil ?? OPEN_END);
       });
       if (overlap) {
-        throw new Error('409 — sudah ada pola aktif pada scope itu yang rentangnya bertindih.');
+        throw new Error('409 — An active pattern on that scope already overlaps this range.');
       }
 
       const row: WorkCalendar = {
@@ -316,7 +316,7 @@ export const calendarService = {
       await delay(250);
       const row = findCalendar(id);
       if (row.scopeLevel === 'COMPANY' && liveCompanyPatterns().length === 1) {
-        throw new Error('422 — pola company aktif terakhir tidak bisa dihapus; buat penggantinya dulu.');
+        throw new Error("422 — The last active company pattern can't be deleted; create its replacement first.");
       }
       mockCalendars = mockCalendars.filter((item) => item.id !== id);
       return;

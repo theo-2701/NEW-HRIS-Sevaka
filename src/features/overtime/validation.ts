@@ -7,13 +7,13 @@ import * as Yup from 'yup';
  */
 export const overtimeSchema = (isRetroactive: boolean) =>
   Yup.object({
-    overtimeDate: Yup.string().required('Tanggal lembur wajib diisi.'),
+    overtimeDate: Yup.string().required('Overtime date is required.'),
     requestedHours: Yup.number()
-      .typeError('Jam yang diminta wajib diisi.')
-      .positive('Jam yang diminta harus lebih besar dari nol.')
-      .required('Jam yang diminta wajib diisi.'),
+      .typeError('Requested hours are required.')
+      .positive('Requested hours must be greater than zero.')
+      .required('Requested hours are required.'),
     requestReason: isRetroactive
-      ? Yup.string().trim().required('Pengajuan susulan butuh alasan tertulis.')
+      ? Yup.string().trim().required('A retroactive request needs a written reason.')
       : Yup.string(),
   });
 
@@ -21,8 +21,8 @@ export const overtimeSchema = (isRetroactive: boolean) =>
 export const approveSchema = (requestedHours: number) =>
   Yup.object({
     approvedHours: Yup.number()
-      .typeError('Jam yang disetujui wajib diisi.')
-      .positive('Jam yang disetujui harus lebih besar dari nol.')
-      .max(requestedHours, 'Jam yang disetujui boleh dipangkas, tidak pernah dinaikkan di atas permintaan.')
-      .required('Jam yang disetujui wajib diisi.'),
+      .typeError('Approved hours are required.')
+      .positive('Approved hours must be greater than zero.')
+      .max(requestedHours, 'Approved hours can be trimmed, never raised above the request.')
+      .required('Approved hours are required.'),
   });

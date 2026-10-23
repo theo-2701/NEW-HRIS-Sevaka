@@ -69,15 +69,15 @@ export function evaluateGates(input: {
 
   const type = leaveTypeOf(leaveTypeId);
   if (!type || !startDate || !endDate) {
-    result.errors.push('422 — jenis cuti, tanggal mulai, dan tanggal selesai wajib diisi.');
+    result.errors.push('422 — Leave type, start date and end date are required.');
     return result;
   }
   if (endDate < startDate) {
-    result.errors.push('422 — tanggal selesai tidak boleh mendahului tanggal mulai.');
+    result.errors.push("422 — End date can't be earlier than the start date.");
     return result;
   }
   if (daySession !== 'FULL' && startDate !== endDate) {
-    result.errors.push('422 — setengah hari hanya sah bila tanggal mulai dan selesai sama.');
+    result.errors.push('422 — Half day is only valid when the start and end dates are the same.');
   }
 
   // Gerbang 1 — blackout. HARD menolak 422; SOFT hanya menaikkan lapis.
@@ -85,7 +85,7 @@ export function evaluateGates(input: {
     const overlaps = startDate <= blackout.endDate && endDate >= blackout.startDate;
     if (!overlaps || type.isStatutory) return;
     if (blackout.mode === 'HARD') {
-      result.errors.push(`422 — tanggalnya masuk blackout keras "${blackout.name}".`);
+      result.errors.push(`422 — The dates fall in the hard blackout "${blackout.name}".`);
     } else {
       result.extra.push('SOFT_BLACKOUT');
     }
@@ -96,7 +96,7 @@ export function evaluateGates(input: {
     if (row.employeeId !== employeeId || row.id === selfId) return;
     if (!LIVE_STATUS.includes(row.status)) return;
     if (startDate <= row.endDate && endDate >= row.startDate) {
-      result.errors.push(`409 — tanggalnya bertabrakan dengan pengajuan hidup ${row.id}.`);
+      result.errors.push(`409 — The dates overlap live request ${row.id}.`);
     }
   });
 
@@ -104,14 +104,14 @@ export function evaluateGates(input: {
   const lead = Math.round((new Date(`${startDate}T00:00:00`).getTime() - now.getTime()) / 86_400_000);
   if (type.minAdvanceDays && lead < type.minAdvanceDays) {
     result.errors.push(
-      `422 — ${type.name} harus diajukan minimal ${type.minAdvanceDays} hari di muka (yang ini ${lead} hari).`,
+      `422 — ${type.name} must be filed at least ${type.minAdvanceDays} days ahead (this one is ${lead} days).`,
     );
   }
 
   // Gerbang 4 — hari kerja bersih tidak boleh nol (422).
   result.totalDays = workingDays(employeeId, startDate, endDate, daySession);
   if (result.totalDays === 0) {
-    result.errors.push('422 — rentangnya tidak memuat hari kerja bersih (libur dan akhir pekan dikeluarkan).');
+    result.errors.push('422 — The range contains no net working days (holidays and weekends are excluded).');
   }
 
   // Lapis persetujuan tambahan — mengangkat, bukan memblokir.

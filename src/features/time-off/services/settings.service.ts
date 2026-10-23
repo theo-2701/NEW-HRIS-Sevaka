@@ -41,24 +41,24 @@ let mockBlackouts: Blackout[] = BLACKOUTS.map((row) => ({ ...row }));
 
 function findType(id: string): LeaveType {
   const row = mockTypes.find((item) => item.id === id);
-  if (!row) throw new Error('Jenis cuti tidak ditemukan.');
+  if (!row) throw new Error('Leave type not found.');
   return row;
 }
 
 function validateType(draft: LeaveTypeDraft, selfId?: string) {
   if (!CODE_PATTERN.test(draft.code)) {
-    throw new Error('422 — kode harus 2–30 karakter huruf kapital, angka, dan tanda hubung.');
+    throw new Error('422 — Code must be 2–30 characters: capital letters, digits and hyphens.');
   }
   const name = draft.name.trim();
-  if (!name || name.length > 150) throw new Error('422 — nama jenis cuti wajib diisi, maksimal 150 karakter.');
+  if (!name || name.length > 150) throw new Error('422 — Leave type name is required, maximum 150 characters.');
   if (!draft.isPaid && draft.affectsBalance) {
-    throw new Error('422 — tidak dibayar dan memotong saldo tidak boleh menyala bersamaan; hari yang sama akan tercharge dua kali.');
+    throw new Error('422 — Unpaid and deducts balance cannot both be on; the same day would be charged twice.');
   }
   if (!Number.isInteger(draft.minAdvanceDays) || draft.minAdvanceDays < 0) {
-    throw new Error('422 — minimum advance days harus bilangan bulat 0 atau lebih.');
+    throw new Error('422 — Minimum advance days must be a whole number of 0 or more.');
   }
   const clash = mockTypes.some((row) => row.isActive && row.code === draft.code && row.id !== selfId);
-  if (clash) throw new Error('409 — kode itu sudah dipakai jenis cuti yang aktif.');
+  if (clash) throw new Error('409 — That code is already used by an active leave type.');
 }
 
 /** Apakah kebijakan masih hidup pada rentang tertentu? */
@@ -85,7 +85,7 @@ export const settingsService = {
         const existing = findType(id);
         // leave_code immutable pasca-insert untuk SEMUA jenis (UIC-TIME §5.1.3).
         if (draft.code !== existing.code) {
-          throw new Error('422 — kode jenis cuti tidak bisa diubah setelah dibuat.');
+          throw new Error("422 — A leave type's code can't be changed after it is created.");
         }
         validateType(draft, id);
         Object.assign(existing, {
@@ -133,14 +133,14 @@ export const settingsService = {
       await delay(250);
       const row = findType(id);
       if (row.isStatutory) {
-        throw new Error('422 — jenis cuti statutory tidak bisa dihapus, bahkan secara lunak. Matikan flag Active saja.');
+        throw new Error("422 — Statutory leave types can't be deleted, not even softly. Turn off the Active flag instead.");
       }
       const referenced =
         mockPolicies.some((policy) => policy.leaveTypeId === id) ||
         LEAVE_REQUESTS.some((request) => request.leaveTypeId === id) ||
         LEDGER.some((entry) => entry.leaveTypeId === id);
       if (referenced) {
-        throw new Error('409 — jenis ini masih dirujuk kebijakan, pengajuan, atau baris saldo. Matikan Active untuk memensiunkannya.');
+        throw new Error('409 — This type is still referenced by policies, requests or balance rows. Turn off Active to retire it.');
       }
       mockTypes = mockTypes.filter((item) => item.id !== id);
       return;
@@ -161,23 +161,23 @@ export const settingsService = {
     if (MOCK) {
       await delay(350);
       if (!draft.leaveTypeId || !draft.effectiveFrom) {
-        throw new Error('422 — jenis cuti dan tanggal mulai wajib diisi.');
+        throw new Error('422 — Leave type and start date are required.');
       }
       if (draft.isEligible && (draft.ratePerMonth === null || draft.ratePerMonth < 0)) {
-        throw new Error('422 — kebijakan yang entitled butuh rate per bulan 0 atau lebih.');
+        throw new Error('422 — An entitled policy needs a monthly rate of 0 or more.');
       }
       if (!draft.isEligible && draft.ratePerMonth !== null) {
-        throw new Error('422 — rate harus kosong bila kelompok itu tidak entitled.');
+        throw new Error('422 — Rate must be empty when the group is not entitled.');
       }
       if (draft.maxBalanceDays !== null && draft.maxBalanceDays <= 0) {
-        throw new Error('422 — balance cap harus lebih besar dari nol bila diisi.');
+        throw new Error('422 — Balance cap must be greater than zero when filled.');
       }
       if (draft.carryOverPolicy === 'CARRY_CAPPED') {
         if (!draft.carryOverMaxDays || !draft.carryOverExpiry || !EXPIRY_PATTERN.test(draft.carryOverExpiry)) {
-          throw new Error('422 — carry capped butuh jumlah hari maksimum dan tanggal kedaluwarsa MM-DD.');
+          throw new Error('422 — Carry capped needs a maximum number of days and an MM-DD expiry date.');
         }
       } else if (draft.carryOverMaxDays !== null || draft.carryOverExpiry) {
-        throw new Error('422 — field carry-over harus kosong kecuali kebijakannya carry capped.');
+        throw new Error('422 — Carry-over fields must be empty unless the policy is carry capped.');
       }
 
       const clash = mockPolicies.some(
@@ -190,7 +190,7 @@ export const settingsService = {
           ),
       );
       if (clash) {
-        throw new Error('409 — sudah ada kebijakan hidup untuk pasangan jenis cuti × jenis kepegawaian pada rentang yang bertindih.');
+        throw new Error('409 — A live policy already exists for this leave type × employment type pair in an overlapping range.');
       }
 
       const row: AccrualPolicy = {
@@ -210,10 +210,10 @@ export const settingsService = {
     if (MOCK) {
       await delay(250);
       const row = mockPolicies.find((item) => item.id === id);
-      if (!row) throw new Error('Kebijakan tidak ditemukan.');
-      if (!effectiveUntil) throw new Error('422 — pilih tanggal kebijakan ini berhenti berlaku.');
+      if (!row) throw new Error('Policy not found.');
+      if (!effectiveUntil) throw new Error('422 — Choose the date this policy stops applying.');
       if (effectiveUntil < row.effectiveFrom) {
-        throw new Error('422 — tanggal akhir tidak boleh mendahului tanggal mulai.');
+        throw new Error("422 — End date can't be earlier than the start date.");
       }
       row.effectiveUntil = effectiveUntil;
       return;
@@ -235,20 +235,20 @@ export const settingsService = {
       await delay(350);
       const blackoutName = draft.name.trim();
       if (!blackoutName || blackoutName.length > 150) {
-        throw new Error('422 — nama periode wajib diisi, maksimal 150 karakter.');
+        throw new Error('422 — Period name is required, maximum 150 characters.');
       }
       const reason = draft.reason.trim();
-      if (reason.length > 300) throw new Error('422 — alasan maksimal 300 karakter.');
+      if (reason.length > 300) throw new Error('422 — Reason can be at most 300 characters.');
       if (!draft.startDate || !draft.endDate) {
-        throw new Error('422 — tanggal mulai dan tanggal akhir dua-duanya wajib diisi.');
+        throw new Error('422 — Start date and end date are both required.');
       }
       if (draft.endDate < draft.startDate) {
-        throw new Error('422 — tanggal akhir tidak boleh mendahului tanggal mulai.');
+        throw new Error("422 — End date can't be earlier than the start date.");
       }
 
       if (id) {
         const row = mockBlackouts.find((item) => item.id === id);
-        if (!row) throw new Error('Periode blackout tidak ditemukan.');
+        if (!row) throw new Error('Blackout period not found.');
         Object.assign(row, {
           name: draft.name.trim(),
           reason,

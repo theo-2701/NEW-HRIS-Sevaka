@@ -15,11 +15,11 @@ import type { OvertimeRequest, OvertimeStatus } from '@/features/overtime/types'
 import { formatDate } from '@/lib/format';
 
 const STATUS_LABEL: Record<OvertimeStatus, string> = {
-  PENDING_APPROVAL: 'Menunggu persetujuan',
-  AUTO_APPROVED: 'Disetujui otomatis',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
-  CANCELLED: 'Dibatalkan',
+  PENDING_APPROVAL: 'Pending approval',
+  AUTO_APPROVED: 'Auto-approved',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancelled',
 };
 
 const TONE: Record<OvertimeStatus, 'ok' | 'warn' | 'err' | 'mute'> = {
@@ -31,9 +31,9 @@ const TONE: Record<OvertimeStatus, 'ok' | 'warn' | 'err' | 'mute'> = {
 };
 
 const CATEGORY_LABEL = {
-  WORKDAY: 'Hari kerja',
-  WEEKLY_REST: 'Istirahat mingguan',
-  PUBLIC_HOLIDAY: 'Libur nasional',
+  WORKDAY: 'Working day',
+  WEEKLY_REST: 'Weekly rest',
+  PUBLIC_HOLIDAY: 'Public holiday',
 } as const;
 
 /**
@@ -60,51 +60,51 @@ export function EssOvertimePage() {
     <PageShell
       crumbs={[{ label: 'Employee Self-Service' }, { label: 'Time Management' }, { label: 'Overtime' }]}
       title="Overtime"
-      description="Pengajuan lembur Anda beserta jam yang disetujui approver."
+      description="Your overtime requests and the hours approved by your approver."
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <Card>
-        <CardHead title="Lembur saya" sub={`Total jam disetujui: ${approvedHours.toFixed(1)} jam`} />
+        <CardHead title="My overtime" sub={`Total approved hours: ${approvedHours.toFixed(1)} h`} />
         <div>
-          <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Ajukan lembur</AddButton>} />
+          <TableToolbar actions={<AddButton onClick={() => setForm(true)}>Request overtime</AddButton>} />
           <DataTable<OvertimeRequest>
             rows={paged.rows}
             rowKey={(row) => row.id}
             loading={overtime.isLoading}
-            empty="Belum ada pengajuan lembur."
+            empty="No overtime request yet."
             columns={[
-              { key: 'date', header: 'Tanggal', strong: true, nowrap: true, render: (row) => formatDate(row.overtimeDate) },
+              { key: 'date', header: 'Date', strong: true, nowrap: true, render: (row) => formatDate(row.overtimeDate) },
               {
                 key: 'category',
-                header: 'Kategori',
+                header: 'Category',
                 render: (row) => CATEGORY_LABEL[row.overtimeCategory],
               },
               {
                 key: 'mode',
-                header: 'Cara ajukan',
+                header: 'Submission',
                 muted: true,
-                render: (row) => (row.submissionMode === 'PRE' ? 'Sebelum lembur' : 'Setelah lembur'),
+                render: (row) => (row.submissionMode === 'PRE' ? 'Before overtime' : 'After overtime'),
               },
               {
                 key: 'requested',
-                header: 'Diajukan',
+                header: 'Submitted',
                 align: 'right',
                 render: (row) =>
                   row.requestedHours === null ? (
-                    <span className="text-fg-4">— (dari deteksi on-call)</span>
+                    <span className="text-fg-4">— (from on-call detection)</span>
                   ) : (
-                    <span className="tabular-nums">{row.requestedHours} jam</span>
+                    <span className="tabular-nums">{row.requestedHours} h</span>
                   ),
               },
               {
                 key: 'approved',
-                header: 'Disetujui',
+                header: 'Approved',
                 align: 'right',
                 render: (row) =>
                   row.approvedHours === null ? (
                     <span className="text-fg-4">—</span>
                   ) : (
-                    <span className="tabular-nums">{row.approvedHours} jam</span>
+                    <span className="tabular-nums">{row.approvedHours} h</span>
                   ),
               },
               {
@@ -114,20 +114,20 @@ export function EssOvertimePage() {
                   <StatusBadge tone={TONE[row.overtimeStatus]}>{STATUS_LABEL[row.overtimeStatus]}</StatusBadge>
                 ),
               },
-              { key: 'reason', header: 'Alasan', muted: true, render: (row) => row.requestReason || '—' },
+              { key: 'reason', header: 'Reason', muted: true, render: (row) => row.requestReason || '—' },
             ]}
             actions={(row) =>
               row.overtimeStatus === 'PENDING_APPROVAL' ? (
                 <RowActions
                   actions={[
                     {
-                      label: 'Ubah',
+                      label: 'Edit',
                       onSelect: () => {
                         setEditing(row);
                         setForm(true);
                       },
                     },
-                    { label: 'Tarik pengajuan', danger: true, onSelect: () => setWithdrawing(row) },
+                    { label: 'Withdraw request', danger: true, onSelect: () => setWithdrawing(row) },
                   ]}
                 />
               ) : null

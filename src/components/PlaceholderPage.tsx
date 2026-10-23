@@ -16,17 +16,17 @@ export function PlaceholderPage() {
   const { pathname } = useLocation();
   const entry = findNavByPath(pathname);
 
-  const title = entry?.label ?? 'Halaman belum tersedia';
+  const title = entry?.label ?? 'Page not available yet';
   const crumbs = entry ? entry.trail.slice(0, -1).map((label) => ({ label })) : [];
 
   return (
     <PageShell crumbs={[...crumbs, { label: title }]} title={title} description={entry?.section}>
       <EmptyState
-        title="Layar ini belum dikonversi ke React"
+        title="This screen hasn't been converted to React yet"
         description={
           entry?.source
-            ? `Acuan prototype: _prototype/${entry.source}. Ikuti docs/UI-STANDARDS.md dan pola modul auth/dashboard saat mengonversinya.`
-            : 'Belum ada acuan prototype untuk route ini.'
+            ? `Prototype reference: _prototype/${entry.source}. Follow docs/UI-STANDARDS.md and the auth/dashboard module patterns when converting it.`
+            : 'No prototype reference for this route yet.'
         }
       />
     </PageShell>

@@ -108,11 +108,11 @@ export const DAILY: AttendanceDay[] = [
 ];
 
 export const CORRECTIONS: Correction[] = [
-  { id: 'cor-1', attendanceDailyId: 'day-rina-27', employeeId: 'emp-rina', correctionReasonType: 'FORGOT_PUNCH', reasonNote: 'Lupa tap pulang tanggal 26 Juli, HP mati baterai di perjalanan.', requestedIn: null, requestedOut: '17:05', correctionStatus: 'APPROVED', submittedAt: '2026-07-27T09:00:00+07:00', decidedBy: 'emp-hendra' },
+  { id: 'cor-1', attendanceDailyId: 'day-rina-27', employeeId: 'emp-rina', correctionReasonType: 'FORGOT_PUNCH', reasonNote: 'Forgot to tap out on 26 July, phone battery died on the way.', requestedIn: null, requestedOut: '17:05', correctionStatus: 'APPROVED', submittedAt: '2026-07-27T09:00:00+07:00', decidedBy: 'emp-hendra' },
   // Pengaju ≠ pemilik hari: Sari (HR_STAFF) memfilekan koreksi atas hari milik Hendra.
-  { id: 'cor-2', attendanceDailyId: 'day-3', employeeId: 'emp-sari', correctionReasonType: 'APP_ERROR', reasonNote: 'Aplikasi gagal mengirim tap keluar.', requestedIn: null, requestedOut: '17:30', correctionStatus: 'PENDING_APPROVAL', submittedAt: '2026-07-29T19:10:00+07:00', decidedBy: null },
+  { id: 'cor-2', attendanceDailyId: 'day-3', employeeId: 'emp-sari', correctionReasonType: 'APP_ERROR', reasonNote: 'The app failed to send the tap out.', requestedIn: null, requestedOut: '17:30', correctionStatus: 'PENDING_APPROVAL', submittedAt: '2026-07-29T19:10:00+07:00', decidedBy: null },
   { id: 'cor-3', attendanceDailyId: 'day-1', employeeId: 'emp-sari', correctionReasonType: 'OFFICIAL_TRAVEL', reasonNote: '', requestedIn: '07:30', requestedOut: '16:30', correctionStatus: 'APPROVED', submittedAt: '2026-07-27T18:20:00+07:00', decidedBy: 'emp-hendra' },
-  { id: 'cor-4', attendanceDailyId: 'day-4', employeeId: 'emp-sari', correctionReasonType: 'OTHER', reasonNote: 'Perjalanan dinas mendadak tanpa akses aplikasi.', requestedIn: '09:00', requestedOut: null, correctionStatus: 'CANCELLED', submittedAt: '2026-07-30T20:00:00+07:00', decidedBy: null },
+  { id: 'cor-4', attendanceDailyId: 'day-4', employeeId: 'emp-sari', correctionReasonType: 'OTHER', reasonNote: 'Sudden business trip without app access.', requestedIn: '09:00', requestedOut: null, correctionStatus: 'CANCELLED', submittedAt: '2026-07-30T20:00:00+07:00', decidedBy: null },
 ];
 
 export function employeeName(id: string): string {

@@ -34,15 +34,15 @@ export function OncallStatusBadge({ status }: { status: OncallStatus }) {
 }
 
 const schema = Yup.object({
-  employeeId: Yup.string().required('Karyawan wajib dipilih.'),
-  startDate: Yup.string().required('Tanggal mulai wajib diisi.'),
-  startTime: Yup.string().required('Jam mulai wajib diisi.'),
-  endDate: Yup.string().required('Tanggal selesai wajib diisi.'),
-  endTime: Yup.string().required('Jam selesai wajib diisi.'),
+  employeeId: Yup.string().required('Choose an employee.'),
+  startDate: Yup.string().required('Start date is required.'),
+  startTime: Yup.string().required('Start time is required.'),
+  endDate: Yup.string().required('End date is required.'),
+  endTime: Yup.string().required('End time is required.'),
   maxCalloutHours: Yup.number()
-    .typeError('Pagu per call-out wajib diisi.')
-    .positive('Pagu per call-out harus lebih besar dari nol.')
-    .required('Pagu per call-out wajib diisi.'),
+    .typeError('Cap per call-out is required.')
+    .positive('Cap per call-out must be greater than zero.')
+    .required('Cap per call-out is required.'),
 });
 
 /**
@@ -69,9 +69,8 @@ function OncallDerived() {
       />
       {derived.extraReason && (
         <Note tone="warn" icon={<TriangleAlert />}>
-          Pagu {formatNumber(Number(values.maxCalloutHours))} jam melewati plafon jam harian{' '}
-          {formatNumber(DAILY_HOUR_CAP)} jam, jadi jendela ini <strong>naik</strong> ke lapis approval HR — bukan
-          ditolak.
+          A cap of {formatNumber(Number(values.maxCalloutHours))} hours exceeds the daily hour cap of{' '}
+          {formatNumber(DAILY_HOUR_CAP)} hours, so this window is <strong>raised</strong> to the HR approval layer — not rejected.
         </Note>
       )}
     </div>
@@ -138,7 +137,7 @@ export function OncallFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Edit standby window' : 'Schedule standby'}
-            description="Jendela siaga memberi otorisasi di muka: begitu terjadwal, kehadiran yang jatuh di dalamnya melahirkan call-out sampai setinggi pagunya."
+            description="A standby window grants authorization in advance: once scheduled, attendance falling inside it creates call-outs up to its cap."
             size="wide"
             footer={
               <>
@@ -154,8 +153,7 @@ export function OncallFormModal({
             <Form className="flex flex-col gap-4">
               {editing && (
                 <Note icon={<Lock />}>
-                  Karyawan beku setelah baris tersimpan, dan jendela hanya bisa diubah selagi masih menunggu
-                  keputusan.
+                  The employee is frozen once the row is saved, and the window can only be changed while it still awaits a decision.
                 </Note>
               )}
 
@@ -173,7 +171,7 @@ export function OncallFormModal({
                 toName="endDate"
                 label="Standby period"
                 required
-                hint="Pilih satu tanggal saja bila siaga mulai dan selesai di hari yang sama."
+                hint="Choose a single date if the standby starts and ends on the same day."
               />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -188,7 +186,7 @@ export function OncallFormModal({
                 min="0"
                 label="Ceiling per call-out (hours)"
                 required
-                hint={`Pagu di atas plafon jam harian ${formatNumber(DAILY_HOUR_CAP)} jam menaikkan jendela ke lapis approval HR.`}
+                hint={`A cap above the daily hour cap of ${formatNumber(DAILY_HOUR_CAP)} hours raises the window to the HR approval layer.`}
               />
 
               <TextAreaField
@@ -197,7 +195,7 @@ export function OncallFormModal({
                 rows={3}
                 maxLength={500}
                 placeholder="Input text here"
-                hint="Dibaca approver saat memutuskan."
+                hint="Read by the approver when deciding."
               />
 
               <OncallDerived />
@@ -227,7 +225,7 @@ export function OncallDecisionModal({
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Review standby window"
-      description="Menyetujui memindahkan jendela ke Scheduled — sejak itu ia mengotorisasi call-out sampai setinggi pagunya."
+      description="Approving moves the window to Scheduled — from then on it authorizes call-outs up to its cap."
       size="wide"
       footer={
         <>
@@ -251,13 +249,12 @@ export function OncallDecisionModal({
         <div className="flex flex-col gap-4">
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              Anda tidak dapat memutuskan jendela siaga yang Anda buat sendiri.
+              You can't decide a standby window you created yourself.
             </Note>
           )}
           {row.requiresExtraApprovalReason && (
             <Note tone="warn" icon={<TriangleAlert />}>
-              {EXTRA_REASON_LABEL[row.requiresExtraApprovalReason]} — pemicu ini menaikkan jendela ke lapis approval
-              berikutnya dan <strong>tidak pernah</strong> jadi alasan menolaknya.
+              {EXTRA_REASON_LABEL[row.requiresExtraApprovalReason]} — this trigger raises the window to the next approval layer and is <strong>never</strong> a reason to reject it.
             </Note>
           )}
           <KeyValueList>
@@ -284,7 +281,7 @@ export function OncallCancelModal({ row, onClose }: { row: OncallAssignment | nu
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Cancel standby window"
-      description="Barisnya tetap tinggal di catatan berstatus Cancelled, bukan menghilang."
+      description="The row stays on record as Cancelled; it does not disappear."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>

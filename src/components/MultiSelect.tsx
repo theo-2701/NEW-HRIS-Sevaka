@@ -34,7 +34,7 @@ export function MultiSelect<T extends string>({
   value,
   onChange,
   options,
-  placeholder = 'Semua',
+  placeholder = 'All',
   id,
   disabled,
   className,

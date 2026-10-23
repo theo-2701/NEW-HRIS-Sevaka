@@ -40,12 +40,12 @@ export const useSaveHoliday = () =>
     ({ draft, id, submit }) => calendarService.saveHoliday(draft, id, submit).then(() => undefined),
     (_result, { id, wasDraft, submit }) => ({
       text: !id
-        ? '201 — libur tersimpan sebagai Draft. Buka "Edit & submit" untuk memulai approval.'
+        ? 'Holiday saved as Draft. Open "Edit & submit" to start approval.'
         : wasDraft && submit
-          ? '200 — tersimpan sekaligus diajukan; barisnya kini menunggu checker.'
+          ? 'Saved and submitted; the row now waits for the checker.'
           : wasDraft
-            ? '200 — tersimpan; baris tetap Draft dan belum diajukan.'
-            : '200 — perubahan tersimpan; status approval tidak tersentuh.',
+            ? 'Saved; the row stays Draft and has not been submitted.'
+            : 'Changes saved; the approval status is untouched.',
     }),
   );
 
@@ -61,12 +61,12 @@ export function useDecideHoliday() {
       return kind;
     },
     onSuccess: async (kind, { id }) => {
-      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      toast('Decision received and passed on to the approval process.', 'info');
       await calendarService.completeHolidayWorkflow(id, kind);
       toast(
         kind === 'APPROVED'
-          ? 'workflow.process.completed — Disetujui; tanggal itu kini libur yang berlaku.'
-          : 'workflow.process.completed — Ditolak; barisnya tetap memegang slotnya sampai dihapus.',
+          ? 'Approved. That date is now an effective holiday.'
+          : 'Rejected. The row keeps holding its slot until deleted.',
         kind === 'APPROVED' ? 'ok' : 'warn',
       );
       void queryClient.invalidateQueries({ queryKey: calendarKeys.all });
@@ -78,7 +78,7 @@ export function useDecideHoliday() {
 export const useDeleteHoliday = () =>
   useCalendarMutation<{ id: string }>(
     ({ id }) => calendarService.deleteHoliday(id),
-    () => ({ text: '200 — libur dihapus; slot tanggalnya bebas lagi.', tone: 'warn' }),
+    () => ({ text: 'Holiday deleted; its date slot is free again.', tone: 'warn' }),
   );
 
 export const useSaveWorkCalendar = () =>
@@ -86,13 +86,13 @@ export const useSaveWorkCalendar = () =>
     ({ draft, id }) => calendarService.saveWorkCalendar(draft, id).then(() => undefined),
     (_result, { id }) => ({
       text: id
-        ? '200 — pola diperbarui.'
-        : '201 — pola kerja tersimpan; ia berlaku ke depan sejak tanggal mulainya.',
+        ? 'Pattern updated.'
+        : 'Work pattern saved. It applies forward from its start date.',
     }),
   );
 
 export const useDeleteWorkCalendar = () =>
   useCalendarMutation<{ id: string }>(
     ({ id }) => calendarService.deleteWorkCalendar(id),
-    () => ({ text: '200 — pola kerja dihapus.', tone: 'warn' }),
+    () => ({ text: 'Work pattern deleted.', tone: 'warn' }),
   );

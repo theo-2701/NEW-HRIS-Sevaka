@@ -117,14 +117,14 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
                 if (event.key === 'Escape') setQuery('');
                 if (event.key === 'Enter' && results[0]) openResult(results[0].path);
               }}
-              placeholder="Cari menu"
-              aria-label="Cari menu"
+              placeholder="Search menu"
+              aria-label="Search menu"
               className="min-w-0 flex-1 border-none bg-transparent font-body text-[13px] font-medium leading-[1.4] text-fg-2 outline-none placeholder:text-fg-4 [&::-webkit-search-cancel-button]:hidden"
             />
             {query && (
               <button
                 type="button"
-                aria-label="Hapus pencarian"
+                aria-label="Clear search"
                 onClick={() => {
                   setQuery('');
                   searchRef.current?.focus();
@@ -137,8 +137,8 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
           </label>
           <button
             type="button"
-            aria-label="Tutup sidebar"
-            title="Tutup sidebar"
+            aria-label="Close sidebar"
+            title="Close sidebar"
             onClick={onToggle}
             className="flex size-8 shrink-0 items-center justify-center rounded-md text-fg-3 transition-colors duration-200 ease-standard hover:bg-bg-app hover:text-secondary-700"
           >
@@ -149,8 +149,8 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         <div className="flex min-h-16 flex-shrink-0 items-center justify-center border-b border-border-1 px-2 py-3">
           <button
             type="button"
-            aria-label="Cari menu"
-            title="Cari menu"
+            aria-label="Search menu"
+            title="Search menu"
             onClick={() => {
               focusOnExpand.current = true;
               onToggle();
@@ -390,7 +390,7 @@ function SidebarNode({
           'inline-flex w-full cursor-default items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-md px-3 py-1.5 font-body text-sm text-fg-4',
           expanded ? 'min-h-10' : 'mx-auto my-0.5 size-11 justify-center p-0',
         )}
-        title={`${node.label} — belum ada halaman`}
+        title={`${node.label} — no page yet`}
       >
         <NavIcon name={node.icon} className={cn('shrink-0', expanded ? 'size-5' : 'size-[22px]')} />
         {expanded && <span className="flex-1 overflow-hidden text-ellipsis">{node.label}</span>}
@@ -441,13 +441,13 @@ function SearchResults({
   if (!results.length) {
     return (
       <p className="m-0 px-3 py-6 text-center font-body text-[13px] font-medium text-fg-3">
-        Tidak ada menu yang cocok dengan &ldquo;{query.trim()}&rdquo;.
+        No menu matches &ldquo;{query.trim()}&rdquo;.
       </p>
     );
   }
   return (
     <>
-      <span className="px-3 pb-1 font-body text-[11px] font-semibold text-fg-4">{results.length} menu ditemukan</span>
+      <span className="px-3 pb-1 font-body text-[11px] font-semibold text-fg-4">{results.length} menus found</span>
       {results.map((entry) => (
         <button
           key={entry.path}

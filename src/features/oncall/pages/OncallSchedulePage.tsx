@@ -89,7 +89,7 @@ export function OncallSchedulePage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'On Call' }, { label: 'On Call Schedule' }]}
         title="On Call Schedule"
-        description="Jendela siaga memberi otorisasi di muka: sekali terjadwal, kehadiran yang jatuh di dalamnya melahirkan call-out otomatis sampai setinggi pagunya — tanpa pengajuan lembur tertulis. Pagu yang melewati plafon jam harian menaikkan jendela ke lapis approval HR, bukan menolaknya."
+        description="A standby window grants authorization in advance: once scheduled, attendance falling inside it creates call-outs automatically up to its cap — no written overtime request needed. A cap above the daily hour cap raises the window to the HR approval layer instead of rejecting it."
         actions={<Button onClick={() => openForm(null)}>Schedule standby</Button>}
       >
         <div className="flex flex-col gap-5">
@@ -140,7 +140,7 @@ export function OncallSchedulePage() {
               rows={paged.rows}
               rowKey={(row) => row.id}
               loading={isLoading}
-              empty="Belum ada jendela siaga yang cocok dengan filter ini."
+              empty="No standby window matches this filter."
               columns={[
                 {
                   key: 'employee',
@@ -205,7 +205,7 @@ export function OncallSchedulePage() {
       <FilterModal
         open={filterOpen}
         title="Filter standby windows"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setFilterOpen}
         onReset={() => {
           setFilter(EMPTY_SCHEDULE_FILTER);

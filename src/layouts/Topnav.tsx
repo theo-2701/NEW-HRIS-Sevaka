@@ -148,7 +148,7 @@ export function Topnav() {
             <IconButton label="Tambah">
               <Plus className="size-[18px]" />
             </IconButton>
-            <IconButton label="Cari">
+            <IconButton label="Search">
               <Search className="size-[18px]" />
             </IconButton>
           </>

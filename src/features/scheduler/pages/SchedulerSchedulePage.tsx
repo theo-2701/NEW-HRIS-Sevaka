@@ -102,7 +102,7 @@ export function SchedulerSchedulePage() {
       <PageShell
         crumbs={[{ label: 'Time Management' }, { label: 'Scheduler' }, { label: 'Schedule' }]}
         title="Scheduler Schedule"
-        description="Semua tulisan ke roster hidup di layar ini. Katalog pola shift menentukan apa yang bisa dipasang; baris roster memegang satu keputusan per karyawan × tanggal; tukar shift tidak menggerakkan roster sebelum keputusan turun."
+        description="Every write to the roster lives on this screen. The shift pattern catalogue decides what can be assigned; a roster row holds one decision per employee × date; a shift swap moves no roster before a decision is made."
         actions={
           tab === 'shifts' ? (
             <Button onClick={() => openShiftForm(null)}>New shift pattern</Button>
@@ -145,16 +145,16 @@ export function SchedulerSchedulePage() {
 
           {tab === 'shifts' && (
             <Card>
-              <CardHead title="Shift catalogue" sub="Pola siklus tidak bisa dipasang ke roster" />
+              <CardHead title="Shift catalogue" sub="Cycle patterns can't be assigned to the roster" />
 
               <div className="flex flex-col">
-                <TableToolbar summary={`${shifts.filter((row) => row.isActive).length} pola aktif`} />
+                <TableToolbar summary={`${shifts.filter((row) => row.isActive).length} active patterns`} />
 
                 <DataTable<Shift>
                   rows={pagedShifts.rows}
                   rowKey={(row) => row.id}
                   loading={shiftsLoading}
-                  empty="Katalog pola shift masih kosong."
+                  empty="The shift pattern catalogue is still empty."
                   columns={[
                     {
                       key: 'code',
@@ -214,16 +214,16 @@ export function SchedulerSchedulePage() {
 
           {tab === 'roster' && (
             <Card>
-              <CardHead title="Roster" sub="Satu baris per karyawan × tanggal" />
+              <CardHead title="Roster" sub="One row per employee × date" />
 
               <div className="flex flex-col">
-                <TableToolbar summary="Sentuhan tangan dicap individual; bulk berikutnya melangkahinya" />
+                <TableToolbar summary="A manual touch is stamped individual; the next bulk run skips it" />
 
                 <DataTable<ShiftAssignment>
                   rows={pagedAssignments.rows}
                   rowKey={(row) => row.id}
                   loading={assignmentsLoading}
-                  empty="Belum ada baris roster."
+                  empty="No roster row yet."
                   columns={[
                     {
                       key: 'date',
@@ -281,16 +281,16 @@ export function SchedulerSchedulePage() {
 
           {tab === 'swap' && (
             <Card>
-              <CardHead title="Swap requests" sub="Roster berubah setelah disetujui" />
+              <CardHead title="Swap requests" sub="The roster changes after approval" />
 
               <div className="flex flex-col">
-                <TableToolbar summary={`${swaps.filter((row) => row.swapStatus === 'PENDING_APPROVAL').length} menunggu keputusan`} />
+                <TableToolbar summary={`${swaps.filter((row) => row.swapStatus === 'PENDING_APPROVAL').length} awaiting decision`} />
 
                 <DataTable<ShiftSwap>
                   rows={pagedSwaps.rows}
                   rowKey={(row) => row.id}
                   loading={swapsLoading}
-                  empty="Belum ada permintaan tukar."
+                  empty="No swap request yet."
                   columns={[
                     {
                       key: 'id',

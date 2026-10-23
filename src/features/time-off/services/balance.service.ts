@@ -110,20 +110,20 @@ export const balanceService = {
     if (MOCK) {
       await delay(400);
       if (!draft.employeeId || !draft.leaveTypeId || !draft.mutationDate || !draft.periodYear) {
-        throw new Error('422 — karyawan, jenis cuti, tahun hak, dan tanggal mutasi wajib diisi.');
+        throw new Error('422 — Employee, leave type, entitlement year and mutation date are required.');
       }
       if (draft.periodYear < 2000 || draft.periodYear > 2999) {
-        throw new Error('422 — tahun hak harus di antara 2000 dan 2999.');
+        throw new Error('422 — Entitlement year must be between 2000 and 2999.');
       }
       if (!Number.isFinite(draft.deltaDays) || draft.deltaDays === 0) {
-        throw new Error('422 — delta wajib diisi dan tidak boleh nol.');
+        throw new Error('422 — Delta is required and cannot be zero.');
       }
       if (!draft.reason.trim()) {
-        throw new Error('422 — alasan wajib diisi untuk penyesuaian manual.');
+        throw new Error('422 — A reason is required for a manual adjustment.');
       }
       // TSD-TIME 0.76 §7.4.5 (E4): satu-satunya batas #68 — aktor ≠ pemilik saldo.
       if (draft.employeeId === session.employeeId) {
-        throw new Error('422 — Anda tidak bisa menyesuaikan saldo cuti Anda sendiri.');
+        throw new Error("422 — You can't adjust your own leave balance.");
       }
 
       const entry: LedgerEntry = {

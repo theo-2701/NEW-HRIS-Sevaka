@@ -36,5 +36,5 @@ export function summarizeHolidayFilter(value: HolidayFilterState): string {
   if (value.from || value.to) {
     parts.push(`${value.from ? formatDate(value.from) : '…'} → ${value.to ? formatDate(value.to) : '…'}`);
   }
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }

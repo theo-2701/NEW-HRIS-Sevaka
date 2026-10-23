@@ -29,7 +29,7 @@ export function tenantPath(url: string, companyCode: string | null | undefined):
 api.interceptors.request.use((config) => {
   // Mode dummy: tidak ada HTTP call yang boleh keluar (lihat `services/mock.ts`).
   if (MOCK) {
-    return Promise.reject(new ApiError(`Mode dummy aktif — panggilan ${config.method?.toUpperCase()} ${config.url} diblokir.`, 0));
+    return Promise.reject(new ApiError(`Dummy mode on — the ${config.method?.toUpperCase()} ${config.url} call was blocked.`, 0));
   }
   const { token, companyId } = useAuthStore.getState();
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -86,7 +86,7 @@ function toApiError(error: AxiosError<ApiErrorBody>): ApiError {
   const body = error.response?.data;
   const message =
     body?.message ??
-    (status === 0 ? 'Tidak dapat terhubung ke server.' : 'Terjadi kesalahan pada server.');
+    (status === 0 ? "Can't connect to the server." : 'A server error occurred.');
   return new ApiError(message, status, body?.code, body?.errors);
 }
 

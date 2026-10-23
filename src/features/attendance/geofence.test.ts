@@ -41,7 +41,7 @@ describe('Work point — validasi form', () => {
     const result = await geofenceService.save({ ...draft, radiusMeters: 20 });
     expect(result.created).toBe(true);
     expect(result.row.radiusMeters).toBe(20);
-    expect(result.warning).toMatch(/akurasi GPS/);
+    expect(result.warning).toMatch(/GPS accuracy/);
   });
 });
 

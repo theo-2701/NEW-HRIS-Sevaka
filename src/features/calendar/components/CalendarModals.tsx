@@ -58,17 +58,17 @@ const SCOPE_LEVEL_OPTIONS = [
 ];
 
 const holidaySchema = Yup.object({
-  holidayDate: Yup.string().required('Tanggal libur wajib diisi.'),
-  holidayName: Yup.string().trim().min(3, 'Nama libur minimal 3 karakter.').required('Nama libur wajib diisi.'),
-  holidayType: Yup.string().required('Tipe libur wajib dipilih.'),
+  holidayDate: Yup.string().required('Holiday date is required.'),
+  holidayName: Yup.string().trim().min(3, 'Holiday name must be at least 3 characters.').required('Holiday name is required.'),
+  holidayType: Yup.string().required('Choose a holiday type.'),
   scopeLevel: Yup.string().when('holidayType', {
     is: 'REGIONAL',
-    then: (schema) => schema.required('Libur regional butuh scope level.'),
+    then: (schema) => schema.required('A regional holiday needs a scope level.'),
     otherwise: (schema) => schema,
   }),
   scopeRef: Yup.string().when('holidayType', {
     is: 'REGIONAL',
-    then: (schema) => schema.required('Libur regional butuh scope-nya.'),
+    then: (schema) => schema.required('A regional holiday needs its scope.'),
     otherwise: (schema) => schema,
   }),
 });
@@ -139,7 +139,7 @@ function JointLeaveToggle({ locked }: { locked: boolean }) {
         onCheckedChange={(next) => void setFieldValue('isJointLeave', next === true)}
       />
       <span className="font-body text-[13px] font-medium text-fg-2">
-        Cuti bersama — hari ini memotong saldo cuti tahunan
+        Joint leave — this day deducts annual leave balance
       </span>
     </label>
   );
@@ -210,9 +210,9 @@ export function HolidayFormModal({
             description={
               editing
                 ? wasDraft
-                  ? 'Hanya nama dan sumber yang terbuka. Save menyimpan tetap Draft; Save & submit sekaligus mengajukannya untuk approval.'
-                  : 'Hanya nama dan sumber yang terbuka.'
-                : 'Libur regional dan company saja — layer nasional disemai sistem dan tidak bisa dibuat di sini.'
+                  ? 'Only the name and source are open. Save keeps it as Draft; Save & submit also sends it for approval.'
+                  : 'Only the name and source are open.'
+                : "Regional and company holidays only — the national layer is seeded by the system and can't be created here."
             }
             size="wide"
             footer={
@@ -259,8 +259,7 @@ export function HolidayFormModal({
             <Form className="flex flex-col gap-4">
               {locked && (
                 <Note icon={<Lock />}>
-                  Tanggal, tipe, dan scope beku setelah baris tersimpan — mengubahnya berarti membuat baris baru, supaya
-                  slot yang sudah dipegang tidak berpindah diam-diam.
+                  Date, type and scope are frozen once the row is saved — changing them means creating a new row, so a held slot never moves silently.
                 </Note>
               )}
 
@@ -291,7 +290,7 @@ export function HolidayFormModal({
                 rows={2}
                 maxLength={300}
                 placeholder="mis. SE Direksi No. 08/2026"
-                hint="Rujukan dokumen yang mendasarinya — dibaca checker saat memutuskan."
+                hint="Reference to the underlying document — read by the checker when deciding."
               />
               <JointLeaveToggle locked={locked} />
             </Form>
@@ -316,7 +315,7 @@ export function HolidayDecisionModal({ row, onClose }: { row: CalendarHoliday | 
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Review holiday"
-      description="Menyetujui membuat tanggal itu jadi libur yang berlaku; menolak membiarkan barisnya tetap memegang slotnya."
+      description="Approving makes that date an effective holiday; rejecting leaves the row holding its slot."
       size="wide"
       footer={
         // FSD-TIME 0.13 #8 (K1): tombol keputusan DISEMBUNYIKAN bagi pengaju baris itu sendiri.
@@ -347,7 +346,7 @@ export function HolidayDecisionModal({ row, onClose }: { row: CalendarHoliday | 
         <div className="flex flex-col gap-4">
           {sod && (
             <Note tone="danger" icon={<ShieldCheck />}>
-              Anda tidak dapat memutuskan pengajuan yang Anda buat sendiri.
+              You can't decide a request you created yourself.
             </Note>
           )}
           <KeyValueList>
@@ -359,7 +358,7 @@ export function HolidayDecisionModal({ row, onClose }: { row: CalendarHoliday | 
             <KeyValueRow label="Submitted by">{employeeName(row.createdBy)}</KeyValueRow>
           </KeyValueList>
           <div className="flex flex-col gap-1">
-            <Label htmlFor="decisionNote">Catatan keputusan</Label>
+            <Label htmlFor="decisionNote">Decision note</Label>
             <textarea
               id="decisionNote"
               rows={3}
@@ -368,7 +367,7 @@ export function HolidayDecisionModal({ row, onClose }: { row: CalendarHoliday | 
               placeholder="Input text here"
               className="min-h-9 w-full rounded-md border border-silver bg-cloud px-3 py-[9px] font-body text-xs font-medium leading-[1.4] text-fg-2 outline-none transition-[border-color,box-shadow] duration-200 ease-standard focus:border-secondary-500 focus:shadow-[0_0_0_4px_rgba(2,132,199,.16)]"
             />
-            <span className="font-body text-xs font-normal text-fg-3">Opsional di kedua cabang keputusan.</span>
+            <span className="font-body text-xs font-normal text-fg-3">Optional for both decisions.</span>
           </div>
         </div>
       )}
@@ -382,7 +381,7 @@ export function HolidayDetailModal({ row, onClose }: { row: CalendarHoliday | nu
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Holiday detail"
-      description="Read-only — layar ini tidak mengubah apa pun."
+      description="Read-only — this screen doesn't change anything."
       size="wide"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -417,7 +416,7 @@ export function HolidayDeleteModal({ row, onClose }: { row: CalendarHoliday | nu
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Delete holiday"
-      description="Menghapus membebaskan slot tanggal × tipe × scope yang dipegang baris ini."
+      description="Deleting frees the date × type × scope slot held by this row."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -483,8 +482,7 @@ function DayToggles({
         })}
       </div>
       <span className="font-body text-xs font-normal text-fg-3">
-        Beku setelah tersimpan — mengubah cara satu minggu bekerja berarti baris baru yang berlaku dari tanggal ke
-        depan, sehingga penilaian lampau tidak pernah ditulis ulang.
+        Frozen once saved — changing how a week works means a new row effective from a future date, so past verdicts are never rewritten.
       </span>
     </div>
   );
@@ -493,14 +491,14 @@ function DayToggles({
 const BLANK_DAYS: WorkingDays = { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false };
 
 const patternSchema = Yup.object({
-  calendarName: Yup.string().trim().min(3, 'Nama pola minimal 3 karakter.').required('Nama pola wajib diisi.'),
-  scopeLevel: Yup.string().required('Scope level wajib dipilih.'),
+  calendarName: Yup.string().trim().min(3, 'Pattern name must be at least 3 characters.').required('Pattern name is required.'),
+  scopeLevel: Yup.string().required('Choose a scope level.'),
   scopeRef: Yup.string().when('scopeLevel', {
     is: (value: string) => value === 'UNIT' || value === 'LOCATION',
-    then: (schema) => schema.required('Pola unit atau lokasi butuh scope-nya.'),
+    then: (schema) => schema.required('A unit or location pattern needs its scope.'),
     otherwise: (schema) => schema,
   }),
-  effectiveFrom: Yup.string().required('Tanggal mulai wajib diisi.'),
+  effectiveFrom: Yup.string().required('Start date is required.'),
 });
 
 function PatternScopeRef({ locked }: { locked: boolean }) {
@@ -592,7 +590,7 @@ export function WorkCalendarFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Edit work pattern' : 'New work pattern'}
-            description="Pola kerja selalu berlaku ke depan. Setelah tersimpan hanya nama dan tanggal akhir yang bisa diubah."
+            description="A work pattern always applies forward. Once saved, only the name and end date can be changed."
             size="wide"
             footer={
               <>
@@ -608,8 +606,7 @@ export function WorkCalendarFormModal({
             <Form className="flex flex-col gap-4">
               {locked && lastCompanyPattern && (
                 <Note tone="warn" icon={<TriangleAlert />}>
-                  Ini pola company aktif terakhir — ia tidak bisa diakhiri tanpa penggantinya, karena tidak akan ada apa
-                  pun yang tersisa untuk menyelesaikan hari kerja.
+                  This is the last active company pattern — it can't be ended without a replacement, because nothing would be left to resolve working days.
                 </Note>
               )}
 
@@ -646,7 +643,7 @@ export function WorkCalendarFormModal({
                 required
                 openEnd
                 lockFrom={locked}
-                hint={`Tanggal akhir boleh kosong — pola terbuka berlaku sampai ada penggantinya.${locked ? ' Tanggal mulai terkunci karena pola sudah berlaku.' : ''}`}
+                hint={`End date can be empty — an open pattern applies until it is replaced.${locked ? ' The start date is locked because the pattern is already in effect.' : ''}`}
               />
             </Form>
           </Modal>
@@ -663,7 +660,7 @@ export function WorkCalendarDeleteModal({ row, onClose }: { row: WorkCalendar | 
       open={Boolean(row)}
       onOpenChange={(next) => !next && onClose()}
       title="Delete work pattern"
-      description="Pola company aktif terakhir tidak bisa dihapus — tanpa itu tidak ada apa pun yang menyelesaikan hari kerja."
+      description="The last active company pattern can't be deleted — without it nothing resolves working days."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>

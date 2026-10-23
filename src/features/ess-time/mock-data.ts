@@ -6,10 +6,10 @@ import type { EssActor } from '@/features/ess-time/types';
  * Sari rekan yang menerima titipan kewenangan pada dataset contoh.
  */
 export const ESS_VIEWERS: EssActor[] = [
-  { employeeId: 'emp-rina', label: 'Rina — Karyawan', isApprover: false },
-  { employeeId: 'emp-budi', label: 'Budi — Dept Manager (juga karyawan)', isApprover: true },
-  { employeeId: 'emp-sari', label: 'Sari — Penerima delegasi', isApprover: true },
-  { employeeId: 'emp-hendra', label: 'Hendra — HR Manager (juga karyawan)', isApprover: true },
+  { employeeId: 'emp-rina', label: 'Rina — Employee', isApprover: false },
+  { employeeId: 'emp-budi', label: 'Budi — Dept Manager (also an employee)', isApprover: true },
+  { employeeId: 'emp-sari', label: 'Sari — Delegate', isApprover: true },
+  { employeeId: 'emp-hendra', label: 'Hendra — HR Manager (also an employee)', isApprover: true },
 ];
 
 export const essName = (id: string) =>

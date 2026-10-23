@@ -33,17 +33,17 @@ export const geofenceSchema = Yup.object({
   scopeRef: Yup.string().required('Choose the branch that owns this point.'),
   centerLatitude: Yup.number()
     .typeError('Latitude is required.')
-    .min(-90, 'Lintang harus di dalam ±90.')
-    .max(90, 'Lintang harus di dalam ±90.')
+    .min(-90, 'Latitude must be within ±90.')
+    .max(90, 'Latitude must be within ±90.')
     .required('Latitude is required.'),
   centerLongitude: Yup.number()
     .typeError('Longitude is required.')
-    .min(-180, 'Bujur harus di dalam ±180.')
-    .max(180, 'Bujur harus di dalam ±180.')
+    .min(-180, 'Longitude must be within ±180.')
+    .max(180, 'Longitude must be within ±180.')
     .required('Longitude is required.'),
   radiusMeters: Yup.number()
     .typeError('Radius is required.')
-    .integer('Radius harus bilangan bulat meter.')
+    .integer('Radius must be a whole number of metres.')
     .positive('Radius must be greater than zero.')
     .required('Radius is required.'),
 });

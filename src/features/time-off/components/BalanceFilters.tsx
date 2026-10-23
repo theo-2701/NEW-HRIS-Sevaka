@@ -18,14 +18,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function EmployeeFilter({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <Field label="Karyawan">
+    <Field label="Employee">
       <EmployeeSelect
+        lang="en"
         source={timeEmployeeSource()}
-        placeholder="Semua karyawan"
+        placeholder="All employees"
         clearable
         value={value === 'ALL' ? '' : value}
         onChange={(id) => onChange(id || 'ALL')}
-        aria-label="Karyawan"
+        aria-label="Employee"
       />
     </Field>
   );
@@ -33,7 +34,7 @@ function EmployeeFilter({ value, onChange }: { value: string; onChange: (value: 
 
 function LeaveTypeSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <Field label="Jenis cuti">
+    <Field label="Leave type">
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger>
           <SelectValue />
@@ -61,7 +62,7 @@ function YearSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <Field label="Tahun hak">
+    <Field label="Entitlement year">
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger>
           <SelectValue />
@@ -111,7 +112,7 @@ export function LedgerFilterFields({
   return (
     <>
       <EmployeeFilter value={value.employeeId} onChange={(employeeId) => onChange({ ...value, employeeId })} />
-      <Field label="Sumber mutasi">
+      <Field label="Mutation source">
         <Select value={value.source} onValueChange={(source) => onChange({ ...value, source })}>
           <SelectTrigger>
             <SelectValue />

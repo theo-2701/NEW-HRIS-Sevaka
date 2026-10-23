@@ -32,7 +32,7 @@ describe('Empat gerbang submit', () => {
 
   it('gerbang 1 — blackout keras ditolak 422', () => {
     const result = evaluateGates({ ...base, leaveTypeId: 'lt-unpaid', startDate: '2027-12-29', endDate: '2027-12-30' });
-    expect(result.errors.some((error) => /422.*blackout keras/.test(error))).toBe(true);
+    expect(result.errors.some((error) => /422.*hard blackout/.test(error))).toBe(true);
   });
 
   it('gerbang 1 — blackout lunak hanya menaikkan lapis tambahan', () => {
@@ -48,14 +48,14 @@ describe('Empat gerbang submit', () => {
 
   it('gerbang 3 — tenggang pengajuan minimum ditolak 422', () => {
     const result = evaluateGates({ ...base, startDate: '2026-07-25', endDate: '2026-07-25' });
-    expect(result.errors.some((error) => /422.*hari di muka/.test(error))).toBe(true);
+    expect(result.errors.some((error) => /422.*days ahead/.test(error))).toBe(true);
   });
 
   it('gerbang 4 — rentang tanpa hari kerja bersih ditolak 422', () => {
     // 15–16 Agustus 2026 jatuh Sabtu–Minggu.
     const result = evaluateGates({ ...base, startDate: '2026-08-15', endDate: '2026-08-16' });
     expect(result.totalDays).toBe(0);
-    expect(result.errors.some((error) => /422.*hari kerja bersih/.test(error))).toBe(true);
+    expect(result.errors.some((error) => /422.*net working days/.test(error))).toBe(true);
   });
 
   it('lapis tambahan mengikuti pemicunya, bukan selalu LONG_DURATION', () => {

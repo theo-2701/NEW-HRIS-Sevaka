@@ -91,7 +91,7 @@ export function ScheduleFilterFields({
         onChange={(oncallStatus) => onChange({ ...value, oncallStatus })}
       />
       <DateRange
-        label="Mulai siaga"
+        label="Standby start"
         from={value.from}
         to={value.to}
         onChange={(range) => onChange({ ...value, ...range })}
@@ -142,7 +142,7 @@ export function ActivityFilterFields({
         onChange={(overtimeCategory) => onChange({ ...value, overtimeCategory })}
       />
       <DateRange
-        label="Tanggal lembur"
+        label="Overtime date"
         from={value.from}
         to={value.to}
         onChange={(range) => onChange({ ...value, ...range })}
