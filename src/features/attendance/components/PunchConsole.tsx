@@ -451,7 +451,13 @@ export function TapModal({
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title={verb}
-      description={step === 'selfie' ? 'HR requires a selfie at this location.' : `Check the details, then ${verb.toLowerCase()}.`}
+      description={
+        step === 'selfie'
+          ? 'HR requires a selfie at this location.'
+          : isIn
+            ? 'Choose your work type, then tap in.'
+            : 'Add a note if you need to, then tap out.'
+      }
       footer={footer}
     >
       <div className="flex flex-col gap-4">
