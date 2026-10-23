@@ -22,8 +22,8 @@ import type { PunchResult } from '@/features/attendance/services/attendance.serv
 import { useMyAttendanceDays, useMyPunchesToday } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS } from '@/features/ess-time/mock-data';
 import { ARRANGEMENT_LABEL, ATTENDANCE_STATUS_LABEL, DAY_TYPE_LABEL } from '@/features/attendance/types';
-import type { AttendanceDay, AttendanceStatus, Punch } from '@/features/attendance/types';
-import { formatDate, formatDateTime } from '@/lib/format';
+import type { AttendanceDay, AttendanceStatus } from '@/features/attendance/types';
+import { formatDate } from '@/lib/format';
 
 type Tone = 'ok' | 'warn' | 'err' | 'info' | 'mute';
 
@@ -92,7 +92,7 @@ export function EssAttendancePage() {
           value={tab}
           onChange={setTab}
           items={[
-            { value: 'today', label: 'Hari ini', count: today.length },
+            { value: 'today', label: 'Hari ini' },
             { value: 'history', label: 'Rekap harian', count: rows.length },
           ]}
         />
@@ -108,50 +108,6 @@ export function EssAttendancePage() {
               day={todayRow}
               onStart={() => setTapKey(newIdempotencyKey())}
             />
-
-            <Card>
-              <CardHead title="Tap hari ini" sub="Setiap tap tercatat apa adanya — termasuk tap ulang" />
-              <DataTable<Punch>
-                rows={today}
-                rowKey={(row) => row.id}
-                loading={punches.isLoading}
-                empty="Belum ada tap hari ini."
-                columns={[
-                  { key: 'type', header: 'Jenis', strong: true, render: (row) => (row.punchType === 'IN' ? 'Masuk' : 'Pulang') },
-                  { key: 'at', header: 'Waktu', nowrap: true, render: (row) => formatDateTime(row.punchAt) },
-                  {
-                    key: 'geo',
-                    header: 'Dalam area',
-                    align: 'center',
-                    render: (row) =>
-                      row.isWithinGeofence === null ? (
-                        <StatusBadge tone="mute">Tak terbaca</StatusBadge>
-                      ) : row.isWithinGeofence ? (
-                        <StatusBadge tone="ok">Ya</StatusBadge>
-                      ) : (
-                        <StatusBadge tone="warn">Di luar</StatusBadge>
-                      ),
-                  },
-                  {
-                    key: 'arrangement',
-                    header: 'Tipe kerja',
-                    render: (row) => row.workArrangement ?? <span className="text-fg-4">—</span>,
-                  },
-                  { key: 'note', header: 'Catatan', muted: true, render: (row) => row.note ?? '—' },
-                  {
-                    key: 'flag',
-                    header: 'Tanda',
-                    muted: true,
-                    render: (row) =>
-                      row.isMockLocationSuspected
-                        ? 'Lokasi terindikasi palsu'
-                        : row.isWorkArrangementUnknown
-                          ? 'Pola kerja belum diketahui'
-                          : '—',
-                  },
-                ]}
-              />
-            </Card>
           </>
         )}
 

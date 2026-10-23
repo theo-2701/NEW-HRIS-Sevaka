@@ -23,7 +23,7 @@ function LocationInfo({ geofence }: { geofence: Geofence }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-w-0 items-center gap-1.5 font-body text-[13px] font-medium leading-[1.4] opacity-90">
+    <div className="flex min-w-0 items-center gap-1.5 font-body text-xs font-medium text-fg-3">
       <MapPin className="size-3.5 shrink-0" />
       <span className="truncate">{geofence.geofenceName}</span>
       <Popover open={open} onOpenChange={setOpen}>
@@ -35,14 +35,14 @@ function LocationInfo({ geofence }: { geofence: Geofence }) {
             onMouseLeave={() => setOpen(false)}
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-white transition-colors duration-150 ease-standard hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30"
           >
             <Info className="size-3.5" />
           </button>
         </PopoverTrigger>
         <PopoverContent
           side="bottom"
-          align="start"
+          align="end"
           className="w-[300px] p-3.5"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
@@ -73,21 +73,32 @@ function LocationInfo({ geofence }: { geofence: Geofence }) {
   );
 }
 
-/** Satu sel ringkasan hari ini — label kecil, nilai besar, keterangan pendek. */
-function TodayCell({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
+/** Satu kolom ringkasan hari ini. */
+function TodayCell({ label, value, sub }: { label: string; value: ReactNode; sub: ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 px-5 py-4">
-      <span className="font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">{label}</span>
-      <span className="font-display text-xl font-bold leading-tight tabular-nums text-fg-1">{value}</span>
-      {sub && <span className="font-body text-xs font-medium leading-[1.4] text-fg-3">{sub}</span>}
+    <div className="flex min-w-0 flex-col gap-0.5 py-3 sm:px-5 sm:first:pl-0">
+      <span className="font-body text-xs font-medium text-fg-3">{label}</span>
+      <span className="font-display text-lg font-bold leading-tight tabular-nums text-fg-1">{value}</span>
+      <span className="truncate font-body text-xs font-medium text-fg-3">{sub}</span>
     </div>
   );
 }
 
+/** Sub-teks tap: tipe kerja, plus peringatan bila tap tercatat di luar radius. */
+function tapSub(punch: Punch) {
+  const type = punch.workArrangement ? ARRANGEMENT_LABEL[punch.workArrangement] : 'Work type not recorded';
+  if (punch.isWithinGeofence !== false) return type;
+  return (
+    <>
+      {type} · <span className="text-warning-700">outside radius</span>
+    </>
+  );
+}
+
 /**
- * Konsol tap. Satu tombol saja — keadaan hari yang menentukan Tap in / Tap out / selesai.
- * Langkah detail (selfie, tipe kerja, catatan, lokasi) ada di modal, jadi kartu ini tetap
- * menjawab tiga pertanyaan karyawan: jam berapa sekarang, shift saya apa, sudah tap atau belum.
+ * Kartu "Hari ini" — satu kartu, satu tombol. Menjawab tiga hal yang dicari karyawan:
+ * shift saya, sudah tap masuk/pulang jam berapa, dan apa yang harus dilakukan sekarang.
+ * Detail tap (selfie, tipe kerja, catatan, lokasi) ada di modal; riwayat lengkap di tab History.
  */
 export function PunchConsole({
   workDate,
@@ -97,7 +108,6 @@ export function PunchConsole({
   today,
   day,
   onStart,
-  children,
 }: {
   workDate: string;
   geofence: Geofence;
@@ -106,7 +116,6 @@ export function PunchConsole({
   today: Punch[];
   day: AttendanceDay | undefined;
   onStart: () => void;
-  children?: ReactNode;
 }) {
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => {
@@ -114,22 +123,15 @@ export function PunchConsole({
     return () => clearInterval(timer);
   }, []);
 
-  const hhmmss = [clock.getHours(), clock.getMinutes(), clock.getSeconds()]
-    .map((part) => String(part).padStart(2, '0'))
-    .join(':');
+  const now = [clock.getHours(), clock.getMinutes()].map((part) => String(part).padStart(2, '0')).join(':');
   const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date(`${workDate}T00:00:00`));
 
   const tapIn = today.find((row) => row.punchType === 'IN');
   const tapOut = today.find((row) => row.punchType === 'OUT');
 
-  const state = !tapIn
-    ? "You haven't tapped in today."
-    : !tapOut
-      ? `Tapped in at ${hhmm(tapIn.punchAt)}${tapIn.workArrangement ? ` · ${tapIn.workArrangement}` : ''}.`
-      : "You're done for today.";
-
-  const steps =
-    nextType === 'IN'
+  const hint = !nextType
+    ? 'Both taps are in. Anything wrong? File a correction.'
+    : nextType === 'IN'
       ? selfieRequired
         ? 'Selfie first, then choose WFO or WFH.'
         : 'Choose WFO or WFH, add a note if needed.'
@@ -138,55 +140,37 @@ export function PunchConsole({
         : 'Confirm and add a note if needed.';
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid items-center gap-x-8 gap-y-5 rounded-2xl bg-linear-to-br from-secondary-600 to-secondary-850 px-6 py-6 text-white shadow-card md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="font-body text-[13px] font-semibold leading-none opacity-90">
-            {weekday}, {formatDate(workDate)}
-          </span>
-          <span className="font-display text-5xl font-bold leading-none tabular-nums tracking-[-0.03em]">{hhmmss}</span>
-          <span className="mt-1 font-body text-[12px] font-medium leading-[1.4] opacity-80">Asia/Jakarta (WIB)</span>
-          <LocationInfo geofence={geofence} />
+    <section className="flex flex-col rounded-xl border border-border-1 bg-bg-surface px-5 pt-[18px] shadow-card-sm">
+      <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
+        <div className="min-w-0">
+          <h3 className="m-0 font-display text-base font-bold leading-tight text-fg-1">Today</h3>
+          <p className="mt-1 font-body text-xs font-medium text-fg-3">
+            {weekday}, {formatDate(workDate)} · <span className="tabular-nums">{now}</span> WIB
+          </p>
         </div>
+        <LocationInfo geofence={geofence} />
+      </header>
 
-        <div className="flex flex-col gap-2.5">
-          <span className="font-body text-sm font-semibold leading-[1.4]">{state}</span>
-          {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan. */}
-          {nextType && (
-            <>
-              <button
-                type="button"
-                onClick={onStart}
-                className="h-12 rounded-[10px] bg-white font-body text-sm font-bold tracking-[0.04em] text-secondary-700 transition-[box-shadow,background] duration-150 ease-standard hover:shadow-press focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
-              >
-                {nextType === 'IN' ? 'TAP IN' : 'TAP OUT'}
-              </button>
-              <span className="font-body text-xs font-medium leading-[1.45] text-white/80">{steps}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="grid divide-y divide-border-1 rounded-xl border border-border-1 bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <div className="mt-2 grid divide-y divide-border-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         <TodayCell
-          label="Today's shift"
+          label="Shift"
           value={day?.expectedIn ? `${day.expectedIn} – ${day.expectedOut}` : 'Not scheduled'}
-          sub={day?.expectedIn ? `Late after ${day.appliedLateToleranceMinutes} min tolerance` : 'Taps are still recorded.'}
+          sub={day?.expectedIn ? `${day.appliedLateToleranceMinutes} min late tolerance` : 'Taps are still recorded'}
         />
-        <TodayCell
-          label="Tap in"
-          value={tapIn ? hhmm(tapIn.punchAt) : '—'}
-          sub={tapIn ? (tapIn.workArrangement ? ARRANGEMENT_LABEL[tapIn.workArrangement] : 'Work type not recorded') : 'Not yet'}
-        />
+        <TodayCell label="Tap in" value={tapIn ? hhmm(tapIn.punchAt) : '—'} sub={tapIn ? tapSub(tapIn) : 'Not yet'} />
         <TodayCell
           label="Tap out"
           value={tapOut ? hhmm(tapOut.punchAt) : '—'}
-          sub={tapOut ? 'Recorded' : tapIn ? 'Tap out when you finish' : 'After tap in'}
+          sub={tapOut ? tapSub(tapOut) : tapIn ? 'When you finish work' : 'After tap in'}
         />
       </div>
 
-      {children}
-    </div>
+      <footer className="-mx-5 mt-1 flex flex-wrap items-center justify-between gap-3 border-t border-border-1 px-5 py-3.5">
+        <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
+        {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan. */}
+        {nextType && <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>}
+      </footer>
+    </section>
   );
 }
 

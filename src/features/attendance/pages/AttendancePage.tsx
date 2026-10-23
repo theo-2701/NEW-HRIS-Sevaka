@@ -80,8 +80,6 @@ import { formatDate, formatDateTime } from '@/lib/format';
 type Tab = 'punch' | 'history' | 'correction';
 type SubTab = 'daily' | 'taps';
 
-const hhmm = (iso: string) => iso.slice(11, 16);
-
 /**
  * Time › Attendance — port `_prototype/time-attendance.html`
  * (FSD-001-TIME §5 · UIC-001-TIME §6).
@@ -264,41 +262,7 @@ export function AttendancePage() {
               today={today}
               day={todayRow}
               onStart={() => setTapKey(newIdempotencyKey())}
-            >
-              <Card>
-                <CardHead
-                  title="Today's taps"
-                  sub="Recorded taps can't be edited or deleted. To fix a day, file a correction."
-                />
-                <DataTable<Punch>
-                  rows={today}
-                  rowKey={(row) => row.id}
-                  empty="Nothing tapped yet today."
-                  columns={[
-                    {
-                      key: 'type',
-                      header: 'Type',
-                      strong: true,
-                      render: (row) => (row.punchType === 'IN' ? 'Tap in' : 'Tap out'),
-                    },
-                    { key: 'time', header: 'Tap Time', nowrap: true, render: (row) => hhmm(row.punchAt) },
-                    {
-                      key: 'arrangement',
-                      header: 'Work Type',
-                      render: (row) => (row.workArrangement ? row.workArrangement : <span className="text-fg-4">—</span>),
-                    },
-                    { key: 'radius', header: 'Radius', render: (row) => <RadiusCell punch={row} /> },
-                    {
-                      key: 'note',
-                      header: 'Note',
-                      muted: true,
-                      render: (row) => row.note ?? <span className="text-fg-4">—</span>,
-                    },
-                    { key: 'flags', header: 'Flags', render: (row) => <FlagsCell punch={row} /> },
-                  ]}
-                />
-              </Card>
-            </PunchConsole>
+            />
           )}
 
           {tab === 'history' && (
