@@ -20,8 +20,8 @@ export function useSaveGeofence() {
     onSuccess: (result) => {
       toast(
         result.created
-          ? '201 — titik tersimpan dan langsung jadi kandidat tap berikutnya di cabang itu.'
-          : '200 — titik diperbarui. Tap yang sudah dinilai tidak tersentuh; aturan baru mulai dari tap berikutnya.',
+          ? 'Work point saved. It applies to the next taps in that branch.'
+          : 'Work point updated. Recorded taps are untouched; the new rules apply from the next tap.',
         'ok',
       );
       // Peringatan radius kecil datang menyusul: tersimpan, tapi patut diketahui.
@@ -39,8 +39,8 @@ export function useToggleGeofence() {
     onSuccess: (row) => {
       toast(
         row.isActive
-          ? '200 — titik diaktifkan kembali; ia jadi kandidat penilaian tap baru lagi.'
-          : '200 — titik dinonaktifkan; ia keluar dari penilaian tap baru dan setiap tap yang terekam tetap apa adanya.',
+          ? 'Work point reactivated. New taps use it again.'
+          : 'Work point deactivated. New taps no longer use it; recorded taps stay as they are.',
         'ok',
       );
       void queryClient.invalidateQueries({ queryKey: geofenceKeys.all });
@@ -59,12 +59,12 @@ export function useDeleteGeofence(onRefused: (message: string) => void) {
     mutationFn: ({ id }: { id: string }) => geofenceService.remove(id),
     onSuccess: () => {
       onRefused('');
-      toast('200 — titik kerja dihapus; ia belum pernah memvalidasi satu tap pun.', 'ok');
+      toast('Work point deleted. It had never been used by a tap.', 'ok');
       void queryClient.invalidateQueries({ queryKey: geofenceKeys.all });
     },
     onError: (error: Error) => {
       onRefused(error.message);
-      toast('409 — ditolak; titik ini masih dirujuk tap yang terekam.', 'danger');
+      toast("409 — This work point is still referenced by recorded taps, so it can't be deleted.", 'danger');
     },
   });
 }

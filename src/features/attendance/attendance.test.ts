@@ -45,7 +45,7 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
   });
 
   it('tap in tanpa tipe kerja ditolak 422', async () => {
-    await expect(attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k' })).rejects.toThrow(/tipe kerja/);
+    await expect(attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k' })).rejects.toThrow(/work type/);
   });
 
   it('cabang tanpa selfie langsung merekam tap; koordinat menentukan radius WFO', async () => {

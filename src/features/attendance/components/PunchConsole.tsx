@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Camera, Info, LocateFixed, MapPin } from 'lucide-react';
+import { Camera, Info, MapPin } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,11 @@ import { Textarea } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
-import { distanceMeters } from '@/features/attendance/rules';
 import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/attendance/types';
 import type { AttendanceDay, Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
+import { MOCK } from '@/services/mock';
 import { cn } from '@/lib/utils';
-import { formatDate, formatDateTime } from '@/lib/format';
 
 const hhmm = (iso: string) => iso.slice(11, 16);
 
@@ -124,7 +123,12 @@ export function PunchConsole({
   }, []);
 
   const now = [clock.getHours(), clock.getMinutes()].map((part) => String(part).padStart(2, '0')).join(':');
-  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date(`${workDate}T00:00:00`));
+  const dateLabel = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(`${workDate}T00:00:00`));
 
   const tapIn = today.find((row) => row.punchType === 'IN');
   const tapOut = today.find((row) => row.punchType === 'OUT');
@@ -143,9 +147,9 @@ export function PunchConsole({
     <section className="flex flex-col rounded-xl border border-border-1 bg-bg-surface px-5 pt-[18px] shadow-card-sm">
       <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
         <div className="min-w-0">
-          <h3 className="m-0 font-display text-base font-bold leading-tight text-fg-1">Today</h3>
+          <h3 className="m-0 font-display text-base font-bold leading-tight text-fg-1">{dateLabel}</h3>
           <p className="mt-1 font-body text-xs font-medium text-fg-3">
-            {weekday}, {formatDate(workDate)} · <span className="tabular-nums">{now}</span> WIB
+            <span className="tabular-nums">{now}</span> WIB
           </p>
         </div>
         <LocationInfo geofence={geofence} />
@@ -175,7 +179,7 @@ export function PunchConsole({
 }
 
 type Step = 'selfie' | 'details';
-type LocationState = { status: 'locating' } | { status: 'ready'; location: TapLocation } | { status: 'unavailable' };
+type Frame = { dataUrl: string | null };
 
 export interface TapSubmission {
   selfieCaptured: boolean;
@@ -215,22 +219,16 @@ function StepMarker({ steps, current }: { steps: Step[]; current: Step }) {
 }
 
 /**
- * Kamera depan langsung. Tidak ada pemilih berkas — foto dari galeri tidak pernah boleh
- * menggantikan orang yang menekan tombol. Tanpa kamera (pratinjau), frame disimulasikan.
+ * Kamera depan langsung — aktif selama langkah selfie terbuka dan belum ada frame.
+ * Tidak ada pemilih berkas: foto galeri tidak pernah boleh menggantikan orang yang menekan tombol.
  */
-function SelfieStep({
-  frame,
-  onFrame,
-}: {
-  frame: { dataUrl: string | null } | null;
-  onFrame: (frame: { dataUrl: string | null } | null) => void;
-}) {
+function useSelfieCamera(active: boolean) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (frame) return;
+    if (!active) return;
     let cancelled = false;
     const stop = () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -257,146 +255,63 @@ function SelfieStep({
       cancelled = true;
       stop();
     };
-  }, [frame]);
+  }, [active]);
 
-  const capture = () => {
+  /** Frame JPEG ber-cermin seperti pratinjau; `null` bila kamera belum mengalir. */
+  const capture = (): string | null => {
     const video = videoRef.current;
     if (!video || !streamRef.current || !video.videoWidth) {
       setError('The camera is not streaming yet.');
-      return;
+      return null;
     }
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
-    // Cermin seperti pratinjau, supaya foto yang tersimpan sama dengan yang dilihat.
     context?.translate(canvas.width, 0);
     context?.scale(-1, 1);
     context?.drawImage(video, 0, 0);
-    onFrame({ dataUrl: canvas.toDataURL('image/jpeg', 0.8) });
+    return canvas.toDataURL('image/jpeg', 0.8);
   };
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-obsidian">
-        {frame?.dataUrl ? (
-          <img src={frame.dataUrl} alt="Captured selfie" className="size-full object-cover" />
-        ) : frame ? (
-          <span className="font-body text-[13px] font-medium text-white">Simulated frame ready</span>
-        ) : (
-          <video ref={videoRef} autoPlay playsInline muted className="size-full -scale-x-100 object-cover" />
-        )}
-        {!frame && error && (
-          <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center font-body text-[13px] font-medium leading-[1.5] text-white">
-            {error}
-            {/* ponytail: jalur pratinjau saja — klien sungguhan hanya menerima frame kamera. */}
-            <Button variant="light" onClick={() => onFrame({ dataUrl: null })}>
-              Use simulated frame
-            </Button>
-          </span>
-        )}
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-body text-xs font-medium text-fg-3">
-          {frame ? 'Looks good? Continue, or retake.' : 'Face the camera in good light. Live camera only.'}
-        </span>
-        {frame ? (
-          <Button variant="secondary" onClick={() => onFrame(null)}>
-            Retake
-          </Button>
-        ) : (
-          !error && (
-            <Button variant="secondary" onClick={capture}>
-              Capture
-            </Button>
-          )
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Koordinat perangkat, diambil sekali saat modal dibuka. */
-function useDeviceLocation(open: boolean) {
-  const [state, setState] = useState<LocationState>({ status: 'locating' });
-
-  useEffect(() => {
-    if (!open) return;
-    setState({ status: 'locating' });
-    if (!navigator.geolocation) {
-      setState({ status: 'unavailable' });
-      return;
-    }
-    let cancelled = false;
-    navigator.geolocation.getCurrentPosition(
-      (position) =>
-        !cancelled &&
-        setState({
-          status: 'ready',
-          location: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracyMeters: Math.round(position.coords.accuracy),
-          },
-        }),
-      () => !cancelled && setState({ status: 'unavailable' }),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-  return [state, setState] as const;
-}
-
-function LocationRow({
-  state,
-  geofence,
-  onSimulate,
-}: {
-  state: LocationState;
-  geofence: Geofence;
-  onSimulate: () => void;
-}) {
-  if (state.status === 'locating') {
-    return <span className="font-body text-[13px] font-medium text-fg-3">Getting your location…</span>;
-  }
-  if (state.status === 'unavailable') {
-    return (
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-body text-[13px] font-medium leading-[1.45] text-fg-2">
-          Location unavailable. Your tap is still recorded, but the radius can&rsquo;t be checked.
-        </span>
-        {/* ponytail: tombol pratinjau — memakai titik kantor saat izin lokasi tidak ada. */}
-        <Button variant="secondary" onClick={onSimulate}>
-          Use office location
-        </Button>
-      </div>
-    );
-  }
-  const { location } = state;
-  const meters = Math.round(
-    distanceMeters({ latitude: geofence.centerLatitude, longitude: geofence.centerLongitude }, location),
-  );
-  return (
-    <div className="flex flex-col gap-0.5 font-body text-[13px] leading-[1.45]">
-      <span className="font-semibold text-fg-1 tabular-nums">
-        {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
-        {location.accuracyMeters != null && <span className="font-medium text-fg-3"> · ±{location.accuracyMeters} m</span>}
-      </span>
-      <span className="font-medium text-fg-3">
-        {meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`} from {geofence.geofenceName}
-        {location.simulated && ' · simulated'}
-      </span>
-    </div>
-  );
+  return { videoRef, error, capture };
 }
 
 /**
- * Tap in / Tap out dalam satu modal bertahap: Selfie (bila admin mewajibkan) → Detail
- * (tipe kerja, catatan, lokasi). Modal, bukan halaman: karyawan tetap tahu ia masih di
- * tengah absen, dan menutupnya berarti batal tanpa jejak.
+ * Koordinat perangkat diambil diam-diam saat modal dibuka — tidak ditampilkan, hanya dikirim
+ * (UIC-TIME §6.1.1 `latitude`/`longitude`/`gps_accuracy_meters`). Tanpa izin lokasi = `null`:
+ * tap tetap lahir, radiusnya saja yang tak terevaluasi.
+ */
+function useDeviceLocation(open: boolean, fallback: TapLocation) {
+  const pending = useRef<Promise<TapLocation | null>>(Promise.resolve(null));
+
+  useEffect(() => {
+    if (!open) return;
+    pending.current = new Promise<TapLocation | null>((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (position) =>
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracyMeters: Math.round(position.coords.accuracy),
+          }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+      );
+    }).then((location) =>
+      // ponytail: mode dummy tanpa izin lokasi memakai titik kantor supaya radius bisa diperagakan.
+      location ?? (MOCK ? { ...fallback, simulated: true } : null),
+    );
+  }, [open, fallback]);
+
+  return pending;
+}
+
+/**
+ * Tap in / Tap out dalam satu modal bertahap: Selfie (bila admin mewajibkan) lalu Detail
+ * (tipe kerja + catatan). Modal, bukan halaman: karyawan tetap tahu ia masih di tengah absen,
+ * dan menutupnya berarti batal tanpa jejak. Semua tombol ada di footer — tanpa gulir di layar 100%.
  */
 export function TapModal({
   open,
@@ -422,10 +337,16 @@ export function TapModal({
 }) {
   const steps: Step[] = selfieRequired ? ['selfie', 'details'] : ['details'];
   const [step, setStep] = useState<Step>(steps[0]);
-  const [frame, setFrame] = useState<{ dataUrl: string | null } | null>(null);
+  const [frame, setFrame] = useState<Frame | null>(null);
   const [arrangement, setArrangement] = useState<WorkArrangement | ''>('');
   const [note, setNote] = useState('');
-  const [location, setLocation] = useDeviceLocation(open);
+  const [locating, setLocating] = useState(false);
+  const camera = useSelfieCamera(open && step === 'selfie' && !frame);
+  const fallback = useMemo(
+    () => ({ latitude: geofence.centerLatitude, longitude: geofence.centerLongitude, accuracyMeters: 10 }),
+    [geofence.centerLatitude, geofence.centerLongitude],
+  );
+  const location = useDeviceLocation(open, fallback);
 
   useEffect(() => {
     if (!open) return;
@@ -437,28 +358,63 @@ export function TapModal({
 
   const isIn = type === 'IN';
   const verb = isIn ? 'Tap in' : 'Tap out';
-  const ready = (!isIn || Boolean(arrangement)) && location.status !== 'locating';
+  const saving = busy || locating;
 
-  const submit = () =>
+  const shoot = () => {
+    const dataUrl = camera.capture();
+    if (dataUrl) setFrame({ dataUrl });
+  };
+
+  const submit = async () => {
+    setLocating(true);
+    const coords = await location.current;
+    setLocating(false);
     onSubmit({
       selfieCaptured: Boolean(frame),
       selfieBase64: frame?.dataUrl?.split(',')[1],
       workArrangement: isIn ? (arrangement as WorkArrangement) : undefined,
       note,
-      location: location.status === 'ready' ? location.location : null,
+      location: coords,
     });
+  };
 
   const describe = (value: WorkArrangement) => {
-    const rule = geofence.rules[value];
-    if (value === 'WFO') {
-      return rule.radius
-        ? `At ${geofence.geofenceName}. You need to be within ${geofence.radiusMeters} m.`
-        : `At ${geofence.geofenceName}. Radius isn't checked.`;
-    }
-    return rule.radius
-      ? `Your location is checked against ${geofence.radiusMeters} m.`
-      : "Your location is recorded, but the radius isn't checked.";
+    if (!geofence.rules[value].radius) return "Location radius isn't checked.";
+    return value === 'WFO'
+      ? `Must be within ${geofence.radiusMeters} m of ${geofence.geofenceName}.`
+      : `Must be within ${geofence.radiusMeters} m of the work point.`;
   };
+
+  const footer =
+    step === 'selfie' ? (
+      <>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        {frame ? (
+          <>
+            <Button variant="secondary" onClick={() => setFrame(null)}>
+              Retake
+            </Button>
+            <Button onClick={() => setStep('details')}>Continue</Button>
+          </>
+        ) : camera.error ? (
+          // ponytail: jalur pratinjau saja — klien sungguhan hanya menerima frame kamera.
+          <Button onClick={() => setFrame({ dataUrl: null })}>Use simulated frame</Button>
+        ) : (
+          <Button onClick={shoot}>Capture selfie</Button>
+        )}
+      </>
+    ) : (
+      <>
+        <Button variant="secondary" onClick={selfieRequired ? () => setStep('selfie') : onClose}>
+          {selfieRequired ? 'Back' : 'Cancel'}
+        </Button>
+        <Button disabled={(isIn && !arrangement) || saving} onClick={submit}>
+          {saving ? 'Saving…' : verb}
+        </Button>
+      </>
+    );
 
   return (
     <Modal
@@ -466,33 +422,32 @@ export function TapModal({
       onOpenChange={(next) => !next && onClose()}
       title={verb}
       description={step === 'selfie' ? 'HR requires a selfie at this location.' : `Check the details, then ${verb.toLowerCase()}.`}
-      footer={
-        step === 'selfie' ? (
-          <>
-            <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button disabled={!frame} onClick={() => setStep('details')}>
-              Continue
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="secondary" onClick={selfieRequired ? () => setStep('selfie') : onClose}>
-              {selfieRequired ? 'Back' : 'Cancel'}
-            </Button>
-            <Button disabled={!ready || busy} onClick={submit}>
-              {busy ? 'Saving…' : verb}
-            </Button>
-          </>
-        )
-      }
+      footer={footer}
     >
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <StepMarker steps={steps} current={step} />
 
         {step === 'selfie' ? (
-          <SelfieStep frame={frame} onFrame={setFrame} />
+          <div className="flex flex-col gap-2">
+            {/* Tinggi dibatasi viewport supaya modal + footer muat tanpa gulir di zoom 100%. */}
+            <div className="relative mx-auto flex aspect-[4/3] max-h-[44vh] w-full items-center justify-center overflow-hidden rounded-xl bg-obsidian">
+              {frame?.dataUrl ? (
+                <img src={frame.dataUrl} alt="Captured selfie" className="size-full object-cover" />
+              ) : frame ? (
+                <span className="font-body text-[13px] font-medium text-white">Simulated frame ready</span>
+              ) : (
+                <video ref={camera.videoRef} autoPlay playsInline muted className="size-full -scale-x-100 object-cover" />
+              )}
+              {!frame && camera.error && (
+                <span className="absolute inset-0 flex items-center justify-center p-6 text-center font-body text-[13px] font-medium leading-[1.5] text-white">
+                  {camera.error}
+                </span>
+              )}
+            </div>
+            <span className="font-body text-xs font-medium text-fg-3">
+              {frame ? 'Looks good? Continue, or retake.' : 'Face the camera in good light. Live camera only.'}
+            </span>
+          </div>
         ) : (
           <>
             {selfieRequired && (
@@ -549,28 +504,6 @@ export function TapModal({
                 </span>
               </span>
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="inline-flex items-center gap-1.5 [&_svg]:size-3.5">
-                <LocateFixed />
-                Location
-              </Label>
-              <LocationRow
-                state={location}
-                geofence={geofence}
-                onSimulate={() =>
-                  setLocation({
-                    status: 'ready',
-                    location: {
-                      latitude: geofence.centerLatitude,
-                      longitude: geofence.centerLongitude,
-                      accuracyMeters: 10,
-                      simulated: true,
-                    },
-                  })
-                }
-              />
-            </div>
           </>
         )}
       </div>
@@ -596,17 +529,12 @@ export function PunchSavedModal({ result, onClose }: { result: PunchResult | nul
     >
       {punch && (
         <KeyValueList>
-          <KeyValueRow label="Time">{formatDateTime(punch.punchAt)} WIB</KeyValueRow>
+          <KeyValueRow label="Time">{hhmm(punch.punchAt)} WIB</KeyValueRow>
           <KeyValueRow label="Work type">
             {punch.workArrangement ? ARRANGEMENT_LABEL[punch.workArrangement] : '—'}
           </KeyValueRow>
           <KeyValueRow label="Radius">
             <RadiusCell punch={punch} />
-          </KeyValueRow>
-          <KeyValueRow label="Location">
-            {punch.latitude != null && punch.longitude != null
-              ? `${punch.latitude.toFixed(5)}, ${punch.longitude.toFixed(5)}`
-              : 'Not available'}
           </KeyValueRow>
           <KeyValueRow label="Selfie">{result.selfieRequired ? 'Captured' : 'Not required'}</KeyValueRow>
           <KeyValueRow label="Note">{punch.note ?? '—'}</KeyValueRow>

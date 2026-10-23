@@ -79,7 +79,7 @@ export function useRecordPunch(session: AttendanceSession) {
 export const useCreateCorrection = (session: AttendanceSession) =>
   useAttendanceMutation<CorrectionDraft>(
     (draft) => attendanceService.createCorrection(session, draft).then(() => undefined),
-    () => ({ text: '201 — koreksi diajukan. Hari itu tetap membawa putusannya sampai keputusan turun.' }),
+    () => ({ text: 'Correction submitted. The day keeps its current verdict until a decision is made.' }),
   );
 
 /** Keputusan checker (K9): 200 diterima, lalu status + baris harian ditulis saat workflow selesai. */
@@ -91,12 +91,12 @@ export function useDecideCorrection(session: AttendanceSession) {
       return kind;
     },
     onSuccess: async (kind, { id }) => {
-      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      toast('Decision received and passed on to the approval process.', 'info');
       await attendanceService.completeCorrectionWorkflow(session, id, kind);
       toast(
         kind === 'APPROVED'
-          ? 'workflow.process.completed — hari itu kini excused; menit terukurnya tidak berubah sedikit pun.'
-          : 'workflow.process.completed — koreksi ditolak dan hari itu tetap membawa putusan aslinya.',
+          ? 'Correction approved. The day is now excused; its measured minutes stay unchanged.'
+          : 'Correction rejected. The day keeps its original verdict.',
         kind === 'APPROVED' ? 'ok' : 'warn',
       );
       void queryClient.invalidateQueries();
@@ -109,7 +109,7 @@ export const useWithdrawCorrection = (session: AttendanceSession) =>
   useAttendanceMutation<{ id: string }>(
     ({ id }) => attendanceService.withdrawCorrection(session, id).then(() => undefined),
     () => ({
-      text: '200 — koreksi ditarik; barisnya tinggal sebagai Cancelled dan harinya bebas dikoreksi lagi.',
+      text: 'Correction withdrawn. It stays on record as Cancelled and the day can be corrected again.',
       tone: 'warn' as const,
     }),
   );

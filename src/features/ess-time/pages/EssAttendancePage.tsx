@@ -84,7 +84,7 @@ export function EssAttendancePage() {
     <PageShell
       crumbs={[{ label: 'Employee Self-Service' }, { label: 'Time Management' }, { label: 'Attendance' }]}
       title="Attendance"
-      description="Rekap kehadiran harian Anda beserta tap masuk/pulang hari ini."
+      description="Tap in and out, and review your daily attendance summary."
       actions={<EssActorPicker actor={actor} onChange={setActor} />}
     >
       <div className="flex flex-col gap-5">
@@ -92,8 +92,8 @@ export function EssAttendancePage() {
           value={tab}
           onChange={setTab}
           items={[
-            { value: 'today', label: 'Hari ini' },
-            { value: 'history', label: 'Rekap harian', count: rows.length },
+            { value: 'today', label: 'Today' },
+            { value: 'history', label: 'Daily summary', count: rows.length },
           ]}
         />
 
@@ -113,17 +113,17 @@ export function EssAttendancePage() {
 
         {tab === 'history' && (
           <Card>
-            <CardHead title="Rekap harian" sub="Hasil penilaian kehadiran per tanggal" />
+            <CardHead title="Daily summary" sub="Your attendance verdict per day" />
             <div>
               <DataTable<AttendanceDay>
                 rows={paged.rows}
                 rowKey={(row) => row.id}
                 loading={days.isLoading}
-                empty="Belum ada rekap kehadiran."
+                empty="No attendance summary yet."
                 columns={[
-                  { key: 'date', header: 'Tanggal', strong: true, nowrap: true, render: (row) => formatDate(row.workDate) },
-                  { key: 'dayType', header: 'Jenis hari', muted: true, render: (row) => DAY_TYPE_LABEL[row.dayType] },
-                  { key: 'arrangement', header: 'Pola kerja', render: (row) => ARRANGEMENT_LABEL[row.workArrangement] },
+                  { key: 'date', header: 'Date', strong: true, nowrap: true, render: (row) => formatDate(row.workDate) },
+                  { key: 'dayType', header: 'Day Type', muted: true, render: (row) => DAY_TYPE_LABEL[row.dayType] },
+                  { key: 'arrangement', header: 'Arrangement', render: (row) => ARRANGEMENT_LABEL[row.workArrangement] },
                   {
                     key: 'status',
                     header: 'Status',
@@ -135,17 +135,17 @@ export function EssAttendancePage() {
                   },
                   {
                     key: 'worked',
-                    header: 'Jam kerja',
+                    header: 'Worked',
                     align: 'right',
-                    render: (row) => <span className="tabular-nums">{(row.workedMinutes / 60).toFixed(1)} jam</span>,
+                    render: (row) => <span className="tabular-nums">{(row.workedMinutes / 60).toFixed(1)} h</span>,
                   },
                   {
                     key: 'late',
-                    header: 'Terlambat',
+                    header: 'Late',
                     align: 'right',
                     render: (row) =>
                       row.lateMinutes > 0 ? (
-                        <span className="tabular-nums text-warning-700">{row.lateMinutes} mnt</span>
+                        <span className="tabular-nums text-warning-700">{row.lateMinutes} min</span>
                       ) : (
                         <span className="text-fg-4">—</span>
                       ),

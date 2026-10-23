@@ -60,9 +60,9 @@ export interface SaveGeofenceResult {
 function validate(draft: GeofenceDraft) {
   const name = draft.geofenceName.trim();
   if (!name || name.length > 150) {
-    throw new Error('422 — nama titik wajib diisi, maksimal 150 karakter.');
+    throw new Error('422 — Point name is required, 3–150 characters.');
   }
-  if (!draft.scopeRef) throw new Error('422 — pilih cabang pemilik titik ini.');
+  if (!draft.scopeRef) throw new Error('422 — Choose the branch that owns this point.');
   if (
     !Number.isFinite(draft.centerLatitude) ||
     !Number.isFinite(draft.centerLongitude) ||
@@ -71,10 +71,10 @@ function validate(draft: GeofenceDraft) {
     draft.centerLongitude < -180 ||
     draft.centerLongitude > 180
   ) {
-    throw new Error('422 — lintang dan bujur wajib berpasangan, dalam ±90 dan ±180.');
+    throw new Error('422 — Latitude and longitude are required as a pair, within ±90 and ±180.');
   }
   if (!Number.isInteger(draft.radiusMeters) || draft.radiusMeters <= 0) {
-    throw new Error('422 — radius harus bilangan bulat meter yang positif.');
+    throw new Error('422 — Radius must be a positive whole number of metres.');
   }
 }
 
@@ -108,7 +108,7 @@ export const geofenceService = {
 
       if (id) {
         const row = mockGeofences.find((item) => item.id === id);
-        if (!row) throw new Error('404 — titik kerja tidak ditemukan.');
+        if (!row) throw new Error('404 — Work point not found.');
         // §6.3 — Ubah sengaja tidak memeriksa bentrok nama.
         Object.assign(row, {
           geofenceName: name,
@@ -129,7 +129,7 @@ export const geofenceService = {
           item.geofenceName.toLowerCase() === name.toLowerCase(),
       );
       if (clash) {
-        throw new Error('409 — sudah ada titik aktif di cabang itu dengan nama yang sama.');
+        throw new Error('409 — An active point with the same name already exists in that branch.');
       }
 
       const row: Geofence = {
@@ -159,7 +159,7 @@ export const geofenceService = {
     if (MOCK) {
       await delay(200);
       const row = mockGeofences.find((item) => item.id === id);
-      if (!row) throw new Error('404 — titik kerja tidak ditemukan.');
+      if (!row) throw new Error('404 — Work point not found.');
       row.isActive = !row.isActive;
       return clone(row);
     }
@@ -176,7 +176,7 @@ export const geofenceService = {
     if (MOCK) {
       await delay(250);
       const row = mockGeofences.find((item) => item.id === id);
-      if (!row) throw new Error('404 — titik kerja tidak ditemukan.');
+      if (!row) throw new Error('404 — Work point not found.');
       if (row.usedByPunch) {
         throw new Error(
           `409 — "${row.geofenceName}" tidak bisa dihapus: tap yang sudah terekam masih merujuknya. Pensiunkan lewat Deactivate — barisnya dan riwayatnya tetap apa adanya.`,

@@ -34,7 +34,7 @@ describe('Work point — validasi form', () => {
 
   it('menolak radius nol atau pecahan', async () => {
     await expect(geofenceService.save({ ...draft, radiusMeters: 0 })).rejects.toThrow(/422/);
-    await expect(geofenceService.save({ ...draft, radiusMeters: 12.5 })).rejects.toThrow(/bilangan bulat/);
+    await expect(geofenceService.save({ ...draft, radiusMeters: 12.5 })).rejects.toThrow(/whole number/);
   });
 
   it('radius kecil adalah peringatan, bukan penolakan', async () => {

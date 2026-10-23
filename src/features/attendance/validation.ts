@@ -6,17 +6,17 @@ import * as Yup from 'yup';
  * jam usulan tidak mengoreksi apa pun, jadi ditolak di sini juga.
  */
 export const correctionSchema = Yup.object({
-  attendanceDailyId: Yup.string().required('Pilih hari yang akan dikoreksi.'),
-  correctionReasonType: Yup.string().required('Pilih alasan koreksi.'),
+  attendanceDailyId: Yup.string().required('Choose the day to correct.'),
+  correctionReasonType: Yup.string().required('Choose a correction reason.'),
   reasonNote: Yup.string().when('correctionReasonType', {
     is: 'OTHER',
-    then: (schema) => schema.trim().required('Catatan alasan wajib diisi bila alasannya Other.'),
+    then: (schema) => schema.trim().required('A reason note is required when the reason is Other.'),
     otherwise: (schema) => schema,
   }),
   requestedIn: Yup.string(),
   requestedOut: Yup.string().test(
     'at-least-one-time',
-    'Usulkan minimal satu jam — koreksi tanpa keduanya tidak mengoreksi apa pun.',
+    'Propose at least one time — a correction without either changes nothing.',
     function (value) {
       const { requestedIn } = this.parent as { requestedIn?: string };
       return Boolean(value || requestedIn);
@@ -29,21 +29,21 @@ export const correctionSchema = Yup.object({
  * itu peringatan yang datang dari server, bukan penolakan.
  */
 export const geofenceSchema = Yup.object({
-  geofenceName: Yup.string().trim().min(3, 'Nama titik minimal 3 karakter.').max(150, 'Nama titik maksimal 150 karakter.').required('Nama titik wajib diisi.'),
-  scopeRef: Yup.string().required('Pilih cabang pemilik titik ini.'),
+  geofenceName: Yup.string().trim().min(3, 'Point name must be at least 3 characters.').max(150, 'Point name can be at most 150 characters.').required('Point name is required.'),
+  scopeRef: Yup.string().required('Choose the branch that owns this point.'),
   centerLatitude: Yup.number()
-    .typeError('Lintang wajib diisi.')
+    .typeError('Latitude is required.')
     .min(-90, 'Lintang harus di dalam ±90.')
     .max(90, 'Lintang harus di dalam ±90.')
-    .required('Lintang wajib diisi.'),
+    .required('Latitude is required.'),
   centerLongitude: Yup.number()
-    .typeError('Bujur wajib diisi.')
+    .typeError('Longitude is required.')
     .min(-180, 'Bujur harus di dalam ±180.')
     .max(180, 'Bujur harus di dalam ±180.')
-    .required('Bujur wajib diisi.'),
+    .required('Longitude is required.'),
   radiusMeters: Yup.number()
-    .typeError('Radius wajib diisi.')
+    .typeError('Radius is required.')
     .integer('Radius harus bilangan bulat meter.')
-    .positive('Radius harus lebih besar dari nol.')
-    .required('Radius wajib diisi.'),
+    .positive('Radius must be greater than zero.')
+    .required('Radius is required.'),
 });

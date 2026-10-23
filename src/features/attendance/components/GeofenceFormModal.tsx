@@ -19,7 +19,7 @@ function RadiusWarning() {
   if (!radius || radius >= 20) return null;
   return (
     <span className="-mt-2 font-body text-xs font-semibold text-warning-800">
-      Radius di bawah 20 meter — lebih kecil dari akurasi GPS ponsel pada umumnya; karyawan bisa sering tercatat di luar radius.
+      Radius under 20 metres — smaller than typical phone GPS accuracy; employees may often be recorded outside the radius.
     </span>
   );
 }
@@ -206,7 +206,7 @@ export function GeofenceFormModal({
                   Cancel
                 </Button>
                 <Button onClick={submitForm} disabled={save.isPending}>
-                  {save.isPending ? 'Menyimpan…' : 'Save work point'}
+                  {save.isPending ? 'Saving…' : 'Save work point'}
                 </Button>
               </>
             }

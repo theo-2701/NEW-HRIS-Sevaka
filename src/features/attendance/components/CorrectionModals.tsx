@@ -153,7 +153,7 @@ export function CorrectionFormModal({
                   Filed by
                   <span className="ml-1.5 inline-flex items-center gap-1 align-middle font-body text-[10px] font-bold uppercase tracking-[0.05em] text-fg-4 [&_svg]:size-3">
                     <Lock />
-                    terkunci
+                    locked
                   </span>
                 </Label>
                 <Input id="filedBy" readOnly tabIndex={-1} value={`${employeeName(session.employeeId)} — ${session.role}`} />
@@ -363,7 +363,7 @@ export function WithdrawCorrectionModal({
       {correction && (
         <div className="flex flex-col gap-4">
           <Note tone="warn" icon={<TriangleAlert />}>
-            Barisnya tetap ada sebagai <strong>Cancelled</strong>, dan harinya kembali bebas dikoreksi.
+            It stays on record as <strong>Cancelled</strong>, and the day can be corrected again.
           </Note>
           <KeyValueList>
             <KeyValueRow label="Correction">{correction.id}</KeyValueRow>

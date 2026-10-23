@@ -57,13 +57,13 @@ export const EMPTY_CORRECTION_FILTER: CorrectionFilterState = {
   employeeId: 'ALL',
 };
 
-const EXCUSED_LABEL: Record<string, string> = { YES: 'Excused', NO: 'Belum excused' };
+const EXCUSED_LABEL: Record<string, string> = { YES: 'Excused', NO: 'Not excused' };
 const GEOFENCE_LABEL: Record<string, string> = {
   IN: 'Inside radius',
   OUT: 'Outside radius',
   UNKNOWN: 'Could not be evaluated',
 };
-const MOCK_LABEL: Record<string, string> = { YES: 'Mock location suspected', NO: 'Tanpa dugaan mock' };
+const MOCK_LABEL: Record<string, string> = { YES: 'Mock location suspected', NO: 'No mock suspicion' };
 
 export function countActive(value: DayFilterState | TapFilterState | CorrectionFilterState): number {
   return Object.values(value).filter((item) => item !== 'ALL').length;
@@ -75,7 +75,7 @@ export function summarizeDayFilter(value: DayFilterState): string {
   if (value.dayType !== 'ALL') parts.push(DAY_TYPE_LABEL[value.dayType as DayType]);
   if (value.excused !== 'ALL') parts.push(EXCUSED_LABEL[value.excused]);
   if (value.employeeId !== 'ALL') parts.push(employeeName(value.employeeId));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }
 
 export function summarizeTapFilter(value: TapFilterState): string {
@@ -84,7 +84,7 @@ export function summarizeTapFilter(value: TapFilterState): string {
   if (value.geofence !== 'ALL') parts.push(GEOFENCE_LABEL[value.geofence]);
   if (value.mockLocation !== 'ALL') parts.push(MOCK_LABEL[value.mockLocation]);
   if (value.employeeId !== 'ALL') parts.push(employeeName(value.employeeId));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }
 
 export function summarizeCorrectionFilter(value: CorrectionFilterState): string {
@@ -94,5 +94,5 @@ export function summarizeCorrectionFilter(value: CorrectionFilterState): string 
     parts.push(CORRECTION_REASON_LABEL[value.correctionReasonType as CorrectionReasonType]);
   }
   if (value.employeeId !== 'ALL') parts.push(employeeName(value.employeeId));
-  return parts.length ? parts.join(' · ') : 'Tanpa filter';
+  return parts.length ? parts.join(' · ') : 'No filter';
 }

@@ -110,7 +110,7 @@ export interface PunchResult {
 
 function findCorrection(id: string): Correction {
   const row = mockCorrections.find((item) => item.id === id);
-  if (!row) throw new Error('404 — koreksi tidak ditemukan.');
+  if (!row) throw new Error('404 — Correction not found.');
   return row;
 }
 
@@ -136,7 +136,7 @@ export const attendanceService = {
     if (MOCK) {
       await delay();
       if (!canSearchPunch(session)) {
-        throw new Error('403 — attendance-punch:search adalah kewenangan penyelidikan yang tidak dipegang peran ini.');
+        throw new Error('403 — Your role can\'t view the tap history.');
       }
       const self = isSelfScoped(session);
       return mockPunches
@@ -209,7 +209,7 @@ export const attendanceService = {
   async recordPunch(session: AttendanceSession, input: TapInput): Promise<PunchResult> {
     const note = input.note?.trim() ?? '';
     if (note.length > PUNCH_NOTE_MAX) {
-      throw new Error(`422 — catatan paling banyak ${PUNCH_NOTE_MAX} karakter.`);
+      throw new Error(`422 — The note can be at most ${PUNCH_NOTE_MAX} characters.`);
     }
 
     if (MOCK) {
@@ -229,13 +229,13 @@ export const attendanceService = {
       const tappedIn = todays.find((row) => row.punchType === 'IN');
       const arrangement = type === 'IN' ? input.workArrangement : (tappedIn?.workArrangement ?? input.workArrangement);
       if (type === 'IN' && !arrangement) {
-        throw new Error('422 — pilih tipe kerja (WFO atau WFH) sebelum tap in.');
+        throw new Error('422 — Choose a work type (WFO or WFH) before tapping in.');
       }
 
       const geofence = resolveGeofence(session.employeeId);
       const selfieRequired = selfieRequiredAtTap(geofence);
       if (selfieRequired && !input.selfieCaptured) {
-        throw new Error('422 — kanal ini mewajibkan selfie langsung dan tidak ada frame yang terlampir; barisnya tidak pernah lahir.');
+        throw new Error('422 — A live selfie is required at this location. The tap was not recorded.');
       }
 
       const now = input.now ?? new Date();
@@ -295,32 +295,32 @@ export const attendanceService = {
     if (MOCK) {
       await delay(350);
       if (!canCreateCorrection(session)) {
-        throw new Error('403 — attendance-correction:create tidak dipegang peran ini.');
+        throw new Error('403 — Your role can\'t submit corrections.');
       }
       if (!draft.attendanceDailyId || !draft.correctionReasonType) {
-        throw new Error('422 — pilih hari dan alasan koreksinya.');
+        throw new Error('422 — Choose the day and the correction reason.');
       }
       // TSD-TIME 0.82 §7.3.4: lingkup baris diperiksa atas PEMILIK hari lebih dulu — di luar lingkup
       // dijawab 404 TIM-NFD-014 supaya keberadaan hari orang lain tidak bocor.
       const day = mockDays.find((item) => item.id === draft.attendanceDailyId);
-      if (!day) throw new Error('422 — hari yang dikoreksi tidak ditemukan.');
+      if (!day) throw new Error('422 — The day to correct was not found.');
       if (isSelfScoped(session) && day.employeeId !== session.employeeId) {
-        throw new Error('404 — hari tidak ditemukan atau di luar akses Anda.');
+        throw new Error('404 — The day was not found or is outside your access.');
       }
       if (!withinCorrectionWindow(day.workDate)) {
-        throw new Error(`422 — hari itu lebih tua dari jendela koreksi ${CORRECTION_WINDOW_DAYS} hari.`);
+        throw new Error(`422 — That day is older than the ${CORRECTION_WINDOW_DAYS}-day correction window.`);
       }
       if (draft.correctionReasonType === 'OTHER' && !draft.reasonNote.trim()) {
-        throw new Error('422 — catatan alasan wajib diisi bila alasannya Other.');
+        throw new Error('422 — A reason note is required when the reason is Other.');
       }
       if (!draft.requestedIn && !draft.requestedOut) {
-        throw new Error('422 — usulkan minimal satu jam; koreksi tanpa keduanya tidak mengoreksi apa pun.');
+        throw new Error('422 — Propose at least one time; a correction without either changes nothing.');
       }
       const live = mockCorrections.some(
         (row) => row.attendanceDailyId === draft.attendanceDailyId && row.correctionStatus === 'PENDING_APPROVAL',
       );
       if (live) {
-        throw new Error('409 — hari itu sudah membawa koreksi yang menunggu keputusan; satu koreksi hidup per hari.');
+        throw new Error('409 — That day already has a correction waiting for a decision. Only one per day.');
       }
 
       const row: Correction = {
@@ -357,13 +357,13 @@ export const attendanceService = {
       await delay(400);
       const row = findCorrection(id);
       if (!canApproveCorrection(session)) {
-        throw new Error('403 — attendance-correction:approve tidak dipegang peran ini.');
+        throw new Error('403 — Your role can\'t decide corrections.');
       }
       if (row.employeeId === session.employeeId) {
-        throw new Error('403 — pengaju koreksi tidak pernah bisa jadi penyetujunya.');
+        throw new Error('403 — You can\'t decide a correction you filed yourself.');
       }
       if (row.correctionStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — koreksi ini sudah diputuskan.');
+        throw new Error('422 — This correction has already been decided.');
       }
       // K9: keputusan diterima (200); status & baris harian ditulis saat workflow selesai.
       return acknowledge(row);
@@ -400,10 +400,10 @@ export const attendanceService = {
       await delay(250);
       const row = findCorrection(id);
       if (row.employeeId !== session.employeeId) {
-        throw new Error('403 — hanya pengaju yang bisa menarik koreksinya sendiri.');
+        throw new Error('403 — Only the filer can withdraw this correction.');
       }
       if (row.correctionStatus !== 'PENDING_APPROVAL') {
-        throw new Error('422 — hanya koreksi yang masih menunggu keputusan yang bisa ditarik.');
+        throw new Error('422 — Only a correction still waiting for a decision can be withdrawn.');
       }
       row.correctionStatus = 'CANCELLED';
       return { ...row };
