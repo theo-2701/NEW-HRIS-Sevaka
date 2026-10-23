@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetSchedulerMocks, schedulerService } from '@/features/scheduler/services/scheduler.service';
+import { resetSchedulerMocks, schedulerService, shiftOn } from '@/features/scheduler/services/scheduler.service';
 import { datesBetween, pickableShifts, weekDates } from '@/features/scheduler/rules';
 import { SHIFTS } from '@/features/scheduler/mock-data';
 import type { ShiftDraft } from '@/features/scheduler/types';
@@ -225,5 +225,22 @@ describe('Aturan tanggal', () => {
     expect(week).toHaveLength(7);
     expect(week[0]).toBe('2026-07-27');
     expect(week[6]).toBe('2026-08-02');
+  });
+});
+
+describe('Shift hari ini untuk kartu tap', () => {
+  it('membaca shift dari roster', async () => {
+    const roster = await shiftOn('emp-rina', '2026-07-30');
+    expect(roster?.shift?.shiftName).toBe('Shift Pagi');
+  });
+
+  it('hari libur roster tanpa shift', async () => {
+    const roster = await shiftOn('emp-budi', '2026-07-30');
+    expect(roster?.assignment.isOffDay).toBe(true);
+    expect(roster?.shift).toBeNull();
+  });
+
+  it('tanggal tanpa baris roster = null', async () => {
+    expect(await shiftOn('emp-rina', '2026-08-15')).toBeNull();
   });
 });

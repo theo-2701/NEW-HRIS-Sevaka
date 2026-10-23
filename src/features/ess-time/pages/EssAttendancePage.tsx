@@ -9,7 +9,7 @@ import { usePagedRows } from '@/hooks/usePagedRows';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
 import { PunchConsole, PunchSavedModal, TapModal } from '@/features/attendance/components/PunchConsole';
 import type { TapSubmission } from '@/features/attendance/components/PunchConsole';
-import { useRecordPunch } from '@/features/attendance/hooks/useAttendance';
+import { useRecordPunch, useShiftToday } from '@/features/attendance/hooks/useAttendance';
 import {
   arrangementToday,
   newIdempotencyKey,
@@ -64,7 +64,7 @@ export function EssAttendancePage() {
   const selfieRequired = selfieRequiredAtTap(geofence);
   const nextType = nextPunchType(session.employeeId, today);
   const tappedIn = today.find((row) => row.punchType === 'IN');
-  const todayRow = allDays.find((row) => row.workDate === ATTENDANCE_TODAY);
+  const { data: shiftToday } = useShiftToday(session.employeeId);
 
   const doPunch = async (submission: TapSubmission) => {
     if (!tapKey || !nextType) return;
@@ -105,7 +105,7 @@ export function EssAttendancePage() {
               selfieRequired={selfieRequired}
               nextType={nextType}
               today={today}
-              day={todayRow}
+              shift={shiftToday}
               onStart={() => setTapKey(newIdempotencyKey())}
             />
           </>

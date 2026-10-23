@@ -10,8 +10,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
 import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/attendance/types';
-import type { AttendanceDay, Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
+import type { Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
+import type { ShiftOn } from '@/features/scheduler/services/scheduler.service';
 import { MOCK } from '@/services/mock';
 import { cn } from '@/lib/utils';
 
@@ -83,6 +84,19 @@ function TodayCell({ label, value, sub }: { label: string; value: ReactNode; sub
   );
 }
 
+/** Kolom Shift dari roster: jam, Day off, tanpa roster, atau memuat (`undefined`). */
+function shiftLabel(roster: ShiftOn | null | undefined): { value: string; sub: string } {
+  if (roster === undefined) return { value: '…', sub: '' };
+  if (!roster) return { value: 'No shift assigned', sub: 'Ask HR if this looks wrong' };
+  const { shift } = roster;
+  if (roster.assignment.isOffDay || !shift) return { value: 'Day off', sub: 'Rest day on your roster' };
+  if (!shift.startTime || !shift.endTime) return { value: 'Flexible', sub: shift.shiftName };
+  return {
+    value: `${shift.startTime} – ${shift.endTime}${shift.crossesMidnight ? ' (+1)' : ''}`,
+    sub: shift.shiftName,
+  };
+}
+
 /** Sub-teks tap: tipe kerja, plus peringatan bila tap tercatat di luar radius. */
 function tapSub(punch: Punch) {
   const type = punch.workArrangement ? ARRANGEMENT_LABEL[punch.workArrangement] : 'Work type not recorded';
@@ -105,7 +119,7 @@ export function PunchConsole({
   selfieRequired,
   nextType,
   today,
-  day,
+  shift,
   onStart,
 }: {
   workDate: string;
@@ -113,7 +127,8 @@ export function PunchConsole({
   selfieRequired: boolean;
   nextType: 'IN' | 'OUT' | null;
   today: Punch[];
-  day: AttendanceDay | undefined;
+  /** Roster hari ini; `undefined` = masih memuat. */
+  shift: ShiftOn | null | undefined;
   onStart: () => void;
 }) {
   const [clock, setClock] = useState(() => new Date());
@@ -156,11 +171,7 @@ export function PunchConsole({
       </header>
 
       <div className="mt-2 grid divide-y divide-border-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <TodayCell
-          label="Shift"
-          value={day?.expectedIn ? `${day.expectedIn} – ${day.expectedOut}` : 'Not scheduled'}
-          sub={day?.expectedIn ? `${day.appliedLateToleranceMinutes} min late tolerance` : 'Taps are still recorded'}
-        />
+        <TodayCell label="Shift" {...shiftLabel(shift)} />
         <TodayCell label="Tap in" value={tapIn ? hhmm(tapIn.punchAt) : '—'} sub={tapIn ? tapSub(tapIn) : 'Not yet'} />
         <TodayCell
           label="Tap out"

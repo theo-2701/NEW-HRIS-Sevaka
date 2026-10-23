@@ -20,6 +20,11 @@ export const ASSIGNMENTS: ShiftAssignment[] = [
   { id: 'as-7', employeeId: 'emp-budi', workDate: '2026-07-27', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
   { id: 'as-8', employeeId: 'emp-budi', workDate: '2026-07-28', shiftId: null, isOffDay: true, assignmentSource: 'INDIVIDUAL_OVERRIDE' },
   { id: 'as-9', employeeId: 'emp-hendra', workDate: '2026-07-27', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  // Roster "hari ini" dataset Attendance (30 Jul) — dibaca kolom Shift di kartu tap.
+  { id: 'as-10', employeeId: 'emp-rina', workDate: '2026-07-30', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  { id: 'as-11', employeeId: 'emp-sari', workDate: '2026-07-30', shiftId: 'sh-2', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  { id: 'as-12', employeeId: 'emp-hendra', workDate: '2026-07-30', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  { id: 'as-13', employeeId: 'emp-budi', workDate: '2026-07-30', shiftId: null, isOffDay: true, assignmentSource: 'BULK_UNIT' },
 ];
 
 export const SWAPS: ShiftSwap[] = [

@@ -90,6 +90,36 @@ function findSwap(id: string): ShiftSwap {
   return row;
 }
 
+/** Roster satu karyawan pada satu tanggal + shift-nya (`null` = tidak ada baris roster). */
+export interface ShiftOn {
+  assignment: ShiftAssignment;
+  /** `null` saat hari libur roster. */
+  shift: Shift | null;
+}
+
+/**
+ * Shift karyawan pada satu tanggal — dipakai kartu tap Attendance. Dua pintu yang sudah ada:
+ * `POST /shift-assignments/search` (UIC-TIME §9.2, EMPLOYEE dipersempit ke miliknya) lalu
+ * `GET /shifts/{shift-id}` (§10.1.2, keenam peran).
+ */
+export async function shiftOn(employeeId: string, workDate: string): Promise<ShiftOn | null> {
+  if (MOCK) {
+    await delay(150);
+    const assignment = mockAssignments.find((row) => row.employeeId === employeeId && row.workDate === workDate);
+    if (!assignment) return null;
+    const shift = mockShifts.find((row) => row.id === assignment.shiftId) ?? null;
+    return { assignment: { ...assignment }, shift: shift && { ...shift } };
+  }
+  const { data } = await api.post<{ data: ShiftAssignment[] }>('/shift-assignments/search', {
+    filters: { employee_id: employeeId, start_date: workDate, end_date: workDate },
+  });
+  const assignment = data.data[0];
+  if (!assignment) return null;
+  if (assignment.isOffDay || !assignment.shiftId) return { assignment, shift: null };
+  const { data: shift } = await api.get<Shift>(`/shifts/${assignment.shiftId}`);
+  return { assignment, shift };
+}
+
 export const schedulerService = {
   async shifts(): Promise<Shift[]> {
     if (MOCK) {

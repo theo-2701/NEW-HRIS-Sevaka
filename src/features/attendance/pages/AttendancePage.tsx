@@ -51,6 +51,7 @@ import {
   useAttendanceDays,
   useCorrections,
   useRecordPunch,
+  useShiftToday,
   useTapHistory,
   useTodayPunches,
 } from '@/features/attendance/hooks/useAttendance';
@@ -156,7 +157,7 @@ export function AttendancePage() {
   const selfieRequired = selfieRequiredAtTap(geofence);
   const next = nextPunchType(session.employeeId, today);
   const tappedIn = today.find((row) => row.punchType === 'IN');
-  const todayRow = allDays.find((row) => row.employeeId === session.employeeId && row.workDate === ATTENDANCE_TODAY);
+  const { data: shiftToday } = useShiftToday(session.employeeId);
   const formDays = eligibleDays(session, allDays, allCorrections);
 
   const approver = canApproveCorrection(session);
@@ -260,7 +261,7 @@ export function AttendancePage() {
               selfieRequired={selfieRequired}
               nextType={next}
               today={today}
-              day={todayRow}
+              shift={shiftToday}
               onStart={() => setTapKey(newIdempotencyKey())}
             />
           )}

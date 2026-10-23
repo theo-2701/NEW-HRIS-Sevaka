@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { attendanceService } from '@/features/attendance/services/attendance.service';
 import { canSearchPunch } from '@/features/attendance/types';
+import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
+import { shiftOn } from '@/features/scheduler/services/scheduler.service';
 import { toast } from '@/store/ui.store';
 import type {
   CorrectionFilter,
@@ -40,6 +42,14 @@ export function useTapHistory(session: AttendanceSession, filter: TapFilter) {
     queryKey: attendanceKeys.taps(session.employeeId, filter),
     queryFn: () => attendanceService.punches(session, filter),
     enabled: canSearchPunch(session),
+  });
+}
+
+/** Shift hari ini dari roster Scheduler — kolom Shift di kartu tap. */
+export function useShiftToday(employeeId: string) {
+  return useQuery({
+    queryKey: ['attendance', 'shift', employeeId, ATTENDANCE_TODAY],
+    queryFn: () => shiftOn(employeeId, ATTENDANCE_TODAY),
   });
 }
 
