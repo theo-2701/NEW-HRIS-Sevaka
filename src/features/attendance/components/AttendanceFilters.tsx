@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmployeeSelect } from '@/components/EmployeeSelect';
@@ -16,9 +16,20 @@ import type {
   TapFilterState,
 } from '@/features/attendance/attendanceFilters';
 
+/**
+ * Mode inline: kontrol langsung di toolbar (≤ 2 filter, UI-STANDARDS §Filter) — tanpa label di atasnya,
+ * tinggi 40px seperti kontrol toolbar lain. Di luar mode ini field dirender untuk isi modal filter.
+ */
+const InlineContext = createContext(false);
+
+export function InlineFilters({ children }: { children: ReactNode }) {
+  return <InlineContext.Provider value={true}>{children}</InlineContext.Provider>;
+}
+
 /** Isi modal filter — hanya field yang diterima kontrak pencarian tiap grid. */
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
+  if (useContext(InlineContext)) return <>{children}</>;
   return (
     <div className="flex flex-col gap-1">
       <Label>{label}</Label>
@@ -43,7 +54,7 @@ function Choice({
   return (
     <Field label={label}>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger className={useContext(InlineContext) ? 'h-10 w-[200px]' : undefined} aria-label={label}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

@@ -32,10 +32,9 @@ export function resolveGeofence(employeeId: string) {
 }
 
 /**
- * Selfie diminta di awal tap, SEBELUM tipe kerja dipilih — jadi wajib bila salah satu
- * pilihan (WFO/WFH) di titik ini mensyaratkannya. Dengan begitu server tidak pernah 422.
- * ponytail: memotret berlebih bila hanya satu tipe yang mewajibkan; pindah ke "pilih tipe
- * dulu, baru kamera" kalau admin sering memakai matriks campuran.
+ * Selfie diminta di awal tap in, SEBELUM tipe kerja dipilih. Keputusan tim dev (23 Okt 2026):
+ * setelan selfie TIDAK dipisah per WFO/WFH dan akan diatur per karyawan — layar cukup membaca satu
+ * flag "wajib selfie". Selama setelan itu belum ada, flag diturunkan dari matriks titik kerja.
  */
 export function selfieRequiredAtTap(geofence: Geofence): boolean {
   return TAP_ARRANGEMENTS.some((arrangement) => geofence.rules[arrangement]?.selfie);

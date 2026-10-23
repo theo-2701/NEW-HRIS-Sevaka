@@ -33,8 +33,10 @@ import {
 import {
   CorrectionFilterFields,
   DayFilterFields,
+  InlineFilters,
   TapFilterFields,
 } from '@/features/attendance/components/AttendanceFilters';
+import { AttendanceStatusReference, CorrectionStatusReference } from '@/features/attendance/components/StatusReference';
 import {
   EMPTY_CORRECTION_FILTER,
   EMPTY_DAY_FILTER,
@@ -101,6 +103,7 @@ export function AttendancePage() {
   const [dayFilterOpen, setDayFilterOpen] = useState(false);
   const [tapFilterOpen, setTapFilterOpen] = useState(false);
   const [correctionFilterOpen, setCorrectionFilterOpen] = useState(false);
+  const [legend, setLegend] = useState<'day' | 'correction' | null>(null);
 
   /** Satu `Idempotency-Key` per percobaan tap — lahir saat modal dibuka, dipakai ulang saat kirim ulang. */
   const [tapKey, setTapKey] = useState<string | null>(null);
@@ -190,6 +193,15 @@ export function AttendancePage() {
   };
 
   const dayOf = (id: string) => allDays.find((row) => row.id === id);
+
+  const changeTapFilter = (next: TapFilterState) => {
+    setTapFilter(next);
+    pagedTaps.resetPage();
+  };
+  const changeCorrectionFilter = (next: CorrectionFilterState) => {
+    setCorrectionFilter(next);
+    pagedCorrections.resetPage();
+  };
 
   const filterButton = (active: number, onClick: () => void) => (
     <Button variant="secondary" onClick={onClick}>
@@ -341,6 +353,7 @@ export function AttendancePage() {
                         {
                           key: 'status',
                           header: 'Status',
+                          info: { label: 'Status reference', onClick: () => setLegend('day') },
                           render: (row) => <AttendanceStatusBadge status={row.attendanceStatus} />,
                         },
                         {
@@ -384,8 +397,16 @@ export function AttendancePage() {
                   ) : (
                     <div className="flex flex-col">
                       <TableToolbar
-                        filters={filterButton(countActive(tapFilter), () => setTapFilterOpen(true))}
-                        summary={summarizeTapFilter(tapFilter)}
+                        filters={
+                          self ? (
+                            <InlineFilters>
+                              <TapFilterFields selfOnly value={tapFilter} onChange={changeTapFilter} />
+                            </InlineFilters>
+                          ) : (
+                            filterButton(countActive(tapFilter), () => setTapFilterOpen(true))
+                          )
+                        }
+                        summary={self ? undefined : summarizeTapFilter(tapFilter)}
                       />
                       <DataTable<Punch>
                         rows={pagedTaps.rows}
@@ -439,8 +460,16 @@ export function AttendancePage() {
               <CardHead title="Correction" sub="One live correction per day; the filer is never the approver" />
               <div className="flex flex-col">
                 <TableToolbar
-                  filters={filterButton(countActive(correctionFilter), () => setCorrectionFilterOpen(true))}
-                  summary={summarizeCorrectionFilter(correctionFilter)}
+                  filters={
+                    self ? (
+                      <InlineFilters>
+                        <CorrectionFilterFields selfOnly value={correctionFilter} onChange={changeCorrectionFilter} />
+                      </InlineFilters>
+                    ) : (
+                      filterButton(countActive(correctionFilter), () => setCorrectionFilterOpen(true))
+                    )
+                  }
+                  summary={self ? undefined : summarizeCorrectionFilter(correctionFilter)}
                 />
                 <DataTable<Correction>
                   rows={pagedCorrections.rows}
@@ -491,6 +520,7 @@ export function AttendancePage() {
                     {
                       key: 'status',
                       header: 'Status',
+                      info: { label: 'Status reference', onClick: () => setLegend('correction') },
                       render: (row) => <CorrectionStatusBadge status={row.correctionStatus} />,
                     },
                   ]}
@@ -586,6 +616,9 @@ export function AttendancePage() {
       <PunchSavedModal result={punchResult} geofence={geofence} onClose={() => setPunchResult(null)} />
 
       <CorrectionFormModal open={filing} session={session} days={formDays} onClose={() => setFiling(false)} />
+
+      <AttendanceStatusReference open={legend === 'day'} onClose={() => setLegend(null)} />
+      <CorrectionStatusReference open={legend === 'correction'} onClose={() => setLegend(null)} />
 
       <CorrectionDetailModal
         correction={detail}

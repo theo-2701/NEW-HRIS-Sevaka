@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
-import { distanceMeters, radiusVerdict } from '@/features/attendance/rules';
+import { distanceMeters, radiusVerdict, selfieRequiredAtTap } from '@/features/attendance/rules';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
 import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/attendance/types';
 import type { Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
@@ -48,26 +48,19 @@ function LocationInfo({ geofence }: { geofence: Geofence }) {
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <p className="m-0 mb-2.5 font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">
-            Set by HR for this location
+            Set by HR for you
           </p>
-          <table className="w-full border-collapse font-body text-[13px] leading-snug">
-            <thead>
-              <tr className="text-left text-fg-3">
-                <th className="pb-1.5 font-medium">Work type</th>
-                <th className="pb-1.5 font-medium">Radius</th>
-                <th className="pb-1.5 font-medium">Selfie</th>
-              </tr>
-            </thead>
-            <tbody>
-              {TAP_ARRANGEMENTS.map((arrangement) => (
-                <tr key={arrangement} className="font-semibold text-fg-1">
-                  <td className="py-0.5">{arrangement}</td>
-                  <td className="py-0.5">{geofence.rules[arrangement].radius ? `${geofence.radiusMeters} m` : 'Not checked'}</td>
-                  <td className="py-0.5">{geofence.rules[arrangement].selfie ? 'Required' : 'Not required'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* Setelan per karyawan dibuat tim dev; layar ini hanya membaca hasilnya. */}
+          <dl className="m-0 grid grid-cols-[110px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
+            <dt className="font-medium text-fg-3">Selfie at tap in</dt>
+            <dd className="m-0 font-semibold text-fg-1">{selfieRequiredAtTap(geofence) ? 'Required' : 'Not required'}</dd>
+            <dt className="font-medium text-fg-3">Radius</dt>
+            <dd className="m-0 font-semibold text-fg-1">
+              {TAP_ARRANGEMENTS.some((arrangement) => geofence.rules[arrangement].radius)
+                ? `Within ${geofence.radiusMeters} m`
+                : 'Not checked'}
+            </dd>
+          </dl>
         </PopoverContent>
       </Popover>
     </div>

@@ -10,6 +10,7 @@ import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
 import { PunchConsole, PunchSavedModal, TapModal } from '@/features/attendance/components/PunchConsole';
 import type { TapSubmission } from '@/features/attendance/components/PunchConsole';
 import { useRecordPunch, useShiftToday } from '@/features/attendance/hooks/useAttendance';
+import { AttendanceStatusReference } from '@/features/attendance/components/StatusReference';
 import {
   arrangementToday,
   newIdempotencyKey,
@@ -57,6 +58,7 @@ export function EssAttendancePage() {
   /** Satu `Idempotency-Key` per percobaan tap — lahir saat modal dibuka, dipakai ulang saat kirim ulang. */
   const [tapKey, setTapKey] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<PunchResult | null>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const today = punches.data ?? [];
   const allDays = days.data ?? [];
@@ -126,6 +128,7 @@ export function EssAttendancePage() {
                   {
                     key: 'status',
                     header: 'Status',
+                    info: { label: 'Status reference', onClick: () => setLegendOpen(true) },
                     render: (row) => (
                       <StatusBadge tone={TONE[row.attendanceStatus]}>
                         {ATTENDANCE_STATUS_LABEL[row.attendanceStatus]}
@@ -177,6 +180,7 @@ export function EssAttendancePage() {
         />
       )}
       <PunchSavedModal result={punchResult} geofence={geofence} onClose={() => setPunchResult(null)} />
+      <AttendanceStatusReference open={legendOpen} onClose={() => setLegendOpen(false)} />
     </PageShell>
   );
 }
