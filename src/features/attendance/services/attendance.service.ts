@@ -233,7 +233,8 @@ export const attendanceService = {
       }
 
       const geofence = resolveGeofence(session.employeeId);
-      const selfieRequired = selfieRequiredAtTap(geofence);
+      // Selfie hanya diminta saat tap in; tap out cukup catatan.
+      const selfieRequired = type === 'IN' && selfieRequiredAtTap(geofence);
       if (selfieRequired && !input.selfieCaptured) {
         throw new Error('422 — A live selfie is required at this location. The tap was not recorded.');
       }

@@ -40,7 +40,9 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
 
   it('tap out mewarisi tipe kerja tap in', async () => {
     await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'in', workArrangement: 'WFH', note: 'Hujan deras' });
-    const out = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'out' });
+    // Tap out tanpa selfie walau titik kerjanya mewajibkan selfie saat tap in.
+    const out = await attendanceService.recordPunch(RINA, { selfieCaptured: false, idempotencyKey: 'out' });
+    expect(out.selfieRequired).toBe(false);
     expect(out.punch.workArrangement).toBe('WFH');
   });
 

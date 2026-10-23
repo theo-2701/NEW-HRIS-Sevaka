@@ -156,7 +156,6 @@ export function AttendancePage() {
   const geofence = resolveGeofence(session.employeeId);
   const selfieRequired = selfieRequiredAtTap(geofence);
   const next = nextPunchType(session.employeeId, today);
-  const tappedIn = today.find((row) => row.punchType === 'IN');
   const { data: shiftToday } = useShiftToday(session.employeeId);
   const formDays = eligibleDays(session, allDays, allCorrections);
 
@@ -578,7 +577,6 @@ export function AttendancePage() {
           geofence={geofence}
           selfieRequired={selfieRequired}
           defaultArrangement={arrangementToday(session.employeeId, allDays)}
-          inheritedArrangement={tappedIn?.workArrangement ?? null}
           busy={punch.isPending}
           onSubmit={doPunch}
           onClose={() => setTapKey(null)}

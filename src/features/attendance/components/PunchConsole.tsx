@@ -155,9 +155,7 @@ export function PunchConsole({
       ? selfieRequired
         ? 'Selfie first, then choose WFO or WFH.'
         : 'Choose WFO or WFH, add a note if needed.'
-      : selfieRequired
-        ? 'Selfie first, then confirm.'
-        : 'Confirm and add a note if needed.';
+      : 'Add a note if needed, then tap out.';
 
   return (
     <section className="flex flex-col rounded-xl border border-border-1 bg-bg-surface px-5 pt-[18px] shadow-card-sm">
@@ -352,9 +350,8 @@ export function TapModal({
   open,
   type,
   geofence,
-  selfieRequired,
+  selfieRequired: selfieAtSite,
   defaultArrangement,
-  inheritedArrangement,
   busy,
   onSubmit,
   onClose,
@@ -364,12 +361,12 @@ export function TapModal({
   geofence: Geofence;
   selfieRequired: boolean;
   defaultArrangement: WorkArrangement | null;
-  /** Tap out: tipe kerja dari tap in hari ini. */
-  inheritedArrangement: WorkArrangement | null;
   busy: boolean;
   onSubmit: (submission: TapSubmission) => void;
   onClose: () => void;
 }) {
+  // Tap out cukup catatan: tanpa selfie, tanpa tipe kerja (mewarisi tap in).
+  const selfieRequired = type === 'IN' && selfieAtSite;
   const steps: Step[] = selfieRequired ? ['selfie', 'details'] : ['details'];
   const [step, setStep] = useState<Step>(steps[0]);
   const [frame, setFrame] = useState<Frame | null>(null);
@@ -414,7 +411,7 @@ export function TapModal({
   };
 
   // Peringatan dini: koordinat sudah terbaca dan tipe kerja ini memeriksa radius, tapi posisinya di luar.
-  const checked = isIn ? arrangement || null : inheritedArrangement;
+  const checked = isIn ? arrangement || null : null;
   const outside = Boolean(checked && radiusVerdict(geofence, checked, resolved) === false);
   const away = resolved ? distanceFrom(geofence, resolved) : null;
 
@@ -503,6 +500,7 @@ export function TapModal({
               </div>
             )}
 
+            {isIn && (
             <div className="flex flex-col gap-2">
               <Label>
                 Work type
@@ -519,13 +517,9 @@ export function TapModal({
                     description: describe(value),
                   }))}
                 />
-              ) : (
-                <span className="font-body text-[13px] font-semibold text-fg-1">
-                  {inheritedArrangement ? ARRANGEMENT_LABEL[inheritedArrangement] : 'Not recorded'}
-                  <span className="font-medium text-fg-3"> · from your tap in</span>
-                </span>
-              )}
+              ) : null}
             </div>
+            )}
 
             {outside && (
               <Note tone="warn" icon={<MapPinOff />}>

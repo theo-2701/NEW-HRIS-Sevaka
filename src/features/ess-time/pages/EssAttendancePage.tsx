@@ -63,7 +63,6 @@ export function EssAttendancePage() {
   const geofence = resolveGeofence(session.employeeId);
   const selfieRequired = selfieRequiredAtTap(geofence);
   const nextType = nextPunchType(session.employeeId, today);
-  const tappedIn = today.find((row) => row.punchType === 'IN');
   const { data: shiftToday } = useShiftToday(session.employeeId);
 
   const doPunch = async (submission: TapSubmission) => {
@@ -172,7 +171,6 @@ export function EssAttendancePage() {
           geofence={geofence}
           selfieRequired={selfieRequired}
           defaultArrangement={arrangementToday(session.employeeId, allDays)}
-          inheritedArrangement={tappedIn?.workArrangement ?? null}
           busy={punch.isPending}
           onSubmit={doPunch}
           onClose={() => setTapKey(null)}
