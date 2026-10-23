@@ -3,10 +3,18 @@ import { MOCK } from '@/services/mock';
 import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
 import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
-import { captureChannel, nextPunchType, punchesToday, withinCorrectionWindow } from '@/features/attendance/rules';
+import {
+  nextPunchType,
+  punchesToday,
+  radiusVerdict,
+  resolveGeofence,
+  selfieRequiredAtTap,
+  withinCorrectionWindow,
+} from '@/features/attendance/rules';
 import {
   CORRECTION_WINDOW_DAYS,
   EXCUSED_FROM_REASON,
+  PUNCH_NOTE_MAX,
   canApproveCorrection,
   canCreateCorrection,
   canSearchPunch,
@@ -18,6 +26,8 @@ import type {
   Correction,
   CorrectionDraft,
   Punch,
+  TapLocation,
+  WorkArrangement,
 } from '@/features/attendance/types';
 
 /**
@@ -73,6 +83,21 @@ export interface CorrectionFilter {
   correctionStatus?: string;
   correctionReasonType?: string;
   employeeId?: string;
+}
+
+export interface TapInput {
+  idempotencyKey: string;
+  selfieCaptured: boolean;
+  /** Frame swafoto base64 tanpa prefiks data-URL (jalur API). */
+  selfieBase64?: string;
+  selfieContentType?: string;
+  /** Wajib saat tap in; tap out mewarisi dari tap in. */
+  workArrangement?: WorkArrangement;
+  note?: string;
+  location?: TapLocation | null;
+  /** Jalur API: jenis tap yang dihitung layar dari keadaan hari. */
+  punchType?: 'IN' | 'OUT';
+  now?: Date;
 }
 
 export interface PunchResult {
@@ -177,39 +202,39 @@ export const attendanceService = {
   },
 
   /**
-   * Merekam satu tap. Jenisnya diturunkan dari keadaan hari, bukan dikirim
-   * layar; waktu, zona, koordinat, dan detail perangkat ikut di latar.
+   * Merekam satu tap. Jenisnya diturunkan dari keadaan hari, bukan dipilih layar. Tap in membawa
+   * tipe kerja (WFO/WFH) + catatan; tap out mewarisi tipe kerja tap in. Koordinat perangkat
+   * dikirim berpasangan bila tersedia — tanpa koordinat tap tetap lahir, radiusnya tak terevaluasi.
    */
-  async recordPunch(
-    session: AttendanceSession,
-    input: {
-      selfieCaptured: boolean;
-      idempotencyKey: string;
-      now?: Date;
-      /** Jalur API: jenis tap yang dihitung layar dari keadaan hari (`IN`/`OUT`). */
-      punchType?: 'IN' | 'OUT';
-      /** Jalur API: frame swafoto base64 tanpa prefiks data-URL. */
-      selfieBase64?: string;
-      selfieContentType?: string;
-    },
-  ): Promise<PunchResult> {
+  async recordPunch(session: AttendanceSession, input: TapInput): Promise<PunchResult> {
+    const note = input.note?.trim() ?? '';
+    if (note.length > PUNCH_NOTE_MAX) {
+      throw new Error(`422 — catatan paling banyak ${PUNCH_NOTE_MAX} karakter.`);
+    }
+
     if (MOCK) {
       await delay(400);
       const keyScope = `${session.employeeId}:${input.idempotencyKey}`;
       const existingId = mockPunchKeys.get(keyScope);
       if (existingId) {
         const existing = mockPunches.find((row) => row.id === existingId)!;
-        const channel = captureChannel(session, mockDays);
-        return { punch: { ...existing }, idempotencyKey: input.idempotencyKey, replayed: true, selfieRequired: channel.selfie };
+        const geofence = resolveGeofence(session.employeeId);
+        return { punch: { ...existing }, idempotencyKey: input.idempotencyKey, replayed: true, selfieRequired: selfieRequiredAtTap(geofence) };
       }
 
       // Punch append-only (UIC-TIME §6.1): tap berikutnya selalu direkam — yang
       // menilai sah-tidaknya adalah recompute, bukan penolakan di pintu tap.
       const todays = [...punchesToday(session.employeeId, mockPunches)].sort((a, b) => (a.punchAt < b.punchAt ? -1 : 1));
       const type = nextPunchType(session.employeeId, mockPunches) ?? (todays.at(-1)?.punchType === 'IN' ? 'OUT' : 'IN');
+      const tappedIn = todays.find((row) => row.punchType === 'IN');
+      const arrangement = type === 'IN' ? input.workArrangement : (tappedIn?.workArrangement ?? input.workArrangement);
+      if (type === 'IN' && !arrangement) {
+        throw new Error('422 — pilih tipe kerja (WFO atau WFH) sebelum tap in.');
+      }
 
-      const channel = captureChannel(session, mockDays);
-      if (channel.selfie && !input.selfieCaptured) {
+      const geofence = resolveGeofence(session.employeeId);
+      const selfieRequired = selfieRequiredAtTap(geofence);
+      if (selfieRequired && !input.selfieCaptured) {
         throw new Error('422 — kanal ini mewajibkan selfie langsung dan tidak ada frame yang terlampir; barisnya tidak pernah lahir.');
       }
 
@@ -223,20 +248,24 @@ export const attendanceService = {
         // Zona karyawan, bukan zona server; waktu masa depan ditolak server.
         punchAt: `${ATTENDANCE_TODAY}T${hh}:${mm}:00+07:00`,
         workDate: ATTENDANCE_TODAY,
-        // Verdict radius dihitung server; kosong berarti tidak bisa dievaluasi.
-        isWithinGeofence: channel.radius ? true : null,
+        // Verdict radius dihitung server dari koordinat × aturan tipe kerja.
+        isWithinGeofence: arrangement ? radiusVerdict(geofence, arrangement, input.location ?? null) : null,
         isMockLocationSuspected: false,
-        isWorkArrangementUnknown: false,
-        geofenceId: channel.geofence.id,
+        isWorkArrangementUnknown: !arrangement,
+        geofenceId: geofence.id,
+        workArrangement: arrangement ?? null,
+        note: note || null,
+        latitude: input.location?.latitude ?? null,
+        longitude: input.location?.longitude ?? null,
+        gpsAccuracyMeters: input.location?.accuracyMeters ?? null,
       };
       mockPunches = [...mockPunches, punch];
       mockPunchKeys.set(keyScope, punch.id);
-      return { punch, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired: channel.selfie };
+      return { punch, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired };
     }
 
-    // UIC-TIME 0.13 §6.1.1: swafoto dikirim sebagai `selfie_base64` (+ `selfie_content_type`, default
-    // image/jpeg) — PROVISIONAL sampai transport dokumen final. `selfie_document_id`/`selfie_hash`,
-    // `work_date`, dan verdict geofence diturunkan server, tidak dikirim.
+    // UIC-TIME §6.1.1: koordinat berpasangan + swafoto `selfie_base64` (PROVISIONAL).
+    // `work_arrangement` dan `note` = permintaan tambahan, BELUM ada di kontrak (GAP) — BE wajib menambahkannya.
     const now = input.now ?? new Date();
     const { data } = await api.post<Punch>(
       '/attendance-punches',
@@ -244,6 +273,15 @@ export const attendanceService = {
         punch_type: input.punchType,
         punch_at: now.toISOString(),
         punch_at_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ...(input.location
+          ? {
+              latitude: input.location.latitude,
+              longitude: input.location.longitude,
+              ...(input.location.accuracyMeters != null ? { gps_accuracy_meters: input.location.accuracyMeters } : {}),
+            }
+          : {}),
+        ...(input.workArrangement ? { work_arrangement: input.workArrangement } : {}),
+        ...(note ? { note } : {}),
         ...(input.selfieBase64
           ? { selfie_base64: input.selfieBase64, selfie_content_type: input.selfieContentType ?? 'image/jpeg' }
           : {}),

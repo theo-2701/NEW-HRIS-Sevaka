@@ -25,12 +25,12 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     const channel = captureChannel(RINA, DAILY);
     expect(channel.selfie).toBe(true);
     await expect(
-      attendanceService.recordPunch(RINA, { selfieCaptured: false, idempotencyKey: 'key-1' }),
+      attendanceService.recordPunch(RINA, { selfieCaptured: false, idempotencyKey: 'key-1', workArrangement: 'WFO' }),
     ).rejects.toThrow(/422/);
   });
 
   it('tap pertama lahir sebagai IN, tap berikutnya OUT', async () => {
-    const first = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'key-in' });
+    const first = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'key-in', workArrangement: 'WFH' });
     expect(first.punch.punchType).toBe('IN');
     const second = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'key-out' });
     expect(second.punch.punchType).toBe('OUT');
@@ -38,9 +38,43 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     expect(nextPunchType(RINA.employeeId, rows)).toBeNull();
   });
 
+  it('tap out mewarisi tipe kerja tap in', async () => {
+    await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'in', workArrangement: 'WFH', note: 'Hujan deras' });
+    const out = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'out' });
+    expect(out.punch.workArrangement).toBe('WFH');
+  });
+
+  it('tap in tanpa tipe kerja ditolak 422', async () => {
+    await expect(attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k' })).rejects.toThrow(/tipe kerja/);
+  });
+
+  it('cabang tanpa selfie langsung merekam tap; koordinat menentukan radius WFO', async () => {
+    const BUDI: AttendanceSession = { employeeId: 'emp-budi', role: 'DEPT_MANAGER' };
+    const near = { latitude: -5.1478, longitude: 119.4328, accuracyMeters: 8 };
+    const result = await attendanceService.recordPunch(BUDI, {
+      selfieCaptured: false,
+      idempotencyKey: 'budi-in',
+      workArrangement: 'WFO',
+      location: near,
+    });
+    expect(result.selfieRequired).toBe(false);
+    expect(result.punch.isWithinGeofence).toBe(true);
+    expect(result.punch.latitude).toBe(-5.1478);
+  });
+
+  it('WFH tidak memeriksa radius walau koordinat jauh', async () => {
+    const result = await attendanceService.recordPunch(RINA, {
+      selfieCaptured: true,
+      idempotencyKey: 'wfh',
+      workArrangement: 'WFH',
+      location: { latitude: -6.3, longitude: 106.9, accuracyMeters: 20 },
+    });
+    expect(result.punch.isWithinGeofence).toBeNull();
+  });
+
   it('kunci idempotensi yang sama tidak pernah melahirkan baris kedua', async () => {
-    const first = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'same-key' });
-    const retry = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'same-key' });
+    const first = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'same-key', workArrangement: 'WFO' });
+    const retry = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'same-key', workArrangement: 'WFO' });
     expect(retry.replayed).toBe(true);
     expect(retry.punch.id).toBe(first.punch.id);
     expect(await attendanceService.todayPunches(RINA)).toHaveLength(1);
@@ -196,6 +230,6 @@ describe('Scope pemilik baris', () => {
   });
 
   it('identitas percobaan mengikuti dataset kontrak', () => {
-    expect(VIEWERS.map((row) => row.role)).toEqual(['EMPLOYEE', 'HR_STAFF', 'HR_MANAGER']);
+    expect(VIEWERS.map((row) => row.role)).toEqual(['EMPLOYEE', 'HR_STAFF', 'HR_MANAGER', 'DEPT_MANAGER']);
   });
 });

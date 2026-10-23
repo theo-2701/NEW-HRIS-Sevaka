@@ -86,6 +86,27 @@ export interface Punch {
   isMockLocationSuspected: boolean;
   isWorkArrangementUnknown: boolean;
   geofenceId: string | null;
+  /** Tipe kerja yang dipilih saat tap in (OUT mewarisi dari IN). PROVISIONAL — belum ada di UIC §6.1.1. */
+  workArrangement?: WorkArrangement | null;
+  /** Catatan karyawan saat tap. PROVISIONAL — belum ada di UIC §6.1.1. */
+  note?: string | null;
+  /** UIC §6.1.1: `latitude`/`longitude` opsional tapi wajib berpasangan. */
+  latitude?: number | null;
+  longitude?: number | null;
+  gpsAccuracyMeters?: number | null;
+}
+
+/** Pilihan tipe kerja di form tap — permintaan tambahan Attendance (WFO/WFH saja). */
+export const TAP_ARRANGEMENTS: WorkArrangement[] = ['WFO', 'WFH'];
+
+export const PUNCH_NOTE_MAX = 500;
+
+/** Lokasi perangkat saat tap. `simulated` hanya untuk pratinjau tanpa izin lokasi. */
+export interface TapLocation {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  simulated?: boolean;
 }
 
 export interface AttendanceDay {

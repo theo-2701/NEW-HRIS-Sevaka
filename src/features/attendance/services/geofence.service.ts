@@ -39,6 +39,11 @@ export function resetGeofenceMocks() {
   mockGeofences = GEOFENCES.map(clone);
 }
 
+/** Titik + matriks yang berlaku SAAT INI — hasil setelan admin, dibaca layar tap. */
+export function liveGeofences(): Geofence[] {
+  return mockGeofences;
+}
+
 export interface GeofenceFilter {
   scopeRef?: string;
   name?: string;

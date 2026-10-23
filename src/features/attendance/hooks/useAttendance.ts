@@ -5,7 +5,7 @@ import { toast } from '@/store/ui.store';
 import type {
   CorrectionFilter,
   DayFilter,
-  PunchResult,
+  TapInput,
   TapFilter,
 } from '@/features/attendance/services/attendance.service';
 import type { AttendanceSession, CorrectionDraft } from '@/features/attendance/types';
@@ -66,15 +66,15 @@ function useAttendanceMutation<TVars, TResult = void>(
   });
 }
 
-export const useRecordPunch = (session: AttendanceSession) =>
-  useAttendanceMutation<{ selfieCaptured: boolean; idempotencyKey: string }, PunchResult>(
-    (vars) => attendanceService.recordPunch(session, vars),
-    (result) => ({
-      text: result.replayed
-        ? '200 — kunci idempotensi yang sama; tap yang sudah ada dikembalikan, bukan baris kedua.'
-        : '201 — tap tersimpan. Perhitungan ulang ringkasan harian berjalan di luar transaksi ini.',
-    }),
-  );
+/** Tap: tanda terimanya modal di layar, jadi sukses tidak memunculkan toast/dialog kedua. */
+export function useRecordPunch(session: AttendanceSession) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: TapInput) => attendanceService.recordPunch(session, vars),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: attendanceKeys.all }),
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
 
 export const useCreateCorrection = (session: AttendanceSession) =>
   useAttendanceMutation<CorrectionDraft>(

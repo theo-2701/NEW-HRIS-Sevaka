@@ -22,6 +22,8 @@ export const VIEWERS: AttendanceSession[] = [
   { employeeId: 'emp-rina', role: 'EMPLOYEE' },
   { employeeId: 'emp-sari', role: 'HR_STAFF' },
   { employeeId: 'emp-hendra', role: 'HR_MANAGER' },
+  // Cabang Makassar (geo-3) tanpa selfie — memperlihatkan tap yang langsung ke langkah tipe kerja.
+  { employeeId: 'emp-budi', role: 'DEPT_MANAGER' },
 ];
 
 const ALL_ARRANGEMENTS = (rule: Record<WorkArrangement, { radius: boolean; selfie: boolean }>) => rule;
@@ -70,11 +72,12 @@ export const GEOFENCES: Geofence[] = [
     radiusMeters: 100,
     isActive: true,
     usedByPunch: false,
+    // Setelan admin contoh: cabang ini cukup radius, tanpa selfie.
     rules: ALL_ARRANGEMENTS({
-      WFO: { radius: true, selfie: true },
-      HYBRID: { radius: true, selfie: true },
-      WFH: { radius: false, selfie: true },
-      MOBILE: { radius: false, selfie: true },
+      WFO: { radius: true, selfie: false },
+      HYBRID: { radius: true, selfie: false },
+      WFH: { radius: false, selfie: false },
+      MOBILE: { radius: false, selfie: false },
     }),
   },
 ];

@@ -1,13 +1,18 @@
-import { ATTENDANCE_TODAY, GEOFENCES, employeeBranch } from '@/features/attendance/mock-data';
+import { ATTENDANCE_TODAY, employeeBranch } from '@/features/attendance/mock-data';
+import { liveGeofences } from '@/features/attendance/services/geofence.service';
 import { CORRECTION_WINDOW_DAYS } from '@/features/attendance/types';
 import type {
   AttendanceDay,
   AttendanceSession,
   CaptureChannel,
   Correction,
+  Geofence,
   Punch,
   PunchType,
+  TapLocation,
+  WorkArrangement,
 } from '@/features/attendance/types';
+import { TAP_ARRANGEMENTS } from '@/features/attendance/types';
 
 /**
  * Aturan murni Attendance — tidak menyentuh jaringan, jadi bisa diuji apa
@@ -22,7 +27,41 @@ import type {
  */
 export function resolveGeofence(employeeId: string) {
   const branch = employeeBranch(employeeId);
-  return GEOFENCES.find((row) => row.scopeRef === branch && row.isActive) ?? GEOFENCES[0];
+  const rows = liveGeofences();
+  return rows.find((row) => row.scopeRef === branch && row.isActive) ?? rows[0];
+}
+
+/**
+ * Selfie diminta di awal tap, SEBELUM tipe kerja dipilih — jadi wajib bila salah satu
+ * pilihan (WFO/WFH) di titik ini mensyaratkannya. Dengan begitu server tidak pernah 422.
+ * ponytail: memotret berlebih bila hanya satu tipe yang mewajibkan; pindah ke "pilih tipe
+ * dulu, baru kamera" kalau admin sering memakai matriks campuran.
+ */
+export function selfieRequiredAtTap(geofence: Geofence): boolean {
+  return TAP_ARRANGEMENTS.some((arrangement) => geofence.rules[arrangement]?.selfie);
+}
+
+/** Jarak dua titik (haversine), meter. */
+export function distanceMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
+  const rad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = rad(b.latitude - a.latitude);
+  const dLng = rad(b.longitude - a.longitude);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.latitude)) * Math.cos(rad(b.latitude)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Putusan radius: `null` bila tipe kerja ini tidak memeriksa radius atau lokasi tidak ada —
+ * keduanya "tidak bisa dievaluasi", bukan pelanggaran.
+ */
+export function radiusVerdict(
+  geofence: Geofence,
+  arrangement: WorkArrangement,
+  location: TapLocation | null,
+): boolean | null {
+  if (!geofence.rules[arrangement]?.radius || !location) return null;
+  const center = { latitude: geofence.centerLatitude, longitude: geofence.centerLongitude };
+  return distanceMeters(center, location) <= geofence.radiusMeters;
 }
 
 /** Pengaturan kerja hari ini menurut baris harian; default WFO bila belum ada. */

@@ -22,7 +22,8 @@ import {
   Minutes,
   RadiusCell,
 } from '@/features/attendance/components/AttendanceBits';
-import { PunchConsole, PunchSavedModal, SelfieModal } from '@/features/attendance/components/PunchConsole';
+import { PunchConsole, PunchSavedModal, TapModal } from '@/features/attendance/components/PunchConsole';
+import type { TapSubmission } from '@/features/attendance/components/PunchConsole';
 import {
   CorrectionDecisionModal,
   CorrectionDetailModal,
@@ -54,7 +55,14 @@ import {
   useTodayPunches,
 } from '@/features/attendance/hooks/useAttendance';
 import { ATTENDANCE_TODAY, VIEWERS, employeeName } from '@/features/attendance/mock-data';
-import { captureChannel, eligibleDays, newIdempotencyKey, nextPunchType } from '@/features/attendance/rules';
+import {
+  arrangementToday,
+  eligibleDays,
+  newIdempotencyKey,
+  nextPunchType,
+  resolveGeofence,
+  selfieRequiredAtTap,
+} from '@/features/attendance/rules';
 import {
   ARRANGEMENT_LABEL,
   ATTENDANCE_STATUS_LABEL,
@@ -95,8 +103,8 @@ export function AttendancePage() {
   const [tapFilterOpen, setTapFilterOpen] = useState(false);
   const [correctionFilterOpen, setCorrectionFilterOpen] = useState(false);
 
-  const [selfieOpen, setSelfieOpen] = useState(false);
-  const [selfieCaptured, setSelfieCaptured] = useState(false);
+  /** Satu `Idempotency-Key` per percobaan tap — lahir saat modal dibuka, dipakai ulang saat kirim ulang. */
+  const [tapKey, setTapKey] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<PunchResult | null>(null);
 
   const [filing, setFiling] = useState(false);
@@ -146,9 +154,11 @@ export function AttendancePage() {
   const pagedCorrections = usePagedRows(corrections);
 
   const punch = useRecordPunch(session);
-  const channel = captureChannel(session, allDays);
+  const geofence = resolveGeofence(session.employeeId);
+  const selfieRequired = selfieRequiredAtTap(geofence);
   const next = nextPunchType(session.employeeId, today);
   const tappedIn = today.find((row) => row.punchType === 'IN');
+  const todayRow = allDays.find((row) => row.employeeId === session.employeeId && row.workDate === ATTENDANCE_TODAY);
   const formDays = eligibleDays(session, allDays, allCorrections);
 
   const approver = canApproveCorrection(session);
@@ -156,18 +166,14 @@ export function AttendancePage() {
   // EMPLOYEE hanya melihat barisnya sendiri — kolom dan pemilih orang tidak berarti baginya.
   const self = isSelfScoped(session);
 
-  const doPunch = async () => {
+  const doPunch = async (submission: TapSubmission) => {
+    if (!tapKey || !next) return;
     try {
-      const result = await punch.mutateAsync({
-        selfieCaptured,
-        // Satu kunci per percobaan tap; dipakai ulang apa adanya bila ditekan lagi.
-        idempotencyKey: newIdempotencyKey(),
-      });
-      setSelfieCaptured(false);
+      const result = await punch.mutateAsync({ ...submission, punchType: next, idempotencyKey: tapKey });
+      setTapKey(null);
       setPunchResult(result);
     } catch {
-      // Penolakan gerbang sudah muncul sebagai toast; frame selfie sengaja
-      // dipertahankan supaya percobaan ulang tidak perlu memotret lagi.
+      // Penolakan sudah tampil; modal tetap terbuka dengan isinya supaya bisa dikirim ulang.
     }
   };
 
@@ -252,14 +258,12 @@ export function AttendancePage() {
           {tab === 'punch' && (
             <PunchConsole
               workDate={ATTENDANCE_TODAY}
-              channel={channel}
+              geofence={geofence}
+              selfieRequired={selfieRequired}
               nextType={next}
-              hasTaps={today.length > 0}
-              tappedInAt={tappedIn ? hhmm(tappedIn.punchAt) : null}
-              selfieCaptured={selfieCaptured}
-              onTakeSelfie={() => setSelfieOpen(true)}
-              onPunch={doPunch}
-              busy={punch.isPending}
+              today={today}
+              day={todayRow}
+              onStart={() => setTapKey(newIdempotencyKey())}
             >
               <Card>
                 <CardHead
@@ -278,8 +282,18 @@ export function AttendancePage() {
                       render: (row) => (row.punchType === 'IN' ? 'Tap in' : 'Tap out'),
                     },
                     { key: 'time', header: 'Tap Time', nowrap: true, render: (row) => hhmm(row.punchAt) },
-                    { key: 'date', header: 'Work Date', muted: true, render: (row) => formatDate(row.workDate) },
+                    {
+                      key: 'arrangement',
+                      header: 'Work Type',
+                      render: (row) => (row.workArrangement ? row.workArrangement : <span className="text-fg-4">—</span>),
+                    },
                     { key: 'radius', header: 'Radius', render: (row) => <RadiusCell punch={row} /> },
+                    {
+                      key: 'note',
+                      header: 'Note',
+                      muted: true,
+                      render: (row) => row.note ?? <span className="text-fg-4">—</span>,
+                    },
                     { key: 'flags', header: 'Flags', render: (row) => <FlagsCell punch={row} /> },
                   ]}
                 />
@@ -431,7 +445,13 @@ export function AttendancePage() {
                             render: (row) => (row.punchType === 'IN' ? 'Tap in' : 'Tap out'),
                           },
                           { key: 'date', header: 'Work Date', muted: true, render: (row) => formatDate(row.workDate) },
+                          {
+                            key: 'arrangement',
+                            header: 'Work Type',
+                            render: (row) => row.workArrangement ?? <span className="text-fg-4">—</span>,
+                          },
                           { key: 'radius', header: 'Radius', render: (row) => <RadiusCell punch={row} /> },
+                          { key: 'note', header: 'Note', muted: true, render: (row) => row.note ?? <span className="text-fg-4">—</span> },
                           { key: 'flags', header: 'Flags', render: (row) => <FlagsCell punch={row} /> },
                         ]}
                       />
@@ -586,9 +606,21 @@ export function AttendancePage() {
         />
       </FilterModal>
 
-      <SelfieModal open={selfieOpen} onClose={() => setSelfieOpen(false)} onCaptured={() => setSelfieCaptured(true)} />
+      {next && (
+        <TapModal
+          open={Boolean(tapKey)}
+          type={next}
+          geofence={geofence}
+          selfieRequired={selfieRequired}
+          defaultArrangement={arrangementToday(session.employeeId, allDays)}
+          inheritedArrangement={tappedIn?.workArrangement ?? null}
+          busy={punch.isPending}
+          onSubmit={doPunch}
+          onClose={() => setTapKey(null)}
+        />
+      )}
 
-      <PunchSavedModal result={punchResult} selfieRequired={channel.selfie} onClose={() => setPunchResult(null)} />
+      <PunchSavedModal result={punchResult} onClose={() => setPunchResult(null)} />
 
       <CorrectionFormModal open={filing} session={session} days={formDays} onClose={() => setFiling(false)} />
 

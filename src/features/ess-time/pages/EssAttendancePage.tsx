@@ -7,9 +7,16 @@ import { Pagination } from '@/components/Pagination';
 import { StatusBadge } from '@/components/StatusBadge';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
-import { PunchConsole, PunchSavedModal, SelfieModal } from '@/features/attendance/components/PunchConsole';
+import { PunchConsole, PunchSavedModal, TapModal } from '@/features/attendance/components/PunchConsole';
+import type { TapSubmission } from '@/features/attendance/components/PunchConsole';
 import { useRecordPunch } from '@/features/attendance/hooks/useAttendance';
-import { captureChannel, newIdempotencyKey, nextPunchType } from '@/features/attendance/rules';
+import {
+  arrangementToday,
+  newIdempotencyKey,
+  nextPunchType,
+  resolveGeofence,
+  selfieRequiredAtTap,
+} from '@/features/attendance/rules';
 import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { useMyAttendanceDays, useMyPunchesToday } from '@/features/ess-time/hooks/useEssTime';
@@ -47,26 +54,26 @@ export function EssAttendancePage() {
   const punches = useMyPunchesToday(actor);
 
   const punch = useRecordPunch(session);
-  const [selfieCaptured, setSelfieCaptured] = useState(false);
-  const [selfieOpen, setSelfieOpen] = useState(false);
+  /** Satu `Idempotency-Key` per percobaan tap — lahir saat modal dibuka, dipakai ulang saat kirim ulang. */
+  const [tapKey, setTapKey] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<PunchResult | null>(null);
 
   const today = punches.data ?? [];
-  const channel = captureChannel(session, days.data ?? []);
+  const allDays = days.data ?? [];
+  const geofence = resolveGeofence(session.employeeId);
+  const selfieRequired = selfieRequiredAtTap(geofence);
   const nextType = nextPunchType(session.employeeId, today);
   const tappedIn = today.find((row) => row.punchType === 'IN');
+  const todayRow = allDays.find((row) => row.workDate === ATTENDANCE_TODAY);
 
-  const doPunch = async () => {
+  const doPunch = async (submission: TapSubmission) => {
+    if (!tapKey || !nextType) return;
     try {
-      const result = await punch.mutateAsync({
-        selfieCaptured,
-        // Satu kunci per percobaan tap; ditekan ulang dengan kunci yang sama = baris yang sama.
-        idempotencyKey: newIdempotencyKey(),
-      });
-      setSelfieCaptured(false);
+      const result = await punch.mutateAsync({ ...submission, punchType: nextType, idempotencyKey: tapKey });
+      setTapKey(null);
       setPunchResult(result);
     } catch {
-      // Penolakan gerbang sudah tampil sebagai toast; frame selfie sengaja dipertahankan.
+      // Penolakan sudah tampil; modal tetap terbuka dengan isinya supaya bisa dikirim ulang.
     }
   };
 
@@ -94,14 +101,12 @@ export function EssAttendancePage() {
           <>
             <PunchConsole
               workDate={ATTENDANCE_TODAY}
-              channel={channel}
+              geofence={geofence}
+              selfieRequired={selfieRequired}
               nextType={nextType}
-              hasTaps={today.length > 0}
-              tappedInAt={tappedIn ? tappedIn.punchAt.slice(11, 16) : null}
-              selfieCaptured={selfieCaptured}
-              onTakeSelfie={() => setSelfieOpen(true)}
-              onPunch={doPunch}
-              busy={punch.isPending}
+              today={today}
+              day={todayRow}
+              onStart={() => setTapKey(newIdempotencyKey())}
             />
 
             <Card>
@@ -128,8 +133,14 @@ export function EssAttendancePage() {
                       ),
                   },
                   {
+                    key: 'arrangement',
+                    header: 'Tipe kerja',
+                    render: (row) => row.workArrangement ?? <span className="text-fg-4">—</span>,
+                  },
+                  { key: 'note', header: 'Catatan', muted: true, render: (row) => row.note ?? '—' },
+                  {
                     key: 'flag',
-                    header: 'Catatan',
+                    header: 'Tanda',
                     muted: true,
                     render: (row) =>
                       row.isMockLocationSuspected
@@ -198,8 +209,20 @@ export function EssAttendancePage() {
         )}
       </div>
 
-      <SelfieModal open={selfieOpen} onClose={() => setSelfieOpen(false)} onCaptured={() => setSelfieCaptured(true)} />
-      <PunchSavedModal result={punchResult} selfieRequired={channel.selfie} onClose={() => setPunchResult(null)} />
+      {nextType && (
+        <TapModal
+          open={Boolean(tapKey)}
+          type={nextType}
+          geofence={geofence}
+          selfieRequired={selfieRequired}
+          defaultArrangement={arrangementToday(session.employeeId, allDays)}
+          inheritedArrangement={tappedIn?.workArrangement ?? null}
+          busy={punch.isPending}
+          onSubmit={doPunch}
+          onClose={() => setTapKey(null)}
+        />
+      )}
+      <PunchSavedModal result={punchResult} onClose={() => setPunchResult(null)} />
     </PageShell>
   );
 }
