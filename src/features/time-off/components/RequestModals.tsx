@@ -28,6 +28,7 @@ import {
   DEMO_NOW,
   REJECT_NOTE_MAX,
   REJECT_REASON_LABEL,
+  REJECT_REASON_OPTIONS,
   SESSION_LABEL,
   canOpenMedical,
 } from '@/features/time-off/types';
@@ -64,7 +65,7 @@ function RejectFields({
             <SelectValue placeholder="Pilih alasan penolakan" />
           </SelectTrigger>
           <SelectContent>
-            {(Object.keys(REJECT_REASON_LABEL) as RejectReasonCode[]).map((code) => (
+            {REJECT_REASON_OPTIONS.map((code) => (
               <SelectItem key={code} value={code}>
                 {REJECT_REASON_LABEL[code]}
               </SelectItem>

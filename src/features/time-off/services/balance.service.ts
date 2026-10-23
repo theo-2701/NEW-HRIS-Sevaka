@@ -121,6 +121,10 @@ export const balanceService = {
       if (!draft.reason.trim()) {
         throw new Error('422 — alasan wajib diisi untuk penyesuaian manual.');
       }
+      // TSD-TIME 0.76 §7.4.5 (E4): satu-satunya batas #68 — aktor ≠ pemilik saldo.
+      if (draft.employeeId === session.employeeId) {
+        throw new Error('422 — Anda tidak bisa menyesuaikan saldo cuti Anda sendiri.');
+      }
 
       const entry: LedgerEntry = {
         id: `ledger-${newId().slice(0, 6)}`,

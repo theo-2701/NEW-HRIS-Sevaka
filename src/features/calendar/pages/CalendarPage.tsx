@@ -34,6 +34,7 @@ import {
 } from '@/features/calendar/calendarFilters';
 import { useHolidays, useWorkCalendars } from '@/features/calendar/hooks/useCalendar';
 import { ME, scopeName } from '@/features/calendar/mock-data';
+import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
 import { HOLIDAY_TYPE_LABEL, SCOPE_LEVEL_LABEL } from '@/features/calendar/types';
 import type { CalendarHoliday, ScopeLevel, WorkCalendar } from '@/features/calendar/types';
 import { formatDate } from '@/lib/format';
@@ -139,12 +140,16 @@ export function CalendarPage() {
       );
     }
 
+    // Libur berlaku yang sudah lewat (cuti bersama: sejak hari-H) tidak bisa dibatalkan — Delete disembunyikan.
+    const locked =
+      row.approvalStatus === 'APPROVED' &&
+      (row.isJointLeave ? row.holidayDate <= ATTENDANCE_TODAY : row.holidayDate < ATTENDANCE_TODAY);
     return (
       <RowActions
         actions={[
           { label: 'View Detail', onSelect: () => setDetail(row) },
           { label: 'Edit', onSelect: () => openHolidayForm(row) },
-          { label: 'Delete', danger: true, onSelect: () => setDeletingHoliday(row) },
+          ...(locked ? [] : [{ label: 'Delete', danger: true, onSelect: () => setDeletingHoliday(row) }]),
         ]}
       />
     );

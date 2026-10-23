@@ -67,16 +67,20 @@ describe('Saldo dihitung dari ledger', () => {
     expect(after.projectedDays).toBeCloseTo(before.projectedDays + 3, 2);
   });
 
+  it('menolak penyesuaian atas saldo milik aktor sendiri (TSD-TIME 0.76)', async () => {
+    await expect(balanceService.createAdjustment(HR, { ...draft, employeeId: HR.employeeId })).rejects.toThrow(/422/);
+  });
+
   it('membuat baris saldo baru bila pasangannya belum ada', async () => {
     await balanceService.createAdjustment(HR, {
-      employeeId: 'emp-hendra',
+      employeeId: 'emp-sari',
       leaveTypeId: 'lt-sick',
       periodYear: 2026,
       mutationDate: '2026-08-02',
       deltaDays: 4,
       reason: 'Pembukaan saldo sakit.',
     });
-    const rows = await balanceService.balances({ employeeId: 'emp-hendra', leaveTypeId: 'lt-sick' });
+    const rows = await balanceService.balances({ employeeId: 'emp-sari', leaveTypeId: 'lt-sick' });
     expect(rows).toHaveLength(1);
     expect(rows[0].balanceDays).toBe(4);
   });

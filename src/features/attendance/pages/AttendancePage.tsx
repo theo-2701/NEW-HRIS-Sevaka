@@ -62,7 +62,9 @@ import {
   DAY_TYPE_LABEL,
   canApproveCorrection,
   canCreateCorrection,
-  canSearchPunch } from '@/features/attendance/types';
+  canSearchPunch,
+  isSelfScoped,
+} from '@/features/attendance/types';
 import type { AttendanceDay, AttendanceSession, Correction, Punch } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { formatDate, formatDateTime } from '@/lib/format';
@@ -151,6 +153,8 @@ export function AttendancePage() {
 
   const approver = canApproveCorrection(session);
   const creator = canCreateCorrection(session);
+  // EMPLOYEE hanya melihat barisnya sendiri — kolom dan pemilih orang tidak berarti baginya.
+  const self = isSelfScoped(session);
 
   const doPunch = async () => {
     try {
@@ -212,6 +216,10 @@ export function AttendancePage() {
                 const nextSession = VIEWERS.find((row) => row.employeeId === value);
                 if (nextSession) {
                   setSession(nextSession);
+                  // Filter orang/mock milik peran sebelumnya tidak berlaku bagi sesi berlingkup diri sendiri.
+                  setDayFilter(EMPTY_DAY_FILTER);
+                  setTapFilter(EMPTY_TAP_FILTER);
+                  setCorrectionFilter(EMPTY_CORRECTION_FILTER);
                   pagedDays.resetPage();
                   pagedTaps.resetPage();
                   pagedCorrections.resetPage();
@@ -294,7 +302,7 @@ export function AttendancePage() {
                 <Card>
                   <CardHead
                     title="Daily summary"
-                    sub="Hasil kehadiran harian"
+                    sub={self ? 'Your attendance verdict per day' : 'Attendance verdict per employee per day'}
                   />
                   <div className="flex flex-col">
                     <TableToolbar
@@ -314,16 +322,20 @@ export function AttendancePage() {
                           nowrap: true,
                           render: (row) => formatDate(row.workDate),
                         },
-                        {
-                          key: 'employee',
-                          header: 'Employee',
-                          render: (row) => (
-                            <CellIdentity
-                              name={employeeName(row.employeeId)}
-                              leading={<Avatar name={employeeName(row.employeeId)} size="sm" />}
-                            />
-                          ),
-                        },
+                        ...(self
+                          ? []
+                          : [
+                              {
+                                key: 'employee',
+                                header: 'Employee',
+                                render: (row: AttendanceDay) => (
+                                  <CellIdentity
+                                    name={employeeName(row.employeeId)}
+                                    leading={<Avatar name={employeeName(row.employeeId)} size="sm" />}
+                                  />
+                                ),
+                              },
+                            ]),
                         { key: 'dayType', header: 'Day Type', muted: true, render: (row) => DAY_TYPE_LABEL[row.dayType] },
                         {
                           key: 'arrangement',
@@ -388,7 +400,7 @@ export function AttendancePage() {
 
               {subTab === 'taps' && (
                 <Card>
-                  <CardHead title="Tap history" sub="Seluruh tap yang tercatat" />
+                  <CardHead title="Tap history" sub={self ? 'Every tap you have recorded' : 'Every recorded tap'} />
                   {!canSearchPunch(session) ? (
                     <Note tone="warn" icon={<Lock />}>You don&rsquo;t have access to the tap history.</Note>
                   ) : (
@@ -410,7 +422,9 @@ export function AttendancePage() {
                             nowrap: true,
                             render: (row) => formatDateTime(row.punchAt),
                           },
-                          { key: 'employee', header: 'Employee', render: (row) => employeeName(row.employeeId) },
+                          ...(self
+                            ? []
+                            : [{ key: 'employee', header: 'Employee', render: (row: Punch) => employeeName(row.employeeId) }]),
                           {
                             key: 'type',
                             header: 'Type',
@@ -438,7 +452,7 @@ export function AttendancePage() {
 
           {tab === 'correction' && (
             <Card>
-              <CardHead title="Correction" sub="Satu koreksi hidup per hari; pengaju tidak pernah jadi penyetuju" />
+              <CardHead title="Correction" sub="One live correction per day; the filer is never the approver" />
               <div className="flex flex-col">
                 <TableToolbar
                   filters={filterButton(countActive(correctionFilter), () => setCorrectionFilterOpen(true))}
@@ -451,7 +465,9 @@ export function AttendancePage() {
                   empty="No correction matches these criteria."
                   columns={[
                     { key: 'id', header: 'Correction', strong: true, nowrap: true, render: (row) => row.id },
-                    { key: 'filer', header: 'Filed by', render: (row) => employeeName(row.employeeId) },
+                    ...(self
+                      ? []
+                      : [{ key: 'filer', header: 'Filed by', render: (row: Correction) => employeeName(row.employeeId) }]),
                     {
                       key: 'day',
                       header: 'Corrected Day',
@@ -468,15 +484,19 @@ export function AttendancePage() {
                         );
                       },
                     },
-                    {
-                      key: 'owner',
-                      header: 'Day owner',
-                      muted: true,
-                      render: (row) => {
-                        const day = dayOf(row.attendanceDailyId);
-                        return day ? employeeName(day.employeeId) : '—';
-                      },
-                    },
+                    ...(self
+                      ? []
+                      : [
+                          {
+                            key: 'owner',
+                            header: 'Day owner',
+                            muted: true,
+                            render: (row: Correction) => {
+                              const day = dayOf(row.attendanceDailyId);
+                              return day ? employeeName(day.employeeId) : '—';
+                            },
+                          },
+                        ]),
                     {
                       key: 'reason',
                       header: 'Reason Type',
@@ -509,7 +529,7 @@ export function AttendancePage() {
       <FilterModal
         open={dayFilterOpen}
         title="Filter daily summary"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setDayFilterOpen}
         onReset={() => {
           setDayFilter(EMPTY_DAY_FILTER);
@@ -517,6 +537,7 @@ export function AttendancePage() {
         }}
       >
         <DayFilterFields
+          selfOnly={self}
           value={dayFilter}
           onChange={(next) => {
             setDayFilter(next);
@@ -528,7 +549,7 @@ export function AttendancePage() {
       <FilterModal
         open={tapFilterOpen}
         title="Filter tap history"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setTapFilterOpen}
         onReset={() => {
           setTapFilter(EMPTY_TAP_FILTER);
@@ -536,6 +557,7 @@ export function AttendancePage() {
         }}
       >
         <TapFilterFields
+          selfOnly={self}
           value={tapFilter}
           onChange={(next) => {
             setTapFilter(next);
@@ -547,7 +569,7 @@ export function AttendancePage() {
       <FilterModal
         open={correctionFilterOpen}
         title="Filter corrections"
-        description="Saring daftar berdasarkan kriteria di bawah."
+        description="Narrow the list with the criteria below."
         onOpenChange={setCorrectionFilterOpen}
         onReset={() => {
           setCorrectionFilter(EMPTY_CORRECTION_FILTER);
@@ -555,6 +577,7 @@ export function AttendancePage() {
         }}
       >
         <CorrectionFilterFields
+          selfOnly={self}
           value={correctionFilter}
           onChange={(next) => {
             setCorrectionFilter(next);

@@ -927,3 +927,27 @@ Baseline FSD 0.10 / UIC 0.14. 24 celah routing komponen (`TIM-233`, K1–K4). Di
 - **GAP:** layar Integration Contact (§13) dan Notice/rilis naskah (§10) belum ada di repo, sehingga aturannya
   (peringatan email kontak kosong, versi tanpa naskah non-aktif, persetujuan rilis dua langkah) menunggu modul dibangun.
   Impor Branch `parent_id` saat DISABLED belum punya layar impor.
+
+## 34. Time Management — UIC-001-TIME 0.20 / TSD-001-TIME 0.83 (doc-update 19 Oktober 2026, dicek 23 Oktober 2026)
+
+Baseline FSD 0.13 / UIC 0.17 (§32). Sumber: `Dokumen HRIS/doc-update/2610191330/UIC-001-TIME-0.20.md`,
+`2610191633/TSD-001-TIME-0.83.md` (Changelog 0.67–0.83) + `CATATAN-PERUBAHAN.md` (`TIM-2610191117` T1). FSD-TIME tetap 0.13.
+
+| Sumber | Perubahan kontrak | Penerapan di repo |
+| :--- | :--- | :--- |
+| UIC 0.20 §6.1.3 / TSD 0.80 | EMPLOYEE memegang `attendance-punch:search` + `attendance-summary:search`, baris dipersempit ke milik sendiri; kriteria mock location dibuang bagi EMPLOYEE | Tab History & Summary › Tap history terbuka bagi EMPLOYEE (`canSearchPunch`, `isSelfScoped`); kolom Employee/Filed by/Day owner dan filter Employee/Mock location disembunyikan bagi EMPLOYEE; tap contoh `punch-1/2` milik Rina masuk dataset |
+| CATATAN 19 Okt (T1) | Form koreksi tanpa pemilih karyawan bagi EMPLOYEE | Daftar Day to correct hanya hari sendiri, tanpa nama pemilik |
+| TSD 0.82 §7.3.4 | Lingkup baris diperiksa atas PEMILIK hari; EMPLOYEE atas hari orang lain `404 TIM-NFD-014` | `createCorrection` 404; HR Staff tetap bebas atas nama |
+| TSD §7.3.4 (K24) | Jendela koreksi `attendance.correction_window_days` bawaan 7 hari, `0` = tanpa batas, di luar ⇒ `422` | `CORRECTION_WINDOW_DAYS = 7`; hari lebih tua keluar dari daftar + 422 di service; hint form menyebut jendela |
+| UIC 0.19 / TSD 0.79 (`E-K9`) | Baris bukan milik pemanggil `403` → `404` seragam; 404 dokumen medis juga berarti "di luar akses" | Time Off ubah/tarik/delegasi: 404 "tidak ditemukan atau di luar akses"; kalimat 404 surat dokter dua sebab |
+| TSD 0.76 E4 (#68) | Aktor tidak boleh menyesuaikan saldo cutinya sendiri ⇒ `422` | `createAdjustment` 422 + hint di modal Adjustment |
+| TSD 0.76 E2 / FC-02 | Libur berlaku tak dibatalkan surut; cuti bersama ditolak sejak hari-H | `deleteHoliday` 422; tombol Delete disembunyikan pada baris terkunci (K1) |
+| TSD 0.70 D1 | `reject_reason` 16 nilai — `SUBJECT_DATA_ERASED` hanya migrasi | Label tampil di detail; pilihan form tetap 15 (`REJECT_REASON_OPTIONS`) |
+| TSD 0.70 D9 (#88) | Roster siaga terkunci penuh sesudah `PENDING_APPROVAL` | Sudah sesuai — Edit hanya pada PENDING_APPROVAL |
+
+**Tidak berdampak layar dummy:** TSD 0.67–0.69/0.71–0.75/0.78/0.81/0.83 (teks ledger Inggris, CronJob, konsumen workflow,
+penyusunan approver oleh time-service, tanda tangan pesan, swafoto via document-service, kursi ganda `422` di
+`work-calendars/effective`, pintu mesin company untuk unit DM). TSD 0.77 (DM pemutus Holiday) dan 0.82/0.83 (DM mengajukan
+koreksi untuk unitnya) tidak punya identitas percobaan DM di layar Calendar/Attendance. UIC-TIME §6.3.1 masih menulis scope
+create = HR_STAFF · EMPLOYEE, sedangkan TSD 0.83 menguji DM `201` — selisih dokumen, dicatat. Dialog galat Error code +
+Trace ID (`LNT-2610141244` T16) lintas modul dan tidak muncul di mode dummy (tanpa amplop galat backend).

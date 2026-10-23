@@ -25,7 +25,11 @@ export type ExtraApprovalReason = 'NEGATIVE_BALANCE' | 'SOFT_BLACKOUT' | 'UNPAID
 
 export type DelegationStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
-/** `reject_reason` — enum 15 nilai tertutup (TSD-001-TIME §4.6, UIC-001-TIME §3.1.6/§3.1.7). */
+/**
+ * `reject_reason` — enum 16 nilai (TSD-001-TIME 0.70 §4.5, D1): 15 pilihan approver
+ * (UIC-001-TIME §3.1.6/§3.1.7) + `SUBJECT_DATA_ERASED` yang hanya ditulis sapuan penghapusan
+ * data subjek — tampil di detail, tidak pernah ditawarkan sebagai pilihan.
+ */
 export type RejectReasonCode =
   | 'INCOMPLETE_PROOF'
   | 'LATE_SUBMISSION'
@@ -41,7 +45,8 @@ export type RejectReasonCode =
   | 'SUSPECTED_FRAUD'
   | 'ALREADY_ON_UNPAID'
   | 'EMPLOYMENT_STATUS_INELIGIBLE'
-  | 'SYSTEM_ERROR_RESUBMIT';
+  | 'SYSTEM_ERROR_RESUBMIT'
+  | 'SUBJECT_DATA_ERASED';
 
 export const REJECT_REASON_LABEL: Record<RejectReasonCode, string> = {
   INCOMPLETE_PROOF: 'Bukti pendukung tidak lengkap',
@@ -59,7 +64,13 @@ export const REJECT_REASON_LABEL: Record<RejectReasonCode, string> = {
   ALREADY_ON_UNPAID: 'Sudah dalam cuti tanpa upah',
   EMPLOYMENT_STATUS_INELIGIBLE: 'Status kepegawaian tidak memenuhi syarat',
   SYSTEM_ERROR_RESUBMIT: 'Kesalahan sistem — ajukan ulang',
+  SUBJECT_DATA_ERASED: 'Alasan asli dihapus (penghapusan data subjek)',
 };
+
+/** Pilihan alasan di form penolakan — 15 nilai; `SUBJECT_DATA_ERASED` bukan pilihan approver. */
+export const REJECT_REASON_OPTIONS: RejectReasonCode[] = (Object.keys(REJECT_REASON_LABEL) as RejectReasonCode[]).filter(
+  (code) => code !== 'SUBJECT_DATA_ERASED',
+);
 
 /** Badan penolakan: enum wajib + catatan opsional (≤500). */
 export interface RejectInput {

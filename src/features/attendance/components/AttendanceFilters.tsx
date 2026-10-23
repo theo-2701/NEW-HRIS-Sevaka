@@ -89,9 +89,12 @@ function EmployeeChoice({
 export function DayFilterFields({
   value,
   onChange,
+  selfOnly = false,
 }: {
   value: DayFilterState;
   onChange: (next: DayFilterState) => void;
+  /** EMPLOYEE: baris sudah dipersempit ke milik sendiri — pemilih orang tidak berarti. */
+  selfOnly?: boolean;
 }) {
   return (
     <>
@@ -118,19 +121,21 @@ export function DayFilterFields({
       <Choice
         label="Excused"
         value={value.excused}
-        allLabel="Excused & belum"
+        allLabel="Excused & not excused"
         options={[
           { value: 'YES', label: 'Excused' },
-          { value: 'NO', label: 'Belum excused' },
+          { value: 'NO', label: 'Not excused' },
         ]}
         onChange={(excused) => onChange({ ...value, excused })}
       />
-      <EmployeeChoice
-        label="Karyawan"
-        value={value.employeeId}
-        allLabel="All employees"
-        onChange={(employeeId) => onChange({ ...value, employeeId })}
-      />
+      {!selfOnly && (
+        <EmployeeChoice
+          label="Employee"
+          value={value.employeeId}
+          allLabel="All employees"
+          onChange={(employeeId) => onChange({ ...value, employeeId })}
+        />
+      )}
     </>
   );
 }
@@ -138,9 +143,12 @@ export function DayFilterFields({
 export function TapFilterFields({
   value,
   onChange,
+  selfOnly = false,
 }: {
   value: TapFilterState;
   onChange: (next: TapFilterState) => void;
+  /** EMPLOYEE: baris sudah dipersempit ke milik sendiri — pemilih orang tidak berarti. */
+  selfOnly?: boolean;
 }) {
   return (
     <>
@@ -165,22 +173,27 @@ export function TapFilterFields({
         ]}
         onChange={(geofence) => onChange({ ...value, geofence })}
       />
-      <Choice
-        label="Mock location"
-        value={value.mockLocation}
-        allLabel="Dengan & tanpa dugaan"
-        options={[
-          { value: 'YES', label: 'Mock location suspected' },
-          { value: 'NO', label: 'Tanpa dugaan mock' },
-        ]}
-        onChange={(mockLocation) => onChange({ ...value, mockLocation })}
-      />
-      <EmployeeChoice
-        label="Karyawan"
-        value={value.employeeId}
-        allLabel="All employees"
-        onChange={(employeeId) => onChange({ ...value, employeeId })}
-      />
+      {/* UIC-TIME 0.20 §6.1.3: kriteria mock location alat penyelidikan — tidak disediakan di layar ESS. */}
+      {!selfOnly && (
+        <>
+          <Choice
+            label="Mock location"
+            value={value.mockLocation}
+            allLabel="With & without suspicion"
+            options={[
+              { value: 'YES', label: 'Mock location suspected' },
+              { value: 'NO', label: 'No mock suspicion' },
+            ]}
+            onChange={(mockLocation) => onChange({ ...value, mockLocation })}
+          />
+          <EmployeeChoice
+            label="Employee"
+            value={value.employeeId}
+            allLabel="All employees"
+            onChange={(employeeId) => onChange({ ...value, employeeId })}
+          />
+        </>
+      )}
     </>
   );
 }
@@ -188,9 +201,12 @@ export function TapFilterFields({
 export function CorrectionFilterFields({
   value,
   onChange,
+  selfOnly = false,
 }: {
   value: CorrectionFilterState;
   onChange: (next: CorrectionFilterState) => void;
+  /** EMPLOYEE: baris sudah dipersempit ke milik sendiri — pemilih orang tidak berarti. */
+  selfOnly?: boolean;
 }) {
   return (
     <>
@@ -214,12 +230,14 @@ export function CorrectionFilterFields({
         }))}
         onChange={(correctionReasonType) => onChange({ ...value, correctionReasonType })}
       />
-      <EmployeeChoice
-        label="Pengaju"
-        value={value.employeeId}
-        allLabel="All filers"
-        onChange={(employeeId) => onChange({ ...value, employeeId })}
-      />
+      {!selfOnly && (
+        <EmployeeChoice
+          label="Filed by"
+          value={value.employeeId}
+          allLabel="All filers"
+          onChange={(employeeId) => onChange({ ...value, employeeId })}
+        />
+      )}
     </>
   );
 }

@@ -48,7 +48,12 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
 
   it('audit tap mentah tertutup untuk peran tanpa kewenangan penyelidikan', async () => {
     await expect(attendanceService.punches(SARI)).rejects.toThrow(/403/);
-    await expect(attendanceService.punches(HENDRA)).resolves.toHaveLength(6);
+    await expect(attendanceService.punches(HENDRA)).resolves.toHaveLength(8);
+  });
+
+  it('EMPLOYEE membaca tap miliknya sendiri; filter karyawan dan mock location diabaikan (UIC 0.20)', async () => {
+    const rows = await attendanceService.punches(RINA, { employeeId: 'emp-hendra', mockLocation: 'YES' });
+    expect(rows.map((row) => row.id).sort()).toEqual(['pun-rina-1', 'pun-rina-2']);
   });
 });
 
@@ -71,6 +76,16 @@ describe('Daily summary — putusan mesin', () => {
 });
 
 describe('Correction — pengajuan', () => {
+  it('EMPLOYEE atas hari orang lain dijawab 404 (TSD-TIME 0.82)', async () => {
+    await expect(attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-1' })).rejects.toThrow(/404/);
+  });
+
+  it('hari di luar jendela koreksi 7 hari ditolak 422 dan tidak ditawarkan di form', async () => {
+    await expect(attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-6' })).rejects.toThrow(/422/);
+    expect(eligibleDays(RINA, DAILY, []).map((day) => day.id)).not.toContain('day-6');
+    expect(eligibleDays(RINA, DAILY, []).map((day) => day.id)).toContain('day-5');
+  });
+
   it('menolak pengaju tanpa scope create', async () => {
     await expect(attendanceService.createCorrection(HENDRA, draft)).rejects.toThrow(/403/);
   });
@@ -89,7 +104,7 @@ describe('Correction — pengajuan', () => {
 
   it('menolak hari yang sudah punya koreksi menunggu keputusan', async () => {
     await expect(
-      attendanceService.createCorrection(RINA, { ...draft, attendanceDailyId: 'day-3' }),
+      attendanceService.createCorrection(SARI, { ...draft, attendanceDailyId: 'day-3' }),
     ).rejects.toThrow(/409/);
   });
 

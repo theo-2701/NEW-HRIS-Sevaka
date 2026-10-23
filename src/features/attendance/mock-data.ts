@@ -86,6 +86,9 @@ export const PUNCHES: Punch[] = [
   { id: 'pun-4', employeeId: 'emp-hendra', punchType: 'OUT', punchAt: '2026-07-28T17:12:00+07:00', workDate: '2026-07-28', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
   { id: 'pun-5', employeeId: 'emp-hendra', punchType: 'IN', punchAt: '2026-07-29T08:05:00+07:00', workDate: '2026-07-29', isWithinGeofence: null, isMockLocationSuspected: true, isWorkArrangementUnknown: true, geofenceId: null },
   { id: 'pun-6', employeeId: 'emp-sari', punchType: 'IN', punchAt: '2026-07-29T09:20:00+07:00', workDate: '2026-07-29', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
+  // punch-1/punch-2 contoh UIC-TIME §6.1.3 — riwayat tap milik Rina yang dibaca layar ESS (0.20).
+  { id: 'pun-rina-1', employeeId: 'emp-rina', punchType: 'IN', punchAt: '2026-07-27T08:05:00+07:00', workDate: '2026-07-27', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
+  { id: 'pun-rina-2', employeeId: 'emp-rina', punchType: 'OUT', punchAt: '2026-07-27T17:12:00+07:00', workDate: '2026-07-27', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
 ];
 
 export const DAILY: AttendanceDay[] = [

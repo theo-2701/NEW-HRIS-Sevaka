@@ -11,7 +11,7 @@ import {
   MEDICAL_ACCESS,
   leaveTypeOf,
 } from '@/features/time-off/mock-data';
-import { LIVE_STATUS, REJECT_NOTE_MAX, REJECT_REASON_LABEL, canOpenMedical, isApprover } from '@/features/time-off/types';
+import { LIVE_STATUS, REJECT_NOTE_MAX, REJECT_REASON_OPTIONS, canOpenMedical, isApprover } from '@/features/time-off/types';
 import type {
   AccessPurpose,
   DecisionInput,
@@ -26,7 +26,7 @@ import type {
 
 /** `reject_reason` wajib dari enum 15 nilai; `reject_note` opsional ≤500 (UIC §3.1.6/§3.1.7). */
 function assertRejectInput(reject: RejectInput | undefined) {
-  if (!reject?.reason || !(reject.reason in REJECT_REASON_LABEL)) {
+  if (!reject?.reason || !REJECT_REASON_OPTIONS.includes(reject.reason)) {
     throw new Error('422 — alasan penolakan wajib dipilih dari daftar.');
   }
   if (reject.note.trim().length > REJECT_NOTE_MAX) {
@@ -188,7 +188,7 @@ export const timeOffService = {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
-      if (row.employeeId !== session.employeeId) throw new Error('403 — pengajuan ini bukan milik Anda.');
+      if (row.employeeId !== session.employeeId) throw new Error('404 — pengajuan tidak ditemukan atau di luar akses Anda.');
       if (row.status !== 'PENDING_APPROVAL') {
         throw new Error('422 — pengajuan hanya bisa diubah selagi menunggu persetujuan.');
       }
@@ -315,7 +315,7 @@ export const timeOffService = {
     if (MOCK) {
       await delay();
       const row = findRequest(id);
-      if (row.employeeId !== session.employeeId) throw new Error('403 — pengajuan ini bukan milik Anda.');
+      if (row.employeeId !== session.employeeId) throw new Error('404 — pengajuan tidak ditemukan atau di luar akses Anda.');
 
       const todayIso = now.toISOString().slice(0, 10);
       const withdrawable =
@@ -354,7 +354,7 @@ export const timeOffService = {
       if (!canOpenMedical(session)) {
         throw new Error('403 — hanya HR Manager (health data officer) yang boleh membuka surat dokter.');
       }
-      if (!row.hasDoctorNote) throw new Error('404 — pengajuan ini tidak punya surat dokter.');
+      if (!row.hasDoctorNote) throw new Error('404 — pengajuan ini tidak punya surat dokter, atau suratnya di luar akses Anda.');
       if (row.doctorNotePurged) throw new Error('410 — surat dokter sudah dimusnahkan sesuai masa simpan.');
       if (!purpose) throw new Error('422 — tujuan akses wajib dipilih.');
 
@@ -401,7 +401,7 @@ export const timeOffService = {
       }
 
       const leave = findRequest(payload.leaveRequestId);
-      if (leave.employeeId !== session.employeeId) throw new Error('403 — cuti itu bukan milik Anda.');
+      if (leave.employeeId !== session.employeeId) throw new Error('404 — cuti tidak ditemukan atau di luar akses Anda.');
       if (!LIVE_STATUS.includes(leave.status)) throw new Error('409 — cuti itu sudah tidak hidup.');
       const duplicate = mockDelegations.some(
         (row) =>

@@ -99,6 +99,7 @@ export function AdjustmentModal({
                   label="Karyawan"
                   required
                   source={timeEmployeeSource(session.employeeId)}
+                  hint="Saldo cuti Anda sendiri tidak bisa disesuaikan."
                 />
                 <SelectField
                   name="leaveTypeId"

@@ -17,6 +17,8 @@ import {
   CORRECTION_REASON_LABEL,
   EXCUSED_FROM_REASON,
   EXCUSED_REASON_LABEL,
+  CORRECTION_WINDOW_DAYS,
+  isSelfScoped,
 } from '@/features/attendance/types';
 import type {
   AttendanceDay,
@@ -50,7 +52,7 @@ function DaySnapshot({ days }: { days: AttendanceDay[] }) {
     return (
       <DerivedBox
         heading="Frozen snapshot of the day being corrected"
-        rows={[['Pilih hari untuk melihat snapshot yang akan dibaca approver.', '']]}
+        rows={[['Pick a day to see the snapshot the approver will read.', '']]}
       />
     );
   }
@@ -98,9 +100,13 @@ export function CorrectionFormModal({
 }) {
   const create = useCreateCorrection(session);
 
+  // EMPLOYEE hanya memilih harinya sendiri (UIC-TIME 0.20) — nama pemilik hari tidak perlu diulang.
+  const self = isSelfScoped(session);
   const dayOptions = days.map((day) => ({
     value: day.id,
-    label: `${formatDate(day.workDate)} · ${employeeName(day.employeeId)} · ${ATTENDANCE_STATUS_LABEL[day.attendanceStatus]}`,
+    label: [formatDate(day.workDate), self ? null : employeeName(day.employeeId), ATTENDANCE_STATUS_LABEL[day.attendanceStatus]]
+      .filter(Boolean)
+      .join(' · '),
   }));
 
   return (
@@ -136,7 +142,7 @@ export function CorrectionFormModal({
                   Cancel
                 </Button>
                 <Button onClick={submitForm} disabled={create.isPending || !dayOptions.length}>
-                  {create.isPending ? 'Mengirim…' : 'Submit correction'}
+                  {create.isPending ? 'Submitting…' : 'Submit correction'}
                 </Button>
               </>
             }
@@ -162,10 +168,10 @@ export function CorrectionFormModal({
                   name="attendanceDailyId"
                   label="Day to correct"
                   required
-                  placeholder={dayOptions.length ? 'Select day' : 'Tidak ada hari yang memenuhi syarat'}
+                  placeholder={dayOptions.length ? 'Select day' : 'No eligible day'}
                   options={dayOptions}
                   disabled={!dayOptions.length}
-                  hint="Days that already carry a pending correction drop out of this list until that one is decided or withdrawn."
+                  hint={`Only days from the last ${CORRECTION_WINDOW_DAYS} days. A day with a pending correction drops out until that one is decided or withdrawn.`}
                 />
                 <SelectField
                   name="correctionReasonType"
@@ -184,13 +190,13 @@ export function CorrectionFormModal({
                   name="requestedIn"
                   type="time"
                   label="Proposed clock-in"
-                  hint="Kosongkan bila yang salah hanya jam pulang."
+                  hint="Leave empty if only the clock-out is wrong."
                 />
                 <TextField
                   name="requestedOut"
                   type="time"
                   label="Proposed clock-out"
-                  hint="Minimal salah satu jam harus diusulkan."
+                  hint="Propose at least one of the two times."
                 />
               </div>
 

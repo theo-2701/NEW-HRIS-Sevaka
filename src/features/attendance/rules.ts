@@ -1,4 +1,5 @@
 import { ATTENDANCE_TODAY, GEOFENCES, employeeBranch } from '@/features/attendance/mock-data';
+import { CORRECTION_WINDOW_DAYS } from '@/features/attendance/types';
 import type {
   AttendanceDay,
   AttendanceSession,
@@ -58,8 +59,19 @@ export function nextPunchType(employeeId: string, punches: Punch[]): PunchType |
 }
 
 /**
- * Hari yang masih boleh dikoreksi: satu koreksi hidup per hari (409), dan
- * EMPLOYEE hanya boleh harinya sendiri sementara HR_STAFF boleh atas nama.
+ * Hari masih di dalam jendela koreksi: jarak `workDate` → hari ini tidak melampaui
+ * `CORRECTION_WINDOW_DAYS` (`0` = tanpa batas).
+ */
+export function withinCorrectionWindow(workDate: string, today = ATTENDANCE_TODAY): boolean {
+  if (CORRECTION_WINDOW_DAYS === 0) return true;
+  const days = (Date.parse(today) - Date.parse(workDate)) / 86_400_000;
+  return days <= CORRECTION_WINDOW_DAYS;
+}
+
+/**
+ * Hari yang masih boleh dikoreksi: di dalam jendela koreksi (422), satu koreksi
+ * hidup per hari (409), dan EMPLOYEE hanya boleh harinya sendiri (404) sementara
+ * HR_STAFF boleh atas nama.
  */
 export function eligibleDays(
   session: AttendanceSession,
@@ -70,7 +82,7 @@ export function eligibleDays(
     .filter((row) => row.correctionStatus === 'PENDING_APPROVAL')
     .map((row) => row.attendanceDailyId);
   return days.filter((day) => {
-    if (taken.includes(day.id)) return false;
+    if (taken.includes(day.id) || !withinCorrectionWindow(day.workDate)) return false;
     return session.role === 'HR_STAFF' ? true : day.employeeId === session.employeeId;
   });
 }

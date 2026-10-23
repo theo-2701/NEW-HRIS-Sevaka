@@ -2,7 +2,7 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
-import { DAILY } from '@/features/attendance/mock-data';
+import { ATTENDANCE_TODAY, DAILY } from '@/features/attendance/mock-data';
 import { HOLIDAYS, ME, WORK_CALENDARS } from '@/features/calendar/mock-data';
 import { APPROVAL_STATUS_LABEL } from '@/features/calendar/types';
 import type {
@@ -214,6 +214,14 @@ export const calendarService = {
       const row = findHoliday(id);
       if (row.isSystem) {
         throw new Error('422 — baris nasional disemai sistem dan tidak bisa dihapus di sini.');
+      }
+      // TSD-TIME §4.6 FC-02: libur berlaku tidak dibatalkan surut; cuti bersama sejak hari-H pun
+      // tidak (0.76, E2) karena job pemotong saldo berjalan pada harinya sendiri.
+      if (row.approvalStatus === 'APPROVED' && row.isJointLeave && row.holidayDate <= ATTENDANCE_TODAY) {
+        throw new Error('422 — libur cuti bersama ini sudah tiba harinya; tidak bisa dibatalkan lagi.');
+      }
+      if (row.approvalStatus === 'APPROVED' && row.holidayDate < ATTENDANCE_TODAY) {
+        throw new Error('422 — tanggal libur ini sudah lewat; pembatalan tidak boleh mengubah hari yang sudah dinilai.');
       }
       // Baris ditolak pun boleh dihapus — justru itu cara membebaskan slotnya.
       const scored = DAILY.filter((day) => day.workDate === row.holidayDate).length;

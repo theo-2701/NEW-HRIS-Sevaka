@@ -200,15 +200,25 @@ export function canApproveCorrection(session: AttendanceSession): boolean {
   return session.role === 'HR_MANAGER' || session.role === 'DEPT_MANAGER';
 }
 
-/** `attendance-summary:search` bukan scope EMPLOYEE (§6.2.2). */
-export function canSearchSummary(session: AttendanceSession): boolean {
-  return session.role !== 'EMPLOYEE';
+/**
+ * Lingkup baris diri sendiri (`RowScope.SELF`): EMPLOYEE memegang `attendance-summary:search` dan
+ * `attendance-punch:search` (UIC-TIME 0.20 §6.1.3/§6.2.2), tetapi server mempersempit barisnya ke
+ * milik pemanggil — filter karyawan apa pun yang dikirim tidak melebarkannya.
+ */
+export function isSelfScoped(session: AttendanceSession): boolean {
+  return session.role === 'EMPLOYEE';
 }
 
 /**
- * `attendance-punch:search` adalah kewenangan penyelidikan (§6.1.3):
- * SUPER_ADMIN · HR_MANAGER saja — DEPT_MANAGER pemegang `:read` pun tidak.
+ * `attendance-punch:search` (§6.1.3): SUPER_ADMIN · HR_MANAGER (penyelidikan, semua karyawan) dan
+ * EMPLOYEE (tap miliknya sendiri). HR_STAFF dan DEPT_MANAGER pemegang `:read` pun tidak.
  */
 export function canSearchPunch(session: AttendanceSession): boolean {
-  return session.role === 'HR_MANAGER';
+  return session.role === 'HR_MANAGER' || session.role === 'EMPLOYEE';
 }
+
+/**
+ * Jendela koreksi `attendance.correction_window_days` (TSD-TIME §7.3.4, K24) — bawaan 7 hari,
+ * `0` = tanpa batas. Hari yang lebih tua dari jendela ditolak `422` sebelum baris koreksi lahir.
+ */
+export const CORRECTION_WINDOW_DAYS: number = 7;

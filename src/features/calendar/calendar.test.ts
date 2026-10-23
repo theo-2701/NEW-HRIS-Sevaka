@@ -105,6 +105,12 @@ describe('Holiday — maker–checker', () => {
 });
 
 describe('Holiday — penghapusan', () => {
+  it('menolak membatalkan libur berlaku yang tanggalnya sudah lewat', async () => {
+    const row = await calendarService.saveHoliday({ ...holidayDraft, holidayDate: '2026-07-10' });
+    await calendarService.completeHolidayWorkflow(row.id, 'APPROVED');
+    await expect(calendarService.deleteHoliday(row.id)).rejects.toThrow(/422/);
+  });
+
   it('menolak menghapus baris nasional', async () => {
     await expect(calendarService.deleteHoliday('hol-1')).rejects.toThrow(/422/);
   });

@@ -3,13 +3,14 @@ import { MOCK } from '@/services/mock';
 import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
 import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
-import { captureChannel, nextPunchType, punchesToday } from '@/features/attendance/rules';
+import { captureChannel, nextPunchType, punchesToday, withinCorrectionWindow } from '@/features/attendance/rules';
 import {
+  CORRECTION_WINDOW_DAYS,
   EXCUSED_FROM_REASON,
   canApproveCorrection,
   canCreateCorrection,
   canSearchPunch,
-  canSearchSummary,
+  isSelfScoped,
 } from '@/features/attendance/types';
 import type {
   AttendanceDay,
@@ -102,8 +103,9 @@ export const attendanceService = {
   },
 
   /**
-   * Audit tap mentah — kewenangan penyelidikan. Peran lain tidak memuat apa pun
-   * di sini; barisnya bukan disembunyikan di klien, endpoint-nya memang tertutup.
+   * Riwayat tap mentah. HR Manager = penyelidikan atas semua karyawan; EMPLOYEE = tap miliknya
+   * sendiri, dan kriteria mock location dibuang (UIC-TIME 0.20 §6.1.3). Peran lain tidak memuat apa
+   * pun di sini; barisnya bukan disembunyikan di klien, endpoint-nya memang tertutup.
    */
   async punches(session: AttendanceSession, filter: TapFilter = {}): Promise<Punch[]> {
     if (MOCK) {
@@ -111,12 +113,14 @@ export const attendanceService = {
       if (!canSearchPunch(session)) {
         throw new Error('403 — attendance-punch:search adalah kewenangan penyelidikan yang tidak dipegang peran ini.');
       }
+      const self = isSelfScoped(session);
       return mockPunches
         .filter((row) => {
           if (filter.punchType && row.punchType !== filter.punchType) return false;
           if (filter.geofence === 'IN' && row.isWithinGeofence !== true) return false;
           if (filter.geofence === 'OUT' && row.isWithinGeofence !== false) return false;
           if (filter.geofence === 'UNKNOWN' && row.isWithinGeofence !== null) return false;
+          if (self) return row.employeeId === session.employeeId;
           if (filter.mockLocation === 'YES' && !row.isMockLocationSuspected) return false;
           if (filter.mockLocation === 'NO' && row.isMockLocationSuspected) return false;
           if (filter.employeeId && row.employeeId !== filter.employeeId) return false;
@@ -125,20 +129,21 @@ export const attendanceService = {
         .sort((a, b) => (a.punchAt < b.punchAt ? 1 : -1))
         .map((row) => ({ ...row }));
     }
-    const { data } = await api.post<{ data: Punch[] }>('/attendance-punches/search', { filters: filter });
+    const filters = isSelfScoped(session) ? { ...filter, mockLocation: undefined, employeeId: undefined } : filter;
+    const { data } = await api.post<{ data: Punch[] }>('/attendance-punches/search', { filters });
     return data.data;
   },
 
   /**
-   * Ringkasan harian. `attendance-summary:search` bukan scope EMPLOYEE, jadi
-   * sesi EMPLOYEE dipersempit ke hari miliknya sendiri dari klaim identitas.
+   * Ringkasan harian. EMPLOYEE memegang `attendance-summary:search` (UIC-TIME §6.2.2), tetapi
+   * barisnya dipersempit ke hari miliknya sendiri dari klaim identitas.
    */
   async days(session: AttendanceSession, filter: DayFilter = {}): Promise<AttendanceDay[]> {
     if (MOCK) {
       await delay();
       return mockDays
         .filter((row) => {
-          if (!canSearchSummary(session) && row.employeeId !== session.employeeId) return false;
+          if (isSelfScoped(session) && row.employeeId !== session.employeeId) return false;
           if (filter.attendanceStatus && row.attendanceStatus !== filter.attendanceStatus) return false;
           if (filter.dayType && row.dayType !== filter.dayType) return false;
           if (filter.excused === 'YES' && !row.isExcused) return false;
@@ -256,6 +261,16 @@ export const attendanceService = {
       }
       if (!draft.attendanceDailyId || !draft.correctionReasonType) {
         throw new Error('422 — pilih hari dan alasan koreksinya.');
+      }
+      // TSD-TIME 0.82 §7.3.4: lingkup baris diperiksa atas PEMILIK hari lebih dulu — di luar lingkup
+      // dijawab 404 TIM-NFD-014 supaya keberadaan hari orang lain tidak bocor.
+      const day = mockDays.find((item) => item.id === draft.attendanceDailyId);
+      if (!day) throw new Error('422 — hari yang dikoreksi tidak ditemukan.');
+      if (isSelfScoped(session) && day.employeeId !== session.employeeId) {
+        throw new Error('404 — hari tidak ditemukan atau di luar akses Anda.');
+      }
+      if (!withinCorrectionWindow(day.workDate)) {
+        throw new Error(`422 — hari itu lebih tua dari jendela koreksi ${CORRECTION_WINDOW_DAYS} hari.`);
       }
       if (draft.correctionReasonType === 'OTHER' && !draft.reasonNote.trim()) {
         throw new Error('422 — catatan alasan wajib diisi bila alasannya Other.');
