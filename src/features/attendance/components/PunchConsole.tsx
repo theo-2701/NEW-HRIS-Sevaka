@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Camera, Info, MapPin } from 'lucide-react';
+import { Camera, CircleCheck, Info, MapPin, MapPinOff, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { KeyValueList, KeyValueRow } from '@/features/time-off/components/TimeOffBits';
+import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
+import { distanceMeters, radiusVerdict } from '@/features/attendance/rules';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
 import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/attendance/types';
 import type { Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
@@ -295,9 +296,13 @@ function useSelfieCamera(active: boolean) {
  */
 function useDeviceLocation(open: boolean, fallback: TapLocation) {
   const pending = useRef<Promise<TapLocation | null>>(Promise.resolve(null));
+  /** Hasil yang sudah terbaca — hanya dipakai untuk peringatan di luar radius, tidak ditampilkan. */
+  const [resolved, setResolved] = useState<TapLocation | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setResolved(null);
+    let cancelled = false;
     pending.current = new Promise<TapLocation | null>((resolve) => {
       if (!navigator.geolocation) return resolve(null);
       navigator.geolocation.getCurrentPosition(
@@ -310,13 +315,32 @@ function useDeviceLocation(open: boolean, fallback: TapLocation) {
         () => resolve(null),
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
       );
-    }).then((location) =>
+    }).then((location) => {
       // ponytail: mode dummy tanpa izin lokasi memakai titik kantor supaya radius bisa diperagakan.
-      location ?? (MOCK ? { ...fallback, simulated: true } : null),
-    );
+      const final = location ?? (MOCK ? { ...fallback, simulated: true } : null);
+      if (!cancelled) setResolved(final);
+      return final;
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [open, fallback]);
 
-  return pending;
+  return { pending, resolved };
+}
+
+/** Jarak manusiawi: `85 m`, `2.4 km`. */
+function distanceLabel(meters: number) {
+  return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
+}
+
+/** Jarak tap ke titik kerja, atau `null` bila koordinat tidak ada. */
+function distanceFrom(geofence: Geofence, point: { latitude?: number | null; longitude?: number | null }) {
+  if (point.latitude == null || point.longitude == null) return null;
+  return distanceMeters(
+    { latitude: geofence.centerLatitude, longitude: geofence.centerLongitude },
+    { latitude: point.latitude, longitude: point.longitude },
+  );
 }
 
 /**
@@ -357,7 +381,7 @@ export function TapModal({
     () => ({ latitude: geofence.centerLatitude, longitude: geofence.centerLongitude, accuracyMeters: 10 }),
     [geofence.centerLatitude, geofence.centerLongitude],
   );
-  const location = useDeviceLocation(open, fallback);
+  const { pending: location, resolved } = useDeviceLocation(open, fallback);
 
   useEffect(() => {
     if (!open) return;
@@ -388,6 +412,11 @@ export function TapModal({
       location: coords,
     });
   };
+
+  // Peringatan dini: koordinat sudah terbaca dan tipe kerja ini memeriksa radius, tapi posisinya di luar.
+  const checked = isIn ? arrangement || null : inheritedArrangement;
+  const outside = Boolean(checked && radiusVerdict(geofence, checked, resolved) === false);
+  const away = resolved ? distanceFrom(geofence, resolved) : null;
 
   const describe = (value: WorkArrangement) => {
     if (!geofence.rules[value].radius) return "Location radius isn't checked.";
@@ -498,6 +527,14 @@ export function TapModal({
               )}
             </div>
 
+            {outside && (
+              <Note tone="warn" icon={<MapPinOff />}>
+                You&rsquo;re about <strong>{away != null ? distanceLabel(away) : 'far'}</strong> from {geofence.geofenceName},
+                outside the {geofence.radiusMeters} m radius. You can still {verb.toLowerCase()}, but the tap will be marked
+                outside radius.
+              </Note>
+            )}
+
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="tap-note">Note</Label>
               <Textarea
@@ -522,34 +559,83 @@ export function TapModal({
   );
 }
 
+type ReceiptState = 'ok' | 'outside' | 'unchecked';
+
+/** Keadaan tanda terima dari putusan radius tap + aturan titik kerja untuk tipe kerjanya. */
+function receiptState(punch: Punch, geofence: Geofence): ReceiptState {
+  if (punch.isWithinGeofence === false) return 'outside';
+  const radiusChecked = punch.workArrangement ? geofence.rules[punch.workArrangement]?.radius : false;
+  if (punch.isWithinGeofence === null && radiusChecked) return 'unchecked';
+  return 'ok';
+}
+
 /**
- * Tanda terima tap. Layar ini tidak memperlihatkan putusan hari —
- * perhitungan ulang ringkasan berjalan di luar transaksi tap.
+ * Tanda terima tap. Tap di luar radius tetap TERSIMPAN (UIC-TIME §6.1.1 — 201, recompute yang menilai),
+ * jadi modal ini wajib membedakan "berhasil" dari "tersimpan tapi di luar radius" sejak judulnya.
  */
-export function PunchSavedModal({ result, onClose }: { result: PunchResult | null; onClose: () => void }) {
+export function PunchSavedModal({
+  result,
+  geofence,
+  onClose,
+}: {
+  result: PunchResult | null;
+  geofence: Geofence;
+  onClose: () => void;
+}) {
   const punch = result?.punch;
+  const verb = punch?.punchType === 'OUT' ? 'Tapped out' : 'Tapped in';
+  const state = punch ? receiptState(punch, geofence) : 'ok';
+  const away = punch ? distanceFrom(geofence, punch) : null;
+  const time = punch ? hhmm(punch.punchAt) : '';
+
   return (
     <Modal
       open={Boolean(result)}
       onOpenChange={(next) => !next && onClose()}
-      title={punch?.punchType === 'OUT' ? 'Tapped out' : 'Tapped in'}
-      description={
-        result?.replayed ? 'This tap was already saved — nothing was recorded twice.' : 'Your tap has been saved.'
-      }
+      title={state === 'outside' ? `${verb} — outside radius` : verb}
+      description={result?.replayed ? 'This tap was already saved — nothing was recorded twice.' : undefined}
       footer={<Button onClick={onClose}>Done</Button>}
     >
       {punch && (
-        <KeyValueList>
-          <KeyValueRow label="Time">{hhmm(punch.punchAt)} WIB</KeyValueRow>
-          <KeyValueRow label="Work type">
-            {punch.workArrangement ? ARRANGEMENT_LABEL[punch.workArrangement] : '—'}
-          </KeyValueRow>
-          <KeyValueRow label="Radius">
-            <RadiusCell punch={punch} />
-          </KeyValueRow>
-          <KeyValueRow label="Selfie">{result.selfieRequired ? 'Captured' : 'Not required'}</KeyValueRow>
-          <KeyValueRow label="Note">{punch.note ?? '—'}</KeyValueRow>
-        </KeyValueList>
+        <div className="flex flex-col gap-4">
+          {state === 'ok' && (
+            <div className="flex items-start gap-3 rounded-md border border-success-200 bg-success-50 px-3.5 py-3 font-body text-[13px] font-medium leading-[1.5] text-success-800">
+              <CircleCheck className="mt-px size-5 shrink-0" />
+              <span>
+                <strong className="block text-sm font-bold">
+                  {punch.punchType === 'OUT' ? `You tapped out at ${time} WIB.` : `You're in. Tapped in at ${time} WIB.`}
+                </strong>
+                {punch.isWithinGeofence ? `Inside the ${geofence.radiusMeters} m radius of ${geofence.geofenceName}.` : 'No radius check for this work type.'}
+              </span>
+            </div>
+          )}
+          {state === 'outside' && (
+            <Note tone="warn" icon={<TriangleAlert />}>
+              <strong className="block text-sm font-bold">Saved, but outside the work radius.</strong>
+              Recorded {away != null ? <strong>{distanceLabel(away)}</strong> : 'away'} from {geofence.geofenceName}; the
+              allowed radius is {geofence.radiusMeters} m. The tap may not count as attendance for today. If you were on
+              site, file an attendance correction.
+            </Note>
+          )}
+          {state === 'unchecked' && (
+            <Note tone="info" icon={<MapPinOff />}>
+              <strong className="block text-sm font-bold">Saved, but the radius couldn&rsquo;t be checked.</strong>
+              Your location wasn&rsquo;t available, so HR may review this tap.
+            </Note>
+          )}
+
+          <KeyValueList>
+            <KeyValueRow label="Time">{time} WIB</KeyValueRow>
+            <KeyValueRow label="Work type">
+              {punch.workArrangement ? ARRANGEMENT_LABEL[punch.workArrangement] : '—'}
+            </KeyValueRow>
+            <KeyValueRow label="Radius">
+              <RadiusCell punch={punch} />
+            </KeyValueRow>
+            <KeyValueRow label="Selfie">{result.selfieRequired ? 'Captured' : 'Not required'}</KeyValueRow>
+            <KeyValueRow label="Note">{punch.note ?? '—'}</KeyValueRow>
+          </KeyValueList>
+        </div>
       )}
     </Modal>
   );

@@ -178,7 +178,7 @@ export function EssAttendancePage() {
           onClose={() => setTapKey(null)}
         />
       )}
-      <PunchSavedModal result={punchResult} onClose={() => setPunchResult(null)} />
+      <PunchSavedModal result={punchResult} geofence={geofence} onClose={() => setPunchResult(null)} />
     </PageShell>
   );
 }

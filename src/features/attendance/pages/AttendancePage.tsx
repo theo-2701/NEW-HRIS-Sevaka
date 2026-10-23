@@ -585,7 +585,7 @@ export function AttendancePage() {
         />
       )}
 
-      <PunchSavedModal result={punchResult} onClose={() => setPunchResult(null)} />
+      <PunchSavedModal result={punchResult} geofence={geofence} onClose={() => setPunchResult(null)} />
 
       <CorrectionFormModal open={filing} session={session} days={formDays} onClose={() => setFiling(false)} />
 

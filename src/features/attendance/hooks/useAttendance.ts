@@ -81,7 +81,12 @@ export function useRecordPunch(session: AttendanceSession) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (vars: TapInput) => attendanceService.recordPunch(session, vars),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: attendanceKeys.all }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      // ESS Attendance membaca tap hari ini lewat kunci `ess-time` — tanpa ini kartunya basi dan
+      // tombol masih "Tap in", sehingga tap berikutnya tercatat sebagai Tap out.
+      void queryClient.invalidateQueries({ queryKey: ['ess-time'] });
+    },
     onError: (error: Error) => toast(error.message, 'danger'),
   });
 }

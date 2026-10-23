@@ -24,6 +24,39 @@ function RadiusWarning() {
   );
 }
 
+/** Isi lintang/bujur dari posisi perangkat — HR menetapkan titik sambil berdiri di lokasinya. */
+function UseCurrentLocation() {
+  const { setFieldValue } = useFormikContext<GeofenceDraft>();
+  const [state, setState] = useState<'idle' | 'locating' | 'done' | 'failed'>('idle');
+
+  const locate = () => {
+    if (!navigator.geolocation) return setState('failed');
+    setState('locating');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        void setFieldValue('centerLatitude', Number(position.coords.latitude.toFixed(6)));
+        void setFieldValue('centerLongitude', Number(position.coords.longitude.toFixed(6)));
+        setState('done');
+      },
+      () => setState('failed'),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+    );
+  };
+
+  return (
+    <div className="-mt-2 flex flex-wrap items-center gap-3">
+      <Button type="button" variant="secondary" onClick={locate} disabled={state === 'locating'}>
+        {state === 'locating' ? 'Locating…' : 'Use my current location'}
+      </Button>
+      <span className="font-body text-xs font-medium text-fg-3">
+        {state === 'done' && 'Coordinates filled from this device. Save to apply.'}
+        {state === 'failed' && 'Location unavailable — allow location access in the browser, or type the coordinates.'}
+        {state === 'idle' && 'Stand at the work point, then fill the coordinates from this device.'}
+      </span>
+    </div>
+  );
+}
+
 const BRANCH_OPTIONS = BRANCHES.map((row) => ({ value: row.id, label: row.name }));
 
 const BLANK_RULES = ARRANGEMENTS.reduce(
@@ -235,6 +268,7 @@ export function GeofenceFormModal({
                 <TextField name="centerLatitude" type="number" step="0.000001" label="Latitude" required placeholder="-6.208763" />
                 <TextField name="centerLongitude" type="number" step="0.000001" label="Longitude" required placeholder="106.845599" />
               </div>
+              <UseCurrentLocation />
 
               <TextField
                 name="radiusMeters"

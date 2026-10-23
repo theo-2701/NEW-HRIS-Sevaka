@@ -62,6 +62,19 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     expect(result.punch.latitude).toBe(-5.1478);
   });
 
+  it('karyawan uji Dewi: tanpa selfie dan tanpa radius, tap WFO di mana pun tersimpan tanpa tanda luar radius', async () => {
+    const DEWI: AttendanceSession = { employeeId: 'emp-dewi', role: 'EMPLOYEE' };
+    const result = await attendanceService.recordPunch(DEWI, {
+      selfieCaptured: false,
+      idempotencyKey: 'dewi-in',
+      workArrangement: 'WFO',
+      location: { latitude: -6.2, longitude: 106.8, accuracyMeters: 15 },
+    });
+    expect(result.selfieRequired).toBe(false);
+    expect(result.punch.punchType).toBe('IN');
+    expect(result.punch.isWithinGeofence).toBeNull();
+  });
+
   it('WFH tidak memeriksa radius walau koordinat jauh', async () => {
     const result = await attendanceService.recordPunch(RINA, {
       selfieCaptured: true,
@@ -230,6 +243,6 @@ describe('Scope pemilik baris', () => {
   });
 
   it('identitas percobaan mengikuti dataset kontrak', () => {
-    expect(VIEWERS.map((row) => row.role)).toEqual(['EMPLOYEE', 'HR_STAFF', 'HR_MANAGER', 'DEPT_MANAGER']);
+    expect(VIEWERS.map((row) => row.role)).toEqual(['EMPLOYEE', 'HR_STAFF', 'HR_MANAGER', 'DEPT_MANAGER', 'EMPLOYEE']);
   });
 });

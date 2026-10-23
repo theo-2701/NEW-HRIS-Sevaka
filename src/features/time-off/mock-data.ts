@@ -26,6 +26,8 @@ export const EMPLOYEES: Employee[] = [
   { id: 'emp-hendra', name: 'Hendra Kusuma', unit: 'Finance', branch: 'br-1', role: 'HR Manager' },
   { id: 'emp-sari', name: 'Sari Kartika', unit: 'Operations', branch: 'br-1', role: 'Staff' },
   { id: 'emp-budi', name: 'Budi Santoso', unit: 'Operations', branch: 'br-4', role: 'Supervisor' },
+  // Karyawan uji Attendance: titik kerjanya tanpa radius dan tanpa selfie — tap selalu lolos.
+  { id: 'emp-dewi', name: 'Dewi Lestari', unit: 'Operations', branch: 'br-5', role: 'Staff' },
 ];
 
 /** Identitas yang bisa dipakai untuk mencoba layar — pengganti login sungguhan. */

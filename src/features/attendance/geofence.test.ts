@@ -137,6 +137,6 @@ describe('Work point — filter kontrak pencarian', () => {
   it('menyaring per status aktif', async () => {
     await geofenceService.toggleActive('geo-2');
     expect((await geofenceService.list({ isActive: false })).map((row) => row.id)).toEqual(['geo-2']);
-    expect((await geofenceService.list({ isActive: true })).map((row) => row.id)).toEqual(['geo-1', 'geo-3']);
+    expect((await geofenceService.list({ isActive: true })).map((row) => row.id)).toEqual(['geo-1', 'geo-3', 'geo-4']);
   });
 });

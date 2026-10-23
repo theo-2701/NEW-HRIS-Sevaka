@@ -24,6 +24,8 @@ export const VIEWERS: AttendanceSession[] = [
   { employeeId: 'emp-hendra', role: 'HR_MANAGER' },
   // Cabang Makassar (geo-3) tanpa selfie — memperlihatkan tap yang langsung ke langkah tipe kerja.
   { employeeId: 'emp-budi', role: 'DEPT_MANAGER' },
+  // Kantor Cabang Bandung (geo-4): tanpa radius dan tanpa selfie — jalur tap yang selalu berhasil.
+  { employeeId: 'emp-dewi', role: 'EMPLOYEE' },
 ];
 
 const ALL_ARRANGEMENTS = (rule: Record<WorkArrangement, { radius: boolean; selfie: boolean }>) => rule;
@@ -80,6 +82,23 @@ export const GEOFENCES: Geofence[] = [
       MOBILE: { radius: false, selfie: false },
     }),
   },
+  {
+    id: 'geo-4',
+    geofenceName: 'Kantor Cabang Bandung',
+    scopeRef: 'br-5',
+    centerLatitude: -6.9175,
+    centerLongitude: 107.6191,
+    radiusMeters: 100,
+    isActive: true,
+    usedByPunch: false,
+    // Setelan admin contoh: tanpa pemeriksaan radius dan tanpa selfie untuk semua tipe kerja.
+    rules: ALL_ARRANGEMENTS({
+      WFO: { radius: false, selfie: false },
+      HYBRID: { radius: false, selfie: false },
+      WFH: { radius: false, selfie: false },
+      MOBILE: { radius: false, selfie: false },
+    }),
+  },
 ];
 
 export const PUNCHES: Punch[] = [
@@ -127,6 +146,7 @@ export function employeeBranch(id: string): string {
 export const BRANCHES = [
   { id: 'br-1', name: 'Kantor Pusat Jakarta' },
   { id: 'br-4', name: 'Kantor Cabang Makassar' },
+  { id: 'br-5', name: 'Kantor Cabang Bandung' },
 ];
 
 export function branchName(id: string): string {
