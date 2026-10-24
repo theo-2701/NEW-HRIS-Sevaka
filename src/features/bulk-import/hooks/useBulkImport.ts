@@ -56,11 +56,11 @@ export const useUploadImport = () =>
 export const useApproveImport = () =>
   useImportMutation(
     ({ id, note }: { id: string; note: string }) => bulkImportService.approve(id, note),
-    'Batch disetujui. Baris valid sedang diproses.',
+    'Batch approved. The invitations are being sent.',
   );
 
 export const useCancelImport = () =>
   useImportMutation(
     ({ id, reason }: { id: string; reason: string }) => bulkImportService.cancel(id, reason),
-    'Batch dibatalkan. Baris tetap tersimpan untuk diperiksa.',
+    'Batch cancelled. No invitation was sent; the rows stay on record.',
   );

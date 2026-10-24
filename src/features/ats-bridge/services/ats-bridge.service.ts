@@ -176,6 +176,34 @@ function sendLink(target: Stored) {
   target.tokenExpiresAt = new Date(now.getTime() + DAY).toISOString();
 }
 
+/** Mode dummy: email yang masih menunggu kandidat atau sudah jadi karyawan tidak diundang ulang lewat impor. */
+export function atsEmailTaken(email: string): boolean {
+  return store.some(
+    (item) => item.candidateEmail === email.toLowerCase() && (item.atsStatus === 'WAITING_CANDIDATE' || item.atsStatus === 'USED'),
+  );
+}
+
+/**
+ * Mode dummy: persetujuan Bulk Import mengirim magic link user consent ke tiap email yang lolos periksa
+ * dan melahirkan satu baris ATS `source=BULK_IMPORT` (FSD-001-EMPLOYEE 0.46 §8).
+ */
+export function inviteFromImport(email: string, requestor: { id: string; name: string; nik: string }): string {
+  const created = row({
+    id: `ats-${String(store.length + 10).padStart(2, '0')}`,
+    source: 'BULK_IMPORT',
+    atsStatus: 'WAITING_CANDIDATE',
+    candidateEmail: email.toLowerCase(),
+    requestorEmployeeId: requestor.id,
+    requestorName: requestor.name,
+    requestorNik: requestor.nik,
+    createdAt: new Date().toISOString(),
+    linkSendCount: 0,
+  });
+  sendLink(created);
+  store = [created, ...store];
+  return created.id;
+}
+
 /** Pratinjau tautan kandidat (mode dummy) — di produksi tautan hanya ada di email kandidat. */
 export function previewLink(id: string, companyCode = 'DIKA'): string | null {
   const found = store.find((item) => item.id === id);

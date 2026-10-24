@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Info, ShieldAlert } from 'lucide-react';
+import { Info, MailCheck, ShieldAlert } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { MultiSelect } from '@/components/MultiSelect';
@@ -18,6 +19,7 @@ import {
 } from '@/features/bulk-import/hooks/useBulkImport';
 import {
   IMPORT_STATUS_LABEL,
+  IMPORT_STATUS_MEANING,
   MAX_ROWS,
   ROW_STATE_LABEL,
   type ImportBatch,
@@ -53,12 +55,12 @@ function RowsTable({ batch, states }: { batch: ImportBatch; states: RowState[] }
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <span className="font-body text-sm font-semibold text-fg-1">Nasib per baris</span>
+        <span className="font-body text-sm font-semibold text-fg-1">Result per row</span>
         <MultiSelect<RowState>
           className="w-[220px]"
           value={filter}
           onChange={setFilter}
-          placeholder="Semua status baris"
+          placeholder="All row results"
           options={states.map((value) => ({ value, label: ROW_STATE_LABEL[value] }))}
         />
       </div>
@@ -66,18 +68,16 @@ function RowsTable({ batch, states }: { batch: ImportBatch; states: RowState[] }
         rows={rows}
         rowKey={(row) => String(row.row)}
         loading={isLoading}
-        empty={batch.importStatus === 'REJECTED_FILE' ? 'Berkas ditolak, tidak ada baris yang disimpan.' : 'Tidak ada baris.'}
+        empty={batch.importStatus === 'REJECTED_FILE' ? 'The file was rejected, so no rows were saved.' : 'No rows.'}
         columns={[
-          { key: 'row', header: 'Baris', align: 'center', render: (row) => row.row },
-          { key: 'nama', header: 'Nama', strong: true, render: (row) => row.nama || '—' },
-          { key: 'id', header: 'Nomor identitas', muted: true, render: (row) => row.nomorIdentitas || '—' },
-          { key: 'emp', header: 'Employee ID', muted: true, nowrap: true, render: (row) => row.employeeId ?? '—' },
+          { key: 'row', header: 'Row', align: 'center', render: (row) => row.row },
+          { key: 'email', header: 'Email', strong: true, render: (row) => row.email || '—' },
           {
             key: 'state',
-            header: 'Status baris',
+            header: 'Result',
             render: (row) => <StatusBadge tone={ROW_TONE[row.rowState]}>{ROW_STATE_LABEL[row.rowState]}</StatusBadge>,
           },
-          { key: 'msg', header: 'Pesan', render: (row) => row.message ?? '—' },
+          { key: 'msg', header: 'Message', render: (row) => row.message ?? '—' },
         ]}
       />
     </div>
@@ -118,37 +118,47 @@ export function UploadModal({ open, onClose }: { open: boolean; onClose: () => v
     <Modal
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title="Unggah berkas baru"
-      description="Berkas diperiksa di latar. Pantau hasilnya di riwayat impor."
+      title={ticket ? 'File received' : 'Upload Employee File'}
+      description={
+        ticket
+          ? undefined
+          : 'Upload a CSV file with one column: the email address of each candidate. The file is checked first; no invitation is sent yet.'
+      }
       footer={
         ticket ? (
-          <Button onClick={onClose}>Kembali ke riwayat impor</Button>
+          <Button onClick={onClose}>Back to Import History</Button>
         ) : (
           <>
             <Button variant="secondary" onClick={onClose}>
-              Batal
+              Cancel
             </Button>
             <Button disabled={!file || upload.isPending} onClick={submit}>
-              {upload.isPending ? 'Mengunggah…' : 'Unggah & periksa'}
+              {upload.isPending ? 'Uploading…' : 'Upload & Check'}
             </Button>
           </>
         )
       }
     >
       {ticket ? (
-        <KeyValueList>
-          <KeyValueRow label="ID batch">{ticket.id}</KeyValueRow>
-          <KeyValueRow label="Nama berkas">{ticket.fileName}</KeyValueRow>
-          <KeyValueRow label="Status">
-            <ImportStatusBadge status={ticket.importStatus} />
-          </KeyValueRow>
-          <KeyValueRow label="Total baris">{ticket.totalRows}</KeyValueRow>
-        </KeyValueList>
+        <div className="flex flex-col gap-4">
+          <KeyValueList>
+            <KeyValueRow label="Batch ID">{ticket.id}</KeyValueRow>
+            <KeyValueRow label="File name">{ticket.fileName}</KeyValueRow>
+            <KeyValueRow label="Status">
+              <ImportStatusBadge status={ticket.importStatus} />
+            </KeyValueRow>
+            <KeyValueRow label="Rows">{ticket.totalRows}</KeyValueRow>
+          </KeyValueList>
+          <Note icon={<MailCheck />}>
+            <strong>No invitation has been sent yet.</strong> The rows are being checked now. Someone other than you must
+            review and approve the batch; only then does each candidate receive an email to fill in their own data.
+          </Note>
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <Label htmlFor="bi-file">
-              Berkas CSV<em>*</em>
+              CSV file<em>*</em>
             </Label>
             <input
               key={file ? 'filled' : 'empty'}
@@ -160,8 +170,9 @@ export function UploadModal({ open, onClose }: { open: boolean; onClose: () => v
             />
           </div>
           <Note icon={<Info />}>
-            CSV polos saja, maksimal {MAX_ROWS.toLocaleString('id-ID')} baris dan 5 MB, 17 kolom sesuai templat.
-            Kolom ptkp_code yang kosong diisi TK/0 dan ditandai.
+            Plain-text CSV only, at most {MAX_ROWS.toLocaleString('en-US')} data rows and 5 MB. The single heading must be{' '}
+            <code className="font-mono text-xs">email</code>, one candidate per row. Candidates fill in the rest of their
+            details themselves. Your file is not stored after it is checked.
           </Note>
         </div>
       )}
@@ -179,10 +190,10 @@ export function DetailModal({ id, onClose }: { id: string | null; onClose: () =>
       open={Boolean(id)}
       onOpenChange={(next) => !next && onClose()}
       size="wide"
-      title="Detail batch impor"
+      title="Import batch detail"
       footer={
         <Button variant="secondary" onClick={onClose}>
-          Tutup
+          Close
         </Button>
       }
     >
@@ -192,35 +203,36 @@ export function DetailModal({ id, onClose }: { id: string | null; onClose: () =>
             <KeyValueRow label="Status">
               <ImportStatusBadge status={batch.importStatus} />
             </KeyValueRow>
-            <KeyValueRow label="ID batch">{batch.id}</KeyValueRow>
-            <KeyValueRow label="Nama berkas">{batch.fileName}</KeyValueRow>
-            <KeyValueRow label="Diajukan">
+            <KeyValueRow label="Batch ID">{batch.id}</KeyValueRow>
+            <KeyValueRow label="File name">{batch.fileName}</KeyValueRow>
+            <KeyValueRow label="Submitted">
               {batch.submittedBy} · {formatDateTime(batch.submittedAt)}
             </KeyValueRow>
-            <KeyValueRow label="Disetujui">
+            <KeyValueRow label="Approved">
               {batch.approvedBy ? `${batch.approvedBy} · ${formatDateTime(batch.approvedAt!)}` : '—'}
             </KeyValueRow>
-            <KeyValueRow label="Total / sukses / gagal">
+            <KeyValueRow label="Total / invited / failed">
               {batch.totalRows} / {batch.successCount} / {batch.failedCount}
-              {!terminal && ' (belum tuntas)'}
+              {!terminal && ' (not final yet)'}
             </KeyValueRow>
-            <KeyValueRow label="PTKP default diisi">{batch.seededPtkpDefaultCount}</KeyValueRow>
             <KeyValueRow label="Selection hash">
               <code className="break-all font-mono text-xs">{batch.selectionHash ?? '—'}</code>
             </KeyValueRow>
           </KeyValueList>
           <RowsTable batch={batch} states={['VALID', 'INVALID', 'IMPORTED', 'FAILED']} />
+          <Note icon={<Info />}>Invited candidates appear in Manpower Planning › ATS Bridge.</Note>
         </div>
       )}
     </Modal>
   );
 }
 
-/** BI-REVIEW — checker meninjau pratinjau VALID/INVALID lalu Setujui atau Batalkan. */
+/** BI-REVIEW — checker meninjau pratinjau Passed/Failed Check lalu Approve atau Cancel. */
 export function ReviewModal({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { data: batch } = useImportBatch(id);
   const [note, setNote] = useState('');
   const [reason, setReason] = useState('');
+  const [confirming, setConfirming] = useState(false);
   const approve = useApproveImport();
   const cancel = useCancelImport();
 
@@ -235,74 +247,122 @@ export function ReviewModal({ id, onClose }: { id: string | null; onClose: () =>
   const valid = batch ? batch.totalRows - batch.failedCount : 0;
 
   return (
+    <>
+      <Modal
+        open={Boolean(id)}
+        onOpenChange={(next) => !next && onClose()}
+        size="wide"
+        title="Review & Decide"
+        description="Check how many candidates will be invited and how many rows are left out before you decide."
+        footer={
+          decidable ? (
+            <>
+              <Button
+                variant="danger"
+                disabled={!reason.trim() || pending}
+                onClick={() => cancel.mutate({ id: batch.id, reason: reason.trim() }, { onSuccess: onClose })}
+              >
+                Cancel Batch
+              </Button>
+              <Button disabled={pending} onClick={() => setConfirming(true)}>
+                Approve & Send Invitations
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
+          )
+        }
+      >
+        {batch && (
+          <div className="flex flex-col gap-4">
+            <Note tone={decidable ? 'warn' : 'info'} icon={<ShieldAlert />}>
+              {decidable
+                ? `${valid} candidate${valid === 1 ? '' : 's'} will be invited, ${batch.failedCount} row${batch.failedCount === 1 ? '' : 's'} left out. Someone other than the uploader must approve.`
+                : `This batch is ${IMPORT_STATUS_LABEL[batch.importStatus].toLowerCase()} and can no longer be decided. ${IMPORT_STATUS_MEANING[batch.importStatus]}`}
+            </Note>
+            <KeyValueList>
+              <KeyValueRow label="Batch ID">{batch.id}</KeyValueRow>
+              <KeyValueRow label="File name">{batch.fileName}</KeyValueRow>
+              <KeyValueRow label="Submitted">
+                {batch.submittedBy} · {formatDateTime(batch.submittedAt)}
+              </KeyValueRow>
+              <KeyValueRow label="Rows">{batch.totalRows}</KeyValueRow>
+            </KeyValueList>
+            <RowsTable batch={batch} states={['VALID', 'INVALID']} />
+            {decidable && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="bi-note">Approval note</Label>
+                  <Textarea id="bi-note" rows={2} value={note} placeholder="Optional" onChange={(event) => setNote(event.target.value)} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="bi-reason">
+                    Cancellation reason<em>*</em>
+                  </Label>
+                  <Textarea
+                    id="bi-reason"
+                    rows={2}
+                    value={reason}
+                    placeholder="Required to cancel"
+                    onChange={(event) => setReason(event.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={confirming}
+        title="Approve and send the invitations?"
+        description="An invitation email will be sent now to every candidate whose row passed the check. Once sent, the batch cannot be cancelled."
+        confirmLabel="Approve & Send"
+        tone="primary"
+        loading={approve.isPending}
+        onConfirm={() =>
+          batch &&
+          approve.mutate(
+            { id: batch.id, note: note.trim() },
+            {
+              onSuccess: () => {
+                setConfirming(false);
+                onClose();
+              },
+              onError: () => setConfirming(false),
+            },
+          )
+        }
+        onOpenChange={setConfirming}
+      />
+    </>
+  );
+}
+
+/** Arti tiap status impor — dibuka dari ikon ⓘ di header kolom Status. */
+export function ImportStatusReference({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
     <Modal
-      open={Boolean(id)}
+      open={open}
       onOpenChange={(next) => !next && onClose()}
+      title="Import statuses"
       size="wide"
-      title="Tinjau & putuskan"
-      description="Periksa berapa baris yang akan diproses dan berapa yang dikeluarkan sebelum memutuskan."
       footer={
-        decidable ? (
-          <>
-            <Button
-              variant="danger"
-              disabled={!reason.trim() || pending}
-              onClick={() => cancel.mutate({ id: batch.id, reason: reason.trim() }, { onSuccess: onClose })}
-            >
-              Batalkan batch
-            </Button>
-            <Button
-              disabled={pending}
-              onClick={() => approve.mutate({ id: batch.id, note: note.trim() }, { onSuccess: onClose })}
-            >
-              {approve.isPending ? 'Memproses…' : 'Setujui & jalankan'}
-            </Button>
-          </>
-        ) : (
-          <Button variant="secondary" onClick={onClose}>
-            Tutup
-          </Button>
-        )
+        <Button variant="secondary" onClick={onClose}>
+          Close
+        </Button>
       }
     >
-      {batch && (
-        <div className="flex flex-col gap-4">
-          <Note tone={decidable ? 'warn' : 'info'} icon={<ShieldAlert />}>
-            {decidable
-              ? `${valid} baris valid akan diproses, ${batch.failedCount} baris tidak valid dikeluarkan. Persetujuan wajib oleh checker selain pengunggah.`
-              : `Batch ini sudah ${IMPORT_STATUS_LABEL[batch.importStatus].toLowerCase()} dan tidak dapat diputuskan lagi.`}
-          </Note>
-          <KeyValueList>
-            <KeyValueRow label="ID batch">{batch.id}</KeyValueRow>
-            <KeyValueRow label="Nama berkas">{batch.fileName}</KeyValueRow>
-            <KeyValueRow label="Diajukan">
-              {batch.submittedBy} · {formatDateTime(batch.submittedAt)}
-            </KeyValueRow>
-            <KeyValueRow label="Total baris">{batch.totalRows}</KeyValueRow>
-          </KeyValueList>
-          <RowsTable batch={batch} states={['VALID', 'INVALID']} />
-          {decidable && (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="bi-note">Catatan persetujuan</Label>
-                <Textarea id="bi-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="bi-reason">
-                  Alasan pembatalan<em>*</em>
-                </Label>
-                <Textarea
-                  id="bi-reason"
-                  rows={2}
-                  value={reason}
-                  placeholder="Wajib diisi bila membatalkan"
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <DataTable<{ status: ImportStatus }>
+        rows={(Object.keys(IMPORT_STATUS_LABEL) as ImportStatus[]).map((status) => ({ status }))}
+        rowKey={(row) => row.status}
+        columns={[
+          { key: 'status', header: 'Status', nowrap: true, render: (row) => <ImportStatusBadge status={row.status} /> },
+          { key: 'meaning', header: 'Meaning', render: (row) => IMPORT_STATUS_MEANING[row.status] },
+        ]}
+      />
     </Modal>
   );
 }
