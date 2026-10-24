@@ -144,6 +144,8 @@ export const NAV: NavSection[] = [
           { label: 'Overview', path: '/employees/manpower/planning', source: 'manpower-requisition.html', status: 'done' },
           { label: 'Planning History', path: '/employees/manpower/history', source: 'manpower-requisition.html', status: 'done' },
           { label: 'Requisition', path: '/employees/manpower/requisition', source: 'manpower-requisition.html', status: 'done' },
+          // FSD-001-EMPLOYEE 0.46 §4A (disetujui Theo, 24 Okt 2026).
+          { label: 'ATS Bridge', path: '/employees/manpower/ats-bridge', source: 'FSD-001-EMPLOYEE §4A', status: 'done' },
         ],
       },
       // `add-employee.html` sengaja TIDAK punya baris menu di prototype; layarnya

@@ -86,6 +86,8 @@ import { PtkpAdjustmentPage } from '@/features/ptkp/pages/PtkpAdjustmentPage';
 import { MassResignationPage } from '@/features/mass-resignation/pages/MassResignationPage';
 import { BulkImportPage } from '@/features/bulk-import/pages/BulkImportPage';
 import { BulkActivationPage } from '@/features/bulk-activation/pages/BulkActivationPage';
+import { AtsBridgePage } from '@/features/ats-bridge/pages/AtsBridgePage';
+import { CandidatePortalPage } from '@/features/ats-bridge/pages/CandidatePortalPage';
 import { TransitionsPage } from '@/features/transitions/pages/TransitionsPage';
 import { TransitionDetailPage } from '@/features/transitions/pages/TransitionDetailPage';
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
@@ -132,6 +134,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/manpower/planning', element: <ManpowerPlanningPage /> },
   { path: 'employees/manpower/history', element: <ManpowerPlanningPage history /> },
   { path: 'employees/manpower/requisition', element: <ManpowerRequisitionPage /> },
+  { path: 'employees/manpower/ats-bridge', element: <AtsBridgePage /> },
   { path: 'employees/reprimand', element: <ReprimandPage /> },
   { path: 'employees/reprimand/type-setting', element: <ReprimandTypeSettingPage /> },
   { path: 'time/time-off/requests', element: <TimeOffRequestPage /> },
@@ -395,5 +398,7 @@ export const routes: RouteObject[] = [
   /* Verifikasi surat publik — tanpa login dan memang tanpa baris menu (DOC-80). */
   { path: '/verify', element: <PublicVerifyPage /> },
   { path: '/verify/:code', element: <PublicVerifyPage /> },
+  /* Portal kandidat publik — tanpa login, tanpa sidebar (FSD-001-EMPLOYEE §4B). */
+  { path: '/candidate/:companyCode', element: <CandidatePortalPage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ];
