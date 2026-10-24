@@ -951,3 +951,20 @@ penyusunan approver oleh time-service, tanda tangan pesan, swafoto via document-
 koreksi untuk unitnya) tidak punya identitas percobaan DM di layar Calendar/Attendance. UIC-TIME §6.3.1 masih menulis scope
 create = HR_STAFF · EMPLOYEE, sedangkan TSD 0.83 menguji DM `201` — selisih dokumen, dicatat. Dialog galat Error code +
 Trace ID (`LNT-2610141244` T16) lintas modul dan tidak muncul di mode dummy (tanpa amplop galat backend).
+
+## 35. Employee — menu baru dari DEV dicek ke FSD-001-EMPLOYEE 0.46 / UIC 0.57 / TSD 0.138 (24 Oktober 2026)
+
+Pemicu: tangkapan layar DEV (Employee Directory) memuat menu yang belum ada di repo. Dibangun hanya yang
+ADA di dokumen (keputusan Theo):
+
+| Menu | Kontrak | Repo |
+| :--- | :--- | :--- |
+| Employee Directory › Bulk Account Activation | FSD §9, kontrak TSD-AUTH | `src/features/bulk-activation` · `/employees/bulk-account-activation` |
+| Manpower Planning › ATS Bridge | FSD §4A, UIC §4A, TSD §7.4.12 | `src/features/ats-bridge` · `/employees/manpower/ats-bridge` |
+| Portal kandidat publik | FSD §4B, UIC §4B, TSD §7.4.10–11 | `/candidate/:companyCode` (tanpa login, tanpa sidebar) |
+| My Transition Tasks | aksi UIC §5.3 + TSD §7.6.4; **tanpa** alamat daftar "task milik saya" (GAP) | `/employees/my-transition-tasks` |
+
+**Tidak dibangun — belum ada di dokumen (DEV mendahului dokumen):** Email Domain, Role Grant Rules, Work Status
+(dokumen hanya punya `GET /employee/work-statuses/lookup` UIC §8D), Temporary Assignment (TSD menyebutnya ditunda).
+**Belum disusul:** Bulk Import kini email-saja (TSD 0.138 T11) dan New Joiner ber-sumber kandidat (Invite by email / From ATS,
+status Waiting for Candidate) — layar lokal masih versi sebelumnya.

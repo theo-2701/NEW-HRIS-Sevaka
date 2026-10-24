@@ -157,6 +157,14 @@ export const NAV: NavSection[] = [
         source: 'new-joiner.html',
         status: 'done',
       },
+      // Task transisi milik PIC lintas transisi (disetujui Theo, 24 Okt 2026; aksi = UIC-EMPLOYEE §5.3).
+      {
+        label: 'My Transition Tasks',
+        icon: 'list-checks',
+        path: '/employees/my-transition-tasks',
+        source: 'UIC-001-EMPLOYEE §5.3',
+        status: 'done',
+      },
       {
         label: 'Onboarding',
         icon: 'user-check',

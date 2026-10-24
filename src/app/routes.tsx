@@ -88,6 +88,7 @@ import { BulkImportPage } from '@/features/bulk-import/pages/BulkImportPage';
 import { BulkActivationPage } from '@/features/bulk-activation/pages/BulkActivationPage';
 import { AtsBridgePage } from '@/features/ats-bridge/pages/AtsBridgePage';
 import { CandidatePortalPage } from '@/features/ats-bridge/pages/CandidatePortalPage';
+import { MyTransitionTasksPage } from '@/features/transitions/pages/MyTransitionTasksPage';
 import { TransitionsPage } from '@/features/transitions/pages/TransitionsPage';
 import { TransitionDetailPage } from '@/features/transitions/pages/TransitionDetailPage';
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
@@ -127,6 +128,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/new-joiner/add', element: <AddEmployeePage /> },
   { path: 'employees/transfer', element: <TransitionsPage /> },
   { path: 'employees/transfer/dashboard', element: <TransitionDetailPage /> },
+  { path: 'employees/my-transition-tasks', element: <MyTransitionTasksPage /> },
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/bulk-import', element: <BulkImportPage /> },
   { path: 'employees/bulk-account-activation', element: <BulkActivationPage /> },
