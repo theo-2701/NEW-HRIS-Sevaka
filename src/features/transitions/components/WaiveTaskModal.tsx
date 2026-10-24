@@ -57,7 +57,7 @@ export function WaiveTaskModal({
             title="Waive task"
             description={
               task
-                ? `Mem-waive "${task.name}" menandainya WAIVED sehingga berhenti memblokir transisi. Tercatat di audit log dengan identitas Anda.`
+                ? `Waiving "${task.name}" marks it Waived so it no longer holds the transition. It is recorded in the audit log with your name.`
                 : ''
             }
             footer={
@@ -66,7 +66,7 @@ export function WaiveTaskModal({
                   Cancel
                 </Button>
                 <Button onClick={submitForm} disabled={waive.isPending}>
-                  {waive.isPending ? 'Memproses…' : 'Waive task'}
+                  {waive.isPending ? 'Waiving…' : 'Waive Task'}
                 </Button>
               </>
             }
@@ -74,9 +74,9 @@ export function WaiveTaskModal({
             <Form className="flex flex-col gap-4">
               <FormField
                 name="control"
-                label="Kelas kontrol"
+                label="Control class"
                 required
-                hint="Elevated wajib untuk task yang clearance-blocking."
+                hint="Elevated is required for clearance-blocking tasks."
               >
                 <RadioBranch<Control>
                   name="waive-control"
@@ -91,11 +91,11 @@ export function WaiveTaskModal({
 
               <TextAreaField
                 name="reason"
-                label="Alasan waive"
+                label="Reason"
                 required
                 rows={2}
                 maxLength={150}
-                placeholder="Kenapa task ini di-waive?"
+                placeholder="Why is this task waived?"
               />
             </Form>
           </Modal>

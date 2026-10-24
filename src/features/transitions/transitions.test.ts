@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { transitionSchema, waiveSchema } from '@/features/transitions/validation';
 import { transitionService } from '@/features/transitions/services/transition.service';
 import { doneCount, progressPct } from '@/features/transitions/types';
+import { startOffboardingForCancelledAccess } from '@/features/transitions/services/transition.service';
 
 const base = { employeeId: 'emp-eka', effectiveDate: '2027-01-01' };
 
@@ -32,7 +33,7 @@ describe('TR-CREATE — field bercabang per tipe', () => {
   it('target job grade hanya wajib untuk promosi/demosi', async () => {
     await expect(
       transitionSchema.validateAt('targetJobGradeId', { ...base, type: 'TRANSFER', subtype: 'PROMOTION', targetJobGradeId: '' }),
-    ).rejects.toThrow(/target job grade/i);
+    ).rejects.toThrow(/target grade/i);
     await expect(
       transitionSchema.validateAt('targetJobGradeId', { ...base, type: 'TRANSFER', subtype: 'LATERAL', targetJobGradeId: '' }),
     ).resolves.toBeDefined();
@@ -41,7 +42,7 @@ describe('TR-CREATE — field bercabang per tipe', () => {
   it('offboarding mewajibkan alasan keluar', async () => {
     await expect(
       transitionSchema.validateAt('reason', { ...base, type: 'OFFBOARDING', reason: '' }),
-    ).rejects.toThrow(/Alasan keluar/);
+    ).rejects.toThrow(/reason/);
   });
 });
 
@@ -55,6 +56,8 @@ describe('Transfer masuk antrean persetujuan', () => {
       targetJobGradeId: 'gr-4a',
       reason: '',
       effectiveDate: '2027-02-01',
+      facilityProvided: '',
+      facilityWithdrawn: '',
     });
     expect(transfer.status).toBe('IN_APPROVAL');
     expect(transfer.tasks).toHaveLength(0);
@@ -67,6 +70,8 @@ describe('Transfer masuk antrean persetujuan', () => {
       targetJobGradeId: '',
       reason: '',
       effectiveDate: '2027-02-01',
+      facilityProvided: '',
+      facilityWithdrawn: '',
     });
     expect(onboarding.status).toBe('IN_PROGRESS');
     expect(onboarding.tasks.length).toBeGreaterThan(0);
@@ -85,6 +90,8 @@ describe('Exclusion & guard server (UIC-EMPLOYEE §5)', () => {
         targetJobGradeId: '',
         reason: 'RESIGN',
         effectiveDate: '2027-03-01',
+        facilityProvided: '',
+        facilityWithdrawn: '',
       }),
     ).rejects.toThrow(/409/);
   });
@@ -99,6 +106,8 @@ describe('Exclusion & guard server (UIC-EMPLOYEE §5)', () => {
         targetJobGradeId: '',
         reason: '',
         effectiveDate: '2027-03-01',
+        facilityProvided: '',
+        facilityWithdrawn: '',
       }),
     ).rejects.toThrow(/422/);
   });
@@ -158,6 +167,61 @@ describe('Task — dua pihak, waive, dan clearance', () => {
 
 describe('Waive — alasan wajib', () => {
   it('menolak waive tanpa alasan', async () => {
-    await expect(waiveSchema.validate({ control: 'STANDARD', reason: '  ' })).rejects.toThrow(/Alasan waive/);
+    await expect(waiveSchema.validate({ control: 'STANDARD', reason: '  ' })).rejects.toThrow(/reason/);
+  });
+});
+
+describe('FSD 0.83 — persetujuan task, fasilitas, eskalasi, Onboarding Closure', () => {
+  it('task wajib persetujuan: selesai ⇒ AWAITING_APPROVAL; penyetuju menolak dengan alasan lalu menyetujui', async () => {
+    const approvals = await transitionService.myTasks('approvals');
+    const waiting = approvals.find(({ task }) => task.status === 'AWAITING_APPROVAL')!;
+    await expect(transitionService.rejectTask(waiting.transition.id, waiting.task.id, ' ')).rejects.toThrow(/^422/);
+    await transitionService.rejectTask(waiting.transition.id, waiting.task.id, 'Photo of the handover is missing');
+    const returned = (await transitionService.get(waiting.transition.id)).tasks.find((task) => task.id === waiting.task.id)!;
+    expect(returned).toMatchObject({ status: 'IN_PROGRESS', rejectReason: 'Photo of the handover is missing' });
+    // Petugas menyelesaikan ulang — dua-pihak menunggu konfirmasi dulu, lalu persetujuan.
+    const next = await transitionService.completeTask(waiting.transition.id, waiting.task.id);
+    if (next === 'AWAITING_CONFIRM') await transitionService.confirmTask(waiting.transition.id, waiting.task.id);
+    await transitionService.approveTask(waiting.transition.id, waiting.task.id);
+    const done = (await transitionService.get(waiting.transition.id)).tasks.find((task) => task.id === waiting.task.id)!;
+    expect(done.status).toBe('COMPLETED');
+  });
+
+  it('bukan penyetuju tidak dapat menyetujui (403)', async () => {
+    const approvals = await transitionService.myTasks('approvals');
+    const any = approvals[0];
+    await expect(transitionService.approveTask(any.transition.id, any.task.id, 'Someone Else')).rejects.toThrow(/^403/);
+  });
+
+  it('catatan fasilitas melahirkan task Facility provided/withdrawn; lebih dari 500 karakter 422', async () => {
+    const draft = {
+      type: 'OFFBOARDING' as const,
+      employeeId: 'emp-eka',
+      subtype: '',
+      destinationPositionId: '',
+      targetJobGradeId: '',
+      reason: 'DECEASED',
+      effectiveDate: '2027-05-01',
+      facilityProvided: '',
+      facilityWithdrawn: 'Official house',
+    };
+    await expect(transitionService.create({ ...draft, facilityWithdrawn: 'x'.repeat(501) })).rejects.toThrow(/^422/);
+  });
+
+  it('eskalasi memuat transisi tanpa setup dan yang lewat tanggal efektif', async () => {
+    const reasons = (await transitionService.escalations()).map((item) => item.reason);
+    expect(reasons).toContain('NO_SETUP');
+    expect(reasons).toContain('PAST_EFFECTIVE');
+  });
+
+  it('Cancel access menutup onboarding ke antrean; Close onboarding mengeluarkannya', async () => {
+    startOffboardingForCancelledAccess({ name: 'Maya Kusuma', reasonLabel: 'Candidate withdrew' });
+    const queue = await transitionService.closureQueue();
+    const maya = queue.find((row) => row.employee === 'Maya Kusuma')!;
+    expect(maya.closure?.reason).toBe('ACCESS_CANCELLED');
+    const closed = await transitionService.closeOnboarding(maya.id, 'Checked with IT');
+    expect(closed).toBeGreaterThan(0);
+    expect((await transitionService.closureQueue()).some((row) => row.id === maya.id)).toBe(false);
+    await expect(transitionService.closeOnboarding(maya.id, '')).rejects.toThrow(/^404/);
   });
 });

@@ -5,33 +5,40 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
+import { TextAreaField } from '@/components/form/TextAreaField';
+import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
 import { Note } from '@/features/transitions/components/TransitionBits';
 import { useCreateTransition } from '@/features/transitions/hooks/useTransitions';
 import { transitionSchema } from '@/features/transitions/validation';
 import {
+  CREATE_KIND_LABEL,
   DESTINATION_OPTIONS,
   EMPLOYEE_OPTIONS,
   FLOW_NOTE,
   GRADE_REQUIRED_SUBTYPES,
+  MUTATION_SUBTYPES,
   REASON_OPTIONS,
-  SUBTYPE_OPTIONS,
+  SUBTYPE_LABEL,
   TARGET_GRADE_OPTIONS,
-  TYPE_LABEL,
 } from '@/features/transitions/types';
-import type { TransitionDraft, TransitionType } from '@/features/transitions/types';
-import { EmployeeSelectField } from '@/components/form/EmployeeSelectField';
+import type { CreateKind, TransitionDraft } from '@/features/transitions/types';
 import { createLocalEmployeeSource, fromLabelOptions } from '@/lib/employeeSource';
 
 const EMPLOYEE_SOURCE = createLocalEmployeeSource('transitions', fromLabelOptions(EMPLOYEE_OPTIONS));
 
-const DESCRIPTION: Record<TransitionType, string> = {
-  ONBOARDING: 'Menyiapkan akses dan aset untuk karyawan baru.',
-  TRANSFER: 'Perpindahan dua sisi — unit asal melepas, unit tujuan menyiapkan.',
-  OFFBOARDING: 'Berbasis notice period, kecuali diberhentikan dengan sebab.',
+const DESCRIPTION: Record<CreateKind, string> = {
+  OFFBOARDING: 'The employee leaves the company. Notice-period reasons keep pay until the leave date.',
+  MUTATION: 'The employee moves to another position without a grade change. The old unit hands over, the new unit prepares.',
+  PROMOTION: 'The employee moves up a grade, with or without a new position.',
+  DEMOTION: 'The employee moves down a grade, with or without a new position.',
 };
 
-/** Blok khusus TRANSFER — target job grade hanya muncul untuk promosi/demosi. */
-function TransferBlock() {
+const FACILITY_PROVIDED_HINT =
+  'Optional. Facilities given in the new position, for example an official car. Visible only to the task handlers, approvers and HR.';
+const FACILITY_WITHDRAWN_HINT = 'Optional. Facilities taken back from the old position, for example an official house.';
+
+/** Blok TRANSFER — sub-tipe hanya dipilih pada Mutation; golongan tujuan hanya Promotion/Demotion. */
+function TransferBlock({ kind }: { kind: CreateKind }) {
   const { values, setFieldValue } = useFormikContext<TransitionDraft>();
   const gradeNeeded = GRADE_REQUIRED_SUBTYPES.includes(values.subtype);
 
@@ -42,69 +49,79 @@ function TransferBlock() {
 
   return (
     <div className="grid gap-4 rounded-[10px] border border-dashed border-fog bg-mist p-4 md:grid-cols-2">
-      <SelectField name="subtype" label="Sub-tipe" required placeholder="Pilih sub-tipe" options={SUBTYPE_OPTIONS} />
+      {kind === 'MUTATION' && (
+        <SelectField
+          name="subtype"
+          label="Sub-type"
+          required
+          placeholder="Select a sub-type"
+          options={MUTATION_SUBTYPES.map((value) => ({ value, label: SUBTYPE_LABEL[value] }))}
+          hint="Determines the approval level required."
+        />
+      )}
       <SelectField
         name="destinationPositionId"
-        label="Posisi tujuan"
-        placeholder="Pilih posisi"
+        label="Target Position"
+        placeholder="Select a position"
         options={DESTINATION_OPTIONS}
-        hint="Opsional pada promosi/demosi tanpa pindah jabatan."
+        hint={kind === 'MUTATION' ? 'The branch follows the target position.' : 'Optional when only the grade changes.'}
       />
       {gradeNeeded && (
         <SelectField
           name="targetJobGradeId"
-          label="Target job grade"
+          label="Target Grade"
           required
-          placeholder="Pilih target job grade"
+          placeholder="Select the target grade"
           options={TARGET_GRADE_OPTIONS}
-          hint="Wajib untuk Promotion dan Demotion — posisi tujuan bersifat struktural, ini grade-nya."
-          containerClassName="md:col-span-2"
+          hint="Applied on the effective date. It must differ from the current grade."
         />
       )}
     </div>
   );
 }
 
-/** Blok khusus OFFBOARDING — peringatan muncul bila diberhentikan dengan sebab. */
+/** Blok OFFBOARDING — Deceased dan Termination punya akibat yang perlu terbaca sebelum kirim. */
 function OffboardingBlock() {
   const { values } = useFormikContext<TransitionDraft>();
-
   return (
     <div className="flex flex-col gap-3 rounded-[10px] border border-dashed border-fog bg-mist p-4">
-      <SelectField name="reason" label="Alasan" required placeholder="Pilih alasan" options={REASON_OPTIONS} />
+      <SelectField name="reason" label="Reason" required placeholder="Select a reason" options={REASON_OPTIONS} />
       {values.reason === 'TERMINATION' && (
         <Note tone="warn" icon={<TriangleAlert />}>
-          Termination with cause mencabut akses seketika; karyawan tidak dibayar sepanjang notice period.
+          Termination with cause revokes access right away; the employee is not paid through a notice period.
+        </Note>
+      )}
+      {values.reason === 'DECEASED' && (
+        <Note tone="warn" icon={<TriangleAlert />}>
+          Account access is revoked immediately. HR confirms the handover tasks.
         </Note>
       )}
     </div>
   );
 }
 
+const draftFor = (kind: CreateKind | null): TransitionDraft => ({
+  type: kind === 'OFFBOARDING' ? 'OFFBOARDING' : 'TRANSFER',
+  employeeId: '',
+  subtype: kind === 'PROMOTION' || kind === 'DEMOTION' ? kind : '',
+  destinationPositionId: '',
+  targetJobGradeId: '',
+  reason: '',
+  effectiveDate: '',
+  facilityProvided: '',
+  facilityWithdrawn: '',
+});
+
 /**
- * TR-CREATE — satu modal untuk tiga tipe transisi; field yang tampil mengikuti
- * tipe yang dipilih dari menu "New transition".
+ * TR-CREATE — satu form yang berubah bentuk menurut jenis (FSD 0.83 §5, §19). Onboarding lahir dari
+ * materialisasi New Joiner, jadi tidak diajukan dari sini.
  */
-export function CreateTransitionModal({
-  type,
-  onClose,
-}: {
-  type: TransitionType | null;
-  onClose: () => void;
-}) {
+export function CreateTransitionModal({ kind, onClose }: { kind: CreateKind | null; onClose: () => void }) {
   const create = useCreateTransition();
 
   return (
     <Formik<TransitionDraft>
-      initialValues={{
-        type: type ?? 'ONBOARDING',
-        employeeId: '',
-        subtype: '',
-        destinationPositionId: '',
-        targetJobGradeId: '',
-        reason: '',
-        effectiveDate: '',
-      }}
+      initialValues={draftFor(kind)}
       enableReinitialize
       validationSchema={transitionSchema}
       onSubmit={(values, helpers) =>
@@ -121,35 +138,36 @@ export function CreateTransitionModal({
           resetForm();
           onClose();
         };
-
         return (
           <Modal
-            open={Boolean(type)}
+            open={Boolean(kind)}
             onOpenChange={(open) => !open && close()}
             size="wide"
-            title={type ? `New ${TYPE_LABEL[type].toLowerCase()}` : 'New transition'}
-            description={type ? DESCRIPTION[type] : ''}
+            title={kind ? CREATE_KIND_LABEL[kind] : 'New transition'}
+            description={kind ? DESCRIPTION[kind] : ''}
             footer={
               <>
                 <Button variant="secondary" onClick={close}>
                   Cancel
                 </Button>
                 <Button onClick={submitForm} disabled={create.isPending}>
-                  {create.isPending ? 'Membuat…' : 'Create transition'}
+                  {create.isPending ? 'Submitting…' : 'Submit Transition'}
                 </Button>
               </>
             }
           >
-            {type && (
+            {kind && (
               <Form className="flex flex-col gap-4">
-                <EmployeeSelectField name="employeeId" label="Karyawan" required source={EMPLOYEE_SOURCE} />
-
-                {type === 'TRANSFER' && <TransferBlock />}
-                {type === 'OFFBOARDING' && <OffboardingBlock />}
-
-                <DateField name="effectiveDate" label="Tanggal efektif" required />
-
-                <Note icon={<Workflow />}>{FLOW_NOTE[type]}</Note>
+                <EmployeeSelectField name="employeeId" lang="en" label="Employee" required source={EMPLOYEE_SOURCE} />
+                {kind === 'OFFBOARDING' ? <OffboardingBlock /> : <TransferBlock kind={kind} />}
+                <DateField name="effectiveDate" label="Effective Date" required />
+                <div className="grid gap-4 md:grid-cols-2">
+                  {kind !== 'OFFBOARDING' && (
+                    <TextAreaField name="facilityProvided" label="Facility provided" rows={3} maxLength={500} hint={FACILITY_PROVIDED_HINT} />
+                  )}
+                  <TextAreaField name="facilityWithdrawn" label="Facility withdrawn" rows={3} maxLength={500} hint={FACILITY_WITHDRAWN_HINT} />
+                </div>
+                <Note icon={<Workflow />}>{FLOW_NOTE[kind === 'OFFBOARDING' ? 'OFFBOARDING' : 'TRANSFER']}</Note>
               </Form>
             )}
           </Modal>

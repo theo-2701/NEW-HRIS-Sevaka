@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AlarmClock, Calendar, CalendarOff, Check, Info, Link2, ShieldAlert, User } from 'lucide-react';
+import { AlarmClock, Calendar, CalendarOff, Check, Info, Link2, ShieldAlert, User, UserCheck } from 'lucide-react';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
 import { RowButton } from '@/components/RowActions';
 import {
@@ -25,6 +25,7 @@ const TASK_TONE: Record<TaskStatus, BadgeTone> = {
   RELEASED: 'info',
   IN_PROGRESS: 'info',
   AWAITING_CONFIRM: 'warn',
+  AWAITING_APPROVAL: 'warn',
   COMPLETED: 'ok',
   WAIVED: 'brand',
   SKIPPED: 'mute',
@@ -64,7 +65,7 @@ export function LifecycleSteps({ status }: { status: TransitionStatus }) {
         const done = index < currentIndex;
         const active = index === currentIndex && !cancelled;
         const last = index === STEP_ORDER.length - 1;
-        const sub = cancelled && index === 1 ? 'Dibatalkan sebelum tanggal efektif' : STEP_SUB[step];
+        const sub = cancelled && index === 1 ? 'Cancelled before the effective date' : STEP_SUB[step];
 
         return (
           <li key={step} className="flex min-w-[180px] flex-1 flex-col gap-2">
@@ -140,12 +141,20 @@ export function TaskCard({
   onComplete,
   onConfirm,
   onWaive,
+  onApprove,
+  onReject,
+  canConfirm = true,
   busy,
 }: {
   task: TransitionTask;
   onComplete: () => void;
   onConfirm: () => void;
   onWaive: () => void;
+  /** Ada hanya bila pengguna penyetuju task ini. */
+  onApprove?: () => void;
+  onReject?: () => void;
+  /** Konfirmasi dua-pihak milik karyawan subjek; HR hanya bila alasan keluar Deceased. */
+  canConfirm?: boolean;
   busy?: boolean;
 }) {
   const closed = isTaskClosed(task);
@@ -169,41 +178,60 @@ export function TaskCard({
       </header>
 
       <div className="flex flex-col gap-1.5">
-        <MetaRow icon={<User />}>{task.owner || '— (kursi kosong)'}</MetaRow>
+        <MetaRow icon={<User />}>
+          {task.handlers?.length ? `Handled by ${task.handlers.join(', ')}` : task.owner || '— (vacant seat)'}
+        </MetaRow>
+        {task.requiresApproval && task.approvers?.length ? (
+          <MetaRow icon={<UserCheck />}>Approved by {task.approvers.join(', ')}</MetaRow>
+        ) : null}
         {schedule ? (
           <MetaRow icon={<Calendar />}>
-            {task.releasedAt ? `Rilis ${formatDate(task.releasedAt)}` : 'Belum dirilis'}
-            {task.dueAt ? ` → tenggat ${formatDate(task.dueAt)}` : ''}
+            {task.releasedAt ? `Released ${formatDate(task.releasedAt)}` : 'Not released yet'}
+            {task.dueAt ? ` → due ${formatDate(task.dueAt)}` : ''}
           </MetaRow>
         ) : (
-          <MetaRow icon={<CalendarOff />}>Tanpa jadwal</MetaRow>
+          <MetaRow icon={<CalendarOff />}>No schedule</MetaRow>
         )}
         {task.clearanceBlocking && (
           <MetaRow icon={<ShieldAlert />}>
             <strong>Clearance-blocking</strong>
           </MetaRow>
         )}
-        {task.dependsOn && <MetaRow icon={<Link2 />}>Menunggu: {task.dependsOn}</MetaRow>}
-        {task.skipReason && <MetaRow icon={<Info />}>Alasan: {task.skipReason}</MetaRow>}
+        {task.dependsOn && <MetaRow icon={<Link2 />}>Waiting for: {task.dependsOn}</MetaRow>}
+        {task.skipReason && <MetaRow icon={<Info />}>Reason: {task.skipReason}</MetaRow>}
+        {task.rejectReason && <MetaRow icon={<Info />}>Returned: {task.rejectReason}</MetaRow>}
       </div>
 
-      {(overdue || waivable) && (
+      {(overdue || waivable || task.status === 'AWAITING_APPROVAL') && (
         <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border-1 pt-2.5">
           {overdue && (
             <span className="inline-flex items-center gap-1 font-body text-[11.5px] font-bold text-error-600 [&_svg]:size-3.5">
               <AlarmClock />
-              Lewat tenggat
+              Overdue
             </span>
           )}
           {(task.status === 'RELEASED' || task.status === 'IN_PROGRESS') && (
             <RowButton onClick={onComplete} disabled={busy}>
-              Mark done (PIC)
+              Complete
             </RowButton>
           )}
-          {task.status === 'AWAITING_CONFIRM' && (
-            <RowButton onClick={onConfirm} disabled={busy}>
-              Confirm receipt
-            </RowButton>
+          {task.status === 'AWAITING_CONFIRM' &&
+            (canConfirm ? (
+              <RowButton onClick={onConfirm} disabled={busy}>
+                Confirm
+              </RowButton>
+            ) : (
+              <span className="font-body text-[11.5px] font-medium text-fg-3">Waiting for the employee to confirm</span>
+            ))}
+          {task.status === 'AWAITING_APPROVAL' && onApprove && onReject && (
+            <>
+              <RowButton onClick={onApprove} disabled={busy}>
+                Approve
+              </RowButton>
+              <RowButton onClick={onReject} disabled={busy}>
+                Reject
+              </RowButton>
+            </>
           )}
           {waivable && (
             <RowButton onClick={onWaive} disabled={busy}>
@@ -223,7 +251,7 @@ export function TaskGroupHead({ side, description }: { side: string; description
       <span
         className={cn(
           'inline-flex h-[22px] items-center rounded-pill px-2.5 font-body text-[10px] font-bold uppercase tracking-[0.06em]',
-          side === 'RELINQUISH' ? 'bg-warning-100 text-warning-800' : 'bg-primary-200 text-secondary-700',
+          side === 'OUT' ? 'bg-warning-100 text-warning-800' : 'bg-primary-200 text-secondary-700',
         )}
       >
         {side}
@@ -241,8 +269,8 @@ export function TaskMeter({ transition, done }: { transition: Transition; done: 
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="font-body text-[13px] font-medium text-fg-2">
-        {done} dari {total} task selesai
-        <span className="text-fg-3"> · {total - done} tersisa</span>
+        {done} of {total} tasks done
+        <span className="text-fg-3"> · {total - done} left</span>
       </span>
       <ProgressBar value={pct} className="w-[180px] flex-1" />
       <span className="font-body text-[13px] font-bold text-fg-1">{pct}%</span>

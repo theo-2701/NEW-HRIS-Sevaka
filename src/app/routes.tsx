@@ -97,6 +97,8 @@ import { CandidatePortalPage } from '@/features/ats-bridge/pages/CandidatePortal
 import { MyTransitionTasksPage } from '@/features/transitions/pages/MyTransitionTasksPage';
 import { TransitionsPage } from '@/features/transitions/pages/TransitionsPage';
 import { TransitionDetailPage } from '@/features/transitions/pages/TransitionDetailPage';
+import { OnboardingClosurePage } from '@/features/transitions/pages/OnboardingClosurePage';
+import { EssMyTransitionPage } from '@/features/transitions/pages/EssMyTransitionPage';
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
 import { AddEmployeePage } from '@/features/new-joiner/pages/AddEmployeePage';
 import { EmployeeDirectoryPage } from '@/features/employees/pages/EmployeeDirectoryPage';
@@ -132,8 +134,13 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/organization', element: <EmployeeDirectoryPage /> },
   { path: 'employees/new-joiner', element: <NewJoinerPage /> },
   { path: 'employees/new-joiner/add', element: <AddEmployeePage /> },
-  { path: 'employees/transfer', element: <TransitionsPage /> },
+  // Rute lama Employee Transfer tetap hidup (tautan lama), isinya menu Transition (FSD 0.83 §19).
+  { path: 'employees/transfer', element: <Navigate to="/employees/transition" replace /> },
   { path: 'employees/transfer/dashboard', element: <TransitionDetailPage /> },
+  { path: 'employees/transition', element: <TransitionsPage /> },
+  { path: 'employees/transition/detail', element: <TransitionDetailPage /> },
+  { path: 'employees/onboarding/closure', element: <OnboardingClosurePage /> },
+  { path: 'me/transition', element: <EssMyTransitionPage /> },
   { path: 'employees/my-transition-tasks', element: <MyTransitionTasksPage /> },
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/bulk-import', element: <BulkImportPage /> },
@@ -271,6 +278,10 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/new-joiner/add',
   '/employees/transfer',
   '/employees/transfer/dashboard',
+  '/employees/transition',
+  '/employees/transition/detail',
+  '/employees/onboarding/closure',
+  '/me/transition',
   '/employees/mass-resignation',
   '/employees/ptkp-adjustment',
   '/employees/bulk-account-activation',

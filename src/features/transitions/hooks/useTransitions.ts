@@ -9,6 +9,18 @@ export const transitionKeys = {
   detail: (id: string) => ['transitions', id] as const,
 };
 
+export const useMyTasks = (tab: 'tasks' | 'approvals') =>
+  useQuery({ queryKey: [...transitionKeys.list, 'mine', tab], queryFn: () => transitionService.myTasks(tab) });
+
+export const useEscalations = (enabled: boolean) =>
+  useQuery({ queryKey: [...transitionKeys.list, 'escalations'], queryFn: () => transitionService.escalations(), enabled });
+
+export const useClosureQueue = (enabled: boolean) =>
+  useQuery({ queryKey: [...transitionKeys.list, 'closure'], queryFn: () => transitionService.closureQueue(), enabled });
+
+export const useMyTransitions = (employee: string) =>
+  useQuery({ queryKey: [...transitionKeys.list, 'ess', employee], queryFn: () => transitionService.myTransitions(employee) });
+
 export function useTransitions() {
   return useQuery({ queryKey: transitionKeys.list, queryFn: () => transitionService.list() });
 }
@@ -47,8 +59,8 @@ export const useCreateTransition = () =>
     (row, draft) => ({
       text:
         row.status === 'IN_APPROVAL'
-          ? `${TYPE_LABEL[draft.type]} untuk ${row.employee} dibuat — menunggu persetujuan parent-chain.`
-          : `${TYPE_LABEL[draft.type]} untuk ${row.employee} dibuat — task sudah dilahirkan.`,
+          ? `The ${TYPE_LABEL[draft.type].toLowerCase()} for ${row.employee} was submitted and waits for approval.`
+          : `The ${TYPE_LABEL[draft.type].toLowerCase()} for ${row.employee} was created and its tasks are open.`,
     }),
   );
 
@@ -57,14 +69,16 @@ export const useCompleteTask = () =>
     ({ transitionId, taskId }) => transitionService.completeTask(transitionId, taskId),
     (status) =>
       status === 'AWAITING_CONFIRM'
-        ? { text: 'Task ditandai selesai oleh PIC. Menunggu konfirmasi karyawan.', tone: 'info' }
-        : { text: 'Task selesai.' },
+        ? { text: 'Marked as done. Waiting for the employee to confirm.', tone: 'info' }
+        : status === 'AWAITING_APPROVAL'
+          ? { text: 'Marked as done. Waiting for approval.', tone: 'info' }
+          : { text: 'The task is completed.' },
   );
 
 export const useConfirmTask = () =>
   useTransitionMutation<{ transitionId: string; taskId: string }>(
     ({ transitionId, taskId }) => transitionService.confirmTask(transitionId, taskId),
-    () => ({ text: 'Penerimaan dikonfirmasi. Task selesai.' }),
+    () => ({ text: 'Confirmed.' }),
   );
 
 export const useWaiveTask = () =>
@@ -77,16 +91,34 @@ export const useWaiveTask = () =>
     ({ transitionId, taskId, control, reason }) =>
       transitionService.waiveTask(transitionId, taskId, { control, reason }),
     (_result, { control }) => ({
-      text: `Task di-waive (kontrol ${control.toLowerCase()}, tercatat di audit log).`,
+      text: `The task was waived (${control.toLowerCase()} control, recorded in the audit log).`,
       tone: 'warn',
     }),
+  );
+
+export const useApproveTask = () =>
+  useTransitionMutation<{ transitionId: string; taskId: string }>(
+    ({ transitionId, taskId }) => transitionService.approveTask(transitionId, taskId),
+    () => ({ text: 'The task was approved.' }),
+  );
+
+export const useRejectTask = () =>
+  useTransitionMutation<{ transitionId: string; taskId: string; reason: string }>(
+    ({ transitionId, taskId, reason }) => transitionService.rejectTask(transitionId, taskId, reason),
+    () => ({ text: 'The task was returned to the handler with your reason.', tone: 'warn' }),
+  );
+
+export const useCloseOnboarding = () =>
+  useTransitionMutation<{ transitionId: string; note: string }, number>(
+    ({ transitionId, note }) => transitionService.closeOnboarding(transitionId, note),
+    (closed) => ({ text: `Onboarding closed. ${closed} task(s) were closed.` }),
   );
 
 export const useForceRelease = () =>
   useTransitionMutation<{ transitionId: string; employee: string; reason: string }>(
     ({ transitionId, reason }) => transitionService.forceRelease(transitionId, reason),
     (_result, { employee }) => ({
-      text: `Clearance di-force-release (tercatat di audit log). Offboarding ${employee} selesai.`,
+      text: `Clearance was force-released (recorded in the audit log). ${employee}'s offboarding is completed.`,
       tone: 'warn',
     }),
   );

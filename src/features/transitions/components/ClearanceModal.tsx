@@ -43,7 +43,7 @@ export function ClearanceModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title="Clearance gate"
-      description="Status terminal ditahan sampai setiap task clearance-blocking bersih — kecuali approver elevated melakukan force-release."
+      description="The final status waits until every clearance-blocking task is cleared, unless an HR Manager or Super Admin force-releases it."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -60,7 +60,7 @@ export function ClearanceModal({
               )
             }
           >
-            {force.isPending ? 'Memproses…' : 'Force-release & complete'}
+            {force.isPending ? 'Releasing…' : 'Force-release & Complete'}
           </Button>
           )}
         </>
@@ -70,7 +70,7 @@ export function ClearanceModal({
         <DataTable<TransitionTask>
           rows={blockers}
           rowKey={(row) => row.id}
-          empty="Tidak ada task clearance-blocking."
+          empty="No clearance-blocking task."
           columns={[
             { key: 'task', header: 'Clearance task', strong: true, render: (row) => row.name },
             { key: 'owner', header: 'Owner', muted: true, render: (row) => row.owner || '—' },
@@ -91,13 +91,13 @@ export function ClearanceModal({
         {checker && (
         <>
         <Note tone="danger" icon={<ShieldAlert />}>
-          <strong>Force-release</strong> menembus gerbang untuk semua task yang masih memblokir. Aksi ini elevated
-          dan ditulis ke audit log bersama identitas serta alasan Anda.
+          <strong>Force-release</strong> clears every task that still blocks. It is an elevated action and is written
+          to the audit log with your name and reason.
         </Note>
 
         <div className="flex flex-col gap-1">
           <Label htmlFor="force-reason">
-            Alasan force-release<em>*</em>
+            Reason<em>*</em>
           </Label>
           <Textarea
             id="force-reason"
@@ -105,7 +105,7 @@ export function ClearanceModal({
             maxLength={150}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Kenapa gerbang clearance ditembus?"
+            placeholder="Why is the clearance gate released?"
           />
         </div>
         </>

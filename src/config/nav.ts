@@ -97,6 +97,7 @@ export const NAV: NavSection[] = [
       },
       { label: 'Finance', icon: 'hand-coins', path: '/me/finance', source: 'finance-ess.html', status: 'done' },
       { label: 'Files', icon: 'folder', path: '/me/files', source: 'document-ess-files.html', status: 'done' },
+      { label: 'My Transition', icon: 'git-fork', path: '/me/transition', source: 'FSD-001-EMPLOYEE §20', status: 'done' },
       { label: 'Assets', icon: 'box' },
       {
         label: 'History',
@@ -121,9 +122,8 @@ export const NAV: NavSection[] = [
               { label: 'Organization', path: '/employees/organization', source: 'employee-directory.html', status: 'done' },
             ],
           },
-          // Detail transisi (`/employees/transfer/dashboard`) sengaja TIDAK ada di
-          // menu: layar itu selalu dibuka lewat "View Detail" dari daftar transfer.
-          { label: 'Employee Transfer', path: '/employees/transfer', source: 'transition.html', status: 'done' },
+          // "Employee Transfer" disembunyikan sejak FSD-001-EMPLOYEE 0.83 §19 (diganti menu Transition);
+          // rutenya tetap ada dan dialihkan ke /employees/transition.
           { label: 'Mass Resignation', path: '/employees/mass-resignation', source: 'mass-resignation.html', status: 'done' },
           { label: 'Employee Bulk Import', path: '/employees/bulk-import', source: 'FSD-001-EMPLOYEE §8', status: 'done' },
           // FSD-001-EMPLOYEE 0.46 §9 — langkah sesudah Bulk Import (disetujui Theo, 24 Okt 2026).
@@ -178,13 +178,23 @@ export const NAV: NavSection[] = [
         label: 'My Transition Tasks',
         icon: 'list-checks',
         path: '/employees/my-transition-tasks',
-        source: 'UIC-001-EMPLOYEE §5.3',
+        source: 'FSD-001-EMPLOYEE §18',
         status: 'done',
       },
+      // FSD-001-EMPLOYEE 0.83 §19: satu menu Transition menggantikan Employee Transfer + dua dashboard
+      // Onboarding/Offboarding (disembunyikan, bukan dihapus — disetujui Theo, 24 Okt 2026).
+      { label: 'Transition', icon: 'split', path: '/employees/transition', source: 'FSD-001-EMPLOYEE §19', status: 'done' },
       {
         label: 'Onboarding',
         icon: 'user-check',
-        children: [{ label: 'Onboarding Dashboard' }, { label: 'Offboarding Dashboard' }],
+        children: [
+          {
+            label: 'Onboarding Closure',
+            path: '/employees/onboarding/closure',
+            source: 'FSD-001-EMPLOYEE §16',
+            status: 'done',
+          },
+        ],
       },
       {
         label: 'Reprimand',

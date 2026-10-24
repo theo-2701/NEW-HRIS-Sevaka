@@ -2,82 +2,101 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import { Card, CardHead } from '@/components/Card';
-import { DataTable } from '@/components/DataTable';
+import { CellIdentity, DataTable } from '@/components/DataTable';
 import { PageShell } from '@/components/PageShell';
 import { Pagination } from '@/components/Pagination';
-import { RowActions } from '@/components/RowActions';
-import { Segmented } from '@/components/Segmented';
+import { RowActions, RowButton } from '@/components/RowActions';
+import type { RowAction } from '@/components/RowActions';
+import { StatusBadge } from '@/components/StatusBadge';
+import { TabMenu } from '@/components/TabMenu';
 import { TableToolbar } from '@/components/TableToolbar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { formatDate } from '@/lib/format';
 import { Note } from '@/features/time-off/components/TimeOffBits';
 import { TaskStatusBadge } from '@/features/transitions/components/TransitionBits';
-import { WaiveTaskModal } from '@/features/transitions/components/WaiveTaskModal';
-import { useCompleteTask, useConfirmTask, useTransitions } from '@/features/transitions/hooks/useTransitions';
-import { TYPE_LABEL, isTaskClosed, type Transition, type TransitionTask } from '@/features/transitions/types';
+import { RejectTaskModal } from '@/features/transitions/components/RejectTaskModal';
+import {
+  useApproveTask,
+  useCompleteTask,
+  useEscalations,
+  useMyTasks,
+} from '@/features/transitions/hooks/useTransitions';
+import type { MyTaskRow } from '@/features/transitions/services/transition.service';
+import { ESCALATION_LABEL, SIDE_LABEL, TYPE_LABEL, isTaskClosed } from '@/features/transitions/types';
+import type { EscalationReason, TaskStatus, Transition, TransitionType } from '@/features/transitions/types';
+import { useAuthStore } from '@/store/auth.store';
 
-interface MyTask {
-  task: TransitionTask;
-  transition: Transition;
-}
+type Tab = 'tasks' | 'approvals' | 'escalations';
+type StatusFilter = 'ALL' | 'IN_PROGRESS' | 'AWAITING_CONFIRM' | 'AWAITING_APPROVAL' | 'COMPLETED';
 
-type View = 'open' | 'done';
+const STATUS_FILTER: Record<Exclude<StatusFilter, 'ALL'>, { label: string; statuses: TaskStatus[] }> = {
+  IN_PROGRESS: { label: 'In progress', statuses: ['PENDING', 'RELEASED', 'IN_PROGRESS'] },
+  AWAITING_CONFIRM: { label: 'Awaiting confirmation', statuses: ['AWAITING_CONFIRM'] },
+  AWAITING_APPROVAL: { label: 'Awaiting approval', statuses: ['AWAITING_APPROVAL'] },
+  COMPLETED: { label: 'Completed', statuses: ['COMPLETED', 'WAIVED', 'SKIPPED'] },
+};
 
-const SIDE_LABEL = { RELINQUISH: 'Release (origin unit)', PROVISION: 'Prepare (new unit)', NONE: '—' } as const;
+const TYPES = Object.keys(TYPE_LABEL) as TransitionType[];
 
 /**
- * Employee Management › My Transition Tasks — task transisi yang PIC-nya saya, lintas transisi.
- * Aksi = kontrak yang sudah ada (UIC-EMPLOYEE §5.3 complete/confirm, TSD §7.6.4 waive).
- * GAP: kontrak belum punya alamat "task milik saya"; mode dummy menyaring task dari daftar transisi
- * berdasarkan unit PIC yang dipilih di "Viewing as".
+ * Employee Management › My Transition Tasks — FSD-001-EMPLOYEE 0.83 §18. Kotak masuk tugas transisi bagi
+ * petugas (My Tasks) dan penyetuju (My Approvals); Escalations hanya HR Manager · Super Admin. Server hanya
+ * mengembalikan tugas milik orang yang login (MT1).
  */
 export function MyTransitionTasksPage() {
   const navigate = useNavigate();
-  const { data, isLoading } = useTransitions();
-  const transitions = useMemo(() => data ?? [], [data]);
+  const role = useAuthStore((s) => s.user?.role);
+  const hrManager = role === 'ROLE_HR_MANAGER' || role === 'ROLE_SUPER_ADMIN';
 
-  const owners = useMemo(
-    () => [...new Set(transitions.flatMap((row) => row.tasks.map((task) => task.owner)))].sort(),
-    [transitions],
-  );
-  const [owner, setOwner] = useState('');
-  const me = owner || owners.find((name) => name.startsWith('HR')) || owners[0] || '';
-  const [view, setView] = useState<View>('open');
+  const [tab, setTab] = useState<Tab>('tasks');
+  const [status, setStatus] = useState<StatusFilter>('ALL');
+  const [type, setType] = useState<TransitionType | 'ALL'>('ALL');
+  const tasks = useMyTasks('tasks');
+  const approvals = useMyTasks('approvals');
+  const escalations = useEscalations(hrManager);
 
-  const all = useMemo<MyTask[]>(
-    () =>
-      transitions
-        .filter((transition) => transition.status !== 'CANCELLED')
-        .flatMap((transition) => transition.tasks.filter((task) => task.owner === me).map((task) => ({ task, transition }))),
-    [transitions, me],
-  );
+  const source = tab === 'approvals' ? approvals : tasks;
   const rows = useMemo(
     () =>
-      all
-        .filter(({ task }) => (view === 'open' ? !isTaskClosed(task) : isTaskClosed(task)))
+      (source.data ?? [])
+        .filter(({ task }) => status === 'ALL' || STATUS_FILTER[status].statuses.includes(task.status))
+        .filter(({ transition }) => type === 'ALL' || transition.type === type)
         // Lewat tenggat dulu, lalu tenggat terdekat.
-        .sort((a, b) => Number(Boolean(b.task.timedOut)) - Number(Boolean(a.task.timedOut)) || (a.task.dueAt || '9').localeCompare(b.task.dueAt || '9')),
-    [all, view],
+        .sort(
+          (a, b) =>
+            Number(Boolean(b.task.timedOut && !isTaskClosed(b.task))) - Number(Boolean(a.task.timedOut && !isTaskClosed(a.task))) ||
+            (a.task.dueAt || '9').localeCompare(b.task.dueAt || '9'),
+        ),
+    [source.data, status, type],
   );
   const paged = usePagedRows(rows);
-  const openCount = all.filter(({ task }) => !isTaskClosed(task)).length;
-  const overdue = all.filter(({ task }) => task.timedOut && !isTaskClosed(task)).length;
 
   const complete = useCompleteTask();
-  const confirm = useConfirmTask();
-  const [waiving, setWaiving] = useState<MyTask | null>(null);
+  const approve = useApproveTask();
+  const [rejecting, setRejecting] = useState<MyTaskRow | null>(null);
 
-  const actions = ({ task, transition }: MyTask) => {
-    const list = [];
-    if (task.status === 'RELEASED' || task.status === 'IN_PROGRESS') {
-      list.push({ label: 'Mark as done', onSelect: () => complete.mutate({ transitionId: transition.id, taskId: task.id }) });
+  const openTasks = (tasks.data ?? []).filter(({ task }) => !isTaskClosed(task)).length;
+  const waitingApproval = (approvals.data ?? []).filter(({ task }) => task.status === 'AWAITING_APPROVAL').length;
+  const overdue = (tasks.data ?? []).filter(({ task }) => task.timedOut && !isTaskClosed(task)).length;
+  const openTransition = (transition: Transition) => navigate(`/employees/transition/detail?tr=${transition.id}`);
+
+  const actionsFor = ({ task, transition }: MyTaskRow) => {
+    const list: RowAction[] = [];
+    if (tab === 'tasks' && (task.status === 'RELEASED' || task.status === 'IN_PROGRESS')) {
+      // Tugas asset selesai otomatis dari event serah-terima/pengembalian di menu Asset (TSU-D31).
+      list.push(
+        task.asset
+          ? { label: 'Open Asset', onSelect: () => navigate('/company-management/assets/assigned') }
+          : { label: 'Complete', onSelect: () => complete.mutate({ transitionId: transition.id, taskId: task.id }) },
+      );
     }
-    if (task.status === 'AWAITING_CONFIRM' && task.owner === 'Employee') {
-      list.push({ label: 'Confirm received', onSelect: () => confirm.mutate({ transitionId: transition.id, taskId: task.id }) });
+    if (tab === 'approvals' && task.status === 'AWAITING_APPROVAL') {
+      list.push({ label: 'Approve', onSelect: () => approve.mutate({ transitionId: transition.id, taskId: task.id }) });
+      list.push({ label: 'Reject', danger: true, onSelect: () => setRejecting({ task, transition }) });
     }
-    if (!isTaskClosed(task)) list.push({ label: 'Waive', danger: true, onSelect: () => setWaiving({ task, transition }) });
-    list.push({ label: 'Open transition', onSelect: () => navigate(`/employees/transfer/dashboard?tr=${transition.id}`) });
+    list.push({ label: 'Open Transition', onSelect: () => openTransition(transition) });
+    if (list.length === 1) return <RowButton onClick={list[0].onSelect}>{list[0].label}</RowButton>;
     return <RowActions actions={list} />;
   };
 
@@ -86,124 +105,160 @@ export function MyTransitionTasksPage() {
       <PageShell
         crumbs={[{ label: 'Employee Management' }, { label: 'My Transition Tasks' }]}
         title="My Transition Tasks"
-        description="Onboarding, transfer and offboarding tasks assigned to you, across all transitions. Mark a task as done when your part is finished; overdue tasks are listed first."
+        description="Transition tasks you handle or approve. Two-party tasks wait for the employee's confirmation after you complete them; that waiting time is not counted against you."
       >
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="font-body text-xs font-medium text-fg-3">Viewing as</span>
-            <Select
-              value={me}
-              onValueChange={(value) => {
-                setOwner(value);
-                paged.resetPage();
-              }}
-            >
-              <SelectTrigger className="w-[260px]" aria-label="Viewing as">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {owners.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TabMenu<Tab>
+            value={tab}
+            onChange={(next) => {
+              setTab(next);
+              paged.resetPage();
+            }}
+            items={[
+              { value: 'tasks', label: 'My Tasks', count: openTasks },
+              { value: 'approvals', label: 'My Approvals', count: waitingApproval },
+              ...(hrManager ? [{ value: 'escalations' as const, label: 'Escalations', count: escalations.data?.length ?? 0 }] : []),
+            ]}
+          />
 
-          {overdue > 0 && view === 'open' && (
+          {tab === 'tasks' && overdue > 0 && (
             <Note tone="warn" icon={<Info />}>
-              {overdue} task{overdue === 1 ? ' is' : 's are'} past the due date. Overdue is a flag — the task stays open until
-              you finish or waive it.
+              {overdue} task{overdue === 1 ? ' is' : 's are'} past the due date. Overdue is a flag — the task stays open until it is done or waived.
             </Note>
           )}
 
-          <Card>
-            <CardHead title="Tasks" sub={`${openCount} open`} />
-            <div className="flex flex-col">
-              <TableToolbar
-                filters={
-                  <Segmented<View>
-                    value={view}
-                    onChange={(next) => {
-                      setView(next);
-                      paged.resetPage();
-                    }}
-                    options={[
-                      { value: 'open', label: 'Open' },
-                      { value: 'done', label: 'Done' },
-                    ]}
-                  />
-                }
-              />
-              <DataTable<MyTask>
-                rows={paged.rows}
-                rowKey={(row) => `${row.transition.id}:${row.task.id}`}
-                loading={isLoading}
-                empty={view === 'open' ? 'No open task for you. Nice.' : 'No finished task yet.'}
+          {tab === 'escalations' ? (
+            <Card>
+              <CardHead title="Escalations" sub="Transitions that need an HR Manager" />
+              <DataTable<{ transition: Transition; reason: EscalationReason }>
+                rows={escalations.data ?? []}
+                rowKey={(row) => row.transition.id}
+                loading={escalations.isLoading}
+                empty={escalations.isError ? 'The tasks could not be loaded.' : 'No escalations.'}
                 columns={[
                   {
-                    key: 'task',
-                    header: 'Task',
-                    strong: true,
-                    render: ({ task }) => (
-                      <span className="flex flex-col gap-0.5">
-                        <span>{task.name}</span>
-                        {task.dependsOn && (
-                          <span className="font-body text-[11px] font-medium text-fg-3">After: {task.dependsOn}</span>
-                        )}
-                      </span>
-                    ),
+                    key: 'employee',
+                    header: 'Employee',
+                    render: ({ transition }) => <CellIdentity name={transition.employee} sub={transition.employeeNik ?? transition.id} />,
                   },
-                  {
-                    key: 'transition',
-                    header: 'Transition',
-                    render: ({ transition }) => (
-                      <span className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-fg-1">{transition.employee}</span>
-                        <span className="font-body text-[11px] font-medium text-fg-3">
-                          {TYPE_LABEL[transition.type]} · effective {formatDate(transition.effectiveDate)}
-                        </span>
-                      </span>
-                    ),
-                  },
-                  { key: 'side', header: 'Side', muted: true, render: ({ task }) => SIDE_LABEL[task.side] },
-                  {
-                    key: 'due',
-                    header: 'Due',
-                    nowrap: true,
-                    render: ({ task }) =>
-                      task.dueAt ? (
-                        <span className={task.timedOut && !isTaskClosed(task) ? 'font-semibold text-warning-700' : undefined}>
-                          {formatDate(task.dueAt)}
-                          {task.timedOut && !isTaskClosed(task) && ' · overdue'}
-                        </span>
-                      ) : (
-                        <span className="text-fg-4">Not released yet</span>
-                      ),
-                  },
-                  { key: 'status', header: 'Status', render: ({ task }) => <TaskStatusBadge status={task.status} /> },
+                  { key: 'type', header: 'Type', render: ({ transition }) => TYPE_LABEL[transition.type] },
+                  { key: 'effective', header: 'Effective Date', muted: true, nowrap: true, render: ({ transition }) => formatDate(transition.effectiveDate) },
+                  { key: 'reason', header: 'Why It Is Here', render: ({ reason }) => ESCALATION_LABEL[reason] },
                 ]}
-                actions={actions}
+                actions={({ transition }) => <RowButton onClick={() => openTransition(transition)}>Open Transition</RowButton>}
               />
-              <Pagination
-                page={paged.page}
-                pageSize={paged.pageSize}
-                total={paged.total}
-                noun="tasks"
-                onPageChange={paged.setPage}
-                onPageSizeChange={paged.setPageSize}
-              />
-            </div>
-          </Card>
+            </Card>
+          ) : (
+            <Card>
+              <CardHead title={tab === 'tasks' ? 'My tasks' : 'Waiting for my approval'} sub={`${rows.length} tasks`} />
+              <div className="flex flex-col">
+                <TableToolbar
+                  filters={
+                    <>
+                      <Select
+                        value={status}
+                        onValueChange={(value) => {
+                          setStatus(value as StatusFilter);
+                          paged.resetPage();
+                        }}
+                      >
+                        <SelectTrigger className="h-10 w-[210px]" aria-label="Status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All statuses</SelectItem>
+                          {(Object.keys(STATUS_FILTER) as Exclude<StatusFilter, 'ALL'>[]).map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {STATUS_FILTER[value].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={type}
+                        onValueChange={(value) => {
+                          setType(value as TransitionType | 'ALL');
+                          paged.resetPage();
+                        }}
+                      >
+                        <SelectTrigger className="h-10 w-[160px]" aria-label="Type">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All types</SelectItem>
+                          {TYPES.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {TYPE_LABEL[value]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  }
+                />
+                <DataTable<MyTaskRow>
+                  rows={paged.rows}
+                  rowKey={(row) => `${row.transition.id}:${row.task.id}`}
+                  loading={source.isLoading}
+                  empty={
+                    source.isError
+                      ? 'The tasks could not be loaded.'
+                      : tab === 'tasks'
+                        ? 'You have no tasks.'
+                        : 'Nothing is waiting for your approval.'
+                  }
+                  columns={[
+                    {
+                      key: 'task',
+                      header: 'Task',
+                      strong: true,
+                      render: ({ task }) => (
+                        <span className="flex flex-col gap-0.5">
+                          <span>{task.name}</span>
+                          {task.rejectReason && <span className="font-body text-[11px] font-medium text-error-700">Returned: {task.rejectReason}</span>}
+                          {task.dependsOn && !task.rejectReason && (
+                            <span className="font-body text-[11px] font-medium text-fg-3">After: {task.dependsOn}</span>
+                          )}
+                        </span>
+                      ),
+                    },
+                    { key: 'type', header: 'Transition', render: ({ transition }) => TYPE_LABEL[transition.type] },
+                    { key: 'part', header: 'Part', muted: true, render: ({ task }) => SIDE_LABEL[task.side] },
+                    { key: 'subject', header: 'Employee', render: ({ transition }) => transition.employee },
+                    {
+                      key: 'due',
+                      header: 'Due',
+                      nowrap: true,
+                      render: ({ task }) => (task.dueAt ? formatDate(task.dueAt) : <span className="text-fg-4">Not released yet</span>),
+                    },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      render: ({ task }) => (
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <TaskStatusBadge status={task.status} />
+                          {task.timedOut && !isTaskClosed(task) && <StatusBadge tone="err">Overdue</StatusBadge>}
+                        </span>
+                      ),
+                    },
+                  ]}
+                  actions={actionsFor}
+                />
+                <Pagination
+                  page={paged.page}
+                  pageSize={paged.pageSize}
+                  total={paged.total}
+                  noun="tasks"
+                  onPageChange={paged.setPage}
+                  onPageSizeChange={paged.setPageSize}
+                />
+              </div>
+            </Card>
+          )}
         </div>
       </PageShell>
 
-      <WaiveTaskModal
-        transitionId={waiving?.transition.id ?? ''}
-        task={waiving?.task ?? null}
-        onClose={() => setWaiving(null)}
-      />
+      <RejectTaskModal transitionId={rejecting?.transition.id ?? ''} task={rejecting?.task ?? null} onClose={() => setRejecting(null)} />
     </>
   );
 }
