@@ -966,17 +966,17 @@ di dokumen" — itu salah karena mengacu ke 0.46; di 0.83 keempatnya ada (§10�
 | Portal kandidat publik (§4B) | TSD §7.4.10–11 | `/candidate/:companyCode` |
 | New Joiner (§4) | TSD §7.4.1–7.4.10 | `src/features/new-joiner` |
 | Employee Bulk Import (§8, email-saja) | TSD §7.16 | `src/features/bulk-import` |
-| My Transition Tasks (§18) | TSD MT1..MT4 | `/employees/my-transition-tasks` — baru Open/Done; tab Tasks · Approvals · Escalations + dialog tolak **belum** |
+| My Transition Tasks (§18) | TSD MT1..MT4 | `/employees/my-transition-tasks` — tab My Tasks · My Approvals · Escalations (HRM/SA), Complete / Open Asset / Approve / Reject (alasan wajib) |
 | Employee Directory › Work Status (§11) | TSD §7.13.3 | `src/features/work-status` · `/employees/work-status` (juga sumber Employment Type) |
 | Employee Directory › Email Domain (§12) | TSD §7.19 | `src/features/email-domain` · `/employees/email-domain` (juga sumber BI-REVIEW) |
 | Employee Directory › Role Grant Rules (§13) | TSD §7.4.13 | `src/features/role-grant` · `/employees/role-grant-rules` — tabel ditransposisi (baris = peran, kolom = pemberi) supaya terbaca HR; isi data sama |
 | Employee Directory › Email and Phone Verification (§14, + Cancel access §14.4) | TSD §7.20–7.21 | `src/features/contact-verification` · `/employees/email-phone-verification` + publik `/contact-verification/:companyCode`; antrean diisi materialisasi NJ/ATS; Cancel access memulai OFFBOARDING menunggu persetujuan |
 | Employee Directory › Temporary Assignment (§10) | TSD §7.18 | `src/features/temporary-assignment` · `/employees/temporary-assignment`; filter = status (multi) + type inline, karyawan lewat kotak cari (standar ≤ 2 filter); sapuan harian dijalankan saat daftar dibaca |
-| Onboarding Closure (§16) | TSD §7.22 | **belum** |
-| Materialization + Role Mapping (§17, §21) | TSD §7.23 | **belum** |
-| Transition terpadu (§19) — menggantikan Employee Transfer + dua dashboard Onboarding | TSD TL1..TL2 | **belum** (Employee Transfer lama masih jalan) |
-| ESS › My Transition + kartu beranda (§20) | TSD ES1..ES2 | **belum** |
-| Dialog Edit Work Data (§1), Change Role (§15) | TSD §7.2.5, §7.4.14 | **belum** |
+| Onboarding Closure (§16) | TSD §7.22 | `/employees/onboarding/closure`; Cancel access menutup onboarding ke antrean |
+| Materialization + Role Mapping (§17, §21) | TSD §7.23 | `src/features/materialization` · `/employees/materialization` (+ `/setup`, `/role-mapping`); paket task transisi di mode dummy masih templat tetap, belum dibaca dari setup |
+| Transition terpadu (§19) — menggantikan Employee Transfer + dua dashboard Onboarding | TSD TL1..TL2 | `/employees/transition` (+ `/detail`); baris menu lama disembunyikan, `/employees/transfer` dialihkan; form 4 jenis + catatan fasilitas + Deceased |
+| ESS › My Transition + kartu beranda (§20) | TSD ES1..ES2 | `/me/transition` (pemilih "Viewing as" demo); **kartu beranda belum** — berkas dashboard sedang diubah sesi lain |
+| Dialog Edit Work Data (§1), Change Role (§15) | TSD §7.2.5, §7.4.14 | detail karyawan: tombol Edit Work Data + More Actions › Change Role (Super Admin · HR Manager · HR Staff) |
 
 **Disusul ke 0.83 (24 Okt 2026):**
 - New Joiner: posisi = checklist posisi requisition bila ada (selain itu seluruh posisi unit), server 422 di luar
@@ -995,4 +995,5 @@ di dokumen" — itu salah karena mengacu ke 0.46; di 0.83 keempatnya ada (§10�
 **GAP tersisa:**
 - Rencana tanggal masuk tidak ada di form undangan maupun portal; HR mengisinya lewat Edit sebelum Submit (server 422).
 - Class tidak disaring ke anak Grade kursi (KCG-4) — data dummy belum punya Grade per kursi.
-- Panel "Proses calon APPROVED" di Onboarding (§4.1 baris terakhir) menunggu menu Transition terpadu (§19).
+- Panel "Proses calon APPROVED" di Onboarding (§4.1 baris terakhir) belum dibuat — onboarding lahir dari Materialize di New Joiner.
+- Kartu beranda My Transition (§20.2) belum dipasang.

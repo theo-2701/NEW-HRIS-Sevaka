@@ -5,7 +5,13 @@ import type {
   EmployeeDetail,
   EmployeeSearchRequest,
   EmployeeSearchResponse,
+  WorkDataPatch,
 } from '@/features/employees/types';
+import { useAuthStore } from '@/store/auth.store';
+import { roleGrantService } from '@/features/role-grant/services/role-grant.service';
+import { ROLES } from '@/features/role-grant/types';
+import type { RoleCode } from '@/features/role-grant/types';
+import { workStatusService } from '@/features/work-status/services/work-status.service';
 
 /**
  * API service Employee Directory.
@@ -384,13 +390,110 @@ export const employeeService = {
     if (MOCK) {
       await delay(250);
       const found = MOCK_EMPLOYEES.find((e) => e.id === id);
-      if (!found) throw new Error('Data karyawan tidak ditemukan.');
-      return found;
+      if (!found) throw new Error('404 — Employee not found.');
+      return {
+        ...found,
+        workStatusId: found.workStatusId ?? (found.contractEndDate ? 'ws-contract' : 'ws-permanent'),
+        seatBranched: !SEATLESS.has(found.id),
+      };
     }
     const { data } = await api.get<EmployeeDetail>(`/employees/${id}`);
     return data;
   },
 };
+
+/** Mode dummy: karyawan yang kursinya tidak bercabang — cabangnya masih dapat diubah lewat Edit Work Data. */
+const SEATLESS = new Set(['emp-nur']);
+
+/** Mode dummy: peran akun login per karyawan (auth-service); selain ini `ROLE_EMPLOYEE`. */
+const EMPLOYEE_ROLES: Record<string, RoleCode> = {
+  'emp-tony': 'ROLE_HR_MANAGER',
+  'emp-lia': 'ROLE_HR_STAFF',
+  'emp-sari': 'ROLE_PAYROLL_OFFICER',
+  'emp-eka': 'ROLE_FINANCE_OFFICER',
+  'emp-doni': 'ROLE_GA_STAFF',
+  'emp-yoga': 'ROLE_SYSTEM_ADMIN',
+};
+
+const distinct = (values: string[]) => [...new Set(values.filter((value) => value && value !== '—'))].sort();
+export const COST_CENTER_OPTIONS = distinct(MOCK_EMPLOYEES.map((row) => row.costCenter)).map((value) => ({ value, label: value }));
+export const SBU_OPTIONS = distinct(MOCK_EMPLOYEES.map((row) => row.sbu)).map((value) => ({ value, label: value }));
+
+const HR_ROLES = ['ROLE_SUPER_ADMIN', 'ROLE_HR_MANAGER', 'ROLE_HR_STAFF'];
+
+/**
+ * `POST /employees/{id}/work-data` (TSD 0.192 §7.2.5, EMP-WORKDATA). Hanya medan yang diubah dikirim; badan
+ * kosong ditolak. Cabang pegawai berkursi bercabang mengikuti kursi (422, KCG-2); rekening wajib berbank.
+ */
+export async function updateWorkData(id: string, patch: WorkDataPatch): Promise<void> {
+  const changed = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined && value !== ''));
+  if (Object.keys(changed).length === 0) throw new Error('422 — No changes to save.');
+  if ((changed.accountNumber || changed.accountHolderName) && !changed.bankCode) {
+    throw new Error('422 — Choose the bank for the account number and holder name.');
+  }
+  if (MOCK) {
+    await delay(300);
+    const found = MOCK_EMPLOYEES.find((e) => e.id === id);
+    if (!found) throw new Error('404 — Employee not found.');
+    if (changed.branchId && !SEATLESS.has(id)) {
+      throw new Error('422 — The branch follows the position; use Transfer to change it.');
+    }
+    if (changed.workStatusId) {
+      const active = await workStatusService.search({ isActive: true });
+      if (!active.some((row) => row.id === changed.workStatusId)) throw new Error('422 — Choose an active employment type.');
+      found.workStatusId = changed.workStatusId;
+    }
+    if (changed.branchId) Object.assign(found, { branchId: changed.branchId, branchName: branchName(changed.branchId) });
+    if (changed.costCenter) found.costCenter = changed.costCenter;
+    if (changed.sbu) found.sbu = changed.sbu;
+    if (changed.bankCode) {
+      found.bank = {
+        bankCode: changed.bankCode,
+        accountNumber: changed.accountNumber || found.bank.accountNumber,
+        accountHolderName: changed.accountHolderName || found.bank.accountHolderName,
+      };
+    }
+    return;
+  }
+  await api.post(`/employees/${id}/work-data`, changed);
+}
+
+/** `GET /employees/{id}/role` (TSD §7.4.14). */
+export async function employeeRole(id: string): Promise<RoleCode> {
+  if (MOCK) {
+    await delay(150);
+    return EMPLOYEE_ROLES[id] ?? 'ROLE_EMPLOYEE';
+  }
+  const { data } = await api.get<{ role_code: RoleCode }>(`/employee/employees/${id}/role`);
+  return data.role_code;
+}
+
+/**
+ * `POST /employees/{id}/role` (TSD §7.4.14) — urutan penjaga server: peran HR (403) → peran kanonik (422) →
+ * bukan diri sendiri (403) → ditemukan (404) → ACTIVE (422) → peran LAMA dan BARU dalam hak pemanggil (403).
+ * Mengembalikan `false` bila peran ternyata sama.
+ */
+export async function changeEmployeeRole(id: string, roleCode: RoleCode): Promise<boolean> {
+  if (MOCK) {
+    await delay(300);
+    if (!HR_ROLES.includes(useAuthStore.getState().user?.role ?? '')) throw new Error('403 — Only HR can change roles.');
+    if (!(ROLES as readonly string[]).includes(roleCode)) throw new Error('422 — Not one of the eleven roles.');
+    if (id === CURRENT_EMPLOYEE_ID) throw new Error('403 — You cannot change your own role.');
+    const found = MOCK_EMPLOYEES.find((e) => e.id === id);
+    if (!found) throw new Error('404 — Employee not found.');
+    if (found.employmentStatus !== 'ACTIVE') throw new Error('422 — Only an active employee can get a new role.');
+    const current = EMPLOYEE_ROLES[id] ?? 'ROLE_EMPLOYEE';
+    if (current === roleCode) return false;
+    const allowed = await roleGrantService.grantable();
+    if (!allowed.includes(current) || !allowed.includes(roleCode)) {
+      throw new Error('403 — The current or new role is outside the roles you may give.');
+    }
+    EMPLOYEE_ROLES[id] = roleCode;
+    return true;
+  }
+  const { data } = await api.post<{ changed: boolean }>(`/employee/employees/${id}/role`, { role_code: roleCode });
+  return data.changed;
+}
 
 /** `GET /employees/active-count` (TSD-EMPLOYEE §7.17) — cacah saja, dilarang memulangkan baris perorangan. */
 export async function activeEmployeeCount(): Promise<{ activeCount: number }> {

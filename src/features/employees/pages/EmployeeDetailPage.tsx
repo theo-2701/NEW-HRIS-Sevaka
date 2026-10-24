@@ -1,6 +1,11 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Briefcase, IdCard, Landmark, Lock } from 'lucide-react';
+import { Briefcase, ChevronDown, IdCard, Landmark, Lock } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChangeRoleModal, EditWorkDataModal } from '@/features/employees/components/EmployeeAdminModals';
+import { workStatusService } from '@/features/work-status/services/work-status.service';
+import { useAuthStore } from '@/store/auth.store';
 import { PageShell } from '@/components/PageShell';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/ui/button';
@@ -37,9 +42,9 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 const mono = 'font-mono tracking-[0.03em]';
 
 /**
- * Halaman detail karyawan — profil gabungan read-only: work data, rekening, dan identitas.
- * Tiga tombol aksi membawa ke layar yang berwenang mengubah data: PTKP Adjustment, Reprimand,
- * dan profil karyawan (ubah hanya untuk HR).
+ * Halaman detail karyawan — profil gabungan: work data, rekening, dan identitas. Ubah data kerja (EMP-WORKDATA)
+ * dan peran (CR-DIALOG) hanya untuk Super Admin · HR Manager · HR Staff (FSD-001-EMPLOYEE 0.83 §1, §15); aksi lain
+ * membawa ke layar yang berwenang (PTKP Adjustment, Reprimand, Biodata).
  */
 export function EmployeeDetailPage() {
   const navigate = useNavigate();
@@ -50,6 +55,12 @@ export function EmployeeDetailPage() {
 
   const { data, isLoading } = useEmployeeDetail(employeeId);
   const isSelf = data?.id === CURRENT_EMPLOYEE_ID;
+  const role = useAuthStore((s) => s.user?.role);
+  const hrWriter = role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER' || role === 'ROLE_HR_STAFF';
+  const [editing, setEditing] = useState(false);
+  const [changingRole, setChangingRole] = useState(false);
+  const { data: workStatuses = [] } = useQuery({ queryKey: ['work-status', {}], queryFn: () => workStatusService.search({}) });
+  const employmentType = workStatuses.find((row) => row.id === data?.workStatusId)?.name;
 
   return (
     <PageShell
@@ -59,35 +70,41 @@ export function EmployeeDetailPage() {
         { label: data?.name ?? 'Detail' },
       ]}
       title={data?.name ?? 'Employee Detail'}
-      description="Profil gabungan read-only — work data, rekening, serta identitas dan posisi."
+      description="Work data, bank account, position and identity of one employee."
       actions={
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="secondary"
-            disabled={!employeeId}
-            onClick={() => navigate(`/employees/ptkp-adjustment?employee=${employeeId}`)}
-          >
-            PTKP Status Adjustment
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={!employeeId}
-            onClick={() => navigate(`/employees/reprimand?employee=${employeeId}`)}
-          >
-            Reprimand
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" disabled={!employeeId}>
+                More Actions
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => navigate(`/employees/ptkp-adjustment?employee=${employeeId}`)}>
+                PTKP Status Adjustment
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate(`/employees/reprimand?employee=${employeeId}`)}>Reprimand</DropdownMenuItem>
+              {hrWriter && <DropdownMenuItem onSelect={() => setChangingRole(true)}>Change Role</DropdownMenuItem>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {hrWriter && (
+            <Button variant="secondary" disabled={!data} onClick={() => setEditing(true)}>
+              Edit Work Data
+            </Button>
+          )}
           <Button
             disabled={!employeeId}
             onClick={() => navigate(`/me/profile?employee=${employeeId}${isHr ? '&as=HR_MANAGER' : ''}`)}
           >
-            {isHr ? 'Biodata' : 'Lihat profil'}
+            {isHr ? 'Biodata' : 'View Profile'}
           </Button>
         </div>
       }
     >
       <Card>
         {isLoading || !data ? (
-          <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat data…</p>
+          <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Loading…</p>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4 border-b border-border-1 pb-[18px]">
@@ -105,8 +122,8 @@ export function EmployeeDetailPage() {
 
             <p className="m-0 flex items-start gap-2.5 rounded-md border border-primary-200 bg-primary-50 px-3.5 py-2.5 font-body text-[12px] font-medium leading-normal text-secondary-900">
               <Lock className="mt-0.5 size-3.5 shrink-0 text-secondary-700" />
-              Halaman ini read-only. Rekening &amp; data pribadi disamarkan untuk karyawan lain; setiap pembukaan data
-              ini tercatat. Perubahan data dilakukan lewat tombol aksi di atas.
+              Bank and personal data are masked for other employees, and every view of this page is logged. Use
+              the buttons above to change data.
             </p>
 
             <Group icon={<Briefcase className="size-[15px]" />} title="Work data">
@@ -116,13 +133,11 @@ export function EmployeeDetailPage() {
               <Row label="Employment status">
                 <EmploymentStatusBadge status={data.employmentStatus} />
               </Row>
-              <Row label="Work status">
-                {data.contractEndDate ? 'Karyawan Kontrak (PKWT)' : 'Karyawan Tetap (permanent)'}
-              </Row>
+              <Row label="Employment type">{employmentType ?? '—'}</Row>
               <Row label="Work arrangement">
                 <WorkArrangementTag arrangement={data.workArrangement} />
               </Row>
-              <Row label="Supervisor (Atasan)">{data.supervisor ?? '— (puncak rantai)'}</Row>
+              <Row label="Supervisor">{data.supervisor ?? '— (top of the chain)'}</Row>
               <Row label="Contract end date">{data.contractEndDate ? formatDate(data.contractEndDate) : '—'}</Row>
               <Row label="Cost center">
                 <span className={mono}>{data.costCenter}</span>
@@ -136,7 +151,7 @@ export function EmployeeDetailPage() {
                 {data.leaveDate ? (
                   formatDate(data.leaveDate)
                 ) : (
-                  <span className="text-success-800">Masih bekerja (NULL)</span>
+                  <span className="text-success-800">Still working</span>
                 )}
               </Row>
               <Row label="Record created">{formatDate(data.createdAt)}</Row>
@@ -168,6 +183,8 @@ export function EmployeeDetailPage() {
           </div>
         )}
       </Card>
+      {data && editing && <EditWorkDataModal employee={data} open={editing} onClose={() => setEditing(false)} />}
+      {data && changingRole && <ChangeRoleModal employee={data} open={changingRole} onClose={() => setChangingRole(false)} />}
     </PageShell>
   );
 }

@@ -58,6 +58,21 @@ export interface EmployeeDetail extends EmployeeRow {
   bank: EmployeeBankAccount;
   email: string;
   phone: string;
+  /** Employment Type — master Work Status (FSD-001-EMPLOYEE 0.83 §11). */
+  workStatusId?: string;
+  /** Memegang kursi bercabang ⇒ cabang mengikuti kursi, tidak dapat diubah lewat Edit Work Data (KCG-2). */
+  seatBranched?: boolean;
+}
+
+/** Isian EMP-WORKDATA (TSD §7.2.5) — hanya medan yang diubah yang dikirim. */
+export interface WorkDataPatch {
+  workStatusId?: string;
+  branchId?: string;
+  costCenter?: string;
+  sbu?: string;
+  bankCode?: string;
+  accountNumber?: string;
+  accountHolderName?: string;
 }
 
 /** Body `POST /employees/search` (search berkriteria, bukan query-string). */
