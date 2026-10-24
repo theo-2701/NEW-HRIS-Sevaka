@@ -967,11 +967,11 @@ di dokumen" — itu salah karena mengacu ke 0.46; di 0.83 keempatnya ada (§10�
 | New Joiner (§4) | TSD §7.4.1–7.4.10 | `src/features/new-joiner` |
 | Employee Bulk Import (§8, email-saja) | TSD §7.16 | `src/features/bulk-import` |
 | My Transition Tasks (§18) | TSD MT1..MT4 | `/employees/my-transition-tasks` — baru Open/Done; tab Tasks · Approvals · Escalations + dialog tolak **belum** |
-| Employee Directory › Work Status (§11) | TSD §7.13.3 | service `src/features/work-status` (dipakai Employment Type); **layar belum** |
-| Employee Directory › Email Domain (§12) | TSD §7.19 | service `src/features/email-domain` (dipakai BI-REVIEW); **layar belum** |
-| Employee Directory › Role Grant Rules (§13) | TSD §7.4.13 | service `src/features/role-grant` (dipakai pilihan Role); **layar belum** |
-| Employee Directory › Email and Phone Verification (§14, + Cancel access §14.4) | TSD §7.20–7.21 | **belum** |
-| Employee Directory › Temporary Assignment (§10) | TSD §7.18 | **belum** |
+| Employee Directory › Work Status (§11) | TSD §7.13.3 | `src/features/work-status` · `/employees/work-status` (juga sumber Employment Type) |
+| Employee Directory › Email Domain (§12) | TSD §7.19 | `src/features/email-domain` · `/employees/email-domain` (juga sumber BI-REVIEW) |
+| Employee Directory › Role Grant Rules (§13) | TSD §7.4.13 | `src/features/role-grant` · `/employees/role-grant-rules` — tabel ditransposisi (baris = peran, kolom = pemberi) supaya terbaca HR; isi data sama |
+| Employee Directory › Email and Phone Verification (§14, + Cancel access §14.4) | TSD §7.20–7.21 | `src/features/contact-verification` · `/employees/email-phone-verification` + publik `/contact-verification/:companyCode`; antrean diisi materialisasi NJ/ATS; Cancel access memulai OFFBOARDING menunggu persetujuan |
+| Employee Directory › Temporary Assignment (§10) | TSD §7.18 | `src/features/temporary-assignment` · `/employees/temporary-assignment`; filter = status (multi) + type inline, karyawan lewat kotak cari (standar ≤ 2 filter); sapuan harian dijalankan saat daftar dibaca |
 | Onboarding Closure (§16) | TSD §7.22 | **belum** |
 | Materialization + Role Mapping (§17, §21) | TSD §7.23 | **belum** |
 | Transition terpadu (§19) — menggantikan Employee Transfer + dua dashboard Onboarding | TSD TL1..TL2 | **belum** (Employee Transfer lama masih jalan) |

@@ -135,6 +135,22 @@ export const NAV: NavSection[] = [
           },
           { label: 'Import/Export Prorate' },
           { label: 'PTKP Status Adjustment', path: '/employees/ptkp-adjustment', source: 'ptkp-adjustment.html', status: 'done' },
+          // FSD-001-EMPLOYEE 0.83 §10–§14 (disetujui Theo, 24 Okt 2026).
+          {
+            label: 'Temporary Assignment',
+            path: '/employees/temporary-assignment',
+            source: 'FSD-001-EMPLOYEE §10',
+            status: 'done',
+          },
+          {
+            label: 'Email and Phone Verification',
+            path: '/employees/email-phone-verification',
+            source: 'FSD-001-EMPLOYEE §14',
+            status: 'done',
+          },
+          { label: 'Work Status', path: '/employees/work-status', source: 'FSD-001-EMPLOYEE §11', status: 'done' },
+          { label: 'Email Domain', path: '/employees/email-domain', source: 'FSD-001-EMPLOYEE §12', status: 'done' },
+          { label: 'Role Grant Rules', path: '/employees/role-grant-rules', source: 'FSD-001-EMPLOYEE §13', status: 'done' },
         ],
       },
       {

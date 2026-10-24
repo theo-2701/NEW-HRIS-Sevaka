@@ -3,6 +3,7 @@ import { MOCK } from '@/services/mock';
 import { employeeService, registerMaterializedEmployee } from '@/features/employees/services/employee.service';
 import { JOB_GRADE_OPTIONS, labelOf } from '@/features/new-joiner/types';
 import { assertNewEmployee, claimUsername, suggestUsername } from '@/features/new-joiner/newEmployee';
+import { queueContactVerification } from '@/features/contact-verification/services/contact-verification.service';
 import type {
   AtsBridge,
   AtsFilter,
@@ -555,6 +556,14 @@ export const atsBridgeService = {
           : undefined,
       });
       claimUsername(input.username);
+      queueContactVerification({
+        employeeId: employee.id,
+        name: employee.name,
+        nik,
+        username: input.username.trim(),
+        companyEmail: input.companyEmail.trim(),
+        phone: found.profile.candidatePhone,
+      });
       found.atsStatus = 'USED';
       found.usedEmployeeId = employee.id;
       return {

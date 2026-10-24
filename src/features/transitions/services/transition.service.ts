@@ -209,6 +209,26 @@ export function startOnboardingForNewJoiner(input: { name: string; positionLabel
   return row;
 }
 
+/**
+ * Koneksi antar modul: Cancel access (FSD-001-EMPLOYEE 0.83 §14.4, TSD §7.21) memulai OFFBOARDING
+ * `CANCELLED_BEFORE_START` yang menunggu persetujuan seperti offboarding biasa.
+ */
+export function startOffboardingForCancelledAccess(input: { name: string; reasonLabel: string }): Transition {
+  const row: Transition = {
+    id: `TR-2026-0${700 + mockRows.length}`,
+    employee: input.name,
+    type: 'OFFBOARDING',
+    from: '—',
+    to: '—',
+    detail: `Access cancelled before start · ${input.reasonLabel}`,
+    effectiveDate: new Date().toISOString().slice(0, 10),
+    status: 'IN_APPROVAL',
+    tasks: [],
+  };
+  mockRows = [row, ...mockRows];
+  return row;
+}
+
 export const transitionService = {
   async list(): Promise<Transition[]> {
     if (MOCK) {

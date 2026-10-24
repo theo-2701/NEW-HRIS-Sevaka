@@ -86,6 +86,12 @@ import { PtkpAdjustmentPage } from '@/features/ptkp/pages/PtkpAdjustmentPage';
 import { MassResignationPage } from '@/features/mass-resignation/pages/MassResignationPage';
 import { BulkImportPage } from '@/features/bulk-import/pages/BulkImportPage';
 import { BulkActivationPage } from '@/features/bulk-activation/pages/BulkActivationPage';
+import { TemporaryAssignmentPage } from '@/features/temporary-assignment/pages/TemporaryAssignmentPage';
+import { ContactVerificationPage } from '@/features/contact-verification/pages/ContactVerificationPage';
+import { ContactVerificationPortalPage } from '@/features/contact-verification/pages/ContactVerificationPortalPage';
+import { WorkStatusPage } from '@/features/work-status/pages/WorkStatusPage';
+import { EmailDomainPage } from '@/features/email-domain/pages/EmailDomainPage';
+import { RoleGrantRulesPage } from '@/features/role-grant/pages/RoleGrantRulesPage';
 import { AtsBridgePage } from '@/features/ats-bridge/pages/AtsBridgePage';
 import { CandidatePortalPage } from '@/features/ats-bridge/pages/CandidatePortalPage';
 import { MyTransitionTasksPage } from '@/features/transitions/pages/MyTransitionTasksPage';
@@ -132,6 +138,11 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/bulk-import', element: <BulkImportPage /> },
   { path: 'employees/bulk-account-activation', element: <BulkActivationPage /> },
+  { path: 'employees/temporary-assignment', element: <TemporaryAssignmentPage /> },
+  { path: 'employees/email-phone-verification', element: <ContactVerificationPage /> },
+  { path: 'employees/work-status', element: <WorkStatusPage /> },
+  { path: 'employees/email-domain', element: <EmailDomainPage /> },
+  { path: 'employees/role-grant-rules', element: <RoleGrantRulesPage /> },
   { path: 'employees/ptkp-adjustment', element: <PtkpAdjustmentPage /> },
   { path: 'employees/manpower/planning', element: <ManpowerPlanningPage /> },
   { path: 'employees/manpower/history', element: <ManpowerPlanningPage history /> },
@@ -262,6 +273,13 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/transfer/dashboard',
   '/employees/mass-resignation',
   '/employees/ptkp-adjustment',
+  '/employees/bulk-account-activation',
+  '/employees/my-transition-tasks',
+  '/employees/temporary-assignment',
+  '/employees/email-phone-verification',
+  '/employees/work-status',
+  '/employees/email-domain',
+  '/employees/role-grant-rules',
   '/employees/manpower/planning',
   '/employees/manpower/history',
   '/employees/manpower/requisition',
@@ -402,5 +420,7 @@ export const routes: RouteObject[] = [
   { path: '/verify/:code', element: <PublicVerifyPage /> },
   /* Portal kandidat publik — tanpa login, tanpa sidebar (FSD-001-EMPLOYEE §4B). */
   { path: '/candidate/:companyCode', element: <CandidatePortalPage /> },
+  /* Halaman verifikasi email kantor / nomor HP — publik, tanpa login (FSD-001-EMPLOYEE 0.83 §14). */
+  { path: '/contact-verification/:companyCode', element: <ContactVerificationPortalPage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ];

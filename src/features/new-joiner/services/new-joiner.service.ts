@@ -4,6 +4,7 @@ import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER, CURRENT_USER_ID, POSITIONS, positionsForRequisition } from '@/features/new-joiner/types';
 import { assertNewEmployee, claimUsername } from '@/features/new-joiner/newEmployee';
+import { queueContactVerification } from '@/features/contact-verification/services/contact-verification.service';
 import type { Candidate, CandidateDraft, InviteDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
 import type { Requisition } from '@/features/manpower/types';
@@ -586,6 +587,14 @@ export const newJoinerService = {
           : undefined,
       });
       claimUsername(payload.username);
+      queueContactVerification({
+        employeeId: employee.id,
+        name: row.name,
+        nik,
+        username: payload.username.trim(),
+        companyEmail: payload.companyEmail.trim(),
+        phone: row.phone,
+      });
       if (row.atsBridgeId) markAtsUsed(row.atsBridgeId, employee.id);
       startOnboardingForNewJoiner({ name: row.name, positionLabel, effectiveDate: payload.joinDate });
       return { nikAlsoUsed: sameNik.some((item) => item.nik === nik) };
