@@ -99,6 +99,9 @@ import { TransitionsPage } from '@/features/transitions/pages/TransitionsPage';
 import { TransitionDetailPage } from '@/features/transitions/pages/TransitionDetailPage';
 import { OnboardingClosurePage } from '@/features/transitions/pages/OnboardingClosurePage';
 import { EssMyTransitionPage } from '@/features/transitions/pages/EssMyTransitionPage';
+import { MaterializationPage } from '@/features/materialization/pages/MaterializationPage';
+import { MaterializationDetailPage } from '@/features/materialization/pages/MaterializationDetailPage';
+import { RoleMappingPage } from '@/features/materialization/pages/RoleMappingPage';
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
 import { AddEmployeePage } from '@/features/new-joiner/pages/AddEmployeePage';
 import { EmployeeDirectoryPage } from '@/features/employees/pages/EmployeeDirectoryPage';
@@ -141,6 +144,9 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/transition/detail', element: <TransitionDetailPage /> },
   { path: 'employees/onboarding/closure', element: <OnboardingClosurePage /> },
   { path: 'me/transition', element: <EssMyTransitionPage /> },
+  { path: 'employees/materialization', element: <MaterializationPage /> },
+  { path: 'employees/materialization/setup', element: <MaterializationDetailPage /> },
+  { path: 'employees/materialization/role-mapping', element: <RoleMappingPage /> },
   { path: 'employees/my-transition-tasks', element: <MyTransitionTasksPage /> },
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/bulk-import', element: <BulkImportPage /> },
@@ -282,6 +288,9 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/transition/detail',
   '/employees/onboarding/closure',
   '/me/transition',
+  '/employees/materialization',
+  '/employees/materialization/setup',
+  '/employees/materialization/role-mapping',
   '/employees/mass-resignation',
   '/employees/ptkp-adjustment',
   '/employees/bulk-account-activation',

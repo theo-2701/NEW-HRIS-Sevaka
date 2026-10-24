@@ -196,6 +196,20 @@ export const NAV: NavSection[] = [
           },
         ],
       },
+      // FSD-001-EMPLOYEE 0.83 §17 + §21. Detail setup dibuka dari daftar, tanpa baris menu sendiri.
+      {
+        label: 'Materialization',
+        icon: 'layers',
+        children: [
+          { label: 'Materialization', path: '/employees/materialization', source: 'FSD-001-EMPLOYEE §17', status: 'done' },
+          {
+            label: 'Materialization Role Mapping',
+            path: '/employees/materialization/role-mapping',
+            source: 'FSD-001-EMPLOYEE §21',
+            status: 'done',
+          },
+        ],
+      },
       {
         label: 'Reprimand',
         icon: 'alert-triangle',
