@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { newEmployeeSchema } from '@/features/new-joiner/newEmployee';
 
 /**
  * Skema New Joiner (FSD-001-EMPLOYEE 0.46 §4 · UIC §4.1 & §1.7).
@@ -95,12 +96,10 @@ export const candidateSchema = Yup.object({
     .test('not-past', 'The intended join date cannot be in the past.', (value) => !value || value >= today()),
 });
 
-/** Skema NJ-MATERIALIZE (FSD 0.46 §4.3): kontrak sudah ditandatangani. */
+/** Skema NJ-MATERIALIZE (FSD 0.83 §4.1): kontrak sudah ditandatangani + isian karyawan baru. */
 export const materializeSchema = Yup.object({
   joinDate: Yup.string().required('Choose the start date.'),
-  jobGradeId: Yup.string().required('Choose a grade.'),
+  jobGradeId: Yup.string().required('Choose a class.'),
   contractFileName: Yup.string().required('Upload the signed contract.'),
-  nik: Yup.string().trim().required('Enter the NIK.').max(50, 'At most 50 characters.'),
-  username: Yup.string().trim().max(50, 'At most 50 characters.'),
-  companyEmail: Yup.string().trim().email('Enter a valid email address.'),
+  ...newEmployeeSchema,
 });

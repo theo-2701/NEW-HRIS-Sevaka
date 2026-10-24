@@ -6,9 +6,18 @@ import {
   previewLink,
   resetAtsMocks,
 } from '@/features/ats-bridge/services/ats-bridge.service';
+import { emptyNewEmployee } from '@/features/new-joiner/newEmployee';
+import { useAuthStore } from '@/store/auth.store';
 
 beforeEach(() => {
   resetAtsMocks();
+  useAuthStore.setState({ user: { id: 'u-hrs', name: 'HR Staff', email: 'hrs@ptdika.co.id', role: 'ROLE_HR_STAFF' } });
+});
+
+const account = (patch = {}) => ({
+  joinDate: '2026-11-02',
+  jobGradeId: 'gr-3a',
+  ...emptyNewEmployee({ nik: 'NIK-0161', username: 'putri.amalia', companyEmail: 'putri.amalia@ptdika.co.id', ...patch }),
 });
 
 const profile = {
@@ -34,16 +43,23 @@ describe('ATS Bridge (FSD-001-EMPLOYEE §4A)', () => {
     ).rejects.toThrow(/409/);
   });
 
-  it('resend hanya untuk WAITING_CANDIDATE; hapus menolak baris USED', async () => {
+  it('Create Employee: usulan username@domain batch; username & company email wajib; peran di luar hak 403; sandi sekali', async () => {
     await expect(atsBridgeService.resendLink('ats-02')).rejects.toThrow(/409/);
-    await atsBridgeService.materialize('ats-02', { joinDate: '2026-11-02', jobGradeId: 'gr-3a', nik: 'NIK-0161', username: '', companyEmail: '' }, 'k1');
+    const detail = await atsBridgeService.detail('ats-02');
+    expect(detail.materializeSuggestion).toMatchObject({ username: 'putri.amalia', companyEmail: 'putri.amalia@ptdika.co.id' });
+    await expect(atsBridgeService.materialize('ats-02', account({ username: '' }), 'k0')).rejects.toThrow(/username/);
+    await expect(atsBridgeService.materialize('ats-02', account({ companyEmail: '' }), 'k0')).rejects.toThrow(/company_email/);
+    await expect(atsBridgeService.materialize('ats-02', account({ roleCode: 'ROLE_HR_STAFF' }), 'k0')).rejects.toThrow(/403/);
+    await expect(atsBridgeService.materialize('ats-02', account({ username: 'tony.stark' }), 'k0')).rejects.toThrow(/409/);
+    await expect(atsBridgeService.materialize('ats-02', account({ accountNumber: '1234567' }), 'k0')).rejects.toThrow(/bank/);
+    const result = await atsBridgeService.materialize('ats-02', account({ roleCode: 'ROLE_GA_STAFF' }), 'k1');
+    expect(result).toMatchObject({ username: 'putri.amalia', companyEmail: 'putri.amalia@ptdika.co.id' });
+    expect(result.mailboxInitialPassword).toHaveLength(14);
     await expect(atsBridgeService.remove('ats-02')).rejects.toThrow(/409/);
   });
 
   it('Create Employee hanya untuk kandidat Bulk Import yang COMPLETED', async () => {
-    await expect(
-      atsBridgeService.materialize('ats-03', { joinDate: '2026-11-02', jobGradeId: 'gr-3a', nik: 'N', username: '', companyEmail: '' }, 'k2'),
-    ).rejects.toThrow(/422/);
+    await expect(atsBridgeService.materialize('ats-03', account({ username: 'reza.f' }), 'k2')).rejects.toThrow(/422/);
   });
 });
 

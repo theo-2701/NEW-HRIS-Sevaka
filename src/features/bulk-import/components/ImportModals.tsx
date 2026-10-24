@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Info, MailCheck, ShieldAlert } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DataTable } from '@/components/DataTable';
@@ -8,6 +9,8 @@ import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { emailDomainService } from '@/features/email-domain/services/email-domain.service';
 // Komponen kunci-nilai & catatan dipakai ulang dari modul tetangga yang berpola maker-checker sama.
 import { KeyValueList, KeyValueRow, Note } from '@/features/mass-resignation/components/BatchBits';
 import {
@@ -18,6 +21,7 @@ import {
   useUploadImport,
 } from '@/features/bulk-import/hooks/useBulkImport';
 import {
+  CURRENT_USER,
   IMPORT_STATUS_LABEL,
   IMPORT_STATUS_MEANING,
   MAX_ROWS,
@@ -227,10 +231,21 @@ export function DetailModal({ id, onClose }: { id: string | null; onClose: () =>
   );
 }
 
-/** BI-REVIEW — checker meninjau pratinjau Passed/Failed Check lalu Approve atau Cancel. */
+const NO_DOMAIN = 'none';
+
+/**
+ * BI-REVIEW — checker meninjau pratinjau Passed/Failed Check lalu Approve atau Cancel (FSD 0.83 §8.5).
+ * Pengunggah batch tidak melihat form Approve (catatan "You uploaded this batch"), tetapi tetap dapat membatalkan.
+ */
 export function ReviewModal({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { data: batch } = useImportBatch(id);
+  const { data: domains = [] } = useQuery({
+    queryKey: ['email-domain', { isActive: true }],
+    queryFn: () => emailDomainService.search({ isActive: true }),
+    enabled: Boolean(id),
+  });
   const [note, setNote] = useState('');
+  const [domainId, setDomainId] = useState(NO_DOMAIN);
   const [reason, setReason] = useState('');
   const [confirming, setConfirming] = useState(false);
   const approve = useApproveImport();
@@ -240,10 +255,12 @@ export function ReviewModal({ id, onClose }: { id: string | null; onClose: () =>
     if (!id) return;
     setNote('');
     setReason('');
+    setDomainId(NO_DOMAIN);
   }, [id]);
 
   const pending = approve.isPending || cancel.isPending;
   const decidable = batch?.importStatus === 'VALIDATED';
+  const uploader = batch?.submittedBy === CURRENT_USER;
   const valid = batch ? batch.totalRows - batch.failedCount : 0;
 
   return (
@@ -264,9 +281,11 @@ export function ReviewModal({ id, onClose }: { id: string | null; onClose: () =>
               >
                 Cancel Batch
               </Button>
-              <Button disabled={pending} onClick={() => setConfirming(true)}>
-                Approve & Send Invitations
-              </Button>
+              {!uploader && (
+                <Button disabled={pending} onClick={() => setConfirming(true)}>
+                  Approve & Send Invitations
+                </Button>
+              )}
             </>
           ) : (
             <Button variant="secondary" onClick={onClose}>
@@ -291,12 +310,41 @@ export function ReviewModal({ id, onClose }: { id: string | null; onClose: () =>
               <KeyValueRow label="Rows">{batch.totalRows}</KeyValueRow>
             </KeyValueList>
             <RowsTable batch={batch} states={['VALID', 'INVALID']} />
+            {decidable && uploader && (
+              <Note icon={<Info />}>
+                You uploaded this batch, so someone else must approve it. You can still cancel it.
+              </Note>
+            )}
+            {decidable && !uploader && (
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="bi-domain">Company Email Domain</Label>
+                <Select value={domainId} onValueChange={setDomainId}>
+                  <SelectTrigger id="bi-domain">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_DOMAIN}>No domain selected</SelectItem>
+                    {domains.map((domain) => (
+                      <SelectItem key={domain.id} value={domain.id}>
+                        {domain.domainName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="font-body text-xs font-medium text-fg-3">
+                  Optional. The company email of each candidate becomes username@domain when you create the employee; you
+                  can still change it then. Manage the domains in Employee Directory &gt; Email Domain.
+                </span>
+              </div>
+            )}
             {decidable && (
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="bi-note">Approval note</Label>
-                  <Textarea id="bi-note" rows={2} value={note} placeholder="Optional" onChange={(event) => setNote(event.target.value)} />
-                </div>
+                {!uploader && (
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="bi-note">Approval note</Label>
+                    <Textarea id="bi-note" rows={2} value={note} placeholder="Optional" onChange={(event) => setNote(event.target.value)} />
+                  </div>
+                )}
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="bi-reason">
                     Cancellation reason<em>*</em>
@@ -325,7 +373,7 @@ export function ReviewModal({ id, onClose }: { id: string | null; onClose: () =>
         onConfirm={() =>
           batch &&
           approve.mutate(
-            { id: batch.id, note: note.trim() },
+            { id: batch.id, note: note.trim(), emailDomainId: domainId === NO_DOMAIN ? '' : domainId },
             {
               onSuccess: () => {
                 setConfirming(false);

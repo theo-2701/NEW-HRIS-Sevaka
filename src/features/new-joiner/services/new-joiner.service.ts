@@ -2,7 +2,8 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
-import { CURRENT_USER, CURRENT_USER_ID, POSITIONS } from '@/features/new-joiner/types';
+import { CURRENT_USER, CURRENT_USER_ID, POSITIONS, positionsForRequisition } from '@/features/new-joiner/types';
+import { assertNewEmployee, claimUsername } from '@/features/new-joiner/newEmployee';
 import type { Candidate, CandidateDraft, InviteDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
 import type { Requisition } from '@/features/manpower/types';
@@ -72,7 +73,7 @@ let mockRows: Candidate[] = (
       name: '',
       email: 'nadia.rahma@gmail.com',
       phone: '',
-      positionId: 'pos-fe',
+      positionId: 'pos-be',
       requisitionId: 'REQ-0230',
       nationality: '',
       idCardLast4: '',
@@ -316,7 +317,7 @@ async function assertCandidate(draft: CandidateDraft, keepIdCard: boolean) {
   }
 }
 
-/** Requisition APPROVED + aktif, dan posisi milik unit requisition itu. */
+/** Requisition APPROVED + aktif; posisi milik unit requisition (EMP-BIZ-544) dan checklist-nya (EMP-BIZ-545). */
 async function assertSeat(requisitionId: string, positionId: string) {
   const requisition = (await manpowerService.requisitions()).find((row) => row.id === requisitionId);
   if (!requisition || !isPickableRequisition(requisition)) {
@@ -326,6 +327,20 @@ async function assertSeat(requisitionId: string, positionId: string) {
   if (!position || position.unitId !== requisition.unitId) {
     throw new Error("422 — position_id must belong to the requisition's organization unit.");
   }
+  if (!positionsForRequisition(requisition).some((item) => item.value === positionId)) {
+    throw new Error("422 — position_id is not on the requisition's position checklist.");
+  }
+}
+
+/**
+ * Pilihan "From ATS" (TSD 0.192 §7.4.12, 0.160): kandidat yang sudah lengkap, bukan asal Bulk Import, dan
+ * belum dipegang calon aktif — menurut tautan ATS ATAU email yang sama.
+ */
+export async function atsCandidatesForNewJoiner() {
+  const held = new Set(mockRows.filter((row) => !CLOSED.includes(row.status)).map((row) => row.email.toLowerCase()));
+  return (await atsAvailableForNewJoiner()).filter(
+    (item) => item.source !== 'BULK_IMPORT' && !held.has(item.candidateEmail.toLowerCase()),
+  );
 }
 
 export const newJoinerService = {
@@ -375,8 +390,9 @@ export const newJoinerService = {
         mockRows = [row, ...mockRows];
         return { ...row };
       }
-      const available = await atsAvailableForNewJoiner();
-      const snap = available.some((item) => item.id === draft.atsBridgeId) ? atsSnapshot(draft.atsBridgeId) : null;
+      const snap = (await atsCandidatesForNewJoiner()).some((item) => item.id === draft.atsBridgeId)
+        ? atsSnapshot(draft.atsBridgeId)
+        : null;
       if (!snap) throw new Error('409 — This ATS candidate is no longer available. Choose another one.');
       const row: Candidate = {
         ...base,
@@ -535,8 +551,8 @@ export const newJoinerService = {
       assertStatus(row, ['APPROVED'], 'materialize');
       if (!payload.joinDate) throw new Error('422 — join_date is required.');
       if (!payload.jobGradeId) throw new Error('422 — job_grade_id is required.');
+      assertNewEmployee(payload);
       const nik = payload.nik.trim();
-      if (!nik || nik.length > 50) throw new Error('422 — nik is required, at most 50 characters.');
 
       const { rows: sameNik } = await employeeService.search({
         keyword: nik,
@@ -559,12 +575,17 @@ export const newJoinerService = {
       const positionLabel = labelOf(POSITION_OPTIONS, row.positionId);
       const employee = registerMaterializedEmployee({
         name: row.name,
-        email: payload.companyEmail.trim() || row.email,
+        email: payload.companyEmail.trim(),
         positionLabel,
         jobGrade: labelOf(JOB_GRADE_OPTIONS, payload.jobGradeId),
         joinDate: payload.joinDate,
         nik,
+        branchId: POSITIONS.find((item) => item.value === row.positionId)?.branchId,
+        bank: payload.bankCode
+          ? { bankCode: payload.bankCode, accountNumber: payload.accountNumber, accountHolderName: payload.accountHolderName }
+          : undefined,
       });
+      claimUsername(payload.username);
       if (row.atsBridgeId) markAtsUsed(row.atsBridgeId, employee.id);
       startOnboardingForNewJoiner({ name: row.name, positionLabel, effectiveDate: payload.joinDate });
       return { nikAlsoUsed: sameNik.some((item) => item.nik === nik) };
@@ -573,11 +594,17 @@ export const newJoinerService = {
     const { data } = await api.post<{ nikAlsoUsed: boolean }>(
       `/new-joiners/${payload.id}/materialize`,
       {
-        joinDate: payload.joinDate,
-        jobGradeId: payload.jobGradeId,
+        join_date: payload.joinDate,
+        job_grade_id: payload.jobGradeId,
+        contract_document_id: payload.contractFileName,
         nik: payload.nik.trim(),
-        username: payload.username.trim() || undefined,
-        companyEmail: payload.companyEmail.trim() || undefined,
+        username: payload.username.trim(),
+        company_email: payload.companyEmail.trim(),
+        role_code: payload.roleCode || undefined,
+        work_status_id: payload.workStatusId || undefined,
+        bank_code: payload.bankCode || undefined,
+        account_number: payload.accountNumber || undefined,
+        account_holder_name: payload.accountHolderName || undefined,
       },
       { headers: { 'Idempotency-Key': newId() } },
     );

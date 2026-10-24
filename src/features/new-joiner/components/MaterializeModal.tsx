@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
-import { TextField } from '@/components/form/TextField';
+import { NewEmployeeFields } from '@/features/new-joiner/components/NewEmployeeFields';
+import { emptyNewEmployee, suggestUsername } from '@/features/new-joiner/newEmployee';
+import { BRANCHES } from '@/features/employees/types';
 import { KeyValueList, KeyValueRow, Note } from '@/features/new-joiner/components/CandidateBits';
 import { useMaterializeCandidate, useSuggestedNik } from '@/features/new-joiner/hooks/useNewJoiner';
 import { materializeSchema } from '@/features/new-joiner/validation';
-import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
+import { JOB_GRADE_OPTIONS, POSITIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
 import type { Candidate } from '@/features/new-joiner/types';
 import { formatDate } from '@/lib/format';
 
@@ -58,14 +60,16 @@ function ContractFileField() {
 }
 
 /**
- * NJ-MATERIALIZE (FSD-001-EMPLOYEE 0.46 §4.3) — kontrak sudah ditandatangani. Membuat identitas
- * global dan menulis work data; kandidat menjadi karyawan berstatus WAITING. NIK wajib (saran nomor
- * berikutnya, kembar hanya peringatan); Username & Company Email opsional.
+ * NJ-MATERIALIZE (FSD-001-EMPLOYEE 0.83 §4.1) — kontrak sudah ditandatangani. Membuat identitas global
+ * dan menulis work data; kandidat menjadi karyawan WAITING. Branch hanya-baca dari kursi (KCG-2); NIK,
+ * Username, Company Email wajib; Role, Employment Type, Bank opsional.
  */
 export function MaterializeModal({ candidate, onClose }: { candidate: Candidate | null; onClose: () => void }) {
   const materialize = useMaterializeCandidate();
   const { data: suggestedNik = '' } = useSuggestedNik(Boolean(candidate));
   const [done, setDone] = useState<{ name: string; nik: string; nikAlsoUsed: boolean } | null>(null);
+  const seat = POSITIONS.find((item) => item.value === candidate?.positionId);
+  const branch = BRANCHES.find((item) => item.id === seat?.branchId)?.name ?? '—';
 
   if (done) {
     const finish = () => {
@@ -76,8 +80,8 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
       <Modal open onOpenChange={(next) => !next && finish()} title="Employee created" footer={<Button onClick={finish}>Done</Button>}>
         <div className="flex flex-col gap-3">
           <p className="m-0 font-body text-[13px] leading-[1.5] text-fg-2">
-            {done.name} is now an employee with status Waiting and an Onboarding transition. The employee receives
-            an activation link to set a password.
+            {done.name} is now an employee with status Waiting and an Onboarding transition. The username and
+            company email are sent to the candidate's personal email.
           </p>
           {done.nikAlsoUsed && (
             <Note tone="warn" icon={<TriangleAlert />}>
@@ -96,9 +100,7 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
         joinDate: '',
         jobGradeId: '',
         contractFileName: '',
-        nik: suggestedNik,
-        username: candidate?.email.split('@')[0] ?? '',
-        companyEmail: '',
+        ...emptyNewEmployee({ nik: suggestedNik, username: candidate ? suggestUsername(candidate.email) : '' }),
       }}
       validationSchema={materializeSchema}
       enableReinitialize
@@ -124,21 +126,20 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
               </Button>
               <Button
                 onClick={submitForm}
-                // L3: nonaktif sampai isian wajib terisi.
-                disabled={
-                  materialize.isPending || !values.joinDate || !values.jobGradeId || !values.contractFileName || !values.nik.trim()
-                }
+                // L3: nonaktif sampai Tanggal join, Class, dan Kontrak ketiganya terisi.
+                disabled={materialize.isPending || !values.joinDate || !values.jobGradeId || !values.contractFileName}
               >
-                {materialize.isPending ? 'Creating…' : 'Create Employee'}
+                {materialize.isPending ? 'Creating…' : 'Materialize'}
               </Button>
             </>
           }
         >
           {candidate && (
-            <Form className="flex flex-col gap-4">
+            <Form className="flex flex-col gap-5">
               <KeyValueList>
                 <KeyValueRow label="Candidate">{candidate.name}</KeyValueRow>
                 <KeyValueRow label="Position">{labelOf(POSITION_OPTIONS, candidate.positionId)}</KeyValueRow>
+                <KeyValueRow label="Branch">{branch}</KeyValueRow>
                 <KeyValueRow label="Seat held until">
                   {candidate.seatExpiry ? formatDate(candidate.seatExpiry) : '—'}
                 </KeyValueRow>
@@ -146,23 +147,18 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
 
               <div className="grid gap-4 md:grid-cols-2">
                 <DateField name="joinDate" label="Start Date" required placeholder="Select a date" />
-                <SelectField name="jobGradeId" label="Grade" required placeholder="Select a grade" options={JOB_GRADE_OPTIONS} />
-                <TextField
-                  name="nik"
-                  label="NIK"
+                <SelectField
+                  name="jobGradeId"
+                  label="Class"
                   required
-                  maxLength={50}
-                  hint="Suggested next number. Free format — you get a warning if it is already used."
+                  placeholder="Select a class"
+                  options={JOB_GRADE_OPTIONS}
+                  hint="The branch follows the seat and cannot be changed here."
                 />
                 <ContractFileField />
-                <TextField name="username" label="Username" hint="Optional. Left empty, the system derives one." />
-                <TextField
-                  name="companyEmail"
-                  type="email"
-                  label="Company Email"
-                  hint="Optional. No mailbox password is asked or stored."
-                />
               </div>
+
+              <NewEmployeeFields />
             </Form>
           )}
         </Modal>

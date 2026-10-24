@@ -2,11 +2,13 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { employeeService, registerMaterializedEmployee } from '@/features/employees/services/employee.service';
 import { JOB_GRADE_OPTIONS, labelOf } from '@/features/new-joiner/types';
+import { assertNewEmployee, claimUsername, suggestUsername } from '@/features/new-joiner/newEmployee';
 import type {
   AtsBridge,
   AtsFilter,
   CandidateProfile,
   MaterializeInput,
+  MaterializeResult,
   PortalState,
   PortalStep,
   ZipArea,
@@ -55,6 +57,8 @@ interface Stored extends AtsBridge {
   step: PortalStep;
   /** Calon New Joiner aktif yang memegang kandidat ini (`available_for_new_joiner=false`). */
   linkedNewJoinerId: string | null;
+  /** Domain email yang dibekukan batch Bulk Import saat Approve (usulan Company Email). */
+  emailDomain: string | null;
 }
 
 /** Profil contoh untuk kandidat yang sudah COMPLETED di dataset dummy. */
@@ -92,6 +96,7 @@ const row = (input: Partial<Stored> & Pick<Stored, 'id' | 'source' | 'atsStatus'
   profile: { ...EMPTY_PROFILE },
   step: 'CONSENT',
   linkedNewJoinerId: null,
+  emailDomain: null,
   ...input,
 });
 
@@ -110,6 +115,7 @@ const seed = (): Stored[] => [
     idPhotoUploaded: true,
     step: 'DONE',
     profile: filled('Putri Amalia', '+6281277001122', '3175015504960001'),
+    emailDomain: 'ptdika.co.id',
   }),
   row({
     id: 'ats-03',
@@ -198,7 +204,15 @@ const fromToken = (token: string) => {
   return found;
 };
 
-const strip = ({ token: _t, profile: _p, step: _s, linkedNewJoinerId: _l, ...rest }: Stored): AtsBridge => ({ ...rest });
+const strip = ({ token: _t, profile: _p, step: _s, linkedNewJoinerId: _l, emailDomain: _d, ...rest }: Stored): AtsBridge => ({
+  ...rest,
+});
+
+/** Sandi awal kotak surat (mode dummy) — dibuat server, tampil sekali, tidak disimpan. */
+function mailboxPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  return Array.from(crypto.getRandomValues(new Uint32Array(14)), (n) => chars[n % chars.length]).join('');
+}
 
 const newToken = () => crypto.randomUUID().replace(/-/g, '');
 
@@ -299,7 +313,11 @@ export function atsEmailTaken(email: string): boolean {
  * Mode dummy: persetujuan Bulk Import mengirim magic link user consent ke tiap email yang lolos periksa
  * dan melahirkan satu baris ATS `source=BULK_IMPORT` (FSD-001-EMPLOYEE 0.46 §8).
  */
-export function inviteFromImport(email: string, requestor: { id: string; name: string; nik: string }): string {
+export function inviteFromImport(
+  email: string,
+  requestor: { id: string; name: string; nik: string },
+  emailDomain: string | null = null,
+): string {
   const created = row({
     id: `ats-${String(store.length + 10).padStart(2, '0')}`,
     source: 'BULK_IMPORT',
@@ -310,6 +328,7 @@ export function inviteFromImport(email: string, requestor: { id: string; name: s
     requestorNik: requestor.nik,
     createdAt: new Date().toISOString(),
     linkSendCount: 0,
+    emailDomain,
   });
   sendLink(created);
   store = [created, ...store];
@@ -422,13 +441,21 @@ export const atsBridgeService = {
     return data.data;
   },
 
-  async detail(id: string): Promise<AtsBridge & { materializeSuggestion: { username: string; nik: string } | null }> {
+  async detail(
+    id: string,
+  ): Promise<AtsBridge & { materializeSuggestion: { username: string; nik: string; companyEmail: string } | null }> {
     if (MOCK) {
       await delay(150);
       const found = find(id);
+      const username = suggestUsername(found.candidateEmail);
       const suggest =
         found.source === 'BULK_IMPORT' && found.atsStatus === 'COMPLETED'
-          ? { username: found.candidateEmail.split('@')[0], nik: `NIK-${String(160 + store.length).padStart(4, '0')}` }
+          ? {
+              username,
+              nik: `NIK-${String(160 + store.length).padStart(4, '0')}`,
+              // username@domain bila batch asal memilih Company Email Domain saat Approve.
+              companyEmail: found.emailDomain ? `${username}@${found.emailDomain}` : '',
+            }
           : null;
       return { ...strip(found), materializeSuggestion: suggest };
     }
@@ -484,6 +511,9 @@ export const atsBridgeService = {
       await delay(300);
       const found = find(id);
       if (found.atsStatus === 'USED') throw new Error('409 — This candidate is already an employee and cannot be deleted.');
+      if (found.linkedNewJoinerId) {
+        throw new Error('409 — This candidate is used by an active New Joiner submission. Cancel that submission first.');
+      }
       store = store.filter((item) => item.id !== id);
       return;
     }
@@ -491,11 +521,11 @@ export const atsBridgeService = {
   },
 
   /** Kandidat asal Bulk Import yang `COMPLETED` → karyawan (UIC §4A.5). */
-  async materialize(id: string, input: MaterializeInput, idempotencyKey: string) {
+  async materialize(id: string, input: MaterializeInput, idempotencyKey: string): Promise<MaterializeResult> {
     if (!input.joinDate) throw new Error('422 — Enter the start date.');
     if (!input.jobGradeId) throw new Error('422 — Choose a grade.');
-    if (!input.nik.trim() || input.nik.trim().length > 50) throw new Error('422 — Enter the NIK (at most 50 characters).');
     if (MOCK) {
+      assertNewEmployee(input);
       await delay(500);
       const found = find(id);
       if (found.source !== 'BULK_IMPORT' || found.atsStatus !== 'COMPLETED') {
@@ -520,27 +550,38 @@ export const atsBridgeService = {
         jobGrade: labelOf(JOB_GRADE_OPTIONS, input.jobGradeId),
         joinDate: input.joinDate,
         nik,
+        bank: input.bankCode
+          ? { bankCode: input.bankCode, accountNumber: input.accountNumber, accountHolderName: input.accountHolderName }
+          : undefined,
       });
+      claimUsername(input.username);
       found.atsStatus = 'USED';
       found.usedEmployeeId = employee.id;
       return {
         employeeId: employee.id,
-        username: input.username.trim() || found.candidateEmail.split('@')[0],
+        username: input.username.trim(),
+        companyEmail: input.companyEmail.trim(),
+        mailboxInitialPassword: mailboxPassword(),
         nikAlsoUsed: rows.some((item) => item.nik === nik),
       };
     }
-    const { data } = await api.post(
+    const { data } = await api.post<MaterializeResult>(
       `/employee/ats-bridges/${id}/materialize`,
       {
         join_date: input.joinDate,
         job_grade_id: input.jobGradeId,
         nik: input.nik.trim(),
-        username: input.username.trim() || undefined,
-        company_email: input.companyEmail.trim() || undefined,
+        username: input.username.trim(),
+        company_email: input.companyEmail.trim(),
+        role_code: input.roleCode || undefined,
+        work_status_id: input.workStatusId || undefined,
+        bank_code: input.bankCode || undefined,
+        account_number: input.accountNumber || undefined,
+        account_holder_name: input.accountHolderName || undefined,
       },
       { headers: { 'Idempotency-Key': idempotencyKey } },
     );
-    return data as { employeeId: string; username: string; nikAlsoUsed: boolean };
+    return data;
   },
 };
 

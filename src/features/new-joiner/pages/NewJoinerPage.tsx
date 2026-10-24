@@ -252,7 +252,7 @@ export function NewJoinerPage() {
                   value={activeBucket}
                   onChange={setBucket}
                   options={[
-                    ...(checker ? [{ value: 'approve' as const, label: `To approve (${toApprove.length})` }] : []),
+                    ...(checker ? [{ value: 'approve' as const, label: `Needs approval (${toApprove.length})` }] : []),
                     { value: 'mine', label: `My candidates (${mine.length})` },
                   ]}
                 />

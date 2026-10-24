@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Form, Formik, useFormikContext } from 'formik';
 import { Info } from 'lucide-react';
 import { Modal } from '@/components/Modal';
@@ -14,7 +15,7 @@ import { Note } from '@/features/new-joiner/components/CandidateBits';
 import { useAtsCandidatesForNewJoiner, useInviteCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
 import { isPickableRequisition } from '@/features/new-joiner/services/new-joiner.service';
 import { inviteSchema } from '@/features/new-joiner/validation';
-import { POSITIONS } from '@/features/new-joiner/types';
+import { positionsForRequisition } from '@/features/new-joiner/types';
 import type { Candidate, CandidateSource, InviteDraft } from '@/features/new-joiner/types';
 
 const EMPTY: InviteDraft = { requisitionId: '', positionId: '', source: 'EMAIL', email: '', atsBridgeId: '' };
@@ -32,12 +33,16 @@ const SOURCES = [
   },
 ];
 
-/** Requisition → Organization Unit (terkunci, dari requisition) → Position milik unit itu. */
+/**
+ * Requisition → Organization Unit (terkunci, dari requisition) → Position (checklist requisition, atau
+ * seluruh posisi unit). Ganti requisition saat posisi sudah dipilih = konfirmasi dulu (FSD 0.83 §4.1).
+ */
 function SeatFields() {
   const { data: requisitions = [] } = useRequisitions();
   const { values, setFieldValue } = useFormikContext<InviteDraft>();
+  const [pendingRequisition, setPendingRequisition] = useState<{ from: string; to: string } | null>(null);
   const chosen = requisitions.find((row) => row.id === values.requisitionId);
-  const positions = chosen ? POSITIONS.filter((item) => item.unitId === chosen.unitId) : [];
+  const positions = chosen ? positionsForRequisition(chosen) : [];
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -50,8 +55,29 @@ function SeatFields() {
           .filter((row) => isPickableRequisition(row))
           .map((row) => ({ value: row.id, label: `${row.id} — ${row.title}` }))}
         hint={chosen ? `Requested by ${chosen.maker}` : 'Only approved requisitions that are still active.'}
-        onValueChange={() => void setFieldValue('positionId', '')}
+        onValueChange={(next) => {
+          // Nilai lama tetap utuh sampai dikonfirmasi; tanpa posisi terpilih langsung berganti.
+          if (values.positionId && next !== values.requisitionId) {
+            void setFieldValue('requisitionId', values.requisitionId);
+            setPendingRequisition({ from: values.requisitionId, to: next });
+          }
+        }}
         containerClassName="md:col-span-2"
+      />
+      <ConfirmDialog
+        open={Boolean(pendingRequisition)}
+        tone="primary"
+        title="Change the requisition?"
+        description="The organization unit follows the new requisition and the chosen position is cleared."
+        confirmLabel="Change Requisition"
+        cancelLabel="Keep Current"
+        onOpenChange={(open) => !open && setPendingRequisition(null)}
+        onConfirm={() => {
+          if (!pendingRequisition) return;
+          void setFieldValue('requisitionId', pendingRequisition.to);
+          void setFieldValue('positionId', '');
+          setPendingRequisition(null);
+        }}
       />
       <FormField name="unit" label="Organization Unit" hint="Follows the requisition.">
         <Input id="unit" value={chosen ? labelOf(UNIT_OPTIONS, chosen.unitId) : ''} placeholder="—" readOnly disabled />
@@ -104,7 +130,7 @@ function SourceFields({ atsOptions, atsLoading }: { atsOptions: { value: string;
           required
           placeholder={atsLoading ? 'Loading…' : 'Select a candidate'}
           options={atsOptions}
-          hint="Completed candidates who agreed to the consent and are not used by another new joiner."
+          hint="Candidates who completed the form, are not from Bulk Import, and are not held by another new joiner."
         />
       )}
     </fieldset>
@@ -119,7 +145,7 @@ export function InviteCandidateModal({ open, onClose }: { open: boolean; onClose
   const invite = useInviteCandidate();
   const [done, setDone] = useState<Candidate | null>(null);
   const { data: ats = [], isLoading: atsLoading } = useAtsCandidatesForNewJoiner(open);
-  const atsOptions = ats.map((row) => ({ value: row.id, label: `${row.candidateName ?? '—'} · ${row.candidateEmail}` }));
+  const atsOptions = ats.map((row) => ({ value: row.id, label: `${row.candidateName ?? '—'} - ${row.candidateEmail}` }));
 
   const finish = () => {
     setDone(null);

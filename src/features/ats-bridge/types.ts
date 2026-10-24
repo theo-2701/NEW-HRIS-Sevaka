@@ -1,3 +1,4 @@
+import type { NewEmployeeFields } from '@/features/new-joiner/newEmployee';
 /**
  * ATS Bridge (FSD-001-EMPLOYEE 0.46 §4A, UIC §4A, TSD §7.4.12) dan Portal Kandidat publik
  * (FSD §4B, UIC §4B, TSD §7.4.10–§7.4.11). Satu baris `emp_ats_bridge` per undangan kandidat.
@@ -16,7 +17,8 @@ export const ATS_STATUS_LABEL: Record<AtsStatus, string> = {
 
 export const ATS_STATUS_MEANING: Record<AtsStatus, string> = {
   WAITING_CANDIDATE: 'The invitation link was sent; the candidate has not submitted their data yet.',
-  COMPLETED: 'The candidate agreed to the consent, filled in their data and uploaded the documents.',
+  COMPLETED:
+    'The candidate finished the form. ATS Bridge and New Joiner records can be picked in New Joiner Submission; Bulk Import records become employees here through Create Employee.',
   INACTIVE: 'Replaced by a newer record with the same email or ID card number.',
   USED: 'The candidate has become an employee; the record can no longer be picked.',
 };
@@ -98,12 +100,19 @@ export interface AtsFilter {
   consentStatus?: ConsentStatus;
 }
 
-export interface MaterializeInput {
+/** ATS-MATERIALIZE "Create Employee" (FSD 0.83 §4A.1) — tanpa kontrak, tanpa baris New Joiner. */
+export interface MaterializeInput extends NewEmployeeFields {
   joinDate: string;
   jobGradeId: string;
-  nik: string;
+}
+
+/** Respons Create Employee: sandi awal kotak surat tampil SEKALI (panel Mailbox credentials). */
+export interface MaterializeResult {
+  employeeId: string;
   username: string;
   companyEmail: string;
+  mailboxInitialPassword: string;
+  nikAlsoUsed: boolean;
 }
 
 export type PortalStep = 'CONSENT' | 'PROFILE' | 'DOCUMENTS' | 'READY' | 'DONE';

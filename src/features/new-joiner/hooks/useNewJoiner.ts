@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { newJoinerService } from '@/features/new-joiner/services/new-joiner.service';
-import { atsAvailableForNewJoiner } from '@/features/ats-bridge/services/ats-bridge.service';
+import { atsCandidatesForNewJoiner, newJoinerService } from '@/features/new-joiner/services/new-joiner.service';
 import { toast } from '@/store/ui.store';
 import type { Candidate, CandidateDraft, InviteDraft, MaterializePayload } from '@/features/new-joiner/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
@@ -14,9 +13,9 @@ export function useCandidates() {
   return useQuery({ queryKey: newJoinerKeys.list, queryFn: () => newJoinerService.list() });
 }
 
-/** Kandidat ATS untuk sumber "From ATS": COMPLETED, setuju, belum dipegang calon aktif. */
+/** Kandidat ATS untuk sumber "From ATS": lengkap, bukan asal Bulk Import, belum dipegang calon aktif. */
 export function useAtsCandidatesForNewJoiner(enabled: boolean) {
-  return useQuery({ queryKey: newJoinerKeys.atsAvailable, queryFn: atsAvailableForNewJoiner, enabled });
+  return useQuery({ queryKey: newJoinerKeys.atsAvailable, queryFn: atsCandidatesForNewJoiner, enabled });
 }
 
 export function useSuggestedNik(enabled: boolean) {

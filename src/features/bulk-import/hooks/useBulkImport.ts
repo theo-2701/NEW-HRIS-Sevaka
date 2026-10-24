@@ -55,7 +55,8 @@ export const useUploadImport = () =>
 
 export const useApproveImport = () =>
   useImportMutation(
-    ({ id, note }: { id: string; note: string }) => bulkImportService.approve(id, note),
+    ({ id, note, emailDomainId }: { id: string; note: string; emailDomainId?: string }) =>
+      bulkImportService.approve(id, note, emailDomainId),
     'Batch approved. The invitations are being sent.',
   );
 

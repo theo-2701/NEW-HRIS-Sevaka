@@ -31,7 +31,8 @@ describe('Employee Bulk Import — bentuk email-saja (FSD-001-EMPLOYEE 0.46 §8)
   });
 
   it('checker lain menyetujui → undangan terkirim dan kandidat muncul di ATS Bridge (sumber Bulk Import)', async () => {
-    const batch = await bulkImportService.approve('BI-0005', 'Checked');
+    await expect(bulkImportService.approve('BI-0005', 'Checked', 'ed-juaracoding')).rejects.toThrow(/^422/);
+    const batch = await bulkImportService.approve('BI-0005', 'Checked', 'ed-ptdika-coid');
     expect(batch.importStatus).toBe('PROCESSING');
     expect(batch.selectionHash).toMatch(/^sha256:/);
     await wait(1700);

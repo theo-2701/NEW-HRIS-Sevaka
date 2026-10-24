@@ -17,6 +17,8 @@ interface ModalProps {
   /** `wide` = 720px (default 540px), sesuai `.ovl__panel--wide`. */
   size?: 'default' | 'wide';
   className?: string;
+  /** false = tanpa tombol X (mis. kredensial sekali-tampil yang hanya boleh ditutup lewat tombol footer). */
+  dismissible?: boolean;
 }
 
 /**
@@ -34,6 +36,7 @@ export function Modal({
   footer,
   size = 'default',
   className,
+  dismissible = true,
 }: ModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,12 +50,14 @@ export function Modal({
               </DialogDescription>
             )}
           </div>
-          <DialogClose
-            aria-label="Close"
-            className="ml-auto inline-flex size-[34px] flex-shrink-0 items-center justify-center rounded-md text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1"
-          >
-            <X className="size-5" />
-          </DialogClose>
+          {dismissible && (
+            <DialogClose
+              aria-label="Close"
+              className="ml-auto inline-flex size-[34px] flex-shrink-0 items-center justify-center rounded-md text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1"
+            >
+              <X className="size-5" />
+            </DialogClose>
+          )}
         </header>
 
         <div className="scroll-thin flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5 [&>*]:flex-shrink-0">

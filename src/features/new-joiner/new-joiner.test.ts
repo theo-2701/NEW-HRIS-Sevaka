@@ -12,6 +12,11 @@ import {
   candidatePortalService,
   previewLink,
 } from '@/features/ats-bridge/services/ats-bridge.service';
+import { atsCandidatesForNewJoiner } from '@/features/new-joiner/services/new-joiner.service';
+import { emptyNewEmployee } from '@/features/new-joiner/newEmployee';
+import { useAuthStore } from '@/store/auth.store';
+
+useAuthStore.setState({ user: { id: 'u-hrm', name: 'Tony Stark', email: 'tony@ptdika.co.id', role: 'ROLE_HR_MANAGER' } });
 
 const base: CandidateDraft = {
   positionId: 'pos-be',
@@ -28,7 +33,12 @@ const base: CandidateDraft = {
 
 const edit = { ...base, hasIdCard: false };
 
-const materialize = { joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf', username: '', companyEmail: '' };
+const materialize = {
+  joinDate: '2099-02-01',
+  jobGradeId: 'gr-3a',
+  contractFileName: 'k.pdf',
+  ...emptyNewEmployee({ username: 'siti.nurhaliza', companyEmail: 'siti.nurhaliza@ptdika.co.id' }),
+};
 
 function candidate(patch: Partial<Candidate>): Candidate {
   return {
@@ -84,11 +94,19 @@ describe('Edit DRAFT — MbV identitas', () => {
   });
 });
 
-describe('NJ-CREATE 0.46 — undangan', () => {
+describe('NJ-CREATE 0.83 — undangan', () => {
   it('skema: email wajib untuk Invite by email, kandidat wajib untuk From ATS', async () => {
     const seat = { requisitionId: 'REQ-0230', positionId: 'pos-be' };
     await expect(inviteSchema.validate({ ...seat, source: 'EMAIL', email: '', atsBridgeId: '' })).rejects.toThrow(/email/);
     await expect(inviteSchema.validate({ ...seat, source: 'ATS', email: '', atsBridgeId: '' })).rejects.toThrow(/ATS candidate/);
+  });
+
+  it('posisi mengikuti checklist requisition; From ATS tanpa kandidat asal Bulk Import', async () => {
+    await expect(
+      newJoinerService.invite({ requisitionId: 'REQ-0230', positionId: 'pos-fe', source: 'EMAIL', email: 'a@b.co', atsBridgeId: '' }),
+    ).rejects.toThrow(/checklist/);
+    const ats = await atsCandidatesForNewJoiner();
+    expect(ats.some((item) => item.source === 'BULK_IMPORT')).toBe(false);
   });
 
   it('requisition wajib APPROVED + aktif dan posisi milik unit requisition (422)', async () => {
@@ -112,7 +130,7 @@ describe('NJ-CREATE 0.46 — undangan', () => {
     const [ats] = await atsBridgeService.search({ source: 'NEW_JOINER', atsStatus: 'WAITING_CANDIDATE', keyword: 'baru.calon' });
     expect(ats.id).toBe(row.atsBridgeId);
     await expect(
-      newJoinerService.invite({ requisitionId: 'REQ-0230', positionId: 'pos-fe', source: 'EMAIL', email: 'baru.calon@gmail.com', atsBridgeId: '' }),
+      newJoinerService.invite({ requisitionId: 'REQ-0230', positionId: 'pos-be', source: 'EMAIL', email: 'baru.calon@gmail.com', atsBridgeId: '' }),
     ).rejects.toThrow(/409/);
     const before = (await atsBridgeService.detail(ats.id)).linkSendCount;
     await newJoinerService.resendLink(row.id);
@@ -125,6 +143,8 @@ describe('NJ-CREATE 0.46 — undangan', () => {
     expect(JSON.stringify(row)).not.toContain('3175011203950002');
     expect((await atsAvailableForNewJoiner()).some((item) => item.id === 'ats-03')).toBe(false);
     await expect(draftFromAts('ats-03')).rejects.toThrow(/409/);
+    // Kandidat yang masih dipegang calon aktif tidak boleh dihapus dari ATS Bridge.
+    await expect(atsBridgeService.remove('ats-03')).rejects.toThrow(/409/);
   });
 
   it('kandidat undangan mengirim portal → calon WAITING jadi DRAFT; resend tidak berlaku lagi', async () => {
@@ -208,9 +228,12 @@ describe('Edit DRAFT — guard server', () => {
 });
 
 describe('NJ-MATERIALIZE & Add Employee', () => {
-  it('mewajibkan tanggal, grade, kontrak, dan NIK ≤ 50', async () => {
+  it('mewajibkan tanggal, class, kontrak, NIK ≤ 50, username berpola, dan company email', async () => {
     await expect(materializeSchema.validate({ ...materialize, nik: '' })).rejects.toThrow(/NIK/);
     await expect(materializeSchema.validate({ ...materialize, nik: 'x'.repeat(51) })).rejects.toThrow(/50/);
+    await expect(materializeSchema.validate({ ...materialize, nik: 'N1', username: '1abc' })).rejects.toThrow(/Start with a letter/);
+    await expect(materializeSchema.validate({ ...materialize, nik: 'N1', companyEmail: '' })).rejects.toThrow(/company email/);
+    await expect(materializeSchema.validate({ ...materialize, nik: 'N1', accountNumber: '1234567' })).rejects.toThrow(/bank/);
     await expect(materializeSchema.validate({ ...materialize, nik: 'NIK-0200' })).resolves.toBeTruthy();
   });
 
@@ -229,7 +252,12 @@ describe('NJ-MATERIALIZE & Add Employee', () => {
 
     const after = await search(approved.name);
     expect(after.total).toBe(before + 1);
-    expect(after.rows[0]).toMatchObject({ employmentStatus: 'WAITING', nik: 'NIK-0005' });
+    expect(after.rows[0]).toMatchObject({
+      employmentStatus: 'WAITING',
+      nik: 'NIK-0005',
+      email: 'siti.nurhaliza@ptdika.co.id',
+      branchName: 'HO-Jakarta',
+    });
     const onboarding = (await transitionService.list()).find((row) => row.type === 'ONBOARDING' && row.employee === approved.name);
     expect(onboarding?.status).toBe('IN_PROGRESS');
 

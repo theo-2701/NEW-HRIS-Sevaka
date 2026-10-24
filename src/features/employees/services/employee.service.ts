@@ -332,9 +332,13 @@ export function registerMaterializedEmployee(input: {
   joinDate: string;
   /** NIK isian HR saat materialize; kosong = nomor urut berikutnya. */
   nik?: string;
+  /** Cabang kursi (KCG-2); kosong = ditebak dari label unit. */
+  branchId?: string;
+  bank?: EmployeeDetail['bank'];
 }): EmployeeDetail {
   const [position, unit = ''] = input.positionLabel.split(' — ');
-  const branch = BRANCHES.find((item) => unit.includes(item.name)) ?? BRANCHES[1];
+  const branch =
+    BRANCHES.find((item) => item.id === input.branchId) ?? BRANCHES.find((item) => unit.includes(item.name)) ?? BRANCHES[1];
   const today = new Date().toISOString().slice(0, 10);
   const sequence = MOCK_EMPLOYEES.length + 1;
   const row: EmployeeDetail = {
@@ -355,7 +359,7 @@ export function registerMaterializedEmployee(input: {
     formalPosition: position,
     joinDate: input.joinDate,
     leaveDate: null,
-    bank: { bankCode: '—', accountNumber: '0000000000', accountHolderName: input.name },
+    bank: input.bank ?? { bankCode: '—', accountNumber: '0000000000', accountHolderName: input.name },
     email: input.email,
     phone: '—',
   };

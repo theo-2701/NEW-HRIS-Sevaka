@@ -3,6 +3,7 @@ import { MOCK } from '@/services/mock';
 import { CURRENT_USER, MAX_BYTES, MAX_ROWS, TEMPLATE_COLUMNS } from '@/features/bulk-import/types';
 import type { ImportBatch, ImportFilter, ImportRow, RowState } from '@/features/bulk-import/types';
 import { atsEmailTaken, inviteFromImport } from '@/features/ats-bridge/services/ats-bridge.service';
+import { emailDomainService } from '@/features/email-domain/services/email-domain.service';
 
 /**
  * API service Employee Bulk Import (FSD-001-EMPLOYEE 0.46 §8 bentuk EMAIL-SAJA · TSD §7.16):
@@ -177,7 +178,8 @@ export const bulkImportService = {
     return { ...data, fileName: file.name };
   },
 
-  async approve(id: string, approverNote: string): Promise<ImportBatch> {
+  /** `emailDomainId` opsional (FSD 0.83 §8.5): domain aktif dibekukan ke batch dan tiap kandidat yang diundang. */
+  async approve(id: string, approverNote: string, emailDomainId = ''): Promise<ImportBatch> {
     if (MOCK) {
       await delay();
       const batch = find(id);
@@ -186,6 +188,10 @@ export const bulkImportService = {
       if (batch.submittedBy === CURRENT_USER) {
         throw new Error('409 — You uploaded this batch. Someone other than the uploader must approve it.');
       }
+      const domain = emailDomainId
+        ? (await emailDomainService.search({ isActive: true })).find((row) => row.id === emailDomainId)?.domainName
+        : null;
+      if (emailDomainId && !domain) throw new Error('422 — The chosen email domain is inactive or unknown.');
       Object.assign(batch, { importStatus: 'PROCESSING', selectionHash: fakeHash(), approvedBy: CURRENT_USER, approvedAt: nowIso() });
       setTimeout(() => {
         const rows = rowsById[id] ?? [];
@@ -196,7 +202,7 @@ export const bulkImportService = {
             Object.assign(row, { rowState: 'FAILED', message: 'This email got an invitation elsewhere after the check.' });
             return;
           }
-          inviteFromImport(row.email, { id: 'emp-tony', name: batch.submittedBy, nik: '—' });
+          inviteFromImport(row.email, { id: 'emp-tony', name: batch.submittedBy, nik: '—' }, domain ?? null);
           row.rowState = 'IMPORTED';
         });
         batch.failedCount = rows.filter((row) => row.rowState === 'INVALID' || row.rowState === 'FAILED').length;
@@ -205,7 +211,10 @@ export const bulkImportService = {
       }, BACKGROUND_MS);
       return { ...batch };
     }
-    const { data } = await api.post<ImportBatch>(`/employee-imports/${id}/approve`, { approver_note: approverNote || undefined });
+    const { data } = await api.post<ImportBatch>(`/employee-imports/${id}/approve`, {
+      approver_note: approverNote || undefined,
+      email_domain_id: emailDomainId || undefined,
+    });
     return data;
   },
 

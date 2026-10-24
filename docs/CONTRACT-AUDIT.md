@@ -952,21 +952,47 @@ koreksi untuk unitnya) tidak punya identitas percobaan DM di layar Calendar/Atte
 create = HR_STAFF · EMPLOYEE, sedangkan TSD 0.83 menguji DM `201` — selisih dokumen, dicatat. Dialog galat Error code +
 Trace ID (`LNT-2610141244` T16) lintas modul dan tidak muncul di mode dummy (tanpa amplop galat backend).
 
-## 35. Employee — menu baru dari DEV dicek ke FSD-001-EMPLOYEE 0.46 / UIC 0.57 / TSD 0.138 (24 Oktober 2026)
+## 35. Employee — menu baru dari DEV dicek ke FSD-001-EMPLOYEE 0.83 / UIC 0.75 / TSD 0.192 (24 Oktober 2026)
 
-Pemicu: tangkapan layar DEV (Employee Directory) memuat menu yang belum ada di repo. Dibangun hanya yang
-ADA di dokumen (keputusan Theo):
+Sumber dokumen terbaru: `../sevaka-ui-october/doc-update/2610230242/` (clone FE tim dev, **baca-saja**; dokumen 23 Okt).
+Salinan `HRIS-docs/.../doc-update` berhenti di `2610191633` (FSD 0.46 / UIC 0.57 / TSD 0.138). **Koreksi:** catatan
+versi pertama bagian ini menyebut Email Domain, Role Grant Rules, Work Status, dan Temporary Assignment "belum ada
+di dokumen" — itu salah karena mengacu ke 0.46; di 0.83 keempatnya ada (§10–§13).
 
-| Menu | Kontrak | Repo |
+| Menu (FSD 0.83) | Kontrak | Repo |
 | :--- | :--- | :--- |
-| Employee Directory › Bulk Account Activation | FSD §9, kontrak TSD-AUTH | `src/features/bulk-activation` · `/employees/bulk-account-activation` |
-| Manpower Planning › ATS Bridge | FSD §4A, UIC §4A, TSD §7.4.12 | `src/features/ats-bridge` · `/employees/manpower/ats-bridge` |
-| Portal kandidat publik | FSD §4B, UIC §4B, TSD §7.4.10–11 | `/candidate/:companyCode` (tanpa login, tanpa sidebar) |
-| My Transition Tasks | aksi UIC §5.3 + TSD §7.6.4; **tanpa** alamat daftar "task milik saya" (GAP) | `/employees/my-transition-tasks` |
+| Employee Directory › Bulk Account Activation (§9) | TSD-AUTH | `src/features/bulk-activation` · `/employees/bulk-account-activation` |
+| Manpower Planning › ATS Bridge (§4A) | TSD §7.4.12 | `src/features/ats-bridge` · `/employees/manpower/ats-bridge` |
+| Portal kandidat publik (§4B) | TSD §7.4.10–11 | `/candidate/:companyCode` |
+| New Joiner (§4) | TSD §7.4.1–7.4.10 | `src/features/new-joiner` |
+| Employee Bulk Import (§8, email-saja) | TSD §7.16 | `src/features/bulk-import` |
+| My Transition Tasks (§18) | TSD MT1..MT4 | `/employees/my-transition-tasks` — baru Open/Done; tab Tasks · Approvals · Escalations + dialog tolak **belum** |
+| Employee Directory › Work Status (§11) | TSD §7.13.3 | service `src/features/work-status` (dipakai Employment Type); **layar belum** |
+| Employee Directory › Email Domain (§12) | TSD §7.19 | service `src/features/email-domain` (dipakai BI-REVIEW); **layar belum** |
+| Employee Directory › Role Grant Rules (§13) | TSD §7.4.13 | service `src/features/role-grant` (dipakai pilihan Role); **layar belum** |
+| Employee Directory › Email and Phone Verification (§14, + Cancel access §14.4) | TSD §7.20–7.21 | **belum** |
+| Employee Directory › Temporary Assignment (§10) | TSD §7.18 | **belum** |
+| Onboarding Closure (§16) | TSD §7.22 | **belum** |
+| Materialization + Role Mapping (§17, §21) | TSD §7.23 | **belum** |
+| Transition terpadu (§19) — menggantikan Employee Transfer + dua dashboard Onboarding | TSD TL1..TL2 | **belum** (Employee Transfer lama masih jalan) |
+| ESS › My Transition + kartu beranda (§20) | TSD ES1..ES2 | **belum** |
+| Dialog Edit Work Data (§1), Change Role (§15) | TSD §7.2.5, §7.4.14 | **belum** |
 
-**Tidak dibangun — belum ada di dokumen (DEV mendahului dokumen):** Email Domain, Role Grant Rules, Work Status
-(dokumen hanya punya `GET /employee/work-statuses/lookup` UIC §8D), Temporary Assignment (TSD menyebutnya ditunda).
-**Sudah disusul (24 Okt 2026):**
-- Bulk Import email-saja (TSD 0.138 T11): undangan lahir sebagai baris ATS `source=BULK_IMPORT`.
-- New Joiner NJ-CREATE 0.46: Requisition → Unit (terkunci) → Posisi; sumber Invite by email (`WAITING_CANDIDATE` + baris ATS `source=NEW_JOINER`, Resend link) atau From ATS (langsung DRAFT). Portal terkirim → DRAFT; Edit hanya DRAFT; Materialize + NIK/Username/Company Email (NIK kembar = peringatan).
-- GAP: rencana tanggal masuk tidak ada di form undangan maupun portal, jadi HR mengisinya lewat Edit sebelum Submit (server 422 bila kosong).
+**Disusul ke 0.83 (24 Okt 2026):**
+- New Joiner: posisi = checklist posisi requisition bila ada (selain itu seluruh posisi unit), server 422 di luar
+  checklist; ganti requisition saat posisi terpilih = konfirmasi; From ATS tanpa kandidat asal Bulk Import dan tanpa
+  kandidat yang email-nya dipegang calon aktif; label `Nama - email`; keranjang "Needs approval".
+- NJ-MATERIALIZE: Branch hanya-baca dari kursi (KCG-2), label **Class**; Username **wajib** (pola `a-z0-9._`,
+  4–100, bentrok 409) dan Company Email **wajib**; Role (Role Grant Rules pemanggil, bawaan Employee); Employment Type
+  (Work Status aktif); Bank · Account Number · Account Holder Name (rekening wajib berbank). Isian bersama ATS:
+  `src/features/new-joiner/newEmployee.ts` + `components/NewEmployeeFields.tsx`.
+- ATS Create Employee: isian sama; Company Email diusulkan `username@domain` dari domain batch; panel **Mailbox
+  credentials** sekali-tampil (tanpa X, Copy Password, unduh CSV per kredensial / sesi tab); kalimat pengantar
+  Bulk Import; legenda Completed baru; hapus ditolak 409 bila kandidat masih dipegang calon New Joiner aktif.
+- BI-REVIEW: pilihan **Company Email Domain** (opsional, domain aktif, dibekukan ke batch dan tiap undangan);
+  pengunggah tidak melihat form Approve (catatan "You uploaded this batch") tetapi tetap bisa Cancel Batch.
+
+**GAP tersisa:**
+- Rencana tanggal masuk tidak ada di form undangan maupun portal; HR mengisinya lewat Edit sebelum Submit (server 422).
+- Class tidak disaring ke anak Grade kursi (KCG-4) — data dummy belum punya Grade per kursi.
+- Panel "Proses calon APPROVED" di Onboarding (§4.1 baris terakhir) menunggu menu Transition terpadu (§19).

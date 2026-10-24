@@ -1,4 +1,6 @@
 import type { SelectOption } from '@/components/form/SelectField';
+import type { Requisition } from '@/features/manpower/types';
+import type { NewEmployeeFields } from '@/features/new-joiner/newEmployee';
 
 /**
  * New Joiner Submission — FSD-001-EMPLOYEE 0.46 §4 · UIC §4.
@@ -85,15 +87,12 @@ export interface CandidateDraft {
   intendedJoinDate: string;
 }
 
-export interface MaterializePayload {
+/** NJ-MATERIALIZE (FSD 0.83 §4.1): kontrak + isian akun & data kerja karyawan baru. */
+export interface MaterializePayload extends NewEmployeeFields {
   id: string;
   joinDate: string;
   jobGradeId: string;
   contractFileName: string;
-  /** Wajib, maksimal 50, format bebas; kembar hanya peringatan (FSD 0.46 §4.3). */
-  nik: string;
-  username: string;
-  companyEmail: string;
 }
 
 export const STATUS_LABEL: Record<CandidateStatus, string> = {
@@ -140,14 +139,27 @@ export const NATIONALITY_LABEL: Record<Nationality, string> = {
 };
 
 /** Posisi per unit organisasi (dummy company-service) — pilihan NJ-CREATE disaring menurut unit requisition. */
+/**
+ * Kursi per unit organisasi (dummy company-service). `companyId` = id posisi di Manpower — dipakai saat
+ * requisition membawa checklist posisi; `branchId` = cabang kursi (ditulis server saat materialize, KCG-2).
+ */
 export const POSITIONS = [
-  { value: 'pos-be', code: 'ENG-BE', name: 'Backend Engineer', unitId: 'unit-eng-hq', unit: 'Engineering HQ' },
-  { value: 'pos-fe', code: 'ENG-FE', name: 'Frontend Engineer', unitId: 'unit-eng-hq', unit: 'Engineering HQ' },
-  { value: 'pos-fin', code: 'FIN-STF', name: 'Staff Finance', unitId: 'unit-fin-papua', unit: 'BR-Papua' },
-  { value: 'pos-hrbp', code: 'PPL-HRBP', name: 'HRBP', unitId: 'unit-people-hq', unit: 'People Ops HQ' },
-  { value: 'pos-hradm', code: 'PPL-ADM', name: 'HR Administrator', unitId: 'unit-people-hq', unit: 'People Ops HQ' },
-  { value: 'pos-sales', code: 'SLS-EXE', name: 'Sales Executive', unitId: 'unit-sales-sby', unit: 'BR-Surabaya' },
+  { value: 'pos-be', code: 'ENG-BE', name: 'Backend Engineer', unitId: 'unit-eng-hq', unit: 'Engineering HQ', companyId: 'pos-eng-be-hq', branchId: 'br-jkt' },
+  { value: 'pos-fe', code: 'ENG-FE', name: 'Frontend Engineer', unitId: 'unit-eng-hq', unit: 'Engineering HQ', companyId: '', branchId: 'br-jkt' },
+  { value: 'pos-fin', code: 'FIN-STF', name: 'Staff Finance', unitId: 'unit-fin-papua', unit: 'BR-Papua', companyId: 'pos-fin-staff-papua', branchId: 'br-papua' },
+  { value: 'pos-hrbp', code: 'PPL-HRBP', name: 'HRBP', unitId: 'unit-people-hq', unit: 'People Ops HQ', companyId: 'pos-people-hrbp-hq', branchId: 'br-jkt' },
+  { value: 'pos-hradm', code: 'PPL-ADM', name: 'HR Administrator', unitId: 'unit-people-hq', unit: 'People Ops HQ', companyId: '', branchId: 'br-jkt' },
+  { value: 'pos-sales', code: 'SLS-EXE', name: 'Sales Executive', unitId: 'unit-sales-sby', unit: 'BR-Surabaya', companyId: 'pos-sales-exec-sby', branchId: 'br-sby' },
 ];
+
+/**
+ * Pilihan Posisi NJ-CREATE (FSD 0.83 §4.1): checklist posisi requisition bila ada, selain itu seluruh
+ * posisi di unit requisition (requisition lama, K1).
+ */
+export function positionsForRequisition(requisition: Pick<Requisition, 'unitId' | 'positionId'>) {
+  const inUnit = POSITIONS.filter((item) => item.unitId === requisition.unitId);
+  return requisition.positionId ? inUnit.filter((item) => item.companyId === requisition.positionId) : inUnit;
+}
 
 /** Label "Posisi — Unit" (Directory membaca unit dari bagian sesudah " — "). */
 export const POSITION_OPTIONS: SelectOption[] = POSITIONS.map((p) => ({ value: p.value, label: `${p.name} — ${p.unit}` }));
