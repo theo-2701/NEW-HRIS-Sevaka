@@ -53,7 +53,25 @@ interface Stored extends AtsBridge {
   token: string | null;
   profile: CandidateProfile;
   step: PortalStep;
+  /** Calon New Joiner aktif yang memegang kandidat ini (`available_for_new_joiner=false`). */
+  linkedNewJoinerId: string | null;
 }
+
+/** Profil contoh untuk kandidat yang sudah COMPLETED di dataset dummy. */
+const filled = (name: string, phone: string, idCard: string): CandidateProfile => ({
+  ...EMPTY_PROFILE,
+  candidateName: name,
+  nationality: 'CITIZEN',
+  idCardNumber: idCard,
+  candidatePhone: phone,
+  placeOfBirth: 'Jakarta',
+  dateOfBirth: '1996-04-12',
+  gender: 'Female',
+  maritalStatus: 'Single',
+  lastEducation: "Bachelor's degree (S1)",
+  religion: 'Islam',
+  idCardAddress: 'Jl. H.R. Rasuna Said Kav. 1',
+});
 
 const row = (input: Partial<Stored> & Pick<Stored, 'id' | 'source' | 'atsStatus' | 'candidateEmail'>): Stored => ({
   candidateName: null,
@@ -73,6 +91,7 @@ const row = (input: Partial<Stored> & Pick<Stored, 'id' | 'source' | 'atsStatus'
   token: null,
   profile: { ...EMPTY_PROFILE },
   step: 'CONSENT',
+  linkedNewJoinerId: null,
   ...input,
 });
 
@@ -90,6 +109,7 @@ const seed = (): Stored[] => [
     cvUploaded: true,
     idPhotoUploaded: true,
     step: 'DONE',
+    profile: filled('Putri Amalia', '+6281277001122', '3175015504960001'),
   }),
   row({
     id: 'ats-03',
@@ -106,6 +126,7 @@ const seed = (): Stored[] => [
     requestorEmployeeId: 'emp-hendra',
     requestorName: 'Hendra Kusuma',
     requestorNik: 'NIK-0002',
+    profile: { ...filled('Reza Fahlevi', '+6281277003344', '3175011203950002'), gender: 'Male' },
   }),
   row({
     id: 'ats-04',
@@ -131,6 +152,7 @@ const seed = (): Stored[] => [
     cvUploaded: true,
     idPhotoUploaded: true,
     step: 'DONE',
+    profile: filled('Dewi Anggraini', '+6281277005566', '3175014409970003'),
   }),
   row({
     id: 'ats-06',
@@ -139,6 +161,18 @@ const seed = (): Stored[] => [
     candidateEmail: 'yoga.pratama@gmail.com',
     consentStatus: 'DECLINED',
     token: 'demo-yoga',
+  }),
+  // Undangan dari form New Joiner (calon nj-10) — tautan contoh /candidate/DIKA#t=demo-nadia.
+  row({
+    id: 'ats-07',
+    source: 'NEW_JOINER',
+    atsStatus: 'WAITING_CANDIDATE',
+    candidateEmail: 'nadia.rahma@gmail.com',
+    token: 'demo-nadia',
+    requestorEmployeeId: 'emp-tony',
+    requestorName: 'Tony Stark',
+    requestorNik: 'NIK-0001',
+    linkedNewJoinerId: 'nj-10',
   }),
 ];
 
@@ -164,7 +198,7 @@ const fromToken = (token: string) => {
   return found;
 };
 
-const strip = ({ token: _t, profile: _p, step: _s, ...rest }: Stored): AtsBridge => ({ ...rest });
+const strip = ({ token: _t, profile: _p, step: _s, linkedNewJoinerId: _l, ...rest }: Stored): AtsBridge => ({ ...rest });
 
 const newToken = () => crypto.randomUUID().replace(/-/g, '');
 
@@ -174,6 +208,84 @@ function sendLink(target: Stored) {
   target.linkSentAt = now.toISOString();
   target.linkSendCount += 1;
   target.tokenExpiresAt = new Date(now.getTime() + DAY).toISOString();
+}
+
+/** Data kandidat yang dibaca New Joiner (sumber From ATS, dan saat kandidat undangan selesai mengisi). */
+export interface AtsSnapshot {
+  atsStatus: AtsBridge['atsStatus'];
+  candidateEmail: string;
+  profile: CandidateProfile;
+}
+
+export function atsSnapshot(id: string): AtsSnapshot | null {
+  const found = store.find((item) => item.id === id);
+  return found ? { atsStatus: found.atsStatus, candidateEmail: found.candidateEmail, profile: { ...found.profile } } : null;
+}
+
+/** `POST /ats-bridges/search` `available_for_new_joiner=true`: setuju + lengkap + belum dipegang calon aktif. */
+export async function atsAvailableForNewJoiner(): Promise<AtsBridge[]> {
+  if (MOCK) {
+    await delay(150);
+    return store
+      .filter((item) => item.atsStatus === 'COMPLETED' && item.consentStatus === 'AGREED' && !item.linkedNewJoinerId)
+      .map(strip);
+  }
+  const { data } = await api.post<{ data: AtsBridge[] }>('/employee/ats-bridges/search', {
+    available_for_new_joiner: true,
+    page: 1,
+    size: 100,
+  });
+  return data.data;
+}
+
+/** Mode dummy: penautan kandidat ATS ke calon New Joiner (dilepas saat calon batal). */
+export function linkAtsToNewJoiner(atsId: string, newJoinerId: string | null) {
+  const found = store.find((item) => item.id === atsId);
+  if (found) found.linkedNewJoinerId = newJoinerId;
+}
+
+/**
+ * Mode dummy: calon New Joiner batal/ditolak → kandidat dilepas. Undangan yang belum diisi ikut mati
+ * (token dicabut, INACTIVE) supaya tautan lama tidak bisa dipakai lagi.
+ */
+export function releaseAtsFromNewJoiner(atsId: string) {
+  const found = store.find((item) => item.id === atsId);
+  if (!found) return;
+  found.linkedNewJoinerId = null;
+  if (found.atsStatus === 'WAITING_CANDIDATE') {
+    found.atsStatus = 'INACTIVE';
+    found.token = null;
+  }
+}
+
+/** Mode dummy: calon New Joiner dimaterialisasi → kandidat ATS terpakai. */
+export function markAtsUsed(atsId: string, employeeId: string) {
+  const found = store.find((item) => item.id === atsId);
+  if (!found) return;
+  found.atsStatus = 'USED';
+  found.usedEmployeeId = employeeId;
+}
+
+/** Mode dummy: undangan dari form New Joiner (sumber Invite by email) = baris ATS `source=NEW_JOINER`. */
+export function inviteForNewJoiner(email: string, newJoinerId: string, requestor: { id: string; name: string; nik: string }): string {
+  if (store.some((item) => item.candidateEmail === email.toLowerCase() && item.atsStatus === 'WAITING_CANDIDATE')) {
+    throw new Error('409 — This email already has a pending invitation.');
+  }
+  const created = row({
+    id: `ats-${String(store.length + 10).padStart(2, '0')}`,
+    source: 'NEW_JOINER',
+    atsStatus: 'WAITING_CANDIDATE',
+    candidateEmail: email.toLowerCase(),
+    requestorEmployeeId: requestor.id,
+    requestorName: requestor.name,
+    requestorNik: requestor.nik,
+    createdAt: new Date().toISOString(),
+    linkSendCount: 0,
+    linkedNewJoinerId: newJoinerId,
+  });
+  sendLink(created);
+  store = [created, ...store];
+  return created.id;
 }
 
 /** Mode dummy: email yang masih menunggu kandidat atau sudah jadi karyawan tidak diundang ulang lewat impor. */
@@ -407,6 +519,7 @@ export const atsBridgeService = {
         positionLabel: 'Staff — Operations',
         jobGrade: labelOf(JOB_GRADE_OPTIONS, input.jobGradeId),
         joinDate: input.joinDate,
+        nik,
       });
       found.atsStatus = 'USED';
       found.usedEmployeeId = employee.id;

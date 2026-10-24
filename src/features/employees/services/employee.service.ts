@@ -330,6 +330,8 @@ export function registerMaterializedEmployee(input: {
   positionLabel: string;
   jobGrade: string;
   joinDate: string;
+  /** NIK isian HR saat materialize; kosong = nomor urut berikutnya. */
+  nik?: string;
 }): EmployeeDetail {
   const [position, unit = ''] = input.positionLabel.split(' — ');
   const branch = BRANCHES.find((item) => unit.includes(item.name)) ?? BRANCHES[1];
@@ -337,7 +339,7 @@ export function registerMaterializedEmployee(input: {
   const sequence = MOCK_EMPLOYEES.length + 1;
   const row: EmployeeDetail = {
     id: `emp-nj-${sequence}`,
-    nik: `NIK-${String(100 + sequence).padStart(4, '0')}`,
+    nik: input.nik || `NIK-${String(100 + sequence).padStart(4, '0')}`,
     name: input.name,
     employmentStatus: input.joinDate > today ? 'WAITING' : 'ACTIVE',
     workArrangement: 'WFO',

@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
-import { STATUS_LABEL, type CandidateStatus } from '@/features/new-joiner/types';
+import { Modal } from '@/components/Modal';
+import { DataTable } from '@/components/DataTable';
+import { Button } from '@/components/ui/button';
+import { STATUS_LABEL, STATUS_MEANING, type CandidateStatus } from '@/features/new-joiner/types';
 import { cn } from '@/lib/utils';
 
 const TONE: Record<CandidateStatus, BadgeTone> = {
+  WAITING_CANDIDATE: 'info',
   DRAFT: 'mute',
   SUBMITTED: 'info',
   IN_APPROVAL: 'info',
@@ -16,6 +20,32 @@ const TONE: Record<CandidateStatus, BadgeTone> = {
 
 export function CandidateStatusBadge({ status }: { status: CandidateStatus }) {
   return <StatusBadge tone={TONE[status]}>{STATUS_LABEL[status]}</StatusBadge>;
+}
+
+/** Legenda status — dibuka dari ikon info di header kolom Status. */
+export function CandidateStatusReference({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      title="Candidate statuses"
+      size="wide"
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          Close
+        </Button>
+      }
+    >
+      <DataTable<{ status: CandidateStatus }>
+        rows={(Object.keys(STATUS_LABEL) as CandidateStatus[]).map((status) => ({ status }))}
+        rowKey={(row) => row.status}
+        columns={[
+          { key: 'status', header: 'Status', nowrap: true, render: (row) => <CandidateStatusBadge status={row.status} /> },
+          { key: 'meaning', header: 'Meaning', render: (row) => STATUS_MEANING[row.status] },
+        ]}
+      />
+    </Modal>
+  );
 }
 
 export interface StatusTab {

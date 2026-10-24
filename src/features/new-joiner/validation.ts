@@ -1,12 +1,12 @@
 import * as Yup from 'yup';
 
 /**
- * Skema NJ-CREATE (FSD §4.1 · UIC §4.1 & §1.7).
+ * Skema New Joiner (FSD-001-EMPLOYEE 0.46 §4 · UIC §4.1 & §1.7).
  *
  * Aturan kontrak yang ditegakkan di sini:
- *  • MbV — KTP wajib bila `nationality = CITIZEN`, paspor bila `FOREIGNER`;
- *    keduanya tidak pernah muncul bersamaan.
- *  • KTP tepat 16 digit angka; paspor 6–15 huruf/angka kapital.
+ *  • NJ-CREATE: Requisition → Posisi wajib; sumber Invite by email butuh email, From ATS butuh kandidat.
+ *  • Ubah DRAFT — MbV: KTP wajib bila `nationality = CITIZEN`, paspor + visa bila `FOREIGNER`;
+ *    keduanya tidak pernah muncul bersamaan. KTP tepat 16 digit; paspor 6–15 huruf/angka kapital.
  *  • Tanggal rencana masuk tidak boleh di masa lalu.
  */
 const today = () => new Date().toISOString().slice(0, 10);
@@ -34,52 +34,73 @@ export function normalizePhone(value: string): string {
   return compact;
 }
 
+/** NJ-CREATE 0.46. */
+export const inviteSchema = Yup.object({
+  requisitionId: Yup.string().required('Choose a requisition.'),
+  positionId: Yup.string().required('Choose a position.'),
+  source: Yup.string().oneOf(['EMAIL', 'ATS']).required(),
+  email: Yup.string().when('source', {
+    is: 'EMAIL',
+    then: (schema) => schema.trim().required('Enter the candidate email.').email('Enter a valid email address.'),
+    otherwise: (schema) => schema,
+  }),
+  atsBridgeId: Yup.string().when('source', {
+    is: 'ATS',
+    then: (schema) => schema.required('Choose an ATS candidate.'),
+    otherwise: (schema) => schema,
+  }),
+});
+
+/**
+ * Ubah DRAFT. `hasIdCard` = KTP sudah tersimpan (4 digit terakhir) — boleh dikosongkan supaya tetap
+ * memakai yang lama, karena KTP transient tidak pernah dipulangkan ke form.
+ */
 export const candidateSchema = Yup.object({
-  positionId: Yup.string().required('Posisi wajib dipilih.'),
-  requisitionId: Yup.string().required('Requisition wajib dipilih.'),
+  hasIdCard: Yup.boolean(),
   name: Yup.string()
     .trim()
-    .required('Nama kandidat wajib diisi.')
-    .max(150, 'Maksimal 150 karakter.')
-    .matches(CANDIDATE_NAME, 'Hanya huruf, spasi, dan tanda \'.,- ; wajib diawali huruf.'),
-  nationality: Yup.string().oneOf(['CITIZEN', 'FOREIGNER'], 'Kewarganegaraan wajib dipilih.').required('Kewarganegaraan wajib dipilih.'),
-  idCardNumber: Yup.string().when('nationality', {
-    is: 'CITIZEN',
+    .required('Enter the candidate name.')
+    .max(150, 'At most 150 characters.')
+    .matches(CANDIDATE_NAME, "Only letters, spaces and '.,- — start with a letter."),
+  nationality: Yup.string().oneOf(['CITIZEN', 'FOREIGNER'], 'Choose the nationality.').required('Choose the nationality.'),
+  idCardNumber: Yup.string().when(['nationality', 'hasIdCard'], {
+    is: (nationality: string, hasIdCard: boolean) => nationality === 'CITIZEN' && !hasIdCard,
     then: (schema) =>
-      schema
-        .required('Nomor KTP wajib diisi untuk WNI.')
-        .matches(/^\d{16}$/, 'Nomor KTP harus tepat 16 digit angka.'),
-    otherwise: (schema) => schema,
+      schema.required('Enter the ID card number.').matches(/^\d{16}$/, 'The ID card number must be exactly 16 digits.'),
+    otherwise: (schema) => schema.matches(/^(\d{16})?$/, 'The ID card number must be exactly 16 digits.'),
   }),
   passportNumber: Yup.string().when('nationality', {
     is: 'FOREIGNER',
     then: (schema) =>
       schema
-        .required('Nomor paspor wajib diisi untuk WNA.')
-        .matches(/^[A-Z0-9]{6,15}$/, 'Paspor 6–15 karakter, hanya huruf dan angka.'),
+        .required('Enter the passport number.')
+        .matches(/^[A-Z0-9]{6,15}$/, 'Passport: 6–15 characters, capital letters and digits only.'),
     otherwise: (schema) => schema,
   }),
   visaNumber: Yup.string().when('nationality', {
     is: 'FOREIGNER',
     then: (schema) =>
       schema
-        .required('Nomor visa wajib diisi untuk WNA.')
-        .matches(/^[A-Z0-9]{6,20}$/, 'Visa 6–20 karakter, hanya huruf kapital dan angka.'),
+        .required('Enter the visa number.')
+        .matches(/^[A-Z0-9]{6,20}$/, 'Visa: 6–20 characters, capital letters and digits only.'),
     otherwise: (schema) => schema,
   }),
-  email: Yup.string().required('Email kandidat wajib diisi.').email('Format email tidak valid.'),
+  email: Yup.string().required('Enter the candidate email.').email('Enter a valid email address.'),
   phone: Yup.string()
     .trim()
-    .required('Nomor HP kandidat wajib diisi.')
-    .test('phone', 'Format nomor HP tidak valid (mis. 0812… atau +62812…).', (value) => !value || CANDIDATE_PHONE.test(normalizePhone(value))),
+    .required('Enter the candidate phone number.')
+    .test('phone', 'Use a mobile number such as 0812… or +62812….', (value) => !value || CANDIDATE_PHONE.test(normalizePhone(value))),
   intendedJoinDate: Yup.string()
-    .required('Tanggal rencana masuk wajib diisi.')
-    .test('not-past', 'Tanggal rencana masuk tidak boleh di masa lalu.', (value) => !value || value >= today()),
+    .required('Choose the intended join date.')
+    .test('not-past', 'The intended join date cannot be in the past.', (value) => !value || value >= today()),
 });
 
-/** Skema NJ-MATERIALIZE (FSD §4.3): kontrak sudah ditandatangani. */
+/** Skema NJ-MATERIALIZE (FSD 0.46 §4.3): kontrak sudah ditandatangani. */
 export const materializeSchema = Yup.object({
-  joinDate: Yup.string().required('Tanggal masuk wajib diisi.'),
-  jobGradeId: Yup.string().required('Job grade wajib dipilih.'),
-  contractFileName: Yup.string().required('Kontrak yang sudah ditandatangani wajib diunggah.'),
+  joinDate: Yup.string().required('Choose the start date.'),
+  jobGradeId: Yup.string().required('Choose a grade.'),
+  contractFileName: Yup.string().required('Upload the signed contract.'),
+  nik: Yup.string().trim().required('Enter the NIK.').max(50, 'At most 50 characters.'),
+  username: Yup.string().trim().max(50, 'At most 50 characters.'),
+  companyEmail: Yup.string().trim().email('Enter a valid email address.'),
 });

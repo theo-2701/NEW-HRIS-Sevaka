@@ -966,5 +966,7 @@ ADA di dokumen (keputusan Theo):
 
 **Tidak dibangun — belum ada di dokumen (DEV mendahului dokumen):** Email Domain, Role Grant Rules, Work Status
 (dokumen hanya punya `GET /employee/work-statuses/lookup` UIC §8D), Temporary Assignment (TSD menyebutnya ditunda).
-**Belum disusul:** Bulk Import kini email-saja (TSD 0.138 T11) dan New Joiner ber-sumber kandidat (Invite by email / From ATS,
-status Waiting for Candidate) — layar lokal masih versi sebelumnya.
+**Sudah disusul (24 Okt 2026):**
+- Bulk Import email-saja (TSD 0.138 T11): undangan lahir sebagai baris ATS `source=BULK_IMPORT`.
+- New Joiner NJ-CREATE 0.46: Requisition → Unit (terkunci) → Posisi; sumber Invite by email (`WAITING_CANDIDATE` + baris ATS `source=NEW_JOINER`, Resend link) atau From ATS (langsung DRAFT). Portal terkirim → DRAFT; Edit hanya DRAFT; Materialize + NIK/Username/Company Email (NIK kembar = peringatan).
+- GAP: rencana tanggal masuk tidak ada di form undangan maupun portal, jadi HR mengisinya lewat Edit sebelum Submit (server 422 bila kosong).

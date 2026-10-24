@@ -14,14 +14,21 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRequisitions } from '@/features/manpower/hooks/useManpower';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { usePagedRows } from '@/hooks/usePagedRows';
-import { CandidateStatusBadge, StatusTabs, type StatusTab } from '@/features/new-joiner/components/CandidateBits';
+import {
+  CandidateStatusBadge,
+  CandidateStatusReference,
+  StatusTabs,
+  type StatusTab,
+} from '@/features/new-joiner/components/CandidateBits';
 import { CandidateFormModal } from '@/features/new-joiner/components/CandidateFormModal';
+import { InviteCandidateModal } from '@/features/new-joiner/components/InviteCandidateModal';
 import { ReviewCandidateModal } from '@/features/new-joiner/components/ReviewCandidateModal';
 import { MaterializeModal } from '@/features/new-joiner/components/MaterializeModal';
 import {
   useCancelCandidate,
   useCandidates,
   useDeleteCandidate,
+  useResendCandidateLink,
   useSubmitCandidate,
 } from '@/features/new-joiner/hooks/useNewJoiner';
 import { rivalsOf } from '@/features/new-joiner/services/new-joiner.service';
@@ -43,8 +50,8 @@ type View = 'activity' | 'information';
 type Bucket = 'approve' | 'mine';
 
 const PENDING: CandidateStatus[] = ['SUBMITTED', 'IN_APPROVAL'];
-/** Kandidat milik sendiri yang masih butuh tindak lanjut (draft → materialisasi). */
-const MINE_OPEN: CandidateStatus[] = ['DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED'];
+/** Kandidat milik sendiri yang masih butuh tindak lanjut (undangan → materialisasi). */
+const MINE_OPEN: CandidateStatus[] = ['WAITING_CANDIDATE', 'DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED'];
 
 /** Kandidat yang kursinya kedaluwarsa dalam 7 hari ke depan. */
 function expiringSoon(rows: Candidate[]): number {
@@ -55,9 +62,8 @@ function expiringSoon(rows: Candidate[]): number {
 }
 
 /**
- * New Joiner Submission — port `_prototype/new-joiner.html`
- * (FSD §4 · UIC §4). Satu layar memuat NJ-LIST + tiga overlay: NJ-CREATE,
- * NJ-APPROVE, dan NJ-MATERIALIZE.
+ * New Joiner Submission — FSD-001-EMPLOYEE 0.46 §4 · UIC §4. Satu layar memuat NJ-LIST + overlay
+ * NJ-CREATE (undangan), Edit DRAFT, NJ-APPROVE, dan NJ-MATERIALIZE.
  */
 export function NewJoinerPage() {
   const navigate = useNavigate();
@@ -65,7 +71,8 @@ export function NewJoinerPage() {
   const rows = useMemo(() => data ?? [], [data]);
 
   const [filter, setFilter] = useState<Filter>('ALL');
-  const [creating, setCreating] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
   const [reviewing, setReviewing] = useState<Candidate | null>(null);
   const [materializing, setMaterializing] = useState<Candidate | null>(null);
   const [cancelling, setCancelling] = useState<Candidate | null>(null);
@@ -79,6 +86,7 @@ export function NewJoinerPage() {
   const submit = useSubmitCandidate();
   const cancel = useCancelCandidate();
   const remove = useDeleteCandidate();
+  const resend = useResendCandidateLink();
 
   const tabs: StatusTab[] = useMemo(() => {
     const counted: StatusTab[] = STATUS_ORDER.map((status) => ({
@@ -118,15 +126,24 @@ export function NewJoinerPage() {
     [rows],
   );
 
-  const inPipeline = rows.filter((row) => row.status === 'SUBMITTED' || row.status === 'IN_APPROVAL').length;
+  const inPipeline = rows.filter((row) => PENDING.includes(row.status)).length;
   const approved = rows.filter((row) => row.status === 'APPROVED').length;
-  const materialized = rows.filter((row) => row.status === 'MATERIALIZED').length;
+  const waiting = rows.filter((row) => row.status === 'WAITING_CANDIDATE').length;
 
   const columns: Column<Candidate>[] = [
     {
       key: 'candidate',
       header: 'Candidate',
-      render: (row) => <CellIdentity name={row.name} sub={row.email} leading={<Avatar name={row.name} size="sm" />} />,
+      render: (row) =>
+        row.status === 'WAITING_CANDIDATE' ? (
+          <CellIdentity
+            name={row.email}
+            sub="Waiting for the candidate to fill in their data"
+            leading={<Avatar name={row.email} size="sm" />}
+          />
+        ) : (
+          <CellIdentity name={row.name} sub={row.email} leading={<Avatar name={row.name} size="sm" />} />
+        ),
     },
     { key: 'position', header: 'Position', muted: true, render: (row) => labelOf(POSITION_OPTIONS, row.positionId) },
     {
@@ -134,26 +151,38 @@ export function NewJoinerPage() {
       header: 'Requisition',
       render: (row) => {
         const req = requisitions.find((item) => item.id === row.requisitionId);
-        return <CellIdentity name={req?.title ?? row.requisitionId} sub={req?.maker} />;
+        return <CellIdentity name={req?.title ?? row.requisitionId} sub={req ? `${req.id} · ${req.maker}` : undefined} />;
       },
     },
-    { key: 'nationality', header: 'Nationality', render: (row) => NATIONALITY_LABEL[row.nationality] },
+    {
+      key: 'nationality',
+      header: 'Nationality',
+      render: (row) => (row.nationality ? NATIONALITY_LABEL[row.nationality] : '—'),
+    },
     {
       key: 'join',
-      header: 'Intended join',
+      header: 'Intended Join',
       muted: true,
       nowrap: true,
-      render: (row) => formatDate(row.intendedJoinDate),
+      render: (row) =>
+        row.intendedJoinDate ? (
+          formatDate(row.intendedJoinDate)
+        ) : row.status === 'DRAFT' ? (
+          <span className="font-semibold text-warning-800">Not set yet</span>
+        ) : (
+          '—'
+        ),
     },
     {
       key: 'status',
       header: 'Status',
+      info: { label: 'Status reference', onClick: () => setLegendOpen(true) },
       render: (row) => (
         <div className="flex flex-col gap-1">
           <CandidateStatusBadge status={row.status} />
           {row.status === 'APPROVED' && row.seatExpiry && (
             <span className="font-body text-[11.5px] font-semibold text-warning-800">
-              Kursi ditahan sampai {formatDate(row.seatExpiry)}
+              Seat held until {formatDate(row.seatExpiry)}
             </span>
           )}
         </div>
@@ -168,13 +197,13 @@ export function NewJoinerPage() {
       <PageShell
         crumbs={[{ label: 'Employee Management' }, { label: 'New Joiner' }]}
         title="New Joiner"
-        description="Ajukan kandidat atas sebuah posisi, setujui lewat checker, lalu materialisasi menjadi karyawan begitu kontrak ditandatangani. Persetujuan menahan kursi sampai masa berlakunya habis."
+        description="Invite a candidate for an open seat. The candidate fills in their own data, a checker approves, and you create the employee once the contract is signed. Approval holds the seat until it expires."
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link to="/employees/new-joiner/add">Add employee manually</Link>
+              <Link to="/employees/new-joiner/add">Add Employee Manually</Link>
             </Button>
-            {maker && <Button onClick={() => setCreating(true)}>Add candidate</Button>}
+            {maker && <Button onClick={() => setInviting(true)}>Add Candidate</Button>}
           </>
         }
       >
@@ -185,24 +214,24 @@ export function NewJoinerPage() {
               value={checker ? toApprove.length : '—'}
               footer={
                 <CardFoot>
-                  {checker ? `To approve as checker · ${inPipeline} in pipeline` : 'Only HR Manager and above decide'}
+                  {checker ? `To approve as checker · ${inPipeline} in progress` : 'Only HR Manager and above approve'}
                 </CardFoot>
               }
             />
             <StatCard
-              label="Approved · awaiting sign"
+              label="Waiting for candidate"
+              value={waiting}
+              footer={<CardFoot>Invited, data not submitted yet</CardFoot>}
+            />
+            <StatCard
+              label="Approved · awaiting contract"
               value={approved}
-              footer={<CardFoot>Kursi ditahan sampai kedaluwarsa</CardFoot>}
+              footer={<CardFoot>Seat held until it expires</CardFoot>}
             />
             <StatCard
-              label="Materialised"
-              value={materialized}
-              footer={<CardFoot>Kini karyawan berstatus WAITING</CardFoot>}
-            />
-            <StatCard
-              label="Expiring in 7d"
+              label="Expiring in 7 days"
               value={expiringSoon(rows)}
-              footer={<CardFoot>Tandatangani kontrak untuk menahan kursi</CardFoot>}
+              footer={<CardFoot>Sign the contract and materialize before then</CardFoot>}
             />
           </div>
 
@@ -230,7 +259,7 @@ export function NewJoinerPage() {
                 <span className="font-body text-xs font-medium text-fg-3">
                   {activeBucket === 'approve'
                     ? 'Submitted by others, oldest first. Your own candidates never appear here.'
-                    : 'Drafts (newest first), waiting for a checker, or approved and waiting to be materialised.'}
+                    : 'Invited, in draft, waiting for a checker, or approved and waiting to be materialized.'}
                 </span>
               </div>
               <DataTable<Candidate>
@@ -269,7 +298,7 @@ export function NewJoinerPage() {
                   rows={paged.rows}
                   rowKey={(row) => row.id}
                   loading={isLoading}
-                  empty="Tidak ada kandidat pada status ini."
+                  empty="No candidate with this status."
                   columns={columns}
                   actions={(row) => <RowAction row={row} />}
                 />
@@ -288,13 +317,9 @@ export function NewJoinerPage() {
         </div>
       </PageShell>
 
-      <CandidateFormModal
-        open={creating || Boolean(editing)}
-        editing={editing}
-        onClose={() => (setCreating(false), setEditing(null))}
-        onEdit={(row) => (setCreating(false), setEditing(row))}
-        onDelete={setDeleting}
-      />
+      <InviteCandidateModal open={inviting} onClose={() => setInviting(false)} />
+      <CandidateFormModal candidate={editing} onClose={() => setEditing(null)} />
+      <CandidateStatusReference open={legendOpen} onClose={() => setLegendOpen(false)} />
 
       <ReviewCandidateModal
         candidate={reviewing}
@@ -312,21 +337,30 @@ export function NewJoinerPage() {
 
       <ConfirmDialog
         open={Boolean(cancelling)}
-        title="Batalkan kandidat?"
-        description={`Kursi untuk ${cancelling?.name ?? ''} akan dilepas dan pengajuan ditutup.`}
-        confirmLabel="Cancel submission"
+        title="Cancel this candidate?"
+        description={
+          cancelling?.status === 'WAITING_CANDIDATE'
+            ? `The invitation link sent to ${cancelling.email} stops working and the seat stays open.`
+            : `${cancelling?.name ?? ''} is closed and the seat is released. This cannot be undone.`
+        }
+        confirmLabel="Cancel Candidate"
+        cancelLabel="Keep"
         loading={cancel.isPending}
         onOpenChange={(open) => !open && setCancelling(null)}
         onConfirm={() =>
           cancelling &&
-          cancel.mutate({ id: cancelling.id, name: cancelling.name }, { onSuccess: () => setCancelling(null) })
+          cancel.mutate(
+            { id: cancelling.id, name: cancelling.name || cancelling.email },
+            { onSuccess: () => setCancelling(null) },
+          )
         }
       />
 
       <ConfirmDialog
         open={Boolean(deleting)}
-        title="Hapus draft kandidat?"
-        description={`Draft ${deleting?.name ?? ''} akan dihapus.`}
+        title="Delete this draft?"
+        description={`${deleting?.name ?? ''}'s draft is removed from the list.`}
+        confirmLabel="Delete Draft"
         loading={remove.isPending}
         onOpenChange={(open) => !open && setDeleting(null)}
         onConfirm={() =>
@@ -337,29 +371,31 @@ export function NewJoinerPage() {
   );
 
   /**
-   * Aksi baris per `nj_status` × peran (FSD 0.24 §4.3; L1 sembunyikan yang tak berhak).
-   * Pembuat tidak diketahui klien — Ubah/Batalkan tampil per peran, server menjawab 403.
+   * Aksi baris per `nj_status` × peran (FSD 0.46 §4.3; L1 sembunyikan yang tak berhak).
    * 1 aksi = tombol inline, ≥ 2 aksi = dropdown "Action ▾".
    */
   function RowAction({ row }: { row: Candidate }) {
+    const waitingCandidate = row.status === 'WAITING_CANDIDATE';
     const draft = row.status === 'DRAFT';
-    const pendingDecision = row.status === 'SUBMITTED' || row.status === 'IN_APPROVAL';
+    const pendingDecision = PENDING.includes(row.status);
+    const canCancel = (waitingCandidate || draft || pendingDecision) && (maker || checker);
     const actions: RowActionItem[] = [
       // Tombol keputusan disembunyikan bagi pembuat kandidat (Notulen 12 Okt 2026 #4).
       {
-        label: pendingDecision && checker && !isOwnCandidate(row) ? 'Setujui' : 'Detail',
+        label: pendingDecision && checker && !isOwnCandidate(row) ? 'Approve' : 'Detail',
         onSelect: () => setReviewing(row),
       },
-      ...(draft && maker ? [{ label: 'Ajukan', onSelect: () => submit.mutate({ id: row.id, name: row.name }) }] : []),
-      ...(draft && maker ? [{ label: 'Ubah', onSelect: () => setEditing(row) }] : []),
+      ...(waitingCandidate && maker
+        ? [{ label: 'Resend Link', onSelect: () => resend.mutate({ id: row.id, email: row.email }) }]
+        : []),
+      ...(draft && maker ? [{ label: 'Submit', onSelect: () => submit.mutate({ id: row.id, name: row.name }) }] : []),
+      ...(draft && maker ? [{ label: 'Edit', onSelect: () => setEditing(row) }] : []),
       ...(row.status === 'APPROVED' && maker ? [{ label: 'Materialize', onSelect: () => setMaterializing(row) }] : []),
       ...(row.status === 'MATERIALIZED'
-        ? [{ label: 'View employee', onSelect: () => navigate('/employees/directory') }]
+        ? [{ label: 'View Employee', onSelect: () => navigate('/employees/directory') }]
         : []),
-      ...((draft || pendingDecision) && (maker || checker)
-        ? [{ label: 'Batalkan', danger: true, onSelect: () => setCancelling(row) }]
-        : []),
-      ...(draft && (maker || checker) ? [{ label: 'Hapus', danger: true, onSelect: () => setDeleting(row) }] : []),
+      ...(draft && (maker || checker) ? [{ label: 'Delete', danger: true, onSelect: () => setDeleting(row) }] : []),
+      ...(canCancel ? [{ label: 'Cancel', danger: true, onSelect: () => setCancelling(row) }] : []),
     ];
     if (actions.length === 1) return <RowButton onClick={actions[0].onSelect}>{actions[0].label}</RowButton>;
     return <RowActions actions={actions} />;

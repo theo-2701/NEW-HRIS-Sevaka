@@ -2,40 +2,51 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
-import { CURRENT_USER, CURRENT_USER_ID } from '@/features/new-joiner/types';
-import type { Candidate, CandidateDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
+import { CURRENT_USER, CURRENT_USER_ID, POSITIONS } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft, InviteDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
 import type { Requisition } from '@/features/manpower/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
 import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
-import { registerMaterializedEmployee } from '@/features/employees/services/employee.service';
+import { employeeService, registerMaterializedEmployee } from '@/features/employees/services/employee.service';
 import { startOnboardingForNewJoiner } from '@/features/transitions/services/transition.service';
+import {
+  atsAvailableForNewJoiner,
+  atsBridgeService,
+  atsSnapshot,
+  inviteForNewJoiner,
+  linkAtsToNewJoiner,
+  markAtsUsed,
+  releaseAtsFromNewJoiner,
+} from '@/features/ats-bridge/services/ats-bridge.service';
+import type { CandidateProfile } from '@/features/ats-bridge/types';
 
 /**
- * API service New Joiner Submission.
+ * API service New Joiner Submission (FSD-001-EMPLOYEE 0.46 §4 · UIC §4).
  *
- * Endpoint kontrak (FSD §4 · UIC §4):
- *   GET    /new-joiners                      — NJ-LIST  (lihat catatan gap)
- *   POST   /new-joiners                      — NJ-CREATE (selalu DRAFT)
- *   PUT    /new-joiners/{id}                 — Ubah (hanya DRAFT)
- *   POST   /new-joiners/{id}/submit          — draft → SUBMITTED
+ *   POST   /new-joiners/search               — NJ-LIST
+ *   POST   /new-joiners                      — NJ-CREATE: Invite by email → WAITING_CANDIDATE,
+ *                                                From ATS → DRAFT berisi data kandidat
+ *   POST   /new-joiners/{id}/resend-link     — tautan baru untuk calon WAITING_CANDIDATE
+ *   PUT    /new-joiners/{id}                 — Ubah (hanya DRAFT; Posisi & Requisition tetap)
+ *   POST   /new-joiners/{id}/submit          — DRAFT → SUBMITTED
  *   POST   /new-joiners/{id}/approve         — NJ-APPROVE, menahan kursi (checker tanpa Tolak —
  *                                                REJECTED hanya otomatis untuk sibling, TSD §7.4.9)
  *   POST   /new-joiners/{id}/cancel          — bukan untuk APPROVED (FSD 0.22)
  *   DELETE /new-joiners/{id}                 — hapus draf
  *   POST   /new-joiners/{id}/materialize     — NJ-MATERIALIZE (Idempotency-Key)
  *
- * `PROB-FRONTEND-004`: kontrak read/list NJ-LIST belum ditegaskan di §7.
- * Selama itu, list dirender dari data contoh dengan struktur envelope grid
- * UIC §1.5 supaya siap dipasang saat endpoint dispesifikasi.
- *
- * KTP dikirim sebagai field transient; yang disimpan hanya 4 digit terakhir.
+ * Data identitas calon datang dari kandidat sendiri (portal ATS). KTP transient: yang tersimpan
+ * hanya 4 digit terakhir.
  */
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
 /** Kursi yang di-reserve setelah approve berlaku 14 hari (FSD §4.2). */
 const SEAT_DAYS = 14;
+
+/** Calon yang sudah selesai — email boleh dipakai lagi untuk calon baru. */
+const CLOSED: Candidate['status'][] = ['REJECTED', 'MATERIALIZED', 'CANCELLED', 'EXPIRED'];
 
 function addDays(days: number): string {
   const date = new Date();
@@ -48,7 +59,7 @@ type SeedRow = Omit<Candidate, 'makerId'>;
 /** Data contoh: ID pembuat dari nama; yang sudah diajukan diberi waktu ajuan 3 minggu sebelum tanggal masuk. */
 function seed(row: SeedRow): Candidate {
   const makerId = row.maker === CURRENT_USER ? CURRENT_USER_ID : `usr-${row.maker.toLowerCase().replace(/\s+/g, '-')}`;
-  if (row.status === 'DRAFT') return { ...row, makerId };
+  if (row.status === 'DRAFT' || row.status === 'WAITING_CANDIDATE') return { ...row, makerId };
   const submitted = new Date(`${row.intendedJoinDate}T09:00:00+07:00`);
   submitted.setDate(submitted.getDate() - 21);
   return { ...row, makerId, submittedAt: submitted.toISOString() };
@@ -56,6 +67,22 @@ function seed(row: SeedRow): Candidate {
 
 let mockRows: Candidate[] = (
   [
+    {
+      id: 'nj-10',
+      name: '',
+      email: 'nadia.rahma@gmail.com',
+      phone: '',
+      positionId: 'pos-fe',
+      requisitionId: 'REQ-0230',
+      nationality: '',
+      idCardLast4: '',
+      passportNumber: '',
+      visaNumber: '',
+      intendedJoinDate: '',
+      status: 'WAITING_CANDIDATE',
+      maker: CURRENT_USER,
+      atsBridgeId: 'ats-07',
+    },
     {
       id: 'nj-1',
       name: 'Putri Maharani',
@@ -209,21 +236,21 @@ export function rivalsOf(rows: Candidate[], candidate: Candidate): Candidate[] {
 
 function find(id: string): Candidate {
   const row = mockRows.find((r) => r.id === id);
-  if (!row) throw new Error('Kandidat tidak ditemukan.');
+  if (!row) throw new Error('404 — Candidate not found.');
   return row;
 }
 
 /** SoD (FSD §4.2): maker tidak boleh menjadi checker atas pengajuannya sendiri. */
 function assertChecker(row: Candidate) {
   if (row.makerId === CURRENT_USER_ID) {
-    throw new Error('409 — Anda pengaju kandidat ini, jadi tidak boleh memutuskan sendiri.');
+    throw new Error('409 — You added this candidate, so someone else must approve it.');
   }
 }
 
 /** Guard state UIC-EMPLOYEE §4 — transisi di luar status sah = 409. */
 function assertStatus(row: Candidate, allowed: Candidate['status'][], action: string) {
   if (!allowed.includes(row.status)) {
-    throw new Error(`409 — kandidat berstatus ${row.status}; ${action} hanya sah dari ${allowed.join('/')}.`);
+    throw new Error(`409 — This candidate is ${row.status}; ${action} is only allowed from ${allowed.join('/')}.`);
   }
 }
 
@@ -234,6 +261,29 @@ export function isPickableRequisition(row: Requisition, today = toIsoDate(new Da
   return row.status === 'APPROVED' && row.activeFrom <= today && today <= row.activeUntil;
 }
 
+/** Data isian kandidat (portal ATS) → kolom calon. KTP utuh tidak ikut tersimpan. */
+function fromProfile(profile: CandidateProfile): Partial<Candidate> {
+  const foreigner = profile.nationality === 'FOREIGNER';
+  return {
+    name: profile.candidateName,
+    phone: normalizePhone(profile.candidatePhone),
+    nationality: profile.nationality,
+    idCardLast4: foreigner ? '' : profile.idCardNumber.slice(-4),
+    passportNumber: foreigner ? profile.passportNumber : '',
+    visaNumber: foreigner ? profile.visaNumber : '',
+  };
+}
+
+/** Mode dummy: kandidat undangan yang sudah mengirim portal → calon WAITING_CANDIDATE jadi DRAFT. */
+function syncFromAts() {
+  for (const row of mockRows) {
+    if (row.status !== 'WAITING_CANDIDATE' || !row.atsBridgeId) continue;
+    const snap = atsSnapshot(row.atsBridgeId);
+    if (snap?.atsStatus !== 'COMPLETED') continue;
+    Object.assign(row, fromProfile(snap.profile), { status: 'DRAFT' });
+  }
+}
+
 /** L2: payload hanya memuat identitas cabang kewarganegaraan yang terpilih. */
 function toBody(draft: CandidateDraft) {
   const { idCardNumber, passportNumber, visaNumber, ...rest } = draft;
@@ -241,33 +291,40 @@ function toBody(draft: CandidateDraft) {
   return { ...rest, ...identity, phone: normalizePhone(draft.phone) };
 }
 
-/** Validasi server NJ-CREATE / Ubah (UIC-EMPLOYEE 0.42 §4.1). */
-async function assertCandidate(draft: CandidateDraft) {
+/** Validasi server Ubah (UIC-EMPLOYEE 0.42 §4.1). KTP kosong = tetap memakai yang tersimpan. */
+async function assertCandidate(draft: CandidateDraft, keepIdCard: boolean) {
   const name = draft.name.trim();
-  if (!name || name.length > 150) throw new Error('422 — candidate_name wajib, maksimal 150 karakter.');
-  if (!CANDIDATE_NAME.test(name)) throw new Error('422 — candidate_name format §8.9 (subset full_name auth).');
-  if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email tidak valid.');
+  if (!name || name.length > 150) throw new Error('422 — candidate_name is required, at most 150 characters.');
+  if (!CANDIDATE_NAME.test(name)) throw new Error('422 — candidate_name may only contain letters, spaces and \'.,-');
+  if (!EMAIL.test(draft.email.trim())) throw new Error('422 — candidate_email is not a valid email address.');
   if (!CANDIDATE_PHONE.test(normalizePhone(draft.phone ?? ''))) {
-    throw new Error('422 — candidate_phone wajib, format §8.3 (mis. +628123456789).');
+    throw new Error('422 — candidate_phone is required, e.g. +628123456789.');
   }
-  if (!draft.nationality) throw new Error('422 — nationality wajib dipilih.');
-  if (draft.nationality === 'CITIZEN' && !/^\d{16}$/.test(draft.idCardNumber)) {
-    throw new Error('422 — id_card_number wajib 16 digit untuk CITIZEN.');
+  if (!draft.nationality) throw new Error('422 — nationality is required.');
+  if (draft.nationality === 'CITIZEN' && !(keepIdCard && !draft.idCardNumber) && !/^\d{16}$/.test(draft.idCardNumber)) {
+    throw new Error('422 — id_card_number must be 16 digits for a CITIZEN.');
   }
   if (draft.nationality === 'FOREIGNER') {
     if (!/^[A-Z0-9]{6,15}$/.test(draft.passportNumber)) {
-      throw new Error('422 — passport_number wajib [A-Z0-9]{6,15} untuk FOREIGNER.');
+      throw new Error('422 — passport_number must be [A-Z0-9]{6,15} for a FOREIGNER.');
     }
-    if (!draft.visaNumber) throw new Error('422 — visa_number wajib untuk nationality FOREIGNER');
-    if (!/^[A-Z0-9]{6,20}$/.test(draft.visaNumber)) throw new Error('422 — visa_number [A-Z0-9]{6,20}.');
+    if (!draft.visaNumber) throw new Error('422 — visa_number is required for a FOREIGNER.');
+    if (!/^[A-Z0-9]{6,20}$/.test(draft.visaNumber)) throw new Error('422 — visa_number must be [A-Z0-9]{6,20}.');
   }
   if (!draft.intendedJoinDate || draft.intendedJoinDate < toIsoDate(new Date())) {
-    throw new Error('422 — intended_join_date wajib dan tidak boleh di masa lalu.');
+    throw new Error('422 — intended_join_date is required and cannot be in the past.');
   }
-  const requisitions = await manpowerService.requisitions();
-  const requisition = requisitions.find((row) => row.id === draft.requisitionId);
+}
+
+/** Requisition APPROVED + aktif, dan posisi milik unit requisition itu. */
+async function assertSeat(requisitionId: string, positionId: string) {
+  const requisition = (await manpowerService.requisitions()).find((row) => row.id === requisitionId);
   if (!requisition || !isPickableRequisition(requisition)) {
-    throw new Error('422 — requisition_id wajib menunjuk Requisition APPROVED yang masih di masa aktifnya.');
+    throw new Error('422 — requisition_id must be an approved requisition that is still active.');
+  }
+  const position = POSITIONS.find((item) => item.value === positionId);
+  if (!position || position.unitId !== requisition.unitId) {
+    throw new Error("422 — position_id must belong to the requisition's organization unit.");
   }
 }
 
@@ -275,6 +332,7 @@ export const newJoinerService = {
   async list(): Promise<Candidate[]> {
     if (MOCK) {
       await delay();
+      syncFromAts();
       return mockRows.map((row) => ({ ...row }));
     }
     // UIC-EMPLOYEE §4.5 — grid NJ-LIST.
@@ -282,34 +340,73 @@ export const newJoinerService = {
     return data.data;
   },
 
-  /** Create §4.1 selalu melahirkan DRAFT; "Ajukan" = transisi §4.2 terpisah (dari panel calon-tersimpan). */
-  async create(draft: CandidateDraft): Promise<Candidate> {
+  /**
+   * NJ-CREATE 0.46: Invite by email → WAITING_CANDIDATE + baris ATS `source=NEW_JOINER` berisi tautan;
+   * From ATS → DRAFT memakai data kandidat yang sudah lengkap.
+   */
+  async invite(draft: InviteDraft): Promise<Candidate> {
     if (MOCK) {
-      await delay();
-      await assertCandidate(draft);
-      const nationality = draft.nationality as Nationality;
-      const row: Candidate = {
+      await delay(400);
+      await assertSeat(draft.requisitionId, draft.positionId);
+      const base: Candidate = {
         id: newId(),
-        name: draft.name.trim(),
-        email: draft.email.trim(),
-        phone: normalizePhone(draft.phone),
+        name: '',
+        email: '',
+        phone: '',
         positionId: draft.positionId,
         requisitionId: draft.requisitionId,
-        nationality,
-        // KTP transient: hanya 4 digit terakhir yang disimpan.
-        idCardLast4: nationality === 'CITIZEN' ? draft.idCardNumber.slice(-4) : '',
-        passportNumber: nationality === 'FOREIGNER' ? draft.passportNumber : '',
-        visaNumber: nationality === 'FOREIGNER' ? draft.visaNumber : '',
-        intendedJoinDate: draft.intendedJoinDate,
-        status: 'DRAFT',
+        nationality: '',
+        idCardLast4: '',
+        passportNumber: '',
+        visaNumber: '',
+        intendedJoinDate: '',
+        status: 'WAITING_CANDIDATE',
         maker: CURRENT_USER,
         makerId: CURRENT_USER_ID,
       };
+      if (draft.source === 'EMAIL') {
+        const email = draft.email.trim().toLowerCase();
+        if (!EMAIL.test(email)) throw new Error('422 — Enter a valid email address.');
+        if (mockRows.some((row) => row.email.toLowerCase() === email && !CLOSED.includes(row.status))) {
+          throw new Error('409 — This email already belongs to an active candidate.');
+        }
+        const row: Candidate = { ...base, email };
+        row.atsBridgeId = inviteForNewJoiner(email, row.id, { id: 'emp-tony', name: CURRENT_USER, nik: 'NIK-0001' });
+        mockRows = [row, ...mockRows];
+        return { ...row };
+      }
+      const available = await atsAvailableForNewJoiner();
+      const snap = available.some((item) => item.id === draft.atsBridgeId) ? atsSnapshot(draft.atsBridgeId) : null;
+      if (!snap) throw new Error('409 — This ATS candidate is no longer available. Choose another one.');
+      const row: Candidate = {
+        ...base,
+        ...fromProfile(snap.profile),
+        email: snap.candidateEmail,
+        status: 'DRAFT',
+        atsBridgeId: draft.atsBridgeId,
+      };
+      linkAtsToNewJoiner(draft.atsBridgeId, row.id);
       mockRows = [row, ...mockRows];
       return { ...row };
     }
-    const { data } = await api.post<Candidate>('/new-joiners', toBody(draft));
+    const { data } = await api.post<Candidate>('/new-joiners', {
+      requisition_id: draft.requisitionId,
+      position_id: draft.positionId,
+      candidate_source: draft.source,
+      ...(draft.source === 'EMAIL' ? { candidate_email: draft.email.trim() } : { ats_bridge_id: draft.atsBridgeId }),
+    });
     return data;
+  },
+
+  /** Tautan baru (yang lama mati) untuk calon yang belum mengisi datanya. */
+  async resendLink(id: string): Promise<void> {
+    if (MOCK) {
+      const row = find(id);
+      assertStatus(row, ['WAITING_CANDIDATE'], 'resend link');
+      await atsBridgeService.resendLink(row.atsBridgeId!);
+      return;
+    }
+    await api.post(`/new-joiners/${id}/resend-link`);
   },
 
   /** Ubah — hanya DRAFT (selain itu 409); Posisi & Requisition tidak ikut berubah; MbV dievaluasi ulang. */
@@ -317,8 +414,8 @@ export const newJoinerService = {
     if (MOCK) {
       await delay();
       const row = find(id);
-      assertStatus(row, ['DRAFT'], 'ubah');
-      await assertCandidate({ ...draft, positionId: row.positionId, requisitionId: row.requisitionId });
+      assertStatus(row, ['DRAFT'], 'edit');
+      await assertCandidate(draft, Boolean(row.idCardLast4));
       const nationality = draft.nationality as Nationality;
       Object.assign(row, {
         name: draft.name.trim(),
@@ -341,6 +438,8 @@ export const newJoinerService = {
       await delay();
       const row = find(id);
       assertStatus(row, ['DRAFT'], 'submit');
+      // Calon dari portal belum punya rencana tanggal masuk — HR melengkapinya lewat Edit.
+      if (!row.intendedJoinDate) throw new Error('422 — Set the intended join date with Edit before submitting.');
       row.status = 'SUBMITTED';
       row.submittedAt = new Date().toISOString();
       return;
@@ -358,6 +457,7 @@ export const newJoinerService = {
       const rivals = rivalsOf(mockRows, row);
       rivals.forEach((rival) => {
         rival.status = 'REJECTED';
+        if (rival.atsBridgeId) releaseAtsFromNewJoiner(rival.atsBridgeId);
       });
       row.status = 'APPROVED';
       row.seatExpiry = addDays(SEAT_DAYS);
@@ -368,14 +468,15 @@ export const newJoinerService = {
     return data.autoRejected;
   },
 
-  /** Calon APPROVED tidak dapat dibatalkan sejak FSD 0.22 (409). */
+  /** Calon APPROVED tidak dapat dibatalkan sejak FSD 0.22 (409). Undangan yang belum diisi ikut dicabut. */
   async cancel(id: string): Promise<void> {
     if (MOCK) {
       await delay();
       const row = find(id);
-      assertStatus(row, ['DRAFT', 'SUBMITTED', 'IN_APPROVAL'], 'cancel');
+      assertStatus(row, ['WAITING_CANDIDATE', 'DRAFT', 'SUBMITTED', 'IN_APPROVAL'], 'cancel');
       row.status = 'CANCELLED';
       delete row.seatExpiry;
+      if (row.atsBridgeId) releaseAtsFromNewJoiner(row.atsBridgeId);
       return;
     }
     await api.post(`/new-joiners/${id}/cancel`);
@@ -384,9 +485,11 @@ export const newJoinerService = {
   async remove(id: string): Promise<void> {
     if (MOCK) {
       await delay();
+      const row = find(id);
       // FSD §4.2: hanya DRAFT yang boleh dihapus bebas — sesudahnya jejaknya wajib tinggal.
-      assertStatus(find(id), ['DRAFT'], 'hapus');
-      mockRows = mockRows.filter((row) => row.id !== id);
+      assertStatus(row, ['DRAFT'], 'delete');
+      if (row.atsBridgeId) releaseAtsFromNewJoiner(row.atsBridgeId);
+      mockRows = mockRows.filter((item) => item.id !== id);
       return;
     }
     await api.delete(`/new-joiners/${id}`);
@@ -404,41 +507,80 @@ export const newJoinerService = {
     await api.post('/employees', values, { headers: { 'Idempotency-Key': newId() } });
   },
 
-  async materialize(payload: MaterializePayload): Promise<void> {
+  /** NIK saran = nomor urut berikutnya di Directory (format bebas, HR boleh mengganti). */
+  async suggestNik(): Promise<string> {
+    const { total } = await employeeService.search({
+      keyword: '',
+      branchId: '',
+      createdFrom: '',
+      createdTo: '',
+      employmentStatus: [],
+      page: 1,
+      size: 1,
+      sortBy: 'createdAt',
+      sortDir: 'DESC',
+    });
+    return `NIK-${String(101 + total).padStart(4, '0')}`;
+  },
+
+  /** `nikAlsoUsed` = NIK sama dengan karyawan lain — hanya peringatan, tidak menolak. */
+  async materialize(payload: MaterializePayload): Promise<{ nikAlsoUsed: boolean }> {
     if (MOCK) {
       await delay();
       const row = find(payload.id);
-      if (row.status === 'MATERIALIZED') throw new Error('409 — kandidat ini sudah dimaterialisasi.');
+      if (row.status === 'MATERIALIZED') throw new Error('409 — This candidate is already an employee.');
       const today = toIsoDate(new Date());
       if (row.status === 'APPROVED' && row.seatExpiry && row.seatExpiry < today) row.status = 'EXPIRED';
-      if (row.status === 'EXPIRED')
-        throw new Error('410 — kursi kandidat sudah kedaluwarsa (approved_expiry_date lewat).');
+      if (row.status === 'EXPIRED') throw new Error('410 — The seat hold has expired (approved_expiry_date passed).');
       assertStatus(row, ['APPROVED'], 'materialize');
-      if (!payload.joinDate) throw new Error('422 — join_date wajib diisi.');
-      if (!payload.jobGradeId) throw new Error('422 — job_grade_id wajib (tingkat Class).');
+      if (!payload.joinDate) throw new Error('422 — join_date is required.');
+      if (!payload.jobGradeId) throw new Error('422 — job_grade_id is required.');
+      const nik = payload.nik.trim();
+      if (!nik || nik.length > 50) throw new Error('422 — nik is required, at most 50 characters.');
+
+      const { rows: sameNik } = await employeeService.search({
+        keyword: nik,
+        branchId: '',
+        createdFrom: '',
+        createdTo: '',
+        employmentStatus: [],
+        page: 1,
+        size: 50,
+        sortBy: 'name',
+        sortDir: 'ASC',
+      });
 
       row.status = 'MATERIALIZED';
       row.jobGradeId = payload.jobGradeId;
       row.intendedJoinDate = payload.joinDate;
       delete row.seatExpiry;
 
-      // Koneksi antar modul: karyawan baru di Directory + transisi Onboarding.
+      // Koneksi antar modul: karyawan baru di Directory + transisi Onboarding + kandidat ATS terpakai.
       const positionLabel = labelOf(POSITION_OPTIONS, row.positionId);
-      registerMaterializedEmployee({
+      const employee = registerMaterializedEmployee({
         name: row.name,
-        email: row.email,
+        email: payload.companyEmail.trim() || row.email,
         positionLabel,
         jobGrade: labelOf(JOB_GRADE_OPTIONS, payload.jobGradeId),
         joinDate: payload.joinDate,
+        nik,
       });
+      if (row.atsBridgeId) markAtsUsed(row.atsBridgeId, employee.id);
       startOnboardingForNewJoiner({ name: row.name, positionLabel, effectiveDate: payload.joinDate });
-      return;
+      return { nikAlsoUsed: sameNik.some((item) => item.nik === nik) };
     }
     // Idempotency-Key: submit yang diulang tidak boleh membuat karyawan ganda.
-    await api.post(
+    const { data } = await api.post<{ nikAlsoUsed: boolean }>(
       `/new-joiners/${payload.id}/materialize`,
-      { joinDate: payload.joinDate, jobGradeId: payload.jobGradeId },
+      {
+        joinDate: payload.joinDate,
+        jobGradeId: payload.jobGradeId,
+        nik: payload.nik.trim(),
+        username: payload.username.trim() || undefined,
+        companyEmail: payload.companyEmail.trim() || undefined,
+      },
       { headers: { 'Idempotency-Key': newId() } },
     );
+    return data;
   },
 };

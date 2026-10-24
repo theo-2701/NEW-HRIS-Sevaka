@@ -1,20 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { candidateSchema, materializeSchema } from '@/features/new-joiner/validation';
+import { candidateSchema, inviteSchema, materializeSchema } from '@/features/new-joiner/validation';
 import { newJoinerService, rivalsOf } from '@/features/new-joiner/services/new-joiner.service';
 import { STEP_SCHEMAS } from '@/features/new-joiner/addEmployee';
-import type { Candidate } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft } from '@/features/new-joiner/types';
 import { employeeService } from '@/features/employees/services/employee.service';
 import { transitionService } from '@/features/transitions/services/transition.service';
+import {
+  EMPTY_PROFILE,
+  atsBridgeService,
+  atsAvailableForNewJoiner,
+  candidatePortalService,
+  previewLink,
+} from '@/features/ats-bridge/services/ats-bridge.service';
 
-const base = {
+const base: CandidateDraft = {
   positionId: 'pos-be',
   requisitionId: 'REQ-0230',
   name: 'Kandidat Uji',
+  nationality: 'CITIZEN',
+  idCardNumber: '3171021505900012',
+  passportNumber: '',
   visaNumber: '',
   email: 'kandidat@email.com',
   phone: '081234567890',
   intendedJoinDate: '2099-01-01',
 };
+
+const edit = { ...base, hasIdCard: false };
+
+const materialize = { joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf', username: '', companyEmail: '' };
 
 function candidate(patch: Partial<Candidate>): Candidate {
   return {
@@ -36,38 +50,121 @@ function candidate(patch: Partial<Candidate>): Candidate {
   };
 }
 
-describe('NJ-CREATE — MbV identitas', () => {
-  it('menerima WNI dengan KTP 16 digit', async () => {
-    await expect(
-      candidateSchema.validate({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505900012', passportNumber: '' }),
-    ).resolves.toBeTruthy();
+const search = (keyword: string) =>
+  employeeService.search({
+    keyword,
+    branchId: '',
+    createdFrom: '',
+    createdTo: '',
+    employmentStatus: [],
+    page: 1,
+    size: 10,
+    sortBy: 'createdAt',
+    sortDir: 'DESC',
   });
 
-  it('menolak KTP yang bukan 16 digit', async () => {
-    await expect(
-      candidateSchema.validate({ ...base, nationality: 'CITIZEN', idCardNumber: '317102150590', passportNumber: '' }),
-    ).rejects.toThrow(/16 digit/);
+/** Calon DRAFT baru lewat From ATS (data kandidat sudah lengkap). */
+async function draftFromAts(atsBridgeId: string) {
+  return newJoinerService.invite({ requisitionId: 'REQ-0229', positionId: 'pos-hradm', source: 'ATS', email: '', atsBridgeId });
+}
+
+describe('Edit DRAFT — MbV identitas', () => {
+  it('WNI wajib KTP 16 digit; KTP tersimpan boleh dikosongkan', async () => {
+    await expect(candidateSchema.validate(edit)).resolves.toBeTruthy();
+    await expect(candidateSchema.validate({ ...edit, idCardNumber: '317102150590' })).rejects.toThrow(/16 digits/);
+    await expect(candidateSchema.validate({ ...edit, idCardNumber: '', hasIdCard: true })).resolves.toBeTruthy();
   });
 
-  it('mewajibkan paspor untuk WNA dan mengabaikan KTP', async () => {
-    await expect(
-      candidateSchema.validate({ ...base, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'A1234567', visaNumber: 'VK2026ABC' }),
-    ).resolves.toBeTruthy();
-    await expect(
-      candidateSchema.validate({ ...base, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'a1', visaNumber: 'VK2026ABC' }),
-    ).rejects.toThrow(/6–15 karakter/);
+  it('WNA wajib paspor + visa; tanggal masuk tidak boleh lampau', async () => {
+    const wna = { ...edit, nationality: 'FOREIGNER', idCardNumber: '', passportNumber: 'A1234567', visaNumber: 'VK2026ABC' };
+    await expect(candidateSchema.validate(wna)).resolves.toBeTruthy();
+    await expect(candidateSchema.validate({ ...wna, passportNumber: 'a1' })).rejects.toThrow(/6–15/);
+    await expect(candidateSchema.validate({ ...wna, visaNumber: '' })).rejects.toThrow(/visa number/);
+    await expect(candidateSchema.validate({ ...edit, intendedJoinDate: '2000-01-01' })).rejects.toThrow(/past/);
+  });
+});
+
+describe('NJ-CREATE 0.46 — undangan', () => {
+  it('skema: email wajib untuk Invite by email, kandidat wajib untuk From ATS', async () => {
+    const seat = { requisitionId: 'REQ-0230', positionId: 'pos-be' };
+    await expect(inviteSchema.validate({ ...seat, source: 'EMAIL', email: '', atsBridgeId: '' })).rejects.toThrow(/email/);
+    await expect(inviteSchema.validate({ ...seat, source: 'ATS', email: '', atsBridgeId: '' })).rejects.toThrow(/ATS candidate/);
   });
 
-  it('menolak tanggal rencana masuk di masa lalu', async () => {
+  it('requisition wajib APPROVED + aktif dan posisi milik unit requisition (422)', async () => {
     await expect(
-      candidateSchema.validate({
-        ...base,
-        intendedJoinDate: '2000-01-01',
-        nationality: 'CITIZEN',
-        idCardNumber: '3171021505900012',
-        passportNumber: '',
-      }),
-    ).rejects.toThrow(/masa lalu/);
+      newJoinerService.invite({ requisitionId: 'REQ-0231', positionId: 'pos-fin', source: 'EMAIL', email: 'a@b.co', atsBridgeId: '' }),
+    ).rejects.toThrow(/requisition_id/);
+    await expect(
+      newJoinerService.invite({ requisitionId: 'REQ-0230', positionId: 'pos-hrbp', source: 'EMAIL', email: 'a@b.co', atsBridgeId: '' }),
+    ).rejects.toThrow(/position_id/);
+  });
+
+  it('Invite by email → WAITING_CANDIDATE + baris ATS sumber New Joiner; email aktif kembar 409; resend', async () => {
+    const row = await newJoinerService.invite({
+      requisitionId: 'REQ-0230',
+      positionId: 'pos-be',
+      source: 'EMAIL',
+      email: 'Baru.Calon@gmail.com',
+      atsBridgeId: '',
+    });
+    expect(row).toMatchObject({ status: 'WAITING_CANDIDATE', email: 'baru.calon@gmail.com', name: '' });
+    const [ats] = await atsBridgeService.search({ source: 'NEW_JOINER', atsStatus: 'WAITING_CANDIDATE', keyword: 'baru.calon' });
+    expect(ats.id).toBe(row.atsBridgeId);
+    await expect(
+      newJoinerService.invite({ requisitionId: 'REQ-0230', positionId: 'pos-fe', source: 'EMAIL', email: 'baru.calon@gmail.com', atsBridgeId: '' }),
+    ).rejects.toThrow(/409/);
+    const before = (await atsBridgeService.detail(ats.id)).linkSendCount;
+    await newJoinerService.resendLink(row.id);
+    expect((await atsBridgeService.detail(ats.id)).linkSendCount).toBe(before + 1);
+  });
+
+  it('From ATS → DRAFT berisi data kandidat; kandidat itu tidak tersedia lagi', async () => {
+    const row = await draftFromAts('ats-03');
+    expect(row).toMatchObject({ status: 'DRAFT', name: 'Reza Fahlevi', email: 'reza.fahlevi@gmail.com', idCardLast4: '0002' });
+    expect(JSON.stringify(row)).not.toContain('3175011203950002');
+    expect((await atsAvailableForNewJoiner()).some((item) => item.id === 'ats-03')).toBe(false);
+    await expect(draftFromAts('ats-03')).rejects.toThrow(/409/);
+  });
+
+  it('kandidat undangan mengirim portal → calon WAITING jadi DRAFT; resend tidak berlaku lagi', async () => {
+    const token = 'demo-nadia';
+    await candidatePortalService.consent(token, 'DIKA', true);
+    await candidatePortalService.saveProfile(token, 'DIKA', {
+      ...EMPTY_PROFILE,
+      candidateName: 'Nadia Rahma',
+      nationality: 'CITIZEN',
+      idCardNumber: '3175014101990004',
+      candidatePhone: '0812 7700 7788',
+      placeOfBirth: 'Bandung',
+      dateOfBirth: '1999-01-01',
+      gender: 'Female',
+      maritalStatus: 'Single',
+      lastEducation: "Bachelor's degree (S1)",
+      religion: 'Islam',
+      idCardAddress: 'Jl. Dago 10',
+      idCardZip: { zipId: 'z-12950', zip: '12950', provinceName: 'DKI Jakarta', regencyName: 'Jakarta Selatan', districtName: 'Setiabudi', villageName: 'Karet Kuningan' },
+    });
+    await candidatePortalService.upload(token, 'DIKA', 'cv', new File(['%PDF'], 'cv.pdf', { type: 'application/pdf' }));
+    await candidatePortalService.upload(token, 'DIKA', 'id-card', new File(['x'], 'ktp.png', { type: 'image/png' }));
+    await candidatePortalService.submit(token, 'DIKA');
+
+    const row = (await newJoinerService.list()).find((item) => item.id === 'nj-10')!;
+    expect(row).toMatchObject({ status: 'DRAFT', name: 'Nadia Rahma', phone: '+6281277007788', idCardLast4: '0004' });
+    await expect(newJoinerService.resendLink(row.id)).rejects.toThrow(/409/);
+    // Dari portal belum ada rencana tanggal masuk → wajib lewat Edit dulu.
+    await expect(newJoinerService.submit(row.id)).rejects.toThrow(/intended join date/);
+    await newJoinerService.update(row.id, { ...base, name: row.name, email: row.email, idCardNumber: '' });
+    await newJoinerService.submit(row.id);
+    expect((await newJoinerService.list()).find((item) => item.id === 'nj-10')?.status).toBe('SUBMITTED');
+  });
+
+  it('batalkan calon WAITING → tautan undangan ikut mati', async () => {
+    const row = await newJoinerService.invite({ requisitionId: 'REQ-0230', positionId: 'pos-be', source: 'EMAIL', email: 'batal@gmail.com', atsBridgeId: '' });
+    expect(previewLink(row.atsBridgeId!)).not.toBeNull();
+    await newJoinerService.cancel(row.id);
+    expect(previewLink(row.atsBridgeId!)).toBeNull();
+    expect((await atsBridgeService.detail(row.atsBridgeId!)).atsStatus).toBe('INACTIVE');
   });
 });
 
@@ -84,161 +181,58 @@ describe('NJ-APPROVE — kursi & saingan', () => {
   });
 
   it('menolak keputusan oleh maker sendiri (SoD)', async () => {
-    const rows = await newJoinerService.list();
-    const own = rows.find((row) => row.status === 'DRAFT');
-    expect(own).toBeDefined();
-    await newJoinerService.submit(own!.id);
-    await expect(newJoinerService.approve(own!.id, '')).rejects.toThrow(/409/);
+    await newJoinerService.submit('nj-9');
+    await expect(newJoinerService.approve('nj-9', '')).rejects.toThrow(/409/);
   });
 });
 
-describe('NJ-CREATE — KTP transient', () => {
-  it('hanya menyimpan 4 digit terakhir KTP', async () => {
-    await newJoinerService.create(
-      {
-        positionId: 'pos-be',
-        requisitionId: 'REQ-0230',
-        name: 'Transient Test',
-        nationality: 'CITIZEN',
-        idCardNumber: '3171021505901234',
-        passportNumber: '',
-        visaNumber: '',
-        email: 'transient@email.com',
-        phone: '081234567890',
-        intendedJoinDate: '2099-01-01',
-      },
-    );
-    const rows = await newJoinerService.list();
-    const saved = rows.find((row) => row.name === 'Transient Test');
-    expect(saved?.idCardLast4).toBe('1234');
+describe('Edit DRAFT — guard server', () => {
+  it('KTP transient: hanya 4 digit terakhir tersimpan; HP diseragamkan ke +62', async () => {
+    const row = await draftFromAts('ats-05');
+    await newJoinerService.update(row.id, { ...base, name: 'Transient Test', idCardNumber: '3171021505901234', phone: '0812-3456-7890' });
+    const saved = (await newJoinerService.list()).find((item) => item.id === row.id)!;
+    expect(saved).toMatchObject({ idCardLast4: '1234', phone: '+6281234567890' });
     expect(JSON.stringify(saved)).not.toContain('3171021505901234');
+  });
+
+  it('menolak HP, nama, dan KTP di luar pola (422); Ubah/hapus hanya DRAFT (409)', async () => {
+    const row = (await newJoinerService.list()).find((item) => item.name === 'Transient Test')!;
+    await expect(newJoinerService.update(row.id, { ...base, phone: '021-5551234' })).rejects.toThrow(/candidate_phone/);
+    await expect(newJoinerService.update(row.id, { ...base, name: 'Budi123' })).rejects.toThrow(/candidate_name/);
+    await expect(newJoinerService.update(row.id, { ...base, idCardNumber: '123' })).rejects.toThrow(/422/);
+    const submitted = (await newJoinerService.list()).find((item) => item.status === 'SUBMITTED')!;
+    await expect(newJoinerService.update(submitted.id, base)).rejects.toThrow(/409/);
+    await expect(newJoinerService.remove(submitted.id)).rejects.toThrow(/409/);
+    await expect(newJoinerService.submit(submitted.id)).rejects.toThrow(/409/);
   });
 });
 
 describe('NJ-MATERIALIZE & Add Employee', () => {
-  it('mewajibkan tanggal, job grade, dan berkas kontrak', async () => {
-    await expect(materializeSchema.validate({ joinDate: '', jobGradeId: '', contractFileName: '' })).rejects.toThrow();
-    await expect(
-      materializeSchema.validate({ joinDate: '2026-10-01', jobGradeId: 'gr-3a', contractFileName: 'kontrak.pdf' }),
-    ).resolves.toBeTruthy();
+  it('mewajibkan tanggal, grade, kontrak, dan NIK ≤ 50', async () => {
+    await expect(materializeSchema.validate({ ...materialize, nik: '' })).rejects.toThrow(/NIK/);
+    await expect(materializeSchema.validate({ ...materialize, nik: 'x'.repeat(51) })).rejects.toThrow(/50/);
+    await expect(materializeSchema.validate({ ...materialize, nik: 'NIK-0200' })).resolves.toBeTruthy();
   });
 
   it('memvalidasi langkah wizard secara terpisah', async () => {
     await expect(STEP_SCHEMAS[1].validateAt('employeeId', { employeeId: '' })).rejects.toThrow(/Employee ID/);
-    await expect(STEP_SCHEMAS[2].validateAt('basicSalary', { basicSalary: '8.000.000' })).rejects.toThrow(
-      /tanpa titik/,
-    );
-  });
-});
-
-describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)', () => {
-  it('submit hanya dari DRAFT dan hapus hanya DRAFT (409)', async () => {
-    const rows = await newJoinerService.list();
-    const submitted = rows.find((row) => row.status === 'SUBMITTED')!;
-    await expect(newJoinerService.submit(submitted.id)).rejects.toThrow(/409/);
-    await expect(newJoinerService.remove(submitted.id)).rejects.toThrow(/409/);
+    await expect(STEP_SCHEMAS[2].validateAt('basicSalary', { basicSalary: '8.000.000' })).rejects.toThrow(/tanpa titik/);
   });
 
-  it('server menolak KTP yang bukan 16 digit (422)', async () => {
-    await expect(
-      newJoinerService.create(
-        { ...base, nationality: 'CITIZEN', idCardNumber: '123', passportNumber: '' },
-      ),
-    ).rejects.toThrow(/422/);
-  });
+  it('materialize → karyawan di Directory + Onboarding; NIK kembar hanya peringatan; tidak bisa diulang; APPROVED tak bisa dibatalkan', async () => {
+    const approved = (await newJoinerService.list()).find((row) => row.status === 'APPROVED')!;
+    await expect(newJoinerService.cancel(approved.id)).rejects.toThrow(/409/);
+    const before = (await search(approved.name)).total;
 
-  it('materialize melahirkan karyawan di Directory + transisi Onboarding, lalu tidak bisa diulang', async () => {
-    const rows = await newJoinerService.list();
-    const approved = rows.find((row) => row.status === 'APPROVED')!;
-    const directoryBefore = (await employeeService.search({
-      keyword: approved.name,
-      branchId: '',
-      createdFrom: '',
-      createdTo: '',
-      employmentStatus: [],
-      page: 1,
-      size: 10,
-      sortBy: 'createdAt',
-      sortDir: 'DESC',
-    })).total;
+    const result = await newJoinerService.materialize({ id: approved.id, ...materialize, nik: 'NIK-0005' });
+    expect(result.nikAlsoUsed).toBe(true);
 
-    await newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' });
-
-    const directoryAfter = await employeeService.search({
-      keyword: approved.name,
-      branchId: '',
-      createdFrom: '',
-      createdTo: '',
-      employmentStatus: [],
-      page: 1,
-      size: 10,
-      sortBy: 'createdAt',
-      sortDir: 'DESC',
-    });
-    expect(directoryAfter.total).toBe(directoryBefore + 1);
-    expect(directoryAfter.rows[0].employmentStatus).toBe('WAITING');
-
-    const onboarding = (await transitionService.list()).find(
-      (row) => row.type === 'ONBOARDING' && row.employee === approved.name,
-    );
+    const after = await search(approved.name);
+    expect(after.total).toBe(before + 1);
+    expect(after.rows[0]).toMatchObject({ employmentStatus: 'WAITING', nik: 'NIK-0005' });
+    const onboarding = (await transitionService.list()).find((row) => row.type === 'ONBOARDING' && row.employee === approved.name);
     expect(onboarding?.status).toBe('IN_PROGRESS');
 
-    await expect(
-      newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' }),
-    ).rejects.toThrow(/409/);
-  });
-});
-
-describe('NJ-CREATE — candidate_phone (UIC-EMPLOYEE §4.1)', () => {
-  it('nomor HP wajib dan diseragamkan ke +62', async () => {
-    await expect(newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505909999', passportNumber: '', phone: '' })).rejects.toThrow(/candidate_phone/);
-    await newJoinerService.create(
-      { ...base, name: 'Phone Test', nationality: 'CITIZEN', idCardNumber: '3171021505908888', passportNumber: '', phone: '0812-3456-7890' },
-    );
-    const saved = (await newJoinerService.list()).find((row) => row.name === 'Phone Test');
-    expect(saved?.phone).toBe('+6281234567890');
-  });
-
-  it('menolak nomor yang tidak berpola +62/0-8xxxxxxxxxx (TSD-EMPLOYEE 0.26 §8.3)', async () => {
-    await expect(
-      newJoinerService.create({ ...base, nationality: 'CITIZEN', idCardNumber: '3171021505907777', passportNumber: '', phone: '021-5551234' }),
-    ).rejects.toThrow(/candidate_phone/);
-  });
-});
-
-describe('NJ-CREATE — candidate_name (TSD-EMPLOYEE 0.26 §8.9)', () => {
-  it('menolak nama yang memuat angka atau simbol di luar pola', async () => {
-    await expect(
-      newJoinerService.create({ ...base, name: 'Budi123', nationality: 'CITIZEN', idCardNumber: '3171021505906666', passportNumber: '' }),
-    ).rejects.toThrow(/candidate_name/);
-  });
-});
-
-describe('NJ 0.24 — visa, Requisition wajib, Ubah, Batalkan', () => {
-  const wna = { ...base, nationality: 'FOREIGNER' as const, idCardNumber: '', passportNumber: 'A1234567' };
-
-  it('WNA wajib nomor visa [A-Z0-9]{6,20}; kewarganegaraan wajib dipilih', async () => {
-    await expect(candidateSchema.validate({ ...wna, visaNumber: '' })).rejects.toThrow(/visa wajib/);
-    await expect(candidateSchema.validate({ ...wna, visaNumber: 'VK2026ABC' })).resolves.toBeTruthy();
-    await expect(candidateSchema.validateAt('nationality', { ...base, nationality: '' })).rejects.toThrow(/Kewarganegaraan/);
-    await expect(newJoinerService.create({ ...wna, name: 'Visa Kosong' })).rejects.toThrow(/visa_number wajib/);
-  });
-
-  it('Requisition wajib APPROVED & aktif; IN_APPROVAL ditolak 422', async () => {
-    await expect(candidateSchema.validateAt('requisitionId', { ...base, requisitionId: '' })).rejects.toThrow(/Requisition wajib/);
-    await expect(
-      newJoinerService.create({ ...wna, name: 'Req Pending', visaNumber: 'VK2026ABC', requisitionId: 'REQ-0231' }),
-    ).rejects.toThrow(/requisition_id/);
-  });
-
-  it('create melahirkan DRAFT; Ubah hanya DRAFT; Batalkan tidak berlaku untuk APPROVED', async () => {
-    const row = await newJoinerService.create({ ...wna, name: 'Draft Baru', visaNumber: 'VK2026ABC' });
-    expect(row).toMatchObject({ status: 'DRAFT', visaNumber: 'VK2026ABC', idCardLast4: '' });
-    await newJoinerService.update(row.id, { ...wna, name: 'Draft Ubah', visaNumber: 'VK2026XYZ' });
-    expect((await newJoinerService.list()).find((r) => r.id === row.id)).toMatchObject({ name: 'Draft Ubah' });
-    await newJoinerService.submit(row.id);
-    await expect(newJoinerService.update(row.id, { ...wna, visaNumber: 'VK2026ABC' })).rejects.toThrow(/409/);
-    const approved = (await newJoinerService.list()).find((r) => r.status === 'APPROVED')!;
-    await expect(newJoinerService.cancel(approved.id)).rejects.toThrow(/409/);
+    await expect(newJoinerService.materialize({ id: approved.id, ...materialize, nik: 'NIK-0300' })).rejects.toThrow(/409/);
   });
 });

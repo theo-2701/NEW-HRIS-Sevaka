@@ -1,12 +1,14 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Form, Formik, useField } from 'formik';
+import { TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
-import { KeyValueList, KeyValueRow } from '@/features/new-joiner/components/CandidateBits';
-import { useMaterializeCandidate } from '@/features/new-joiner/hooks/useNewJoiner';
+import { TextField } from '@/components/form/TextField';
+import { KeyValueList, KeyValueRow, Note } from '@/features/new-joiner/components/CandidateBits';
+import { useMaterializeCandidate, useSuggestedNik } from '@/features/new-joiner/hooks/useNewJoiner';
 import { materializeSchema } from '@/features/new-joiner/validation';
 import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
 import type { Candidate } from '@/features/new-joiner/types';
@@ -25,7 +27,7 @@ function ContractFileField() {
   return (
     <div className="flex flex-col gap-1">
       <Label htmlFor="contract-file">
-        Kontrak yang ditandatangani<em>*</em>
+        Signed Contract<em>*</em>
       </Label>
       <div className="flex h-9 items-center gap-3 rounded-md border border-silver bg-white pr-3">
         <button
@@ -36,7 +38,7 @@ function ContractFileField() {
           Choose File
         </button>
         <span className="min-w-0 flex-1 truncate font-body text-[13px] font-medium text-fg-3">
-          {field.value || 'Belum ada berkas dipilih'}
+          {field.value || 'No file chosen'}
         </span>
       </div>
       <input
@@ -56,12 +58,36 @@ function ContractFileField() {
 }
 
 /**
- * NJ-MATERIALIZE (FSD §4.3) — kontrak sudah ditandatangani. Membuat identitas
- * global dan menulis work data; kandidat menjadi karyawan berstatus WAITING.
- * Request membawa Idempotency-Key supaya submit yang diulang tidak menggandakan.
+ * NJ-MATERIALIZE (FSD-001-EMPLOYEE 0.46 §4.3) — kontrak sudah ditandatangani. Membuat identitas
+ * global dan menulis work data; kandidat menjadi karyawan berstatus WAITING. NIK wajib (saran nomor
+ * berikutnya, kembar hanya peringatan); Username & Company Email opsional.
  */
 export function MaterializeModal({ candidate, onClose }: { candidate: Candidate | null; onClose: () => void }) {
   const materialize = useMaterializeCandidate();
+  const { data: suggestedNik = '' } = useSuggestedNik(Boolean(candidate));
+  const [done, setDone] = useState<{ name: string; nik: string; nikAlsoUsed: boolean } | null>(null);
+
+  if (done) {
+    const finish = () => {
+      setDone(null);
+      onClose();
+    };
+    return (
+      <Modal open onOpenChange={(next) => !next && finish()} title="Employee created" footer={<Button onClick={finish}>Done</Button>}>
+        <div className="flex flex-col gap-3">
+          <p className="m-0 font-body text-[13px] leading-[1.5] text-fg-2">
+            {done.name} is now an employee with status Waiting and an Onboarding transition. The employee receives
+            an activation link to set a password.
+          </p>
+          {done.nikAlsoUsed && (
+            <Note tone="warn" icon={<TriangleAlert />}>
+              NIK {done.nik} is also used by another employee. Check that this is intended.
+            </Note>
+          )}
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Formik
@@ -70,14 +96,17 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
         joinDate: '',
         jobGradeId: '',
         contractFileName: '',
+        nik: suggestedNik,
+        username: candidate?.email.split('@')[0] ?? '',
+        companyEmail: '',
       }}
       validationSchema={materializeSchema}
       enableReinitialize
       onSubmit={(values) => {
         if (!candidate) return;
         materialize.mutate(
-          { payload: { id: candidate.id, ...values }, name: candidate.name },
-          { onSuccess: onClose },
+          { id: candidate.id, ...values },
+          { onSuccess: (result) => setDone({ name: candidate.name, nik: values.nik.trim(), nikAlsoUsed: result.nikAlsoUsed }) },
         );
       }}
     >
@@ -86,8 +115,8 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
           open={Boolean(candidate)}
           onOpenChange={(open) => !open && onClose()}
           size="wide"
-          title="Materialise — contract signed"
-          description="Membuat identitas global dan menulis work data. Kandidat menjadi karyawan berstatus WAITING."
+          title="Materialize Candidate"
+          description="The contract is signed. This creates the employee with status Waiting."
           footer={
             <>
               <Button variant="secondary" onClick={onClose}>
@@ -95,10 +124,12 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
               </Button>
               <Button
                 onClick={submitForm}
-                // L3: nonaktif sampai Tanggal join, Golongan, dan Kontrak ketiganya terisi.
-                disabled={materialize.isPending || !values.joinDate || !values.jobGradeId || !values.contractFileName}
+                // L3: nonaktif sampai isian wajib terisi.
+                disabled={
+                  materialize.isPending || !values.joinDate || !values.jobGradeId || !values.contractFileName || !values.nik.trim()
+                }
               >
-                {materialize.isPending ? 'Memproses…' : 'Materialise employee'}
+                {materialize.isPending ? 'Creating…' : 'Create Employee'}
               </Button>
             </>
           }
@@ -106,24 +137,31 @@ export function MaterializeModal({ candidate, onClose }: { candidate: Candidate 
           {candidate && (
             <Form className="flex flex-col gap-4">
               <KeyValueList>
-                <KeyValueRow label="Kandidat">{candidate.name}</KeyValueRow>
-                <KeyValueRow label="Posisi">{labelOf(POSITION_OPTIONS, candidate.positionId)}</KeyValueRow>
-                <KeyValueRow label="Kursi ditahan sampai">
+                <KeyValueRow label="Candidate">{candidate.name}</KeyValueRow>
+                <KeyValueRow label="Position">{labelOf(POSITION_OPTIONS, candidate.positionId)}</KeyValueRow>
+                <KeyValueRow label="Seat held until">
                   {candidate.seatExpiry ? formatDate(candidate.seatExpiry) : '—'}
                 </KeyValueRow>
               </KeyValueList>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="joinDate" label="Tanggal masuk" required />
-                <SelectField
-                  name="jobGradeId"
-                  label="Job grade"
+                <DateField name="joinDate" label="Start Date" required placeholder="Select a date" />
+                <SelectField name="jobGradeId" label="Grade" required placeholder="Select a grade" options={JOB_GRADE_OPTIONS} />
+                <TextField
+                  name="nik"
+                  label="NIK"
                   required
-                  placeholder="Pilih job grade"
-                  options={JOB_GRADE_OPTIONS}
-                  hint="Tingkat kelas jabatan karyawan."
+                  maxLength={50}
+                  hint="Suggested next number. Free format — you get a warning if it is already used."
                 />
                 <ContractFileField />
+                <TextField name="username" label="Username" hint="Optional. Left empty, the system derives one." />
+                <TextField
+                  name="companyEmail"
+                  type="email"
+                  label="Company Email"
+                  hint="Optional. No mailbox password is asked or stored."
+                />
               </div>
             </Form>
           )}

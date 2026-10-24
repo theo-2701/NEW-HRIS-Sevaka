@@ -1,49 +1,69 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { newJoinerService } from '@/features/new-joiner/services/new-joiner.service';
+import { atsAvailableForNewJoiner } from '@/features/ats-bridge/services/ats-bridge.service';
 import { toast } from '@/store/ui.store';
-import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft, InviteDraft, MaterializePayload } from '@/features/new-joiner/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
 
 export const newJoinerKeys = {
   list: ['new-joiners'] as const,
+  atsAvailable: ['ats-bridge', 'available-for-new-joiner'] as const,
 };
 
 export function useCandidates() {
   return useQuery({ queryKey: newJoinerKeys.list, queryFn: () => newJoinerService.list() });
 }
 
-/** Semua mutasi New Joiner memakai invalidasi + penanganan galat yang sama. */
+/** Kandidat ATS untuk sumber "From ATS": COMPLETED, setuju, belum dipegang calon aktif. */
+export function useAtsCandidatesForNewJoiner(enabled: boolean) {
+  return useQuery({ queryKey: newJoinerKeys.atsAvailable, queryFn: atsAvailableForNewJoiner, enabled });
+}
+
+export function useSuggestedNik(enabled: boolean) {
+  return useQuery({ queryKey: ['new-joiners', 'suggest-nik'], queryFn: () => newJoinerService.suggestNik(), enabled });
+}
+
+/** Semua mutasi New Joiner memakai invalidasi + penanganan galat yang sama (ATS ikut, karena saling tertaut). */
 function useCandidateMutation<TVars, TResult = void>(
   mutationFn: (vars: TVars) => Promise<TResult>,
-  onDone: (result: TResult, vars: TVars) => string,
+  onDone: (result: TResult, vars: TVars) => string | null,
 ) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
     onSuccess: (result, vars) => {
-      toast(onDone(result, vars), 'ok');
-      queryClient.invalidateQueries({ queryKey: newJoinerKeys.list });
+      const message = onDone(result, vars);
+      if (message) toast(message, 'ok');
+      void queryClient.invalidateQueries({ queryKey: newJoinerKeys.list });
+      void queryClient.invalidateQueries({ queryKey: ['ats-bridge'] });
     },
     onError: (error: Error) => toast(error.message, 'danger'),
   });
 }
 
-export const useCreateCandidate = () =>
-  useCandidateMutation<CandidateDraft, Candidate>(
-    (draft) => newJoinerService.create(draft),
-    (row) => `${row.name} tersimpan sebagai draft. Ajukan dari panel calon-tersimpan atau daftar.`,
+/** Tanpa toast — hasilnya ditampilkan di dialog "Invitation sent" / "Candidate added". */
+export const useInviteCandidate = () =>
+  useCandidateMutation<InviteDraft, Candidate>(
+    (draft) => newJoinerService.invite(draft),
+    () => null,
+  );
+
+export const useResendCandidateLink = () =>
+  useCandidateMutation<{ id: string; email: string }>(
+    ({ id }) => newJoinerService.resendLink(id),
+    (_result, { email }) => `A new link was sent to ${email}. The previous link no longer works.`,
   );
 
 export const useUpdateCandidate = () =>
   useCandidateMutation<{ id: string; draft: CandidateDraft }>(
     ({ id, draft }) => newJoinerService.update(id, draft),
-    (_result, { draft }) => `Draft ${draft.name} diperbarui.`,
+    (_result, { draft }) => `${draft.name}'s draft was updated.`,
   );
 
 export const useSubmitCandidate = () =>
   useCandidateMutation<{ id: string; name: string }>(
     ({ id }) => newJoinerService.submit(id),
-    (_result, { name }) => `${name} diajukan. Menunggu persetujuan checker.`,
+    (_result, { name }) => `${name} was submitted and is waiting for a checker.`,
   );
 
 export const useApproveCandidate = () =>
@@ -51,20 +71,20 @@ export const useApproveCandidate = () =>
     ({ id, note }) => newJoinerService.approve(id, note),
     (autoRejected, { name }) =>
       autoRejected > 0
-        ? `${name} disetujui — kursi ditahan. ${autoRejected} kandidat saingan otomatis ditolak.`
-        : `${name} disetujui — kursi ditahan sampai tanggal kedaluwarsa.`,
+        ? `${name} was approved and the seat is held. ${autoRejected} other candidate(s) for this position were rejected automatically.`
+        : `${name} was approved. The seat is held until the expiry date.`,
   );
 
 export const useCancelCandidate = () =>
   useCandidateMutation<{ id: string; name: string }>(
     ({ id }) => newJoinerService.cancel(id),
-    (_result, { name }) => `${name} dibatalkan sebelum kontrak ditandatangani. Kursi dilepas.`,
+    (_result, { name }) => `${name} was cancelled. The seat is released.`,
   );
 
 export const useDeleteCandidate = () =>
   useCandidateMutation<{ id: string; name: string }>(
     ({ id }) => newJoinerService.remove(id),
-    (_result, { name }) => `Draft ${name} dihapus.`,
+    (_result, { name }) => `${name}'s draft was deleted.`,
   );
 
 /** Jalur manual Add Employee — tidak menyentuh daftar kandidat. */
@@ -74,8 +94,9 @@ export const useAddEmployee = () =>
     (_result, values) => `${values.fullName} ditambahkan ke direktori dengan status WAITING.`,
   );
 
+/** Tanpa toast — dialog "Employee created" menampilkan hasil, termasuk peringatan NIK kembar. */
 export const useMaterializeCandidate = () =>
-  useCandidateMutation<{ payload: MaterializePayload; name: string }>(
-    ({ payload }) => newJoinerService.materialize(payload),
-    (_result, { name }) => `${name} dimaterialisasi. Undangan akun dikirim; karyawan berstatus WAITING.`,
+  useCandidateMutation<MaterializePayload, { nikAlsoUsed: boolean }>(
+    (payload) => newJoinerService.materialize(payload),
+    () => null,
   );
