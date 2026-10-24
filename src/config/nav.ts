@@ -126,6 +126,13 @@ export const NAV: NavSection[] = [
           { label: 'Employee Transfer', path: '/employees/transfer', source: 'transition.html', status: 'done' },
           { label: 'Mass Resignation', path: '/employees/mass-resignation', source: 'mass-resignation.html', status: 'done' },
           { label: 'Bulk Import Karyawan', path: '/employees/bulk-import', source: 'FSD-001-EMPLOYEE §8', status: 'done' },
+          // FSD-001-EMPLOYEE 0.46 §9 — langkah sesudah Bulk Import (disetujui Theo, 24 Okt 2026).
+          {
+            label: 'Bulk Account Activation',
+            path: '/employees/bulk-account-activation',
+            source: 'FSD-001-EMPLOYEE §9',
+            status: 'done',
+          },
           { label: 'Import/Export Prorate' },
           { label: 'PTKP Status Adjustment', path: '/employees/ptkp-adjustment', source: 'ptkp-adjustment.html', status: 'done' },
         ],
