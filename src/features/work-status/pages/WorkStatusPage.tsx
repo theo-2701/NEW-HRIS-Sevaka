@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Info, Lock } from 'lucide-react';
-import { Card, CardHead } from '@/components/Card';
+import { Card } from '@/components/Card';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { PageShell } from '@/components/PageShell';
-import { PanelActionButton, RowActions } from '@/components/RowActions';
+import { RowActions } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableToolbar } from '@/components/TableToolbar';
 import { SelectField } from '@/components/form/SelectField';
@@ -145,6 +145,7 @@ export function WorkStatusPage() {
         crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Work Status' }]}
         title="Work Status"
         description="The employment types your company uses, with the tax and benefit settings Payroll and Time read. Types are never deleted: deactivate the ones you no longer use."
+        actions={manager && <Button onClick={() => setEditing('new')}>Add Work Status</Button>}
       >
         {!canRead ? (
           <Note tone="warn" icon={<Lock />}>
@@ -156,11 +157,6 @@ export function WorkStatusPage() {
               <Note icon={<Info />}>You can view work statuses. HR Manager and Super Admin add and change them.</Note>
             )}
             <Card>
-              <CardHead
-                title="Work statuses"
-                sub={`${rows.length} types`}
-                action={manager ? <PanelActionButton onClick={() => setEditing('new')}>Add Work Status</PanelActionButton> : undefined}
-              />
               <div className="flex flex-col">
                 <TableToolbar
                   filters={

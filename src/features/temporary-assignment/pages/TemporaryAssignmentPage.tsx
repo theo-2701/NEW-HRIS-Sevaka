@@ -5,12 +5,14 @@ import { Info, Lock } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHead } from '@/components/Card';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { CellIdentity, DataTable } from '@/components/DataTable';
+import { CellIdentity, DataTable, type Column } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { MultiSelect } from '@/components/MultiSelect';
 import { PageShell } from '@/components/PageShell';
 import { Pagination } from '@/components/Pagination';
 import { RowButton } from '@/components/RowActions';
+import { Segmented } from '@/components/Segmented';
+import { TabMenu } from '@/components/TabMenu';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableToolbar } from '@/components/TableToolbar';
 import { DateField } from '@/components/form/DateField';
@@ -412,9 +414,14 @@ function StatusReference({ open, onClose }: { open: boolean; onClose: () => void
   );
 }
 
+type View = 'activity' | 'information';
+type Bucket = 'approve' | 'mine';
+const OPEN: AssignmentStatus[] = ['IN_APPROVAL', 'APPROVED', 'ACTIVE'];
+
 /**
- * Employee Directory › Temporary Assignment — FSD-001-EMPLOYEE 0.83 §10. Membuka & mengajukan: HR Staff ·
- * HR Manager · Super Admin; memutuskan, mengembalikan lebih awal, memperpanjang: HR Manager · Super Admin.
+ * Employee Directory › Temporary Assignment — FSD-001-EMPLOYEE 0.83 §10. Pola maker/checker sama dengan New
+ * Joiner: tab Activity memisahkan "Needs approval" (diajukan orang lain, terlama dulu) dari "My requests"
+ * (ajuan sendiri yang masih berjalan); tab Information = seluruh penugasan dengan filter.
  */
 export function TemporaryAssignmentPage() {
   const role = useAuthStore((s) => s.user?.role);
@@ -433,14 +440,75 @@ export function TemporaryAssignmentPage() {
     queryFn: () => temporaryAssignmentService.search(filter),
     enabled: allowed,
   });
+  const { data: everything = [] } = useQuery({
+    queryKey: [...KEYS, 'all'],
+    queryFn: () => temporaryAssignmentService.search({}),
+    enabled: allowed,
+  });
   const rows = useMemo(() => data ?? [], [data]);
   const paged = usePagedRows(rows);
   const filtered = keyword || statuses.length > 0 || type !== 'ALL';
+
+  const toApprove = useMemo(
+    () =>
+      checker
+        ? everything
+            .filter((row) => row.status === 'IN_APPROVAL' && row.createdById !== CURRENT_USER_ID)
+            .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        : [],
+    [everything, checker],
+  );
+  const mine = useMemo(
+    () => everything.filter((row) => row.createdById === CURRENT_USER_ID && OPEN.includes(row.status)),
+    [everything],
+  );
+
+  const [view, setView] = useState<View>('activity');
+  const [bucket, setBucket] = useState<Bucket>('approve');
+  // Peran yang bukan checker tidak punya antrean persetujuan — langsung ke ajuannya sendiri.
+  const activeBucket: Bucket = checker ? bucket : 'mine';
 
   const [creating, setCreating] = useState(false);
   const [detail, setDetail] = useState<TemporaryAssignment | null>(null);
   const [extending, setExtending] = useState<TemporaryAssignment | null>(null);
   const [legendOpen, setLegendOpen] = useState(false);
+
+  const columns: Column<TemporaryAssignment>[] = [
+    {
+      key: 'employee',
+      header: 'Employee',
+      render: (row) => <CellIdentity name={row.employeeName} sub={`${row.employeeNik} · ${row.homeSeat}`} />,
+    },
+    { key: 'type', header: 'Type', render: (row) => TYPE_LABEL[row.assignmentType] },
+    { key: 'seat', header: 'Assignment Seat', muted: true, render: (row) => seatLabel(row.assignedSeatId) },
+    {
+      key: 'period',
+      header: 'Period',
+      nowrap: true,
+      render: (row) => `${formatDate(row.startDate)} – ${formatDate(row.returnDate)}`,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      info: { label: 'Status reference', onClick: () => setLegendOpen(true) },
+      render: (row) => (
+        <div className="flex flex-col gap-1">
+          <AssignmentBadge status={row.status} />
+          {row.returnTrigger && (
+            <span className="font-body text-[11.5px] font-medium text-fg-3">{RETURN_TRIGGER_LABEL[row.returnTrigger]}</span>
+          )}
+        </div>
+      ),
+    },
+    { key: 'requester', header: 'Requested By', muted: true, render: (row) => row.createdBy },
+  ];
+
+  /** Baris yang menunggu keputusan pengguna diberi label "Review" supaya tugasnya terbaca. */
+  const action = (row: TemporaryAssignment) => (
+    <RowButton onClick={() => setDetail(row)}>
+      {row.status === 'IN_APPROVAL' && checker && row.createdById !== CURRENT_USER_ID ? 'Review' : 'View Detail'}
+    </RowButton>
+  );
 
   return (
     <>
@@ -455,103 +523,117 @@ export function TemporaryAssignmentPage() {
             This menu is available to HR Staff, HR Manager and Super Admin.
           </Note>
         ) : (
-          <Card>
-            <CardHead title="Assignments" sub={`${rows.length} records · newest first`} />
-            <div className="flex flex-col">
-              <TableToolbar
-                filters={
-                  <>
-                    <MultiSelect<AssignmentStatus>
-                      className="w-[220px]"
-                      value={statuses}
-                      onChange={(next) => {
-                        setStatuses(next);
+          <div className="flex flex-col gap-5">
+            <TabMenu<View>
+              value={view}
+              onChange={setView}
+              items={[
+                { value: 'activity', label: 'Activity', count: toApprove.length + mine.length },
+                { value: 'information', label: 'Information', count: everything.length },
+              ]}
+            />
+
+            {view === 'activity' && (
+              <Card>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Segmented<Bucket>
+                    value={activeBucket}
+                    onChange={setBucket}
+                    options={[
+                      ...(checker ? [{ value: 'approve' as const, label: `Needs approval (${toApprove.length})` }] : []),
+                      { value: 'mine', label: `My requests (${mine.length})` },
+                    ]}
+                  />
+                  <span className="font-body text-xs font-medium text-fg-3">
+                    {activeBucket === 'approve'
+                      ? 'Submitted by others, oldest first. Your own requests never appear here.'
+                      : 'Your requests that are waiting, approved, or running.'}
+                  </span>
+                </div>
+                <DataTable<TemporaryAssignment>
+                  rows={activeBucket === 'approve' ? toApprove : mine}
+                  rowKey={(row) => row.id}
+                  loading={isLoading}
+                  empty={activeBucket === 'approve' ? 'Nothing is waiting for your approval.' : 'You have no request in progress.'}
+                  columns={columns}
+                  actions={action}
+                />
+              </Card>
+            )}
+
+            {view === 'information' && (
+              <Card>
+                <CardHead title="All assignments" sub={`${rows.length} records · newest first`} />
+                <div className="flex flex-col">
+                  <TableToolbar
+                    filters={
+                      <>
+                        <MultiSelect<AssignmentStatus>
+                          className="w-[220px]"
+                          value={statuses}
+                          onChange={(next) => {
+                            setStatuses(next);
+                            paged.resetPage();
+                          }}
+                          options={STATUSES.map((value) => ({ value, label: STATUS_LABEL[value] }))}
+                          placeholder="All statuses"
+                        />
+                        <Select
+                          value={type}
+                          onValueChange={(value) => {
+                            setType(value as AssignmentType | 'ALL');
+                            paged.resetPage();
+                          }}
+                        >
+                          <SelectTrigger className="h-10 w-[160px]" aria-label="Type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ALL">All types</SelectItem>
+                            {TYPES.map((value) => (
+                              <SelectItem key={value} value={value}>
+                                {TYPE_LABEL[value]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    }
+                    search={{
+                      value: keyword,
+                      onChange: (value) => {
+                        setKeyword(value);
                         paged.resetPage();
-                      }}
-                      options={STATUSES.map((value) => ({ value, label: STATUS_LABEL[value] }))}
-                      placeholder="All statuses"
-                    />
-                    <Select
-                      value={type}
-                      onValueChange={(value) => {
-                        setType(value as AssignmentType | 'ALL');
-                        paged.resetPage();
-                      }}
-                    >
-                      <SelectTrigger className="h-10 w-[160px]" aria-label="Type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">All types</SelectItem>
-                        {TYPES.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {TYPE_LABEL[value]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                }
-                search={{
-                  value: keyword,
-                  onChange: (value) => {
-                    setKeyword(value);
-                    paged.resetPage();
-                  },
-                  placeholder: 'Search employee name or NIK',
-                }}
-              />
-              <DataTable<TemporaryAssignment>
-                rows={paged.rows}
-                rowKey={(row) => row.id}
-                loading={isLoading}
-                empty={
-                  isError
-                    ? 'The assignment list could not be loaded.'
-                    : filtered
-                      ? 'No assignments match the current filter.'
-                      : 'No temporary assignments yet. Use New Assignment to place an employee in a vacant seat.'
-                }
-                columns={[
-                  {
-                    key: 'employee',
-                    header: 'Employee',
-                    render: (row) => <CellIdentity name={row.employeeName} sub={`${row.employeeNik} · ${row.homeSeat}`} />,
-                  },
-                  { key: 'type', header: 'Type', render: (row) => TYPE_LABEL[row.assignmentType] },
-                  { key: 'seat', header: 'Assignment Seat', muted: true, render: (row) => seatLabel(row.assignedSeatId) },
-                  {
-                    key: 'period',
-                    header: 'Period',
-                    nowrap: true,
-                    render: (row) => `${formatDate(row.startDate)} – ${formatDate(row.returnDate)}`,
-                  },
-                  {
-                    key: 'status',
-                    header: 'Status',
-                    info: { label: 'Status reference', onClick: () => setLegendOpen(true) },
-                    render: (row) => (
-                      <div className="flex flex-col gap-1">
-                        <AssignmentBadge status={row.status} />
-                        {row.returnTrigger && (
-                          <span className="font-body text-[11.5px] font-medium text-fg-3">{RETURN_TRIGGER_LABEL[row.returnTrigger]}</span>
-                        )}
-                      </div>
-                    ),
-                  },
-                ]}
-                actions={(row) => <RowButton onClick={() => setDetail(row)}>Details</RowButton>}
-              />
-              <Pagination
-                page={paged.page}
-                pageSize={paged.pageSize}
-                total={paged.total}
-                noun="assignments"
-                onPageChange={paged.setPage}
-                onPageSizeChange={paged.setPageSize}
-              />
-            </div>
-          </Card>
+                      },
+                      placeholder: 'Search employee name or NIK',
+                    }}
+                  />
+                  <DataTable<TemporaryAssignment>
+                    rows={paged.rows}
+                    rowKey={(row) => row.id}
+                    loading={isLoading}
+                    empty={
+                      isError
+                        ? 'The assignment list could not be loaded.'
+                        : filtered
+                          ? 'No assignments match the current filter.'
+                          : 'No temporary assignments yet. Use New Assignment to place an employee in a vacant seat.'
+                    }
+                    columns={columns}
+                    actions={action}
+                  />
+                  <Pagination
+                    page={paged.page}
+                    pageSize={paged.pageSize}
+                    total={paged.total}
+                    noun="assignments"
+                    onPageChange={paged.setPage}
+                    onPageSizeChange={paged.setPageSize}
+                  />
+                </div>
+              </Card>
+            )}
+          </div>
         )}
       </PageShell>
 

@@ -16,29 +16,35 @@ export interface RowAction {
   disabled?: boolean;
 }
 
-/** Kelas dasar tombol di dalam baris tabel — `.rowbtn` / `.rowmenu__trigger`. */
+/**
+ * Kelas dasar tombol di dalam baris tabel — `.rowbtn` / `.rowmenu__trigger`. Lebar minimal = lebar
+ * "Action ▾" (84px, standar Theo 26 Okt 2026) supaya kolom aksi rata walau labelnya pendek ("Edit", "Open").
+ */
 const ROW_CONTROL =
-  'inline-flex h-[30px] items-center gap-1.5 whitespace-nowrap rounded-md border border-fog bg-white px-3 font-body text-[11.5px] font-bold leading-none text-secondary-700 shadow-inset-rim transition-[background,box-shadow,color] duration-200 ease-standard hover:bg-vapor hover:[box-shadow:var(--shadow-press)] [&_svg]:size-3.5';
+  'inline-flex h-[30px] min-w-[84px] items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-fog bg-white px-3 font-body text-[11.5px] font-bold leading-none text-secondary-700 shadow-inset-rim transition-[background,box-shadow,color] duration-200 ease-standard hover:bg-vapor hover:[box-shadow:var(--shadow-press)] [&_svg]:size-3.5';
 
 /**
  * Tombol aksi inline dalam baris tabel — port `.rowbtn`:
  * **30px** · border 1px Fog + `shadow-inset-rim` · 11.5px/700 Secondary-700 ·
  * ikon 14px · hover Vapor + soft-press.
  * Teks saja, tanpa ikon. Label detail selalu "View Detail".
+ * `primary` = aksi utama di bilah seleksi tabel (ukuran sama dengan tombol kolom aksi).
  */
 export function RowButton({
   children,
   variant = 'default',
   className,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'default' | 'ghost' | 'danger' }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'default' | 'ghost' | 'danger' | 'primary' }) {
   return (
     <button
       type="button"
       className={cn(
         ROW_CONTROL,
-        variant === 'ghost' && 'border-transparent bg-transparent px-2 shadow-none hover:bg-mist',
+        variant === 'ghost' && 'min-w-0 border-transparent bg-transparent px-2 shadow-none hover:bg-mist',
         variant === 'danger' && 'text-error-600 hover:bg-error-50 hover:text-error-700',
+        variant === 'primary' &&
+          'border-transparent text-white shadow-none [background:var(--bg-primary-btn)] hover:text-white hover:[background:var(--bg-primary-btn-hover)]',
         'disabled:cursor-not-allowed disabled:bg-fog disabled:text-fg-4 disabled:shadow-none',
         className,
       )}

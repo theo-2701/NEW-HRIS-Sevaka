@@ -9,6 +9,7 @@ import { Modal } from '@/components/Modal';
 import { PageShell } from '@/components/PageShell';
 import { RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
+import { TabMenu } from '@/components/TabMenu';
 import { TableToolbar } from '@/components/TableToolbar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -134,6 +135,7 @@ export function MaterializationPage() {
   const canRead = canReadMaterialization(role);
   const canWrite = canWriteMaterialization(role);
 
+  const [tab, setTab] = useState<'setups' | 'coverage'>('setups');
   const [filter, setFilter] = useState<SetupFilter>({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -176,7 +178,14 @@ export function MaterializationPage() {
             {Boolean(coverage?.understaffed) && (
               <Note tone="warn" icon={<TriangleAlert />}>
                 {coverage!.understaffed} setup(s) have fewer than 2 active people on a task. New transitions still run with the remaining people.{' '}
-                <button type="button" className="font-semibold underline" onClick={() => setFilter({ status: 'UNDERSTAFFED' })}>
+                <button
+                  type="button"
+                  className="font-semibold underline"
+                  onClick={() => {
+                    setTab('setups');
+                    setFilter({ status: 'UNDERSTAFFED' });
+                  }}
+                >
                   Show them
                 </button>
               </Note>
@@ -188,40 +197,52 @@ export function MaterializationPage() {
               </Link>
               .
             </span>
-            <Card>
-              <CardHead title="Setups" sub={`${rows.length} setups`} />
-              <div className="flex flex-col">
-                <TableToolbar
-                  filters={
-                    <Button variant="secondary" onClick={() => setFilterOpen(true)}>
-                      {active > 0 ? `Filter (${active})` : 'Filter'}
-                    </Button>
-                  }
-                  summary={summary}
-                />
-                <DataTable<Row>
-                  rows={rows}
-                  rowKey={(row) => row.id}
-                  loading={isLoading}
-                  empty={isError ? 'The setups could not be loaded.' : active ? 'No setup matches the filter.' : 'No setup has been defined yet.'}
-                  columns={[
-                    { key: 'type', header: 'Type', strong: true, render: (row) => SETUP_TYPE_LABEL[row.type] },
-                    { key: 'subtype', header: 'Subtype', muted: true, render: (row) => (row.type !== 'TRANSFER' ? '—' : row.subtype ? SUBTYPE_LABEL[row.subtype] : 'All subtypes') },
-                    { key: 'branch', header: 'Branch', render: (row) => (row.type === 'TRANSFER' ? 'Whole company' : branchLabel(row.branchId)) },
-                    { key: 'status', header: 'Status', render: (row) => <StatusBadge tone={SETUP_STATUS_TONE[row.status]}>{SETUP_STATUS_LABEL[row.status]}</StatusBadge> },
-                    { key: 'version', header: 'Version', align: 'center', render: (row) => `v${row.version}` },
-                    { key: 'updated', header: 'Updated', muted: true, nowrap: true, render: (row) => `${formatDateTime(row.updatedAt)} · ${row.updatedBy}` },
-                  ]}
-                  actions={(row) => <RowButton onClick={() => open(row.id)}>Open</RowButton>}
-                />
-              </div>
-            </Card>
-            {coverage && coverage.missing.length > 0 && (
+            {/* Satu tabel per tampilan (Theo, 26 Okt 2026): cakupan cabang pindah ke tab sendiri. */}
+            <TabMenu<'setups' | 'coverage'>
+              value={tab}
+              onChange={setTab}
+              items={[
+                { value: 'setups', label: 'Setups', count: rows.length },
+                { value: 'coverage', label: 'Branches without a setup', count: coverage?.missing.length ?? 0 },
+              ]}
+            />
+            {tab === 'setups' && (
               <Card>
-                <CardHead title="Branches without a setup" sub="These use the company default" />
+                <CardHead title="Setups" sub={`${rows.length} setups`} />
+                <div className="flex flex-col">
+                  <TableToolbar
+                    filters={
+                      <Button variant="secondary" onClick={() => setFilterOpen(true)}>
+                        {active > 0 ? `Filter (${active})` : 'Filter'}
+                      </Button>
+                    }
+                    summary={summary}
+                  />
+                  <DataTable<Row>
+                    rows={rows}
+                    rowKey={(row) => row.id}
+                    loading={isLoading}
+                    empty={isError ? 'The setups could not be loaded.' : active ? 'No setup matches the filter.' : 'No setup has been defined yet.'}
+                    columns={[
+                      { key: 'type', header: 'Type', strong: true, render: (row) => SETUP_TYPE_LABEL[row.type] },
+                      { key: 'subtype', header: 'Subtype', muted: true, render: (row) => (row.type !== 'TRANSFER' ? '—' : row.subtype ? SUBTYPE_LABEL[row.subtype] : 'All subtypes') },
+                      { key: 'branch', header: 'Branch', render: (row) => (row.type === 'TRANSFER' ? 'Whole company' : branchLabel(row.branchId)) },
+                      { key: 'status', header: 'Status', render: (row) => <StatusBadge tone={SETUP_STATUS_TONE[row.status]}>{SETUP_STATUS_LABEL[row.status]}</StatusBadge> },
+                      { key: 'version', header: 'Version', align: 'center', render: (row) => `v${row.version}` },
+                      { key: 'updated', header: 'Updated', muted: true, nowrap: true, render: (row) => `${formatDateTime(row.updatedAt)} · ${row.updatedBy}` },
+                    ]}
+                    actions={(row) => <RowButton onClick={() => open(row.id)}>Open</RowButton>}
+                  />
+                </div>
+              </Card>
+            )}
+            {tab === 'coverage' && (
+              <Card>
+                <CardHead title="Branches without a setup" sub="These use the company default until they get their own setup" />
                 <DataTable<{ type: SetupType; branchId: string }>
-                  rows={coverage.missing}
+                  rows={coverage?.missing ?? []}
                   rowKey={(row) => `${row.type}:${row.branchId}`}
+                  empty="Every branch has its own onboarding and offboarding setup."
                   columns={[
                     { key: 'branch', header: 'Branch', strong: true, render: (row) => branchLabel(row.branchId) },
                     { key: 'type', header: 'Type', render: (row) => SETUP_TYPE_LABEL[row.type] },

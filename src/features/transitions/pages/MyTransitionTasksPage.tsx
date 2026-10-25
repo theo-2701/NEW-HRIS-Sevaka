@@ -5,6 +5,7 @@ import { Card, CardHead } from '@/components/Card';
 import { CellIdentity, DataTable } from '@/components/DataTable';
 import { PageShell } from '@/components/PageShell';
 import { Pagination } from '@/components/Pagination';
+import { Segmented } from '@/components/Segmented';
 import { RowActions, RowButton } from '@/components/RowActions';
 import type { RowAction } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -21,13 +22,17 @@ import {
   useCompleteTask,
   useEscalations,
   useMyTasks,
+  useTeamTasks,
 } from '@/features/transitions/hooks/useTransitions';
+import { SUBORDINATES } from '@/features/transitions/services/transition.service';
 import type { MyTaskRow } from '@/features/transitions/services/transition.service';
+import { CURRENT_USER } from '@/features/manpower/types';
 import { ESCALATION_LABEL, SIDE_LABEL, TYPE_LABEL, isTaskClosed } from '@/features/transitions/types';
 import type { EscalationReason, TaskStatus, Transition, TransitionType } from '@/features/transitions/types';
 import { useAuthStore } from '@/store/auth.store';
 
-type Tab = 'tasks' | 'approvals' | 'escalations';
+type View = 'activity' | 'escalations';
+type Bucket = 'tasks' | 'approvals' | 'team';
 type StatusFilter = 'ALL' | 'IN_PROGRESS' | 'AWAITING_CONFIRM' | 'AWAITING_APPROVAL' | 'COMPLETED';
 
 const STATUS_FILTER: Record<Exclude<StatusFilter, 'ALL'>, { label: string; statuses: TaskStatus[] }> = {
@@ -40,23 +45,26 @@ const STATUS_FILTER: Record<Exclude<StatusFilter, 'ALL'>, { label: string; statu
 const TYPES = Object.keys(TYPE_LABEL) as TransitionType[];
 
 /**
- * Employee Management › My Transition Tasks — FSD-001-EMPLOYEE 0.83 §18. Kotak masuk tugas transisi bagi
- * petugas (My Tasks) dan penyetuju (My Approvals); Escalations hanya HR Manager · Super Admin. Server hanya
- * mengembalikan tugas milik orang yang login (MT1).
+ * Employee Management › My Transition Tasks — FSD-001-EMPLOYEE 0.83 §18, pola New Joiner (Theo, 26 Okt 2026):
+ * tab Activity memisahkan "My tasks" (saya petugasnya), "Needs my approval" (saya penyetujunya), dan "My team"
+ * (task yang dipegang bawahan saya, untuk dipantau); tab Escalations hanya HR Manager · Super Admin.
  */
 export function MyTransitionTasksPage() {
   const navigate = useNavigate();
   const role = useAuthStore((s) => s.user?.role);
   const hrManager = role === 'ROLE_HR_MANAGER' || role === 'ROLE_SUPER_ADMIN';
 
-  const [tab, setTab] = useState<Tab>('tasks');
+  const [view, setView] = useState<View>('activity');
+  const [tab, setTab] = useState<Bucket>('tasks');
+  const hasTeam = (SUBORDINATES[CURRENT_USER] ?? []).length > 0;
   const [status, setStatus] = useState<StatusFilter>('ALL');
   const [type, setType] = useState<TransitionType | 'ALL'>('ALL');
   const tasks = useMyTasks('tasks');
   const approvals = useMyTasks('approvals');
+  const team = useTeamTasks();
   const escalations = useEscalations(hrManager);
 
-  const source = tab === 'approvals' ? approvals : tasks;
+  const source = tab === 'approvals' ? approvals : tab === 'team' ? team : tasks;
   const rows = useMemo(
     () =>
       (source.data ?? [])
@@ -78,6 +86,7 @@ export function MyTransitionTasksPage() {
 
   const openTasks = (tasks.data ?? []).filter(({ task }) => !isTaskClosed(task)).length;
   const waitingApproval = (approvals.data ?? []).filter(({ task }) => task.status === 'AWAITING_APPROVAL').length;
+  const teamOpen = (team.data ?? []).filter(({ task }) => !isTaskClosed(task)).length;
   const overdue = (tasks.data ?? []).filter(({ task }) => task.timedOut && !isTaskClosed(task)).length;
   const openTransition = (transition: Transition) => navigate(`/employees/transition/detail?tr=${transition.id}`);
 
@@ -108,26 +117,25 @@ export function MyTransitionTasksPage() {
         description="Transition tasks you handle or approve. Two-party tasks wait for the employee's confirmation after you complete them; that waiting time is not counted against you."
       >
         <div className="flex flex-col gap-4">
-          <TabMenu<Tab>
-            value={tab}
+          <TabMenu<View>
+            value={view}
             onChange={(next) => {
-              setTab(next);
+              setView(next);
               paged.resetPage();
             }}
             items={[
-              { value: 'tasks', label: 'My Tasks', count: openTasks },
-              { value: 'approvals', label: 'My Approvals', count: waitingApproval },
+              { value: 'activity', label: 'Activity', count: openTasks + waitingApproval },
               ...(hrManager ? [{ value: 'escalations' as const, label: 'Escalations', count: escalations.data?.length ?? 0 }] : []),
             ]}
           />
 
-          {tab === 'tasks' && overdue > 0 && (
+          {view === 'activity' && tab === 'tasks' && overdue > 0 && (
             <Note tone="warn" icon={<Info />}>
               {overdue} task{overdue === 1 ? ' is' : 's are'} past the due date. Overdue is a flag — the task stays open until it is done or waived.
             </Note>
           )}
 
-          {tab === 'escalations' ? (
+          {view === 'escalations' ? (
             <Card>
               <CardHead title="Escalations" sub="Transitions that need an HR Manager" />
               <DataTable<{ transition: Transition; reason: EscalationReason }>
@@ -150,7 +158,27 @@ export function MyTransitionTasksPage() {
             </Card>
           ) : (
             <Card>
-              <CardHead title={tab === 'tasks' ? 'My tasks' : 'Waiting for my approval'} sub={`${rows.length} tasks`} />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Segmented<Bucket>
+                  value={tab}
+                  onChange={(next) => {
+                    setTab(next);
+                    paged.resetPage();
+                  }}
+                  options={[
+                    { value: 'tasks', label: `My tasks (${openTasks})` },
+                    { value: 'approvals', label: `Needs my approval (${waitingApproval})` },
+                    ...(hasTeam ? [{ value: 'team' as const, label: `My team (${teamOpen})` }] : []),
+                  ]}
+                />
+                <span className="font-body text-xs font-medium text-fg-3">
+                  {tab === 'tasks'
+                    ? 'Tasks you handle. Overdue first, then the nearest due date.'
+                    : tab === 'approvals'
+                      ? 'Tasks waiting for your approval after the handler finished.'
+                      : 'Tasks handled by the people who report to you. View only — open the transition to follow up.'}
+                </span>
+              </div>
               <div className="flex flex-col">
                 <TableToolbar
                   filters={
@@ -205,7 +233,9 @@ export function MyTransitionTasksPage() {
                       ? 'The tasks could not be loaded.'
                       : tab === 'tasks'
                         ? 'You have no tasks.'
-                        : 'Nothing is waiting for your approval.'
+                        : tab === 'approvals'
+                          ? 'Nothing is waiting for your approval.'
+                          : 'Your team has no transition tasks.'
                   }
                   columns={[
                     {
@@ -225,6 +255,16 @@ export function MyTransitionTasksPage() {
                     { key: 'type', header: 'Transition', render: ({ transition }) => TYPE_LABEL[transition.type] },
                     { key: 'part', header: 'Part', muted: true, render: ({ task }) => SIDE_LABEL[task.side] },
                     { key: 'subject', header: 'Employee', render: ({ transition }) => transition.employee },
+                    ...(tab === 'team'
+                      ? [
+                          {
+                            key: 'handler',
+                            header: 'Handled By',
+                            muted: true,
+                            render: ({ task }: MyTaskRow) => (task.handlers ?? [task.owner]).filter((name) => (SUBORDINATES[CURRENT_USER] ?? []).includes(name)).join(', '),
+                          },
+                        ]
+                      : []),
                     {
                       key: 'due',
                       header: 'Due',

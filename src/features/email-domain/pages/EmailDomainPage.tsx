@@ -3,11 +3,11 @@ import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Info, Lock } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardHead } from '@/components/Card';
+import { Card } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { PageShell } from '@/components/PageShell';
-import { PanelActionButton, RowButton } from '@/components/RowActions';
+import { RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableToolbar } from '@/components/TableToolbar';
 import { TextField } from '@/components/form/TextField';
@@ -118,6 +118,7 @@ export function EmailDomainPage() {
         crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Email Domain' }]}
         title="Email Domain"
         description="Your company's email domains. When a Bulk Import batch is approved with a domain, each new employee's company email is suggested as username@domain."
+        actions={manager && <Button onClick={() => setEditing('new')}>Add Email Domain</Button>}
       >
         {!canRead ? (
           <Note tone="warn" icon={<Lock />}>
@@ -129,11 +130,6 @@ export function EmailDomainPage() {
               <Note icon={<Info />}>You can view email domains. HR Manager and Super Admin add and change them.</Note>
             )}
             <Card>
-              <CardHead
-                title="Email domains"
-                sub={`${rows.length} domains`}
-                action={manager ? <PanelActionButton onClick={() => setEditing('new')}>Add Email Domain</PanelActionButton> : undefined}
-              />
               <div className="flex flex-col">
                 <TableToolbar
                   filters={

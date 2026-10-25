@@ -86,6 +86,8 @@ import { PtkpAdjustmentPage } from '@/features/ptkp/pages/PtkpAdjustmentPage';
 import { MassResignationPage } from '@/features/mass-resignation/pages/MassResignationPage';
 import { BulkImportPage } from '@/features/bulk-import/pages/BulkImportPage';
 import { BulkActivationPage } from '@/features/bulk-activation/pages/BulkActivationPage';
+import { BulkImportUploadPage } from '@/features/bulk-import/pages/BulkImportUploadPage';
+import { BulkImportDetailPage } from '@/features/bulk-import/pages/BulkImportDetailPage';
 import { TemporaryAssignmentPage } from '@/features/temporary-assignment/pages/TemporaryAssignmentPage';
 import { ContactVerificationPage } from '@/features/contact-verification/pages/ContactVerificationPage';
 import { ContactVerificationPortalPage } from '@/features/contact-verification/pages/ContactVerificationPortalPage';
@@ -150,6 +152,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/my-transition-tasks', element: <MyTransitionTasksPage /> },
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/bulk-import', element: <BulkImportPage /> },
+  { path: 'employees/bulk-import/upload', element: <BulkImportUploadPage /> },
+  { path: 'employees/bulk-import/detail', element: <BulkImportDetailPage /> },
   { path: 'employees/bulk-account-activation', element: <BulkActivationPage /> },
   { path: 'employees/temporary-assignment', element: <TemporaryAssignmentPage /> },
   { path: 'employees/email-phone-verification', element: <ContactVerificationPage /> },
@@ -294,6 +298,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/mass-resignation',
   '/employees/ptkp-adjustment',
   '/employees/bulk-account-activation',
+  '/employees/bulk-import/upload',
+  '/employees/bulk-import/detail',
   '/employees/my-transition-tasks',
   '/employees/temporary-assignment',
   '/employees/email-phone-verification',

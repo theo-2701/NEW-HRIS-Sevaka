@@ -353,6 +353,11 @@ export function startOffboardingForCancelledAccess(input: { name: string; reason
   return row;
 }
 
+/** Mode dummy: bawahan langsung per atasan (di produksi dari rantai atasan company-service). */
+export const SUBORDINATES: Record<string, string[]> = {
+  'Tony Stark': ['Lia Permata', 'Doni Prabowo', 'Nur Aisyah', 'Yoga Pratama'],
+};
+
 export interface MyTaskRow {
   task: TransitionTask;
   transition: Transition;
@@ -553,6 +558,23 @@ export const transitionService = {
         );
     }
     const { data } = await api.get<MyTaskRow[]>(`/employee/my-transition-tasks?tab=${tab}`);
+    return data;
+  },
+
+  /** Task yang dipegang bawahan `manager` (bukan dirinya) — untuk memantau tim. */
+  async teamTasks(manager = CURRENT_USER): Promise<MyTaskRow[]> {
+    const team = SUBORDINATES[manager] ?? [];
+    if (MOCK) {
+      await delay();
+      return mockRows
+        .filter((row) => row.status !== 'CANCELLED')
+        .flatMap((row) =>
+          row.tasks
+            .filter((item) => !isHandler(item, manager) && team.some((person) => isHandler(item, person)))
+            .map((item) => ({ task: { ...item }, transition: copy(row) })),
+        );
+    }
+    const { data } = await api.get<MyTaskRow[]>('/employee/my-transition-tasks?tab=team');
     return data;
   },
 

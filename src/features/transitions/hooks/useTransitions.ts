@@ -12,6 +12,9 @@ export const transitionKeys = {
 export const useMyTasks = (tab: 'tasks' | 'approvals') =>
   useQuery({ queryKey: [...transitionKeys.list, 'mine', tab], queryFn: () => transitionService.myTasks(tab) });
 
+export const useTeamTasks = () =>
+  useQuery({ queryKey: [...transitionKeys.list, 'team'], queryFn: () => transitionService.teamTasks() });
+
 export const useEscalations = (enabled: boolean) =>
   useQuery({ queryKey: [...transitionKeys.list, 'escalations'], queryFn: () => transitionService.escalations(), enabled });
 

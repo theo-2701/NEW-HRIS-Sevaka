@@ -35,6 +35,39 @@ const OpenRequest = createContext<string | null>(null);
 const containsPath = (node: NavLeaf, path: string): boolean =>
   node.path === path || (node.children ?? []).some((child) => containsPath(child, path));
 
+/**
+ * Gulir area menu sesudah sebuah modul/grup dibuka (permintaan Theo, 26 Okt 2026): modul naik ke tepat di
+ * bawah tile Dashboard (`top`), grup cukup digeser sampai seluruh isinya terlihat (`fit`). Hanya area menu
+ * yang bergulir — halaman tidak ikut. Gerak halus kecuali pengguna meminta gerak dikurangi.
+ */
+function scrollNavTo(el: HTMLElement | null, mode: 'top' | 'fit') {
+  const nav = el?.closest('nav');
+  if (!el || !nav) return;
+  const pad = 8;
+  const navBox = nav.getBoundingClientRect();
+  const box = el.getBoundingClientRect();
+  const toTop = box.top - navBox.top - pad;
+  const overflow = box.bottom - navBox.bottom + 20;
+  const top = mode === 'top' ? toTop : overflow > 0 ? Math.min(overflow, toTop) : 0;
+  if (Math.abs(top) < 1) return;
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  nav.scrollBy({ top, behavior: reduce ? 'auto' : 'smooth' });
+}
+
+/** Menjalankan `scrollNavTo` sekali sesudah render yang membuka elemen karena klik pengguna. */
+function useScrollOnOpen(open: boolean, mode: 'top' | 'fit') {
+  const ref = useRef<HTMLDivElement>(null);
+  const pending = useRef(false);
+  useEffect(() => {
+    if (!open || !pending.current) return;
+    pending.current = false;
+    // Tunggu layout akordeon saudara yang menutup selesai dihitung.
+    const frame = requestAnimationFrame(() => scrollNavTo(ref.current, mode));
+    return () => cancelAnimationFrame(frame);
+  }, [open, mode]);
+  return { ref, markOpening: () => (pending.current = true) };
+}
+
 /** Pudar tipis di tepi atas/bawah area gulir — scrollbar disembunyikan, isi tetap terasa bisa digulir. */
 const SCROLL_FADE = '[mask-image:linear-gradient(to_bottom,transparent,black_8px,black_calc(100%-20px),transparent)]';
 
@@ -265,13 +298,17 @@ function SidebarSection({
   holdsActive: boolean;
   onToggle: () => void;
 }) {
+  const scroll = useScrollOnOpen(open, 'top');
   return (
-    <div className="flex flex-col">
+    <div ref={scroll.ref} className="flex flex-col">
       <button
         type="button"
         aria-expanded={open}
         title={section.section}
-        onClick={onToggle}
+        onClick={() => {
+          if (!open) scroll.markOpening();
+          onToggle();
+        }}
         className={cn(
           'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left font-body text-[13px] font-semibold transition-colors duration-200 ease-standard hover:bg-secondary-700/[0.06]',
           open ? 'text-secondary-800' : 'text-fg-3',
@@ -344,17 +381,21 @@ function SidebarNode({
   const location = useLocation();
   const navigate = useNavigate();
   const hasKids = Boolean(node.children?.length);
+  const scroll = useScrollOnOpen(open && expanded, 'fit');
 
   if (!expanded && depth > 1) return null;
 
   if (hasKids) {
     return (
-      <div className="flex flex-col">
+      <div ref={scroll.ref} className="flex flex-col">
         <button
           type="button"
           aria-expanded={expanded ? open : undefined}
           title={node.label}
-          onClick={onToggle}
+          onClick={() => {
+            if (!open && expanded) scroll.markOpening();
+            onToggle();
+          }}
           className={cn(
             'inline-flex w-full items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-md border-none bg-transparent text-left font-body text-sm font-bold capitalize tracking-[0.04em] text-secondary-700 transition-colors duration-200 ease-standard hover:bg-secondary-700/[0.07]',
             expanded ? 'min-h-10 px-3 py-1.5' : 'mx-auto my-0.5 size-11 justify-center p-0',

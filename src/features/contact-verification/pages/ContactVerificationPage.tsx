@@ -9,7 +9,7 @@ import { CellIdentity, DataTable, SelectionBar } from '@/components/DataTable';
 import { Modal } from '@/components/Modal';
 import { PageShell } from '@/components/PageShell';
 import { Pagination } from '@/components/Pagination';
-import { RowActions } from '@/components/RowActions';
+import { RowActions, RowButton } from '@/components/RowActions';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableToolbar } from '@/components/TableToolbar';
 import { SelectField } from '@/components/form/SelectField';
@@ -317,15 +317,13 @@ export function ContactVerificationPage() {
                 selectionBar={
                   picked.length > 0 ? (
                     <SelectionBar count={picked.length} total={paged.rows.length} onToggleAll={toggleAll}>
-                      <Button variant="secondary" onClick={() => setPicked([])}>
-                        Clear selection
-                      </Button>
-                      <Button variant="secondary" disabled={tooMany} onClick={() => askSend('PHONE', picked)}>
+                      <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
+                      <RowButton disabled={tooMany} onClick={() => askSend('PHONE', picked)}>
                         Send WhatsApp Links
-                      </Button>
-                      <Button disabled={tooMany} onClick={() => askSend('EMAIL', picked)}>
+                      </RowButton>
+                      <RowButton variant="primary" disabled={tooMany} onClick={() => askSend('EMAIL', picked)}>
                         Send Email Links
-                      </Button>
+                      </RowButton>
                     </SelectionBar>
                   ) : null
                 }

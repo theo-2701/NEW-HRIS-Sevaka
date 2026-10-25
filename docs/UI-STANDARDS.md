@@ -371,3 +371,22 @@ literal** — itu slot data.
 Satu bahasa per layar. Build saat ini: surface end-user (auth, dashboard) memakai
 **Bahasa Indonesia**; istilah HR/enterprise (nama menu, label kolom kontrak) tetap
 Inggris seperti di prototype. Tanpa emoji.
+
+## 13. Tambahan standar (Theo, 26 Oktober 2026)
+
+- **Tombol kolom aksi** (`RowButton`, `RowActions`): lebar minimal **84px** = lebar "Action ▾", jadi
+  tombol berlabel pendek ("Edit", "Open") tidak terlihat lebih kecil. Sudah ada di `ROW_CONTROL`.
+- **Bilah seleksi tabel** (`SelectionBar`): tombolnya `RowButton` (30px, sama dengan kolom aksi). Aksi
+  utama memakai `variant="primary"`, sisanya default.
+- **Menu maker/checker** memakai pola New Joiner: `TabMenu` **Activity** (`Segmented`: "Needs approval" =
+  diajukan orang lain, terlama dulu · "My requests/uploads" = ajuan sendiri yang masih berjalan) dan
+  **Information** (seluruh data + filter). Contoh: New Joiner, Temporary Assignment, Employee Bulk Import.
+  Kotak masuk tugas (My Transition Tasks) memakai pola sama: My tasks · Needs my approval · My team.
+- **Detail dan keputusan maker/checker = halaman**, bukan modal. Tombol Approve/Cancel di kepala halaman;
+  modal hanya untuk catatan/alasan keputusan. Unggah berkas juga halaman sendiri (templat diunduh di sana),
+  sehingga halaman daftar cukup punya **satu tombol primary**.
+- **Satu tabel per tampilan.** Data kedua dipindah ke tab (`TabMenu`) atau halaman sendiri.
+- **Halaman master satu tabel** (Work Status, Email Domain): tanpa `CardHead` kedua; tombol **Add …**
+  primary di kepala halaman (`PageShell actions`), sejajar judul.
+- **Sidebar**: membuka modul menggulir area menu sampai modul itu tepat di bawah tile Dashboard; membuka grup
+  hanya menggeser secukupnya supaya seluruh isinya terlihat.
