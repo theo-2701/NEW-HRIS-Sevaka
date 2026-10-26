@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar';
 import { EmploymentStatusBadge, WorkArrangementTag } from '@/features/employees/components/EmployeeTags';
 import { useEmployeeDetail } from '@/features/employees/hooks/useEmployees';
+import { DETAIL_ERROR_TEXT, detailErrorKind } from '@/features/employees/detailError';
 import { CURRENT_EMPLOYEE_ID } from '@/features/employees/services/employee.service';
 import { maskAccountHolder, maskAccountNumber, maskNik } from '@/features/employees/masking';
 import type { ActorScope } from '@/features/employees/types';
@@ -53,7 +54,9 @@ export function EmployeeDetailPage() {
   const scope = (params.get('scope') as ActorScope | null) ?? 'HR';
   const isHr = scope === 'HR';
 
-  const { data, isLoading } = useEmployeeDetail(employeeId);
+  const { data, isLoading, error, refetch, isFetching } = useEmployeeDetail(employeeId);
+  // UIC-EMPLOYEE 0.76 §2.2 — tanpa id pun dijawab kalimat anti-enumeration, bukan "Loading…" abadi.
+  const failure = !employeeId ? 'not-found' : error ? detailErrorKind(error) : null;
   const isSelf = data?.id === CURRENT_EMPLOYEE_ID;
   const role = useAuthStore((s) => s.user?.role);
   const hrWriter = role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_HR_MANAGER' || role === 'ROLE_HR_STAFF';
@@ -103,7 +106,20 @@ export function EmployeeDetailPage() {
       }
     >
       <Card>
-        {isLoading || !data ? (
+        {failure ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <p className="m-0 max-w-[520px] font-body text-[13px] font-medium leading-normal text-fg-2">{DETAIL_ERROR_TEXT[failure]}</p>
+            {failure === 'unavailable' ? (
+              <Button variant="secondary" disabled={isFetching} onClick={() => void refetch()}>
+                {isFetching ? 'Trying…' : 'Try again'}
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => navigate('/employees/directory')}>
+                Back to Employee Directory
+              </Button>
+            )}
+          </div>
+        ) : isLoading || !data ? (
           <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Loading…</p>
         ) : (
           <div className="flex flex-col gap-4">

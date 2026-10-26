@@ -1,3 +1,4 @@
+import { DETAIL_DEMO_ERRORS } from '@/features/employees/detailError';
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { BRANCHES } from '@/features/employees/types';
@@ -389,6 +390,7 @@ export const employeeService = {
   async getById(id: string): Promise<EmployeeDetail> {
     if (MOCK) {
       await delay(250);
+      if (DETAIL_DEMO_ERRORS[id]) throw new Error(DETAIL_DEMO_ERRORS[id]);
       const found = MOCK_EMPLOYEES.find((e) => e.id === id);
       if (!found) throw new Error('404 — Employee not found.');
       return {

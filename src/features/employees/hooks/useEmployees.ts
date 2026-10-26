@@ -27,5 +27,7 @@ export function useEmployeeDetail(id: string | null) {
     queryKey: employeeKeys.detail(id ?? ''),
     queryFn: () => employeeService.getById(id as string),
     enabled: Boolean(id),
+    // 404/403 tak berubah bila diulang; 503 diulang sendiri lewat tombol Try again.
+    retry: false,
   });
 }
