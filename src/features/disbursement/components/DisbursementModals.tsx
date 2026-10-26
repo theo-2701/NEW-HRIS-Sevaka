@@ -76,9 +76,9 @@ function NoteField({
   );
 }
 
+/** Nama dari baris respons finance (`employee_name`, UIC-FINANCE 0.36) — NIK tidak lagi tampil. */
 function employeeLine(id: string) {
-  const employee = employeeOf(id);
-  return employee ? `${employee.name} · ${employee.nik}` : id;
+  return employeeOf(id)?.name ?? 'Unknown employee';
 }
 
 /** Detail payable (`GET /disbursements/{id}`) — baca saja, dengan jejak tanda & pembalik. */

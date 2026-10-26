@@ -9,7 +9,7 @@ import { RadioBranch } from '@/components/RadioBranch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
 import { AdvanceStatusBadge } from '@/features/cash-advance/components/CashAdvanceBits';
-import { ADVANCE_EMPLOYEE_SOURCE, employeeName, employeeOf } from '@/features/cash-advance/mock-data';
+import { ADVANCE_RECIPIENT_SOURCE, employeeName, employeeOf } from '@/features/cash-advance/mock-data';
 import { EmployeeSelect } from '@/components/EmployeeSelect';
 import { parseAmount, purposeSelectable, thousands } from '@/features/cash-advance/rules';
 import {
@@ -68,7 +68,7 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
       open={open}
       onOpenChange={(next) => !next && onClose()}
       title="New cash advance"
-      description="Batas nominal mengikuti jenis keperluan yang berlaku saat pengajuan dikirim."
+      description="The amount limit follows the purpose type in force when you submit."
       size="wide"
       footer={
         <>
@@ -84,7 +84,7 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
               )
             }
           >
-            {submit.isPending ? 'Mengirim…' : 'Submit request'}
+            {submit.isPending ? 'Submitting…' : 'Submit request'}
           </Button>
         </>
       }
@@ -98,11 +98,11 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
               value={door}
               onChange={setDoor}
               options={[
-                { value: 'SELF', title: 'For myself', description: 'Penerima dan pembuat adalah orang yang sama.' },
+                { value: 'SELF', title: 'For myself', description: 'You are both the maker and the recipient.' },
                 {
                   value: 'ON_BEHALF',
                   title: 'On behalf of an employee',
-                  description: 'Pintu kedua — penerima boleh membantah selama belum ditandai cair.',
+                  description: 'The recipient can repudiate it until it is marked as disbursed.',
                 },
               ]}
             />
@@ -117,7 +117,9 @@ export function AdvanceFormModal({ open, actor, onClose }: { open: boolean; acto
             <EmployeeSelect
               id="advance-recipient"
               lang="en"
-              source={ADVANCE_EMPLOYEE_SOURCE}
+              source={ADVANCE_RECIPIENT_SOURCE}
+              minQueryLength={3}
+              placeholder="Search employee name"
               exclude={[actor.employeeId]}
               value={draft.recipientEmployeeId}
               onChange={(recipientEmployeeId) => patch({ recipientEmployeeId })}
@@ -220,7 +222,7 @@ export function AdvanceDetailModal({
       open={Boolean(advance)}
       onOpenChange={(next) => !next && onClose()}
       title={advance?.requestNo ?? ''}
-      description="Baca saja. Setiap snapshot di bawah dibekukan ke baris saat dikirim."
+      description="Read only. The values below are frozen when the request was submitted."
       size="wide"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -236,8 +238,8 @@ export function AdvanceDetailModal({
           <KeyValueRow label="Recipient">{recipient ? `${recipient.name} · ${recipient.unit}` : '—'}</KeyValueRow>
           <KeyValueRow label="Submission door">
             {advance.createdOnBehalfEmployeeId
-              ? `Atas nama — dibuat ${employeeName(advance.createdOnBehalfEmployeeId)}`
-              : 'Karyawan sendiri — penerima dan pembuat sama'}
+              ? `On behalf — made by ${employeeName(advance.createdOnBehalfEmployeeId)}`
+              : 'For themself — the maker is the recipient'}
           </KeyValueRow>
           <KeyValueRow label="Purpose type">
             {advance.purposeTypeName}
@@ -282,21 +284,21 @@ const EXIT_COPY: Record<
 > = {
   cancel: {
     title: 'Cancel request',
-    description: 'Hanya bisa dibatalkan selagi masih SUBMITTED dan belum ada persetujuan yang selesai.',
+    description: 'You can cancel only while it is still submitted and no approval has finished.',
     confirm: 'Cancel request',
     reason: 'optional',
   },
   repudiate: {
     title: 'Repudiate request',
     description:
-      'Pernyataan "saya tidak mengajukan ini" atas pengajuan yang dibuatkan orang lain, selama belum ditandai cair.',
+      'Say "I did not request this" for a request someone made on your behalf, before it is marked as disbursed.',
     confirm: 'Repudiate',
     reason: 'optional',
   },
   travel: {
     title: 'Cancel travel',
     description:
-      'Dinas batal setelah disetujui — tanpa gerbang persetujuan. Seluruh nominal menjadi sisa di tahap penutup.',
+      'The trip was cancelled after approval. No approval is needed; the whole amount becomes a surplus at the closing stage.',
     confirm: 'Cancel travel',
     reason: 'required',
   },

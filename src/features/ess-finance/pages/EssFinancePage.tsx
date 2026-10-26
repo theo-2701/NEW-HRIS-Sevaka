@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
@@ -20,24 +20,34 @@ import type { BenefitClaim, Payable } from '@/features/benefit/types';
 import { LoanStatusBadge, Money as LoanMoney } from '@/features/loan/components/LoanBits';
 import { useLoans } from '@/features/loan/hooks/useLoan';
 import type { Loan } from '@/features/loan/types';
+import { CashAdvanceRequests } from '@/features/cash-advance/pages/CashAdvancePage';
+import { AdvanceFormModal } from '@/features/cash-advance/components/AdvanceModals';
+import { useAdvances } from '@/features/cash-advance/hooks/useCashAdvance';
+import type { Actor } from '@/features/cash-advance/types';
 import { ownClaims, ownLoans, ownPayables } from '@/features/ess-finance/rules';
 import { formatDate } from '@/lib/format';
 
-type Tab = 'reimbursement' | 'taken' | 'loan';
+export type EssFinanceTab = 'reimbursement' | 'taken' | 'loan' | 'cash-advance';
+type Tab = EssFinanceTab;
 
 const NO_FILTER = {};
+/** Karyawan pemilik hub — pintu dibuka per identitas (FSD-FINANCE 0.35); Ajukan hanya `ROLE_EMPLOYEE`. */
+const ESS_ACTOR: Actor = { employeeId: ME, role: 'ROLE_EMPLOYEE' };
 
 /**
  * Employee Self-Service › Finance — port `_prototype/finance-ess.html` (FSD-001-FINANCE §7.2).
  *
- * Hub baca tiga tab atas transaksi milik sendiri: Reimbursement (ESS-3), Reimbursement
- * Taken (ESS-4), Loan (ESS-5). Nol endpoint baru dan nol form di sini — "New claim" dan
- * "New loan request" membawa ke layar Benefit Reimbursement / Loan tempat form itu
- * dikontrakkan (G4). Cash Advance tidak termasuk hub ini (PROB-FRONTEND-014).
+ * Hub empat tab atas transaksi milik sendiri: Reimbursement (ESS-3), Reimbursement Taken (ESS-4),
+ * Loan (ESS-5), dan Cash Advance (ESS-6, FSD-FINANCE 0.34 — layar + aksi Menu 4 tanpa tab petugas;
+ * `/finance/cash-advance` tetap tertutup bagi Employee). Nol endpoint baru. "New claim" dan
+ * "New loan request" membawa ke layar Benefit Reimbursement / Loan tempat form itu dikontrakkan (G4).
+ * `state.tab` + `state.viewId` = pendarat tautan surel (UIC-FINANCE §12).
  */
 export function EssFinancePage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>('reimbursement');
+  const link = useLocation().state as { tab?: Tab; viewId?: string } | null;
+  const [tab, setTab] = useState<Tab>(link?.tab ?? 'reimbursement');
+  const [advanceForm, setAdvanceForm] = useState(false);
   const [claimSearch, setClaimSearch] = useState('');
   const [loanSearch, setLoanSearch] = useState('');
   const [detail, setDetail] = useState<BenefitClaim | null>(null);
@@ -45,6 +55,7 @@ export function EssFinancePage() {
   const { data: claims = [], isLoading: claimsLoading } = useClaims(NO_FILTER);
   const { data: payables = [], isLoading: payablesLoading } = useBenefitDisbursements();
   const { data: loans = [], isLoading: loansLoading } = useLoans();
+  const { data: advances = [] } = useAdvances(ESS_ACTOR, NO_FILTER);
 
   const myClaims = useMemo(() => ownClaims(claims, ME, claimSearch), [claims, claimSearch]);
   const myPayables = useMemo(() => ownPayables(payables, ME), [payables]);
@@ -54,17 +65,29 @@ export function EssFinancePage() {
   const pagedPayables = usePagedRows(myPayables);
   const pagedLoans = usePagedRows(myLoans);
 
+  // Tautan surel klaim: buka detailnya sekali begitu daftar klaim termuat.
+  const openedClaim = useRef(false);
+  useEffect(() => {
+    if (openedClaim.current || link?.tab !== 'reimbursement' || !link.viewId) return;
+    const claim = myClaims.find((row) => row.id === link.viewId);
+    if (!claim) return;
+    openedClaim.current = true;
+    setDetail(benefitService.asApplicantView(claim));
+  }, [link, myClaims]);
+
   return (
     <>
       <PageShell
         crumbs={[{ label: 'Employee Self-Service' }, { label: 'Finance' }]}
         title="My Finance"
-        description="Klaim benefit, pencairan klaim, dan pinjaman milik Anda dalam satu tempat. Pengajuan baru dibuat di menu Benefit Reimbursement dan Loan."
+        description="Your benefit claims, claim payouts, loans, and cash advances in one place."
         actions={
           tab === 'reimbursement' ? (
             <Button onClick={() => navigate('/finance/benefit-reimbursement')}>New claim</Button>
           ) : tab === 'loan' ? (
             <Button onClick={() => navigate('/finance/loan')}>New loan request</Button>
+          ) : tab === 'cash-advance' ? (
+            <Button onClick={() => setAdvanceForm(true)}>Request cash advance</Button>
           ) : undefined
         }
       >
@@ -76,12 +99,13 @@ export function EssFinancePage() {
               { value: 'reimbursement', label: 'Reimbursement', count: myClaims.length },
               { value: 'taken', label: 'Reimbursement Taken', count: myPayables.length },
               { value: 'loan', label: 'Loan', count: myLoans.length },
+              { value: 'cash-advance', label: 'Cash Advance', count: advances.length },
             ]}
           />
 
           {tab === 'reimbursement' && (
             <Card>
-              <CardHead title="My claims" sub="Termasuk klaim yang masih menunggu keputusan" />
+              <CardHead title="My claims" sub="Including claims still waiting for a decision" />
               <div className="flex flex-col">
                 <TableToolbar
                   search={{
@@ -135,7 +159,7 @@ export function EssFinancePage() {
 
           {tab === 'taken' && (
             <Card>
-              <CardHead title="Reimbursement taken" sub="Klaim yang sudah disetujui dan status pembayarannya" />
+              <CardHead title="Reimbursement taken" sub="Approved claims and their payment status" />
               <div className="flex flex-col">
                 <DataTable<Payable>
                   rows={pagedPayables.rows}
@@ -190,7 +214,7 @@ export function EssFinancePage() {
 
           {tab === 'loan' && (
             <Card>
-              <CardHead title="My loans" sub="Pengakuan jadwal dan pembatalan dilakukan di menu Loan" />
+              <CardHead title="My loans" sub="Acknowledge schedules and cancel requests in the Loan menu" />
               <div className="flex flex-col">
                 <TableToolbar
                   search={{
@@ -252,9 +276,18 @@ export function EssFinancePage() {
               </div>
             </Card>
           )}
+
+          {tab === 'cash-advance' && (
+            <CashAdvanceRequests
+              actor={ESS_ACTOR}
+              variant="ess"
+              openId={link?.tab === 'cash-advance' ? (link.viewId ?? null) : null}
+            />
+          )}
         </div>
       </PageShell>
 
+      <AdvanceFormModal open={advanceForm} actor={ESS_ACTOR} onClose={() => setAdvanceForm(false)} />
       <ClaimDetailModal claim={detail} asApprover={false} onClose={() => setDetail(null)} onReject={() => undefined} />
     </>
   );

@@ -102,7 +102,7 @@ export function LoanDetailPage() {
 
             <KeyValueList>
               <KeyValueRow label="Employee">
-                {employee ? `${employee.name} · ${employee.nik}` : '—'}
+                {employee?.name ?? '—'}
               </KeyValueRow>
               <KeyValueRow label="Submitted">{formatDate(loan.submittedAt)}</KeyValueRow>
               <KeyValueRow label="Scheme">

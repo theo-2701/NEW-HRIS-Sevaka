@@ -512,6 +512,7 @@ export const cashAdvanceService = {
       requiresExtraApproval: extra,
       dueDate: diff.type === 'SURPLUS' ? addDays(today(), mockConfig.secondStageDeadlineDays) : null,
       status: extra ? 'AWAITING_APPROVAL' : diff.type === 'SHORTFALL' ? 'APPROVED' : 'OPEN',
+      awaitingRestart: false,
       settlementDecidedBy: decidedBy,
     };
     mockDifferences = [difference, ...mockDifferences];
@@ -563,6 +564,23 @@ export const cashAdvanceService = {
       return { accepted: true };
     }
     await api.post(`/differences/${id}/approve-extra`, { decision });
+    return { accepted: true };
+  },
+
+  /**
+   * 5.15a — mulai ulang lapis tambahan yang berakhir tanpa putusan (`POST /differences/{id}/extra-approval/restart`,
+   * tanpa badan, 202). Hanya Finance Officer (UIC-FINANCE 0.38).
+   */
+  async restartExtraApproval(actor: Actor, id: string): Promise<{ accepted: true }> {
+    if (MOCK) {
+      await delay(400);
+      if (actor.role !== 'ROLE_FINANCE_OFFICER') throw new Error('403 FIN-AUZ-779 — Only a Finance Officer can restart the approval.');
+      const row = findDifference(id);
+      if (!row.awaitingRestart) throw new Error('409 FIN-CNF-782 — This approval is already running.');
+      row.awaitingRestart = false;
+      return { accepted: true };
+    }
+    await api.post(`/differences/${id}/extra-approval/restart`);
     return { accepted: true };
   },
 

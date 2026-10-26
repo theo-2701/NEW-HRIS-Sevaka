@@ -80,7 +80,7 @@ export function SettlementFormModal({
       open={Boolean(advance)}
       onOpenChange={(next) => !next && onClose()}
       title={advance ? `Submit settlement — ${advance.requestNo}` : ''}
-      description="Nomor nota harus unik di seluruh modul finance."
+      description="Each receipt number must be unique across Finance."
       size="wide"
       footer={
         <>
@@ -91,7 +91,7 @@ export function SettlementFormModal({
             disabled={!ready || submit.isPending}
             onClick={() => advance && submit.mutate({ actor, advanceId: advance.id, draft: { isFinalStage, items } }, { onSuccess: onClose })}
           >
-            {submit.isPending ? 'Mengirim…' : 'Submit settlement'}
+            {submit.isPending ? 'Submitting…' : 'Submit settlement'}
           </Button>
         </>
       }
@@ -233,7 +233,7 @@ export function ReviewModal({ settlement, actor, onClose }: { settlement: Settle
       open={Boolean(settlement)}
       onOpenChange={(next) => !next && onClose()}
       title={settlement ? `Review receipts — ${settlement.settlementNo}` : ''}
-      description="Menandai bukan memutus. Tanpa tanda sama sekali berarti seluruh nota dianggap sah."
+      description="Flagging is not deciding. With no flags, every receipt counts as valid."
       size="wide"
       footer={
         <>
@@ -308,7 +308,7 @@ export function ReviewModal({ settlement, actor, onClose }: { settlement: Settle
             <label className="flex cursor-pointer items-start gap-3">
               <Checkbox checked={acknowledged} onCheckedChange={(next) => setAcknowledged(next === true)} />
               <span className="font-body text-[13px] font-medium leading-[1.5] text-fg-2">
-                Saya sudah membaca peringatan kemiripan dan tetap meneruskan tahap ini (similarity_warning_acknowledged).
+                I have read the similarity warning and still want to forward this stage.
               </span>
             </label>
           )}
@@ -329,7 +329,7 @@ export function DecisionModal({ settlement, actor, onClose }: { settlement: Sett
       open={Boolean(settlement)}
       onOpenChange={(next) => !next && onClose()}
       title={settlement ? `Settlement — ${settlement.settlementNo}` : ''}
-      description="Hanya atasan langsung penerima yang memutus. Status dan selisih diperbarui setelah proses selesai."
+      description="Only the recipient's direct manager decides. Status and differences update when the process finishes."
       size="wide"
       footer={
         decidable && settlement ? (
@@ -374,8 +374,8 @@ export function DecisionModal({ settlement, actor, onClose }: { settlement: Sett
           {!decidable && (
             <Note icon={<Clock />}>
               {settlement.status === 'SUBMITTED'
-                ? 'Nota belum ditinjau Finance Officer, jadi belum bisa diputus.'
-                : 'Tahap ini sudah diputus.'}
+                ? 'Finance has not checked the receipts yet, so this stage cannot be decided.'
+                : 'This stage has been decided.'}
             </Note>
           )}
         </div>
@@ -404,7 +404,7 @@ export function SurplusMethodModal({ difference, actor, onClose }: { difference:
       open={Boolean(difference)}
       onOpenChange={(next) => !next && onClose()}
       title="Surplus return method"
-      description="Khusus SURPLUS — kekurangan diselesaikan lewat Pencairan & Piutang."
+      description="Surplus only — a shortfall is settled through Disbursement & Receivables."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -438,12 +438,12 @@ export function SurplusMethodModal({ difference, actor, onClose }: { difference:
               {
                 value: 'RETURNED_OUTSIDE_HRIS',
                 title: SETTLEMENT_METHOD_LABEL.RETURNED_OUTSIDE_HRIS,
-                description: 'Fakta yang dilaporkan, bukan bukti — langsung tuntas setelah ditandai.',
+                description: 'A reported fact, not a proof — settled as soon as it is marked.',
               },
               {
                 value: 'PAYROLL_DEDUCTION',
                 title: SETTLEMENT_METHOD_LABEL.PAYROLL_DEDUCTION,
-                description: 'Tuntas setelah payroll mengonfirmasi potongannya.',
+                description: 'Settled once payroll confirms the deduction.',
               },
             ]}
           />

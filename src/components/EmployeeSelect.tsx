@@ -36,6 +36,7 @@ const TEXT = {
     picked: (count: number) => `${count} dipilih`,
     remove: (name: string) => `Hapus ${name}`,
     rest: (count: number) => `+${count} lainnya`,
+    minQuery: (count: number) => `Ketik minimal ${count} karakter untuk mencari.`,
   },
   en: {
     placeholder: 'Select employee',
@@ -50,6 +51,7 @@ const TEXT = {
     picked: (count: number) => `${count} selected`,
     remove: (name: string) => `Remove ${name}`,
     rest: (count: number) => `+${count} more`,
+    minQuery: (count: number) => `Type at least ${count} characters to search.`,
   },
 } as const;
 
@@ -70,6 +72,11 @@ interface BaseProps {
   invalid?: boolean;
   className?: string;
   'aria-label'?: string;
+  /**
+   * Kata kunci minimal sebelum mencari (mis. pemilih penerima uang muka = 3, UIC-FINANCE 0.37). Di bawahnya
+   * tidak ada panggilan sama sekali — saran sebelum mengetik pun tidak — hanya petunjuk.
+   */
+  minQueryLength?: number;
   /** Dipanggil saat popover ditutup — dipakai Formik untuk menandai field "touched". */
   onBlur?: () => void;
 }
@@ -110,7 +117,7 @@ const detailOf = (option: EmployeeOption) => [option.nik, option.unit].filter(Bo
  * - `multiple`: centang di tiap baris, pilihan tampil sebagai chip yang bisa dihapus satu per satu.
  */
 export function EmployeeSelect(props: EmployeeSelectProps) {
-  const { source, lang = 'id', exclude, id, disabled, invalid, className, onBlur } = props;
+  const { source, lang = 'id', exclude, id, disabled, invalid, className, onBlur, minQueryLength = 0 } = props;
   const t = TEXT[lang];
   const placeholder = props.placeholder ?? t.placeholder;
   const selectedIds = props.multiple ? props.value : props.value ? [props.value] : [];
@@ -131,12 +138,13 @@ export function EmployeeSelect(props: EmployeeSelectProps) {
     return () => clearTimeout(timer);
   }, [input]);
 
+  const tooShort = query.length < minQueryLength;
   const results = useInfiniteQuery({
     queryKey: ['employee-select', source.key, query],
     queryFn: ({ pageParam }) => source.search(query, pageParam),
     initialPageParam: 1,
     getNextPageParam: (last, pages) => (last.hasMore ? pages.length + 1 : undefined),
-    enabled: open,
+    enabled: open && !tooShort,
     staleTime: 0,
     // Hasil kata kunci sebelumnya tetap tampil selama kata kunci baru dimuat — tidak berkedip.
     placeholderData: keepPreviousData,
@@ -148,7 +156,7 @@ export function EmployeeSelect(props: EmployeeSelectProps) {
       const [recent, unit] = await Promise.all([source.resolve(recentIds), source.sameUnit?.() ?? []]);
       return { recent, unit: unit.filter((row) => !recent.some((item) => item.id === row.id)) };
     },
-    enabled: open && !query,
+    enabled: open && !query && minQueryLength === 0,
     staleTime: 0,
   });
 
@@ -162,13 +170,15 @@ export function EmployeeSelect(props: EmployeeSelectProps) {
   const visible = (rows: EmployeeOption[] = []) =>
     exclude?.length ? rows.filter((row) => !exclude.includes(row.id)) : rows;
   const resultRows = visible(results.data?.pages.flatMap((page) => page.items));
-  const candidates: OptionGroup[] = query
-    ? [{ key: 'result', label: '', items: resultRows }]
-    : [
-        { key: 'recent', label: t.recent, items: visible(suggestions.data?.recent).slice(0, SUGGEST_LIMIT) },
-        { key: 'unit', label: t.sameUnit, items: visible(suggestions.data?.unit).slice(0, SUGGEST_LIMIT) },
-        { key: 'all', label: t.all, items: resultRows },
-      ];
+  const candidates: OptionGroup[] = tooShort
+    ? []
+    : query
+      ? [{ key: 'result', label: '', items: resultRows }]
+      : [
+          { key: 'recent', label: t.recent, items: visible(suggestions.data?.recent).slice(0, SUGGEST_LIMIT) },
+          { key: 'unit', label: t.sameUnit, items: visible(suggestions.data?.unit).slice(0, SUGGEST_LIMIT) },
+          { key: 'all', label: t.all, items: resultRows },
+        ];
   const groups = candidates.filter((group) => group.items.length > 0);
   // Satu bagian saja tidak perlu judul.
   const showHeaders = groups.length > 1;
@@ -240,9 +250,9 @@ export function EmployeeSelect(props: EmployeeSelectProps) {
     }
   };
 
-  const status = results.isPending
-    ? t.loading
-    : results.isFetchingNextPage
+  const status = tooShort
+    ? t.minQuery(minQueryLength)
+    : results.isPending || results.isFetchingNextPage
       ? t.loading
       : flat.length === 0
         ? t.empty

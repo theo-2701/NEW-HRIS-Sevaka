@@ -32,13 +32,14 @@ export const EMPLOYEES = [
   { id: 'emp-maya', name: 'Maya Puspita', nik: '2018-0290', role: 'ROLE_HEALTH_DATA_OFFICER', unit: 'Human Capital', gradeId: 'jg-staff-2' },
 ];
 
+/** Plafon pinjaman per Class aktif, bukan per Grade (FSD-FINANCE 0.33 · UIC F1.25: `job_grade_id` = Class). */
 export const JOB_GRADES = [
-  { id: 'jg-staff-1', name: 'Staff Grade 1' },
-  { id: 'jg-staff-2', name: 'Staff Grade 2' },
-  { id: 'jg-staff-3', name: 'Staff Grade 3' },
-  { id: 'jg-spv-1', name: 'Supervisor Grade 1' },
-  { id: 'jg-mgr-1', name: 'Manager Grade 1' },
-  { id: 'jg-mgr-2', name: 'Manager Grade 2' },
+  { id: 'jg-staff-1', name: 'Staff 1' },
+  { id: 'jg-staff-2', name: 'Staff 2' },
+  { id: 'jg-staff-3', name: 'Staff 3' },
+  { id: 'jg-spv-1', name: 'Supervisor 1' },
+  { id: 'jg-mgr-1', name: 'Manager 1' },
+  { id: 'jg-mgr-2', name: 'Manager 2' },
 ];
 
 export const LOAN_CFG: LoanConfig = {

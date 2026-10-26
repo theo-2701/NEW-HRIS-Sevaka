@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
@@ -106,6 +107,16 @@ export function BenefitReimbursementPage() {
   );
 
   const { data: claims = [], isLoading } = useClaims(filter);
+  // Pendarat tautan surel (`state.viewId`, UIC-FINANCE §12): buka detail klaim sekali begitu daftar termuat.
+  const viewId = (useLocation().state as { viewId?: string } | null)?.viewId;
+  const openedLink = useRef(false);
+  useEffect(() => {
+    if (openedLink.current || !viewId) return;
+    const claim = claims.find((row) => row.id === viewId);
+    if (!claim) return;
+    openedLink.current = true;
+    setDetail({ claim, asApprover: false });
+  }, [viewId, claims]);
   const { data: types = [] } = useBenefitTypes();
   const { data: beneficiaries = [] } = useBeneficiaries();
   const { data: ledger = [] } = useBenefitLedger();

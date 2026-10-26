@@ -247,3 +247,13 @@ describe('5.14–5.15 Selisih', () => {
     await expect(cashAdvanceService.approveExtra(ari, difference.id, 'APPROVE')).rejects.toThrow(/409/);
   });
 });
+
+describe('Lapis tambahan berakhir tanpa putusan — awaiting_restart (UIC-FINANCE 0.38)', () => {
+  it('hanya Finance Officer yang memulai ulang; sesudahnya baris kembali Awaiting approval', async () => {
+    await expect(cashAdvanceService.restartExtraApproval(ari, 'dif-69')).rejects.toThrow(/^403/);
+    await cashAdvanceService.restartExtraApproval(rahmat, 'dif-69');
+    const row = (await cashAdvanceService.differences()).find((item) => item.id === 'dif-69');
+    expect(row).toMatchObject({ status: 'AWAITING_APPROVAL', awaitingRestart: false });
+    await expect(cashAdvanceService.restartExtraApproval(rahmat, 'dif-69')).rejects.toThrow(/^409/);
+  });
+});

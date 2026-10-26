@@ -428,9 +428,9 @@ export function DisbursementPage() {
                         render: (row) => {
                           const employee = employeeOf(row.employeeId);
                           return (
+                            // UIC-FINANCE 0.36: nama dari respons finance, sub-baris NIK dicabut.
                             <CellIdentity
-                              name={employee?.name ?? row.employeeId}
-                              sub={employee ? `${employee.unit} · ${employee.nik}` : undefined}
+                              name={employee?.name ?? 'Unknown employee'}
                               leading={<Avatar name={employee?.name ?? '?'} size="sm" />}
                             />
                           );

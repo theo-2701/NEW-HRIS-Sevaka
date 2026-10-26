@@ -134,6 +134,11 @@ export interface Difference {
   /** Hanya `SURPLUS`. */
   dueDate: string | null;
   status: DifferenceStatus;
+  /**
+   * Lapis tambahan berakhir tanpa putusan dan menunggu dimulai ulang Finance Officer (UIC-FINANCE 0.38 `5.13`,
+   * medan server `awaiting_restart` — bukan status turunan; lima status ERD §6.7 tidak berubah).
+   */
+  awaitingRestart: boolean;
   /** Pemutus tahap penutup — lapis tambahan wajib orang lain. */
   settlementDecidedBy: string | null;
 }

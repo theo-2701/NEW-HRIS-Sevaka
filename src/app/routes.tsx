@@ -26,6 +26,7 @@ import { DisbursementPage } from '@/features/disbursement/pages/DisbursementPage
 import { FinanceSettingsPage } from '@/features/finance-settings/pages/FinanceSettingsPage';
 import { FinanceSecurityPage } from '@/features/finance-security/pages/FinanceSecurityPage';
 import { EssFinancePage } from '@/features/ess-finance/pages/EssFinancePage';
+import { FinanceOpenLinkPage } from '@/features/finance-link/pages/FinanceOpenLinkPage';
 import { SalaryProcessingPage } from '@/features/salary-processing/pages/SalaryProcessingPage';
 import { PayrollAuthorizationPage } from '@/features/payroll-authorization/pages/PayrollAuthorizationPage';
 import { SalarySettingsPage } from '@/features/salary-settings/pages/SalarySettingsPage';
@@ -186,6 +187,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'finance/disbursement', element: <DisbursementPage /> },
   { path: 'finance/settings', element: <FinanceSettingsPage /> },
   { path: 'finance/security', element: <FinanceSecurityPage /> },
+  /* Pendarat tautan surel kabar finance — bukan layar, tanpa baris menu (UIC-FINANCE 0.32 §12). */
+  { path: 'finance/open/:kind/:id', element: <FinanceOpenLinkPage /> },
   { path: 'me/finance', element: <EssFinancePage /> },
   { path: 'payroll/salary-processing', element: <SalaryProcessingPage /> },
   { path: 'payroll/authorization', element: <PayrollAuthorizationPage /> },

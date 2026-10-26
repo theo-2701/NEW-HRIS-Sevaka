@@ -48,7 +48,9 @@ export function SettlementStatusBadge({ status }: { status: SettlementStatus }) 
   return <StatusBadge tone={SETTLEMENT_TONE[status]}>{SETTLEMENT_STATUS_LABEL[status]}</StatusBadge>;
 }
 
-export function DifferenceStatusBadge({ status }: { status: DifferenceStatus }) {
+/** `awaitingRestart` menggantikan label "Awaiting approval" — lapis tambahan berhenti tanpa putusan (UIC 0.38). */
+export function DifferenceStatusBadge({ status, awaitingRestart = false }: { status: DifferenceStatus; awaitingRestart?: boolean }) {
+  if (awaitingRestart) return <StatusBadge tone="warn">Awaiting restart</StatusBadge>;
   return <StatusBadge tone={DIFFERENCE_TONE[status]}>{DIFFERENCE_STATUS_LABEL[status]}</StatusBadge>;
 }
 

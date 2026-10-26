@@ -90,14 +90,14 @@ export function LoanLimitFormModal({
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <Label>
-            Job grade{!limit && <em>*</em>}
+            Job class{!limit && <em>*</em>}
           </Label>
           {limit ? (
             <Input value={gradeName(limit.jobGradeId)} disabled />
           ) : (
             <Select value={gradeId} onValueChange={setGradeId}>
               <SelectTrigger>
-                <SelectValue placeholder={freeGrades.length ? 'Select job grade' : 'Every job grade already has a limit'} />
+                <SelectValue placeholder={freeGrades.length ? 'Select job class' : 'Every job class already has a limit'} />
               </SelectTrigger>
               <SelectContent>
                 {freeGrades.map((grade) => (
@@ -169,7 +169,7 @@ export function DeleteLoanLimitModal({ actor, limit, onClose }: { actor: Actor; 
     >
       {limit && (
         <KeyValueList>
-          <KeyValueRow label="Job grade">{gradeName(limit.jobGradeId)}</KeyValueRow>
+          <KeyValueRow label="Job class">{gradeName(limit.jobGradeId)}</KeyValueRow>
           <KeyValueRow label="Limit amount">
             <Money value={limit.limitAmount} />
           </KeyValueRow>

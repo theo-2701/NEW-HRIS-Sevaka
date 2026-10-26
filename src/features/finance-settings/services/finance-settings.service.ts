@@ -138,7 +138,7 @@ export const financeSettingsService = {
     if (MOCK) {
       await delay(350);
       requireWrite(actor);
-      if (!JOB_GRADES.some((grade) => grade.id === draft.jobGradeId)) throw new Error('422 — job_grade_id wajib dipilih.');
+      if (!JOB_GRADES.some((grade) => grade.id === draft.jobGradeId)) throw new Error('422 — Choose an active job class.');
       const limitAmount = requireAmount(draft.limitAmount, 'limit_amount');
       const state = settingsState();
       if (state.limits.some((row) => !row.deletedAt && row.jobGradeId === draft.jobGradeId)) {

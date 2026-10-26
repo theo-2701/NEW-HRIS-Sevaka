@@ -1,4 +1,5 @@
 import { createLocalEmployeeSource } from '@/lib/employeeSource';
+import type { EmployeeSource } from '@/lib/employeeSource';
 import type {
   Actor,
   CashAdvance,
@@ -130,12 +131,18 @@ export const DIFFERENCES: Difference[] = [
   {
     id: 'dif-78', cashAdvanceId: 'adv-78', closingSettlementId: 'stl-78', requestNo: 'ADV-2026-000078', employeeId: 'emp-budi',
     differenceType: 'SHORTFALL', amount: 150_000, settlementMethod: null, requiresExtraApproval: false, dueDate: null,
-    status: 'APPROVED', settlementDecidedBy: 'emp-sinta',
+    status: 'APPROVED', awaitingRestart: false, settlementDecidedBy: 'emp-sinta',
   },
   {
     id: 'dif-72', cashAdvanceId: 'adv-72', closingSettlementId: 'stl-72', requestNo: 'ADV-2026-000072', employeeId: 'emp-maya',
     differenceType: 'SURPLUS', amount: 320_000, settlementMethod: null, requiresExtraApproval: false, dueDate: '2026-08-15',
-    status: 'OPEN', settlementDecidedBy: 'emp-ari',
+    status: 'OPEN', awaitingRestart: false, settlementDecidedBy: 'emp-ari',
+  },
+  // Kekurangan besar yang lapis tambahannya berakhir tanpa putusan (UIC 0.38 `awaiting_restart`).
+  {
+    id: 'dif-69', cashAdvanceId: 'adv-69', closingSettlementId: 'stl-69', requestNo: 'ADV-2026-000069', employeeId: 'emp-budi',
+    differenceType: 'SHORTFALL', amount: 1_250_000, settlementMethod: null, requiresExtraApproval: true, dueDate: null,
+    status: 'AWAITING_APPROVAL', awaitingRestart: true, settlementDecidedBy: 'emp-sinta',
   },
 ];
 
@@ -146,6 +153,23 @@ export function employeeOf(id: string | null | undefined) {
 export function employeeName(id: string | null | undefined): string {
   return employeeOf(id)?.name ?? '—';
 }
+
+/**
+ * Pemilih penerima pintu b "atas nama" — `POST /cash-advance-recipients/search` milik finance (UIC-FINANCE 0.37):
+ * dipasang dengan `minQueryLength={3}`, maks. 10 baris, NIK tersamar «ID ••••<4 digit>», cabang kosong.
+ */
+const recipientRows = createLocalEmployeeSource(
+  'cash-advance-recipient',
+  () => EMPLOYEES.map((row) => ({ id: row.id, name: row.name, nik: `ID ••••${row.nik.slice(-4)}` })),
+  { pageSize: 10 },
+);
+export const ADVANCE_RECIPIENT_SOURCE: EmployeeSource = {
+  ...recipientRows,
+  async search(query, page) {
+    if (page > 1) return { items: [], hasMore: false };
+    return { ...(await recipientRows.search(query, 1)), hasMore: false };
+  },
+};
 
 /** Sumber `<EmployeeSelect>` Cash Advance — baris kedua NIK · unit. */
 export const ADVANCE_EMPLOYEE_SOURCE = createLocalEmployeeSource('cash-advance', () =>

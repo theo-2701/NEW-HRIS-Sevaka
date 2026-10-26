@@ -159,6 +159,18 @@ export const useSetSurplusMethod = () =>
     }),
   );
 
+export function useRestartExtraApproval() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ actor, id }: { actor: Actor; id: string; requestNo: string }) =>
+      cashAdvanceService.restartExtraApproval(actor, id),
+    onSuccess: (_result, { requestNo }) => {
+      toast(`Additional approval for ${requestNo} restarted.`, 'ok');
+      void queryClient.invalidateQueries({ queryKey: cashAdvanceKeys.all });
+    },
+  });
+}
+
 export function useApproveExtra() {
   const queryClient = useQueryClient();
   return useMutation({

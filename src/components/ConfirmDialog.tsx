@@ -45,7 +45,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </Button>
           <Button variant={tone} onClick={onConfirm} disabled={loading}>
-            {loading ? 'Memproses…' : confirmLabel}
+            {loading ? 'Processing…' : confirmLabel}
           </Button>
         </>
       }

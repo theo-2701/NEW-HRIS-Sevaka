@@ -116,7 +116,7 @@ export function FinanceSettingsPage() {
           {tab === 'loanlimit' && (
             <Card>
               <CardHead
-                title="Loan limit per job grade"
+                title="Loan limit per job class"
                 sub={writable ? 'Dibaca layar Loan saat pengajuan berikutnya' : 'Baca saja — penulisan milik Finance Officer dan Super Admin'}
               />
 
@@ -129,11 +129,11 @@ export function FinanceSettingsPage() {
                   filters={
                     <>
                       <Select value={grade} onValueChange={setGrade}>
-                        <SelectTrigger className="h-10 w-[220px]" aria-label="Job grade">
+                        <SelectTrigger className="h-10 w-[220px]" aria-label="Job class">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">All grades</SelectItem>
+                          <SelectItem value="ALL">All classes</SelectItem>
                           {JOB_GRADES.map((row) => (
                             <SelectItem key={row.id} value={row.id}>
                               {row.name}
@@ -167,7 +167,7 @@ export function FinanceSettingsPage() {
                   loading={limits.isLoading}
                   empty="No loan limit matches the current filter."
                   columns={[
-                    { key: 'grade', header: 'Job Grade', strong: true, render: (row) => gradeName(row.jobGradeId) },
+                    { key: 'grade', header: 'Job Class', strong: true, render: (row) => gradeName(row.jobGradeId) },
                     { key: 'amount', header: 'Limit Amount', align: 'right', render: (row) => <Money value={row.limitAmount} /> },
                     { key: 'status', header: 'Status', render: (row) => <ActiveBadge active={row.isActive} /> },
                   ]}
