@@ -55,7 +55,7 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     const BUDI: AttendanceSession = { employeeId: 'emp-budi', role: 'DEPT_MANAGER' };
     const near = { latitude: -5.1478, longitude: 119.4328, accuracyMeters: 8 };
     // 30 Juli Budi hari libur (tap in ditutup); jadwalkan masuk dulu supaya jalur cabang tanpa selfie teruji.
-    await expect(attendanceService.recordPunch(BUDI, { selfieCaptured: false, idempotencyKey: 'budi-off', workArrangement: 'WFO', location: near })).rejects.toThrow(/rest day/);
+    await expect(attendanceService.recordPunch(BUDI, { selfieCaptured: false, idempotencyKey: 'budi-off', workArrangement: 'WFO', location: near })).rejects.toThrow(/day off in your work schedule/);
     await schedulerService.saveAssignment({ employeeId: 'emp-budi', workDate: '2026-07-30', shiftId: 'sh-1', isOffDay: false }, 'as-13');
     const result = await attendanceService.recordPunch(BUDI, {
       selfieCaptured: false,
@@ -259,7 +259,7 @@ describe('Gerbang tap in — cuti dan hari libur (Theo, 26 Okt 2026)', () => {
     expect((await tapGate('emp-hendra', '2026-07-30')).block).toMatchObject({ reason: 'TIME_OFF', leaveTypeName: 'Annual Leave' });
     // Hari libur tertutup sudah diuji lewat Budi di atas. Rina libur roster 29 Juli tapi punya lembur yang
     // disetujui — tap in tetap terbuka (lembur hari libur).
-    expect(await tapGate('emp-rina', '2026-07-29')).toEqual({ block: null, restDayException: true });
+    expect(await tapGate('emp-rina', '2026-07-29')).toEqual({ block: null, restDayOpenedBy: 'OVERTIME', halfDayLeave: null });
     expect((await tapGate('emp-rina', '2026-07-30')).block).toBeNull();
   });
 
@@ -270,6 +270,6 @@ describe('Gerbang tap in — cuti dan hari libur (Theo, 26 Okt 2026)', () => {
         { employeeId: 'emp-hendra', role: 'HR_MANAGER' },
         { punchType: 'IN', idempotencyKey: 'gate-1', workArrangement: 'WFO', note: '', selfieCaptured: true, location: null },
       ),
-    ).rejects.toThrow(/^422 — Your Annual Leave/);
+    ).rejects.toThrow(/^422 — You're on approved Annual Leave/);
   });
 });

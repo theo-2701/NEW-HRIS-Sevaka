@@ -235,7 +235,7 @@ export const attendanceService = {
       // Cuti seharian / hari libur roster tanpa lembur atau siaga yang disetujui = tap in ditutup (tapGate).
       if (type === 'IN') {
         const gate = await tapGate(session.employeeId, ATTENDANCE_TODAY);
-        if (gate.block) throw new Error(`422 — ${tapBlockText(gate.block).detail}`);
+        if (gate.block) throw new Error(`422 — ${tapBlockText(gate.block)}`);
       }
 
       const geofence = resolveGeofence(session.employeeId);

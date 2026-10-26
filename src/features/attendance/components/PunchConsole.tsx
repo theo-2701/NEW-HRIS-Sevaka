@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { CalendarOff, Camera, CircleCheck, Clock, Info, MapPin, MapPinOff, TriangleAlert } from 'lucide-react';
+import { Camera, CircleCheck, Clock, Coffee, Info, MapPin, MapPinOff, Palmtree, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Button } from '@/components/ui/button';
@@ -14,56 +15,162 @@ import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/
 import type { Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import type { ShiftOn } from '@/features/scheduler/services/scheduler.service';
-import { tapBlockText, type TapGate } from '@/features/attendance/tapGate';
+import type { TapBlock, TapGate } from '@/features/attendance/tapGate';
+import { formatDateRange } from '@/lib/format';
 import { MOCK } from '@/services/mock';
 import { cn } from '@/lib/utils';
 
 const hhmm = (iso: string) => iso.slice(11, 16);
 
-/** Syarat titik kerja per tipe kerja — dibuka dari ikon info di samping nama lokasi. */
-function LocationInfo({ geofence }: { geofence: Geofence }) {
+type LiveLocation =
+  | { kind: 'idle' }
+  | { kind: 'locating' }
+  | { kind: 'off' }
+  | { kind: 'found'; meters: number; simulated: boolean };
+
+/**
+ * Lokasi perangkat untuk kartu Today. Tidak meminta izin saat halaman dibuka — izin baru diminta bila
+ * karyawan menekan "Check my location" (atau sudah pernah mengizinkan). Hanya jarak ke titik kerja yang
+ * ditampilkan: kontrak tidak punya alamat jalan (reverse geocoding), dan alamat panjang justru tidak
+ * menjawab pertanyaan karyawan, "bisakah saya tap di sini?".
+ */
+function useLiveLocation(geofence: Geofence) {
+  const [state, setState] = useState<LiveLocation>({ kind: 'idle' });
+  const center = useMemo(
+    () => ({ latitude: geofence.centerLatitude, longitude: geofence.centerLongitude }),
+    [geofence.centerLatitude, geofence.centerLongitude],
+  );
+
+  const locate = useCallback(() => {
+    // ponytail: mode dummy tanpa izin lokasi memakai titik kantor, sama seperti modal tap.
+    const fallback = () => setState(MOCK ? { kind: 'found', meters: 0, simulated: true } : { kind: 'off' });
+    if (!navigator.geolocation) return fallback();
+    setState({ kind: 'locating' });
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        setState({
+          kind: 'found',
+          meters: distanceMeters(center, { latitude: position.coords.latitude, longitude: position.coords.longitude }),
+          simulated: false,
+        }),
+      fallback,
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+    );
+  }, [center]);
+
+  useEffect(() => {
+    setState({ kind: 'idle' });
+    let cancelled = false;
+    navigator.permissions
+      ?.query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        if (!cancelled && status.state === 'granted') locate();
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [geofence.id, locate]);
+
+  return { state, locate };
+}
+
+/** Syarat tap per tipe kerja — isi ikon info di samping status lokasi. */
+function TapRules({ geofence }: { geofence: Geofence }) {
   const [open, setOpen] = useState(false);
+  const rule = (value: WorkArrangement) =>
+    geofence.rules[value].radius ? `Within ${geofence.radiusMeters} m of the work point` : 'Anywhere — location is not checked';
 
   return (
-    <div className="flex min-w-0 items-center gap-1.5 font-body text-xs font-medium text-fg-3">
-      <MapPin className="size-3.5 shrink-0" />
-      <span className="truncate">{geofence.geofenceName}</span>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            aria-label="Work location requirements"
-            onMouseEnter={() => setOpen(true)}
-            onMouseLeave={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setOpen(false)}
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30"
-          >
-            <Info className="size-3.5" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          side="bottom"
-          align="end"
-          className="w-[300px] p-3.5"
-          onOpenAutoFocus={(event) => event.preventDefault()}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Where you can tap in"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30"
         >
-          <p className="m-0 mb-2.5 font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">
-            Set by HR for you
-          </p>
-          {/* Setelan per karyawan dibuat tim dev; layar ini hanya membaca hasilnya. */}
-          <dl className="m-0 grid grid-cols-[110px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
-            <dt className="font-medium text-fg-3">Selfie at tap in</dt>
-            <dd className="m-0 font-semibold text-fg-1">{selfieRequiredAtTap(geofence) ? 'Required' : 'Not required'}</dd>
-            <dt className="font-medium text-fg-3">Radius</dt>
-            <dd className="m-0 font-semibold text-fg-1">
-              {TAP_ARRANGEMENTS.some((arrangement) => geofence.rules[arrangement].radius)
-                ? `Within ${geofence.radiusMeters} m`
-                : 'Not checked'}
-            </dd>
-          </dl>
-        </PopoverContent>
-      </Popover>
+          <Info className="size-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="end" className="w-[320px] p-3.5" onOpenAutoFocus={(event) => event.preventDefault()}>
+        <p className="m-0 font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">Where you can tap in</p>
+        <p className="m-0 mt-1.5 font-body text-[13px] font-semibold leading-snug text-fg-1">{geofence.geofenceName}</p>
+        {/* Setelan per karyawan dibuat tim dev; layar ini hanya membaca hasilnya. */}
+        <dl className="m-0 mt-2.5 grid grid-cols-[96px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
+          {TAP_ARRANGEMENTS.map((value) => (
+            <Fragment key={value}>
+              <dt className="font-medium text-fg-3">{ARRANGEMENT_LABEL[value]}</dt>
+              <dd className="m-0 font-semibold text-fg-1">{rule(value)}</dd>
+            </Fragment>
+          ))}
+          <dt className="font-medium text-fg-3">Selfie</dt>
+          <dd className="m-0 font-semibold text-fg-1">{selfieRequiredAtTap(geofence) ? 'Required at tap in' : 'Not required'}</dd>
+        </dl>
+        <p className="m-0 mt-2.5 font-body text-[11.5px] font-medium leading-snug text-fg-3">
+          Set by HR for you. A tap outside the radius is still saved, marked outside radius.
+        </p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/**
+ * Status lokasi di kepala kartu: satu baris pendek "di mana saya terhadap titik kerja". Nama titik kerja yang
+ * panjang dipotong dengan elipsis dan tetap utuh di tooltip serta di popover syarat.
+ */
+function LocationStatus({ geofence }: { geofence: Geofence }) {
+  const { state, locate } = useLiveLocation(geofence);
+  const checked = geofence.rules.WFO.radius;
+  const name = geofence.geofenceName;
+
+  let icon: ReactNode = <MapPin />;
+  let tone = 'text-fg-3';
+  let text: ReactNode = (
+    <>
+      Work point: <span className="text-fg-1">{name}</span>
+    </>
+  );
+  if (checked && state.kind === 'locating') text = 'Checking your location…';
+  if (checked && state.kind === 'off') {
+    icon = <MapPinOff />;
+    text = 'Location is off — your tap is saved without a radius check';
+  }
+  if (checked && state.kind === 'found') {
+    const inside = state.meters <= geofence.radiusMeters;
+    icon = inside ? <CircleCheck /> : <MapPinOff />;
+    tone = inside ? 'text-success-700' : 'text-warning-700';
+    text = inside ? (
+      <>
+        You&rsquo;re at <span className="text-fg-1">{name}</span>
+        {state.simulated && <span className="text-fg-4"> · demo location</span>}
+      </>
+    ) : (
+      <>
+        {distanceLabel(state.meters)} from <span className="text-fg-1">{name}</span>
+      </>
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 max-w-full items-center gap-2 font-body text-xs font-medium sm:max-w-[60%]">
+      <span className={cn('flex min-w-0 items-center gap-1.5 [&>svg]:size-3.5 [&>svg]:shrink-0', tone)} title={name}>
+        {icon}
+        <span className="truncate text-fg-3">{text}</span>
+      </span>
+      {checked && (state.kind === 'idle' || state.kind === 'off') && (
+        <button
+          type="button"
+          onClick={locate}
+          className="shrink-0 rounded font-semibold text-secondary-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30"
+        >
+          {state.kind === 'off' ? 'Try again' : 'Check my location'}
+        </button>
+      )}
+      <TapRules geofence={geofence} />
     </div>
   );
 }
@@ -79,17 +186,31 @@ function TodayCell({ label, value, sub }: { label: string; value: ReactNode; sub
   );
 }
 
-/** Kolom Shift dari roster: jam, Day off, tanpa roster, atau memuat (`undefined`). */
-function shiftLabel(roster: ShiftOn | null | undefined): { value: string; sub: string } {
-  if (roster === undefined) return { value: 'Loading…', sub: 'Checking your roster' };
+const HALF_LABEL = { HALF_AM: 'morning', HALF_PM: 'afternoon' } as const;
+
+/**
+ * Kolom Shift dari jadwal kerja (Scheduler): jam shift, hari libur yang dibuka lembur/siaga, tanpa jadwal,
+ * atau memuat (`undefined`). Istilah "roster" diganti "work schedule" — itu kata yang dikenal karyawan.
+ */
+function shiftLabel(roster: ShiftOn | null | undefined, gate: TapGate | undefined): { value: string; sub: string } {
+  if (roster === undefined) return { value: 'Loading…', sub: 'Checking your work schedule' };
   if (!roster) return { value: 'No shift assigned', sub: 'Ask HR if this looks wrong' };
   const { shift } = roster;
-  if (roster.assignment.isOffDay || !shift) return { value: 'Day off', sub: 'Rest day on your roster' };
-  if (!shift.startTime || !shift.endTime) return { value: 'Flexible', sub: shift.shiftName };
-  return {
-    value: `${shift.startTime} – ${shift.endTime}${shift.crossesMidnight ? ' (+1)' : ''}`,
-    sub: shift.shiftName,
-  };
+  if (roster.assignment.isOffDay || !shift) {
+    return {
+      value: 'Day off',
+      sub:
+        gate?.restDayOpenedBy === 'OVERTIME'
+          ? 'Overtime approved — you can tap in'
+          : gate?.restDayOpenedBy === 'ONCALL'
+            ? 'On call today — you can tap in'
+            : 'No shift in your work schedule',
+    };
+  }
+  const half = gate?.halfDayLeave;
+  const sub = half ? `${half.leaveTypeName} this ${HALF_LABEL[half.daySession]}` : shift.shiftName;
+  if (!shift.startTime || !shift.endTime) return { value: 'Flexible', sub };
+  return { value: `${shift.startTime} – ${shift.endTime}${shift.crossesMidnight ? ' (+1)' : ''}`, sub };
 }
 
 /** Sub-teks tap: tipe kerja, plus peringatan bila tap tercatat di luar radius. */
@@ -100,6 +221,38 @@ function tapSub(punch: Punch) {
     <>
       {type} · <span className="text-warning-700">outside radius</span>
     </>
+  );
+}
+
+/**
+ * Hari tanpa tap in: cuti seharian yang disetujui atau hari libur jadwal. Kolom Shift/Tap in/Tap out disembunyikan
+ * — isinya hanya tanda "—" yang membingungkan — dan diganti satu pernyataan: kenapa hari ini tertutup dan apa
+ * yang bisa dilakukan bila karyawan ternyata tetap bekerja.
+ */
+function ClosedDay({ block }: { block: TapBlock }) {
+  const timeOff = block.reason === 'TIME_OFF';
+  const Icon = timeOff ? Palmtree : Coffee;
+  return (
+    <div className="flex items-start gap-3.5 py-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-50 text-secondary-600 [&_svg]:size-5">
+        <Icon strokeWidth={1.75} />
+      </span>
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="m-0 font-display text-base font-bold leading-tight text-fg-1">
+          {timeOff ? `You're on ${block.leaveTypeName} today` : 'Day off today'}
+        </p>
+        <p className="m-0 font-body text-[13px] font-medium text-fg-2">
+          {timeOff
+            ? `Approved · ${formatDateRange(block.startDate, block.endDate)} · ${block.totalDays} day${block.totalDays === 1 ? '' : 's'}`
+            : 'Your work schedule has no shift today.'}
+        </p>
+        <p className="m-0 font-body text-xs font-medium leading-normal text-fg-3">
+          {timeOff
+            ? 'No tap needed. Working after all? Withdraw the time off first, or ask HR.'
+            : 'No tap needed. If you are asked to work, the overtime has to be approved first — then tap in opens.'}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -129,6 +282,7 @@ export function PunchConsole({
   gate?: TapGate;
   onStart: () => void;
 }) {
+  const navigate = useNavigate();
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setClock(new Date()), 1000);
@@ -145,21 +299,20 @@ export function PunchConsole({
 
   const tapIn = today.find((row) => row.punchType === 'IN');
   const tapOut = today.find((row) => row.punchType === 'OUT');
-
-  // Tap out tidak pernah ditutup; gerbang hanya berlaku untuk tap in.
-  const blocked = nextType === 'IN' && gate?.block ? tapBlockText(gate.block) : null;
-  const onTimeOff = gate?.block?.reason === 'TIME_OFF' ? gate.block : null;
-  const shiftCell = onTimeOff ? { value: 'Time off', sub: `${onTimeOff.leaveTypeName} · approved` } : shiftLabel(shift);
+  // Tap out tidak pernah ditutup; gerbang hanya berlaku sebelum tap in.
+  const closed = nextType === 'IN' && gate?.block ? gate.block : null;
+  // Selama gerbang dimuat, jangan tampilkan lokasi & petunjuk tap yang bisa langsung hilang.
+  const checking = nextType === 'IN' && gate === undefined;
 
   const hint = !nextType
     ? 'Both taps are in. Anything wrong? File a correction.'
-    : nextType === 'IN'
-      ? gate?.restDayException
-        ? 'Rest day — tap in for your approved overtime or on-call.'
-        : selfieRequired
+    : checking
+      ? 'Checking whether tap in is open today…'
+      : nextType === 'IN'
+        ? selfieRequired
           ? 'Selfie first, then choose WFO or WFH.'
           : 'Choose WFO or WFH, add a note if needed.'
-      : 'Add a note if needed, then tap out.';
+        : 'Add a note if needed, then tap out.';
 
   return (
     <section className="flex flex-col rounded-xl border border-border-1 bg-bg-surface px-5 pt-[18px] shadow-card-sm">
@@ -170,37 +323,41 @@ export function PunchConsole({
             <span className="tabular-nums">{now}</span> WIB
           </p>
         </div>
-        <LocationInfo geofence={geofence} />
+        {/* Lokasi tidak relevan di hari tanpa tap in. */}
+        {!closed && !checking && <LocationStatus geofence={geofence} />}
       </header>
 
-      <div className="mt-2 grid divide-y divide-border-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <TodayCell label="Shift" {...shiftCell} />
-        <TodayCell
-          label="Tap in"
-          value={tapIn ? hhmm(tapIn.punchAt) : '—'}
-          sub={tapIn ? tapSub(tapIn) : blocked ? 'Not available today' : 'Not yet'}
-        />
-        <TodayCell
-          label="Tap out"
-          value={tapOut ? hhmm(tapOut.punchAt) : '—'}
-          sub={tapOut ? tapSub(tapOut) : tapIn ? 'When you finish work' : 'After tap in'}
-        />
-      </div>
+      {closed ? (
+        <ClosedDay block={closed} />
+      ) : (
+        <div className="mt-2 grid divide-y divide-border-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <TodayCell label="Shift" {...shiftLabel(shift, gate)} />
+          <TodayCell label="Tap in" value={tapIn ? hhmm(tapIn.punchAt) : '—'} sub={tapIn ? tapSub(tapIn) : 'Not yet'} />
+          <TodayCell
+            label="Tap out"
+            value={tapOut ? hhmm(tapOut.punchAt) : '—'}
+            sub={tapOut ? tapSub(tapOut) : tapIn ? 'When you finish work' : 'After tap in'}
+          />
+        </div>
+      )}
 
       <footer className="-mx-5 mt-1 flex flex-wrap items-center justify-between gap-3 border-t border-border-1 px-5 py-3.5">
-        {blocked ? (
-          <span className="flex items-start gap-2 font-body text-xs font-medium leading-normal text-fg-2">
-            <CalendarOff className="mt-px size-4 shrink-0 text-fg-3" />
-            <span>
-              <strong className="font-semibold text-fg-1">{blocked.title}.</strong> {blocked.detail}
+        {closed ? (
+          <>
+            <span className="font-body text-xs font-medium text-fg-3">
+              {closed.reason === 'TIME_OFF' ? 'Tap in opens again after your time off.' : 'Tap in opens again on your next shift.'}
             </span>
-          </span>
+            <Button variant="secondary" onClick={() => navigate(closed.reason === 'TIME_OFF' ? '/me/time/time-off' : '/me/time/overtime')}>
+              {closed.reason === 'TIME_OFF' ? 'View My Time Off' : 'View My Overtime'}
+            </Button>
+          </>
         ) : (
-          <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
+          <>
+            <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
+            {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan. */}
+            {nextType && gate !== undefined && <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>}
+          </>
         )}
-        {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan.
-            Sama untuk gerbang cuti/hari libur: tombol tidak tampil, alasannya tertulis di kiri. */}
-        {nextType && !blocked && gate !== undefined && <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>}
       </footer>
     </section>
   );
