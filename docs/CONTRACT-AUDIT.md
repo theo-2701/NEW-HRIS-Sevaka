@@ -997,3 +997,27 @@ di dokumen" — itu salah karena mengacu ke 0.46; di 0.83 keempatnya ada (§10�
 - Class tidak disaring ke anak Grade kursi (KCG-4) — data dummy belum punya Grade per kursi.
 - Panel "Proses calon APPROVED" di Onboarding (§4.1 baris terakhir) belum dibuat — onboarding lahir dari Materialize di New Joiner.
 - Kartu beranda My Transition (§20.2) belum dipasang.
+
+## 36. doc-update 2610260941 (26 Oktober 2026) — Time · Finance · Auth · Employee · Performance · Company
+
+Sumber: `../sevaka-ui/sevaka-ui-paul/doc-update/2610260941/` (baca-saja) — FSD-TIME 0.19, FSD-FINANCE 0.35,
+FSD-AUTH 0.24, FSD-PERFORMANCE 0.25, FSD-COMPANY 0.60; UIC-TIME 0.26, UIC-FINANCE 0.38, UIC-AUTH 0.30,
+UIC-EMPLOYEE 0.76, UIC-PERFORMANCE 0.26, UIC-COMPANY 0.46; `CATATAN-PERUBAHAN.md` FE 22–26 Okt. Branch
+`ui/doc-update-2610260941`.
+
+| Modul | Kontrak | Realisasi |
+|---|---|---|
+| Time › Punch | FSD 0.19 §5.2/§5.3, UIC 0.26 §6.1.1/§6.1.4 | `GET /attendance-punches/policy`; WFO/WFH di tap in **dan** tap out; swafoto per pilihan (matriks Settings); profil `MOBILE` tanpa pilihan; gagal baca ⇒ perilaku lama |
+| Finance | FSD 0.33–0.35, UIC 0.31–0.38 | Loan Limit per Class; NIK dicabut di layar petugas; pemilih penerima ≥3 huruf, NIK tersamar, maks. 10; `awaiting_restart` + Restart Approval (FO); tab ESS-6 Cash Advance; pendarat `/finance/open/:kind/:id` |
+| Auth | FSD 0.21–0.24, UIC 0.28–0.30 §8A | Kembali ke alamat asal sesudah login (15 menit, sekali pakai, anti open-redirect); menu System Log › Trace ID / Error Code (Super Admin) |
+| Employee | UIC 0.76 §2.2 | Detail membedakan 403 aturan cabang / 503 / 404 |
+| Performance | FSD 0.25, UIC 0.25 | `ROLE_EMPLOYEE` penilai/penyetuju/pemikul: antrean lembar, pemilih KPI, persetujuan, sanggahan masuk, papan orang lain, I1/I8 dirinya |
+| Company › Grade & Class | FSD 0.54/0.55/0.59, UIC 0.38–0.41/0.46 | Grade = tangga tingkat + Class default; kode `3A`/`3A.1`; form bertahap; Chart View / Table View; tab Class wajib pilih Grade |
+| Company › Branch | FSD 0.56–0.60, UIC 0.42–0.45 | Kaskade kategori → induk; titik koordinat alternatif (maks. 10); HQ + kop surat cabang (logo); saklar clock-in ponsel disembunyikan; `can_view_child_data` dihapus |
+
+**GAP / tidak dikerjakan:**
+- Grade: seret-lepas `PUT /job-grades/reorder` belum dibuat — pindah tingkat lewat Edit Grade (`PUT /job-grades/{id}`).
+- Lencana *Branch break* pada kursi (FSD-COMPANY §2.1.4) — posisi di repo ini belum punya cabang kursi (§2.1.3, 0.51).
+- Performance `TIMED_OUT` (UIC 0.24): perilaku server; riwayat putaran sudah menampilkan alasan apa adanya.
+- TSD yang ikut naik versi (EMPLOYEE 0.200, TIME 0.103, dst.) tidak ditinjau baris per baris; yang dirujuk FSD/UIC di atas sudah diikuti.
+- Copy berbahasa Indonesia masih tersisa di sebagian layar Finance (Disbursement, Loan, Benefit), Company (Group Structure, Cost Center, SBU, Vendor), dan Performance.

@@ -49,7 +49,7 @@ describe('Sesi berakhir (FSD-001-AUTH §1)', () => {
     expireSession();
     expireSession();
 
-    const toasts = useUiStore.getState().toasts.filter((t) => t.message === 'Sesi berakhir, silakan masuk lagi');
+    const toasts = useUiStore.getState().toasts.filter((t) => t.message === 'Your session ended. Please sign in again.');
     expect(toasts).toHaveLength(1);
     expect(useAuthStore.getState().token).toBe('mock-token');
 
