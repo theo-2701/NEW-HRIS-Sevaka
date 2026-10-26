@@ -5,10 +5,11 @@ import type { DecisionAck } from '@/services/decision';
 import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
 import {
   nextPunchType,
+  punchPolicy,
   punchesToday,
   radiusVerdict,
   resolveGeofence,
-  selfieRequiredAtTap,
+  selfieRequiredFor,
   withinCorrectionWindow,
 } from '@/features/attendance/rules';
 import { tapBlockText, tapGate } from '@/features/attendance/tapGate';
@@ -16,6 +17,7 @@ import {
   CORRECTION_WINDOW_DAYS,
   EXCUSED_FROM_REASON,
   PUNCH_NOTE_MAX,
+  TAP_ARRANGEMENTS,
   canApproveCorrection,
   canCreateCorrection,
   canSearchPunch,
@@ -27,6 +29,7 @@ import type {
   Correction,
   CorrectionDraft,
   Punch,
+  PunchPolicy,
   TapLocation,
   WorkArrangement,
 } from '@/features/attendance/types';
@@ -92,7 +95,7 @@ export interface TapInput {
   /** Frame swafoto base64 tanpa prefiks data-URL (jalur API). */
   selfieBase64?: string;
   selfieContentType?: string;
-  /** Wajib saat tap in; tap out mewarisi dari tap in. */
+  /** Pilihan WFO/WFH tap ini (tap in maupun tap out); tanpa nilai, profil yang menentukan. */
   workArrangement?: WorkArrangement;
   note?: string;
   location?: TapLocation | null;
@@ -202,9 +205,34 @@ export const attendanceService = {
     return data.data;
   },
 
+  /** Kebijakan tap pemanggil sendiri (UIC-TIME 0.26 §6.1.4) — dibaca layar Punch sebelum tap. */
+  async punchPolicy(session: AttendanceSession): Promise<PunchPolicy> {
+    if (MOCK) {
+      await delay(120);
+      return punchPolicy(resolveGeofence(session.employeeId));
+    }
+    const { data } = await api.get<{
+      profile_work_arrangement: WorkArrangement | null;
+      can_choose: boolean;
+      default_work_arrangement: 'WFO' | 'WFH' | null;
+      selfie_required_wfo: boolean;
+      selfie_required_wfh: boolean;
+      selfie_required_profile: boolean;
+    }>('/attendance-punches/policy');
+    return {
+      profileWorkArrangement: data.profile_work_arrangement,
+      canChoose: data.can_choose,
+      defaultWorkArrangement: data.default_work_arrangement,
+      selfieRequiredWfo: data.selfie_required_wfo,
+      selfieRequiredWfh: data.selfie_required_wfh,
+      selfieRequiredProfile: data.selfie_required_profile,
+    };
+  },
+
   /**
-   * Merekam satu tap. Jenisnya diturunkan dari keadaan hari, bukan dipilih layar. Tap in membawa
-   * tipe kerja (WFO/WFH) + catatan; tap out mewarisi tipe kerja tap in. Koordinat perangkat
+   * Merekam satu tap. Jenisnya diturunkan dari keadaan hari, bukan dipilih layar. Tap in dan tap out
+   * sama-sama membawa pilihan WFO/WFH (UIC-TIME 0.26 §6.1.1 — menang atas profil; tanpa nilai, profil yang
+   * menentukan) + catatan; swafoto wajib bila baris matriks untuk pilihan itu mensyaratkan. Koordinat
    * dikirim berpasangan bila tersedia — tanpa koordinat tap tetap lahir, radiusnya tak terevaluasi.
    */
   async recordPunch(session: AttendanceSession, input: TapInput): Promise<PunchResult> {
@@ -212,37 +240,38 @@ export const attendanceService = {
     if (note.length > PUNCH_NOTE_MAX) {
       throw new Error(`422 — The note can be at most ${PUNCH_NOTE_MAX} characters.`);
     }
+    if (input.workArrangement && !TAP_ARRANGEMENTS.includes(input.workArrangement)) {
+      throw new Error('422 — Choose Work from office or Work from home.');
+    }
 
     if (MOCK) {
       await delay(400);
+      const geofence = resolveGeofence(session.employeeId);
+      const policy = punchPolicy(geofence);
       const keyScope = `${session.employeeId}:${input.idempotencyKey}`;
       const existingId = mockPunchKeys.get(keyScope);
       if (existingId) {
         const existing = mockPunches.find((row) => row.id === existingId)!;
-        const geofence = resolveGeofence(session.employeeId);
-        return { punch: { ...existing }, idempotencyKey: input.idempotencyKey, replayed: true, selfieRequired: selfieRequiredAtTap(geofence) };
+        const selfieRequired = selfieRequiredFor(policy, policy.canChoose ? (existing.workArrangement ?? null) : null);
+        return { punch: { ...existing }, idempotencyKey: input.idempotencyKey, replayed: true, selfieRequired };
       }
 
       // Punch append-only (UIC-TIME §6.1): tap berikutnya selalu direkam — yang
       // menilai sah-tidaknya adalah recompute, bukan penolakan di pintu tap.
       const todays = [...punchesToday(session.employeeId, mockPunches)].sort((a, b) => (a.punchAt < b.punchAt ? -1 : 1));
       const type = nextPunchType(session.employeeId, mockPunches) ?? (todays.at(-1)?.punchType === 'IN' ? 'OUT' : 'IN');
-      const tappedIn = todays.find((row) => row.punchType === 'IN');
-      const arrangement = type === 'IN' ? input.workArrangement : (tappedIn?.workArrangement ?? input.workArrangement);
-      if (type === 'IN' && !arrangement) {
-        throw new Error('422 — Choose a work type (WFO or WFH) before tapping in.');
-      }
       // Cuti seharian yang disetujui = tap in ditutup; hari libur tetap terbuka (tapGate).
       if (type === 'IN') {
         const gate = await tapGate(session.employeeId, ATTENDANCE_TODAY);
         if (gate.block) throw new Error(`422 — ${tapBlockText(gate.block)}`);
       }
 
-      const geofence = resolveGeofence(session.employeeId);
-      // Selfie hanya diminta saat tap in; tap out cukup catatan.
-      const selfieRequired = type === 'IN' && selfieRequiredAtTap(geofence);
+      // Pilihan menang atas profil; profil lapangan tak punya pilihan.
+      const choice = policy.canChoose ? (input.workArrangement ?? null) : null;
+      const arrangement = choice ?? policy.profileWorkArrangement;
+      const selfieRequired = selfieRequiredFor(policy, choice);
       if (selfieRequired && !input.selfieCaptured) {
-        throw new Error('422 — A live selfie is required at this location. The tap was not recorded.');
+        throw new Error('422 — A live selfie is required for this work type. The tap was not recorded.');
       }
 
       const now = input.now ?? new Date();
@@ -260,7 +289,8 @@ export const attendanceService = {
         isMockLocationSuspected: false,
         isWorkArrangementUnknown: !arrangement,
         geofenceId: geofence.id,
-        workArrangement: arrangement ?? null,
+        // `null` bila tap tanpa pilihan (UIC §6.1.1) — penilaiannya memakai profil.
+        workArrangement: choice,
         note: note || null,
         latitude: input.location?.latitude ?? null,
         longitude: input.location?.longitude ?? null,
@@ -271,8 +301,8 @@ export const attendanceService = {
       return { punch, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired };
     }
 
-    // UIC-TIME §6.1.1: koordinat berpasangan + swafoto `selfie_base64` (PROVISIONAL).
-    // `work_arrangement` dan `note` = permintaan tambahan, BELUM ada di kontrak (GAP) — BE wajib menambahkannya.
+    // UIC-TIME §6.1.1: koordinat berpasangan + swafoto `selfie_base64` (PROVISIONAL) + `work_arrangement` (0.26).
+    // `note` = permintaan tambahan, BELUM ada di kontrak (GAP) — BE wajib menambahkannya.
     const now = input.now ?? new Date();
     const { data } = await api.post<Punch>(
       '/attendance-punches',

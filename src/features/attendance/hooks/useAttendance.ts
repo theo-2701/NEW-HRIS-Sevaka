@@ -11,7 +11,8 @@ import type {
   TapInput,
   TapFilter,
 } from '@/features/attendance/services/attendance.service';
-import type { AttendanceSession, CorrectionDraft } from '@/features/attendance/types';
+import type { AttendanceSession, CorrectionDraft, PunchPolicy } from '@/features/attendance/types';
+import { LEGACY_PUNCH_POLICY } from '@/features/attendance/rules';
 import type { ToastTone } from '@/store/ui.store';
 
 export const attendanceKeys = {
@@ -56,6 +57,19 @@ export function useTapGate(employeeId: string) {
     queryFn: () => tapGate(employeeId, ATTENDANCE_TODAY),
     staleTime: 0,
   });
+}
+
+/**
+ * Kebijakan tap (UIC-TIME 0.26 §6.1.4) — `undefined` selama memuat. Gagal dibaca ⇒ perilaku lama
+ * (`LEGACY_PUNCH_POLICY`): layar tidak meminta swafoto, server yang memutus lewat `422`.
+ */
+export function usePunchPolicy(session: AttendanceSession): PunchPolicy | undefined {
+  const query = useQuery({
+    queryKey: ['attendance', 'policy', session.employeeId],
+    queryFn: () => attendanceService.punchPolicy(session),
+    retry: false,
+  });
+  return query.data ?? (query.isError ? LEGACY_PUNCH_POLICY : undefined);
 }
 
 /** Shift hari ini dari roster Scheduler — kolom Shift di kartu tap. */

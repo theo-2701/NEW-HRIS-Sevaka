@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { attendanceService, resetAttendanceMocks } from '@/features/attendance/services/attendance.service';
-import { captureChannel, eligibleDays, nextPunchType } from '@/features/attendance/rules';
-import { DAILY, VIEWERS } from '@/features/attendance/mock-data';
+import { captureChannel, eligibleDays, nextPunchType, punchPolicy, selfieRequiredFor } from '@/features/attendance/rules';
+import { DAILY, GEOFENCES, VIEWERS } from '@/features/attendance/mock-data';
 import type { AttendanceSession } from '@/features/attendance/types';
 
 const RINA: AttendanceSession = { employeeId: 'emp-rina', role: 'EMPLOYEE' };
@@ -38,16 +38,25 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     expect(nextPunchType(RINA.employeeId, rows)).toBeNull();
   });
 
-  it('tap out mewarisi tipe kerja tap in', async () => {
+  it('tap out membawa pilihan WFO/WFH sendiri dan swafotonya mengikuti pilihan itu (UIC 0.26 §6.1.1)', async () => {
     await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'in', workArrangement: 'WFH', note: 'Hujan deras' });
-    // Tap out tanpa selfie walau titik kerjanya mewajibkan selfie saat tap in.
-    const out = await attendanceService.recordPunch(RINA, { selfieCaptured: false, idempotencyKey: 'out' });
-    expect(out.selfieRequired).toBe(false);
+    // geo-hq: baris WFH mewajibkan swafoto, jadi tap out WFH tanpa foto ditolak.
+    await expect(
+      attendanceService.recordPunch(RINA, { selfieCaptured: false, idempotencyKey: 'out-1', workArrangement: 'WFH' }),
+    ).rejects.toThrow(/selfie/);
+    const out = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'out-2', workArrangement: 'WFH' });
+    expect(out.selfieRequired).toBe(true);
+    expect(out.punch.punchType).toBe('OUT');
     expect(out.punch.workArrangement).toBe('WFH');
   });
 
-  it('tap in tanpa tipe kerja ditolak 422', async () => {
-    await expect(attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k' })).rejects.toThrow(/work type/);
+  it('tanpa pilihan, profil yang menilai; HYBRID/MOBILE sebagai pilihan ditolak 422', async () => {
+    const tap = await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k' });
+    expect(tap.punch.workArrangement).toBeNull();
+    expect(tap.punch.isWorkArrangementUnknown).toBe(false);
+    await expect(
+      attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k2', workArrangement: 'HYBRID' }),
+    ).rejects.toThrow(/^422/);
   });
 
   it('cabang tanpa selfie langsung merekam tap; koordinat menentukan radius WFO', async () => {
@@ -63,6 +72,13 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     expect(result.selfieRequired).toBe(false);
     expect(result.punch.isWithinGeofence).toBe(true);
     expect(result.punch.latitude).toBe(-5.1478);
+  });
+
+  it('Makassar: WFO tanpa swafoto, WFH wajib swafoto — mengikuti matriks Settings per pilihan', async () => {
+    const BUDI: AttendanceSession = { employeeId: 'emp-budi', role: 'DEPT_MANAGER' };
+    await expect(
+      attendanceService.recordPunch(BUDI, { selfieCaptured: false, idempotencyKey: 'budi-wfh', workArrangement: 'WFH' }),
+    ).rejects.toThrow(/selfie/);
   });
 
   it('karyawan uji Dewi: tanpa selfie dan tanpa radius, tap WFO di mana pun tersimpan tanpa tanda luar radius', async () => {
@@ -268,5 +284,32 @@ describe('Gerbang tap in — cuti dan hari libur (Theo, 26 Okt 2026)', () => {
         { punchType: 'IN', idempotencyKey: 'gate-1', workArrangement: 'WFO', note: '', selfieCaptured: true, location: null },
       ),
     ).rejects.toThrow(/^422 — You're on approved Annual Leave/);
+  });
+});
+
+describe('Kebijakan tap — GET /attendance-punches/policy (UIC-TIME 0.26 §6.1.4)', () => {
+  const makassar = GEOFENCES.find((row) => row.id === 'geo-3')!;
+
+  it('swafoto dibaca per pilihan dari matriks titik kerja; pilihan awal WFO', async () => {
+    expect(punchPolicy(makassar)).toEqual({
+      profileWorkArrangement: 'WFO',
+      canChoose: true,
+      defaultWorkArrangement: 'WFO',
+      selfieRequiredWfo: false,
+      selfieRequiredWfh: true,
+      selfieRequiredProfile: false,
+    });
+    expect(await attendanceService.punchPolicy({ employeeId: 'emp-budi', role: 'DEPT_MANAGER' })).toMatchObject({
+      selfieRequiredWfo: false,
+      selfieRequiredWfh: true,
+    });
+  });
+
+  it('profil WFH mulai dari WFH; profil MOBILE tak ditawari pilihan dan memakai aturan profilnya', () => {
+    expect(punchPolicy(makassar, 'WFH').defaultWorkArrangement).toBe('WFH');
+    const field = punchPolicy(makassar, 'MOBILE');
+    expect(field.canChoose).toBe(false);
+    expect(field.defaultWorkArrangement).toBeNull();
+    expect(selfieRequiredFor(field, null)).toBe(makassar.rules.MOBILE.selfie);
   });
 });

@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { Camera, CircleCheck, Clock, Info, MapPin, MapPinOff, Palmtree, TriangleAlert } from 'lucide-react';
+import { CircleCheck, Clock, Info, MapPin, MapPinOff, Palmtree, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
-import { distanceMeters, radiusVerdict, selfieRequiredAtTap } from '@/features/attendance/rules';
+import { distanceMeters, radiusVerdict, selfieRequiredFor } from '@/features/attendance/rules';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
 import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/attendance/types';
-import type { Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
+import type { Geofence, Punch, PunchPolicy, TapLocation, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import type { ShiftOn } from '@/features/scheduler/services/scheduler.service';
 import type { TapBlock, TapGate } from '@/features/attendance/tapGate';
@@ -84,8 +84,17 @@ function useLiveLocation(geofence: Geofence) {
  * label satu baris, ESS banyak dibuka di HP yang tak punya hover — dan pola hover + fokus dulu membuat popover
  * terbuka lagi sendiri karena Radix mengembalikan fokus ke tombol saat menutup.
  */
-function TapRules({ geofence }: { geofence: Geofence }) {
+function TapRules({ geofence, policy }: { geofence: Geofence; policy: PunchPolicy | undefined }) {
   const rule = (value: WorkArrangement) => (geofence.rules[value].radius ? `Within ${geofence.radiusMeters} m of the work point` : 'Anywhere');
+  // Profil lapangan tak ditawari pilihan — hanya baris profilnya yang berlaku (UIC-TIME 0.26 §6.1.4).
+  const rows: WorkArrangement[] =
+    policy && !policy.canChoose && policy.profileWorkArrangement ? [policy.profileWorkArrangement] : TAP_ARRANGEMENTS;
+  // Swafoto mengikuti pilihan WFO/WFH (Required matriks Settings), bukan satu flag per lokasi.
+  const selfieRows = rows.filter((value) =>
+    policy ? selfieRequiredFor(policy, policy.canChoose ? value : null) : geofence.rules[value].selfie,
+  );
+  const selfieText =
+    rows.length === 1 || selfieRows.length === rows.length ? 'Required' : `Required for ${selfieRows.join(' and ')}`;
 
   return (
     <Popover>
@@ -103,20 +112,20 @@ function TapRules({ geofence }: { geofence: Geofence }) {
         <p className="m-0 font-body text-[13px] font-bold text-fg-1">Tap in rules</p>
         {/* Setelan per karyawan dibuat tim dev; layar ini hanya membaca hasilnya. */}
         <dl className="m-0 mt-2 grid grid-cols-[56px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
-          {TAP_ARRANGEMENTS.map((value) => (
+          {rows.map((value) => (
             <Fragment key={value}>
               <dt className="font-medium text-fg-3">{value}</dt>
               <dd className="m-0 font-semibold text-fg-1">{rule(value)}</dd>
             </Fragment>
           ))}
-          {selfieRequiredAtTap(geofence) && (
+          {selfieRows.length > 0 && (
             <>
               <dt className="font-medium text-fg-3">Selfie</dt>
-              <dd className="m-0 font-semibold text-fg-1">Required at tap in</dd>
+              <dd className="m-0 font-semibold text-fg-1">{selfieText}</dd>
             </>
           )}
         </dl>
-        {TAP_ARRANGEMENTS.some((value) => geofence.rules[value].radius) && (
+        {rows.some((value) => geofence.rules[value].radius) && (
           <p className="m-0 mt-2.5 border-t border-border-1 pt-2 font-body text-[11.5px] font-medium leading-snug text-fg-3">
             Taps outside the radius are still saved, flagged.
           </p>
@@ -130,7 +139,7 @@ function TapRules({ geofence }: { geofence: Geofence }) {
  * Status lokasi di kepala kartu: satu baris pendek "di mana saya terhadap titik kerja". Nama titik kerja yang
  * panjang dipotong dengan elipsis dan tetap utuh di tooltip serta di popover syarat.
  */
-function LocationStatus({ geofence }: { geofence: Geofence }) {
+function LocationStatus({ geofence, policy }: { geofence: Geofence; policy: PunchPolicy | undefined }) {
   const { state, locate } = useLiveLocation(geofence);
   const checked = geofence.rules.WFO.radius;
   const name = geofence.geofenceName;
@@ -178,7 +187,7 @@ function LocationStatus({ geofence }: { geofence: Geofence }) {
           {state.kind === 'off' ? 'Try again' : 'Check my location'}
         </button>
       )}
-      <TapRules geofence={geofence} />
+      <TapRules geofence={geofence} policy={policy} />
     </div>
   );
 }
@@ -252,7 +261,12 @@ function shiftLabel(
 
 /** Sub-teks tap: tipe kerja, plus peringatan bila tap tercatat di luar radius. */
 function tapSub(punch: Punch) {
-  const type = punch.workArrangement ? ARRANGEMENT_LABEL[punch.workArrangement] : 'Work type not recorded';
+  // Tanpa pilihan (profil lapangan) profil yang menilai; tak terbaca sama sekali = tidak tercatat.
+  const type = punch.workArrangement
+    ? ARRANGEMENT_LABEL[punch.workArrangement]
+    : punch.isWorkArrangementUnknown
+      ? 'Work type not recorded'
+      : 'From your profile';
   if (punch.isWithinGeofence !== false) return type;
   return (
     <>
@@ -294,7 +308,7 @@ export function PunchConsole({
   employeeId,
   workDate,
   geofence,
-  selfieRequired,
+  policy,
   nextType,
   today,
   shift,
@@ -304,7 +318,8 @@ export function PunchConsole({
   employeeId: string;
   workDate: string;
   geofence: Geofence;
-  selfieRequired: boolean;
+  /** Kebijakan tap (UIC-TIME §6.1.4); `undefined` = masih memuat. */
+  policy: PunchPolicy | undefined;
   nextType: 'IN' | 'OUT' | null;
   today: Punch[];
   /** Roster hari ini; `undefined` = masih memuat. */
@@ -343,11 +358,11 @@ export function PunchConsole({
       ? 'Checking whether tap in is open today…'
       : restDay
         ? REST_DAY_HINT[restDay]
-        : nextType === 'IN'
-          ? selfieRequired
-            ? 'Selfie first, then choose WFO or WFH.'
-            : 'Choose WFO or WFH, add a note if needed.'
-          : 'Add a note if needed, then tap out.';
+        : policy?.canChoose === false
+          ? 'Add a note if needed, then tap.'
+          : nextType === 'IN'
+            ? 'Choose WFO or WFH, add a note if needed.'
+            : 'Check WFO or WFH, add a note if needed.';
 
   return (
     <section className="flex flex-col rounded-xl border border-border-1 bg-bg-surface px-5 pt-[18px] shadow-card-sm">
@@ -360,7 +375,7 @@ export function PunchConsole({
               <span className="tabular-nums">{now}</span> WIB
             </p>
           </div>
-          {!checking && <LocationStatus geofence={geofence} />}
+          {!checking && <LocationStatus geofence={geofence} policy={policy} />}
         </header>
       )}
 
@@ -390,7 +405,9 @@ export function PunchConsole({
           <>
             <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
             {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan. */}
-            {nextType && gate !== undefined && <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>}
+            {nextType && gate !== undefined && policy !== undefined && (
+              <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>
+            )}
           </>
         )}
       </footer>
@@ -571,16 +588,17 @@ function distanceFrom(geofence: Geofence, point: { latitude?: number | null; lon
 }
 
 /**
- * Tap in / Tap out dalam satu modal bertahap: Selfie (bila admin mewajibkan) lalu Detail
- * (tipe kerja + catatan). Modal, bukan halaman: karyawan tetap tahu ia masih di tengah absen,
- * dan menutupnya berarti batal tanpa jejak. Semua tombol ada di footer — tanpa gulir di layar 100%.
+ * Tap in / Tap out dalam satu modal bertahap (UIC-TIME 0.26 §6.1.1/§6.1.4): Details lebih dulu (jam, pilihan
+ * WFO/WFH, catatan), lalu Selfie hanya bila baris matriks Settings untuk pilihan itu mewajibkan — tap terkirim
+ * begitu foto dipakai. Tap out menawarkan pilihan yang sama, terisi pilihan tap in. Profil lapangan tak ditawari
+ * pilihan. Modal, bukan halaman: karyawan tetap tahu ia masih di tengah absen, dan menutupnya berarti batal.
  */
 export function TapModal({
   open,
   type,
   geofence,
-  selfieRequired: selfieAtSite,
-  defaultArrangement,
+  policy,
+  tapInArrangement,
   busy,
   onSubmit,
   onClose,
@@ -588,35 +606,40 @@ export function TapModal({
   open: boolean;
   type: 'IN' | 'OUT';
   geofence: Geofence;
-  selfieRequired: boolean;
-  defaultArrangement: WorkArrangement | null;
+  policy: PunchPolicy | undefined;
+  /** Pilihan saat tap in hari ini — jadi pilihan awal tap out. */
+  tapInArrangement: WorkArrangement | null;
   busy: boolean;
   onSubmit: (submission: TapSubmission) => void;
   onClose: () => void;
 }) {
-  // Tap out cukup catatan: tanpa selfie, tanpa tipe kerja (mewarisi tap in).
-  const selfieRequired = type === 'IN' && selfieAtSite;
-  const steps: Step[] = selfieRequired ? ['selfie', 'details'] : ['details'];
-  const [step, setStep] = useState<Step>(steps[0]);
+  const canChoose = policy?.canChoose ?? true;
+  const [step, setStep] = useState<Step>('details');
   const [frame, setFrame] = useState<Frame | null>(null);
   const [arrangement, setArrangement] = useState<WorkArrangement | ''>('');
   const [note, setNote] = useState('');
   const [locating, setLocating] = useState(false);
-  // `selfieRequired` ikut dicek: step bisa masih 'selfie' dari identitas sebelumnya sesaat setelah modal dibuka.
-  const camera = useSelfieCamera(open && selfieRequired && step === 'selfie' && !frame);
+  const choice = canChoose ? arrangement || null : null;
+  const selfieNeeded = policy ? selfieRequiredFor(policy, choice) : false;
+  const steps: Step[] = selfieNeeded ? ['details', 'selfie'] : ['details'];
+  const camera = useSelfieCamera(open && selfieNeeded && step === 'selfie' && !frame);
   const fallback = useMemo(
     () => ({ latitude: geofence.centerLatitude, longitude: geofence.centerLongitude, accuracyMeters: 10 }),
     [geofence.centerLatitude, geofence.centerLongitude],
   );
   const { pending: location, resolved } = useDeviceLocation(open, fallback);
 
+  const initial =
+    type === 'OUT' && tapInArrangement && TAP_ARRANGEMENTS.includes(tapInArrangement)
+      ? tapInArrangement
+      : (policy?.defaultWorkArrangement ?? '');
   useEffect(() => {
     if (!open) return;
-    setStep(selfieRequired ? 'selfie' : 'details');
+    setStep('details');
     setFrame(null);
-    setArrangement(defaultArrangement && TAP_ARRANGEMENTS.includes(defaultArrangement) ? defaultArrangement : '');
+    setArrangement(initial);
     setNote('');
-  }, [open, selfieRequired, defaultArrangement]);
+  }, [open, initial]);
 
   const isIn = type === 'IN';
   const verb = isIn ? 'Tap in' : 'Tap out';
@@ -631,39 +654,44 @@ export function TapModal({
     setLocating(true);
     const coords = await location.current;
     setLocating(false);
+    // Foto hanya dikirim bila pilihan ini mewajibkannya — ganti ke pilihan tanpa swafoto membuang frame.
+    const photo = selfieNeeded ? frame : null;
     onSubmit({
-      selfieCaptured: Boolean(frame),
-      selfieBase64: frame?.dataUrl?.split(',')[1],
-      workArrangement: isIn ? (arrangement as WorkArrangement) : undefined,
+      selfieCaptured: Boolean(photo),
+      selfieBase64: photo?.dataUrl?.split(',')[1],
+      workArrangement: choice ?? undefined,
       note,
       location: coords,
     });
   };
 
   // Peringatan dini: koordinat sudah terbaca dan tipe kerja ini memeriksa radius, tapi posisinya di luar.
-  const checked = isIn ? arrangement || null : null;
-  const outside = Boolean(checked && radiusVerdict(geofence, checked, resolved) === false);
+  const judged = choice ?? policy?.profileWorkArrangement ?? null;
+  const outside = Boolean(judged && radiusVerdict(geofence, judged, resolved) === false);
   const away = resolved ? distanceFrom(geofence, resolved) : null;
 
   const describe = (value: WorkArrangement) => {
-    if (!geofence.rules[value].radius) return "Location radius isn't checked.";
-    return value === 'WFO'
-      ? `Must be within ${geofence.radiusMeters} m of ${geofence.geofenceName}.`
-      : `Must be within ${geofence.radiusMeters} m of the work point.`;
+    const where = geofence.rules[value].radius
+      ? `Within ${geofence.radiusMeters} m of ${value === 'WFO' ? geofence.geofenceName : 'the work point'}`
+      : "Location radius isn't checked";
+    return policy && selfieRequiredFor(policy, value) ? `${where} · Selfie required` : where;
   };
 
+  const sendLabel = saving ? 'Saving…' : verb;
   const footer =
     step === 'selfie' ? (
       <>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
+        <Button variant="secondary" onClick={() => setStep('details')}>
+          Back
         </Button>
         {frame ? (
           <>
             <Button variant="secondary" onClick={() => setFrame(null)}>
               Retake
             </Button>
-            <Button onClick={() => setStep('details')}>Continue</Button>
+            <Button disabled={saving} onClick={submit}>
+              {sendLabel}
+            </Button>
           </>
         ) : camera.error ? (
           // ponytail: jalur pratinjau saja — klien sungguhan hanya menerima frame kamera.
@@ -674,11 +702,11 @@ export function TapModal({
       </>
     ) : (
       <>
-        <Button variant="secondary" onClick={selfieRequired ? () => setStep('selfie') : onClose}>
-          {selfieRequired ? 'Back' : 'Cancel'}
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
         </Button>
-        <Button disabled={(isIn && !arrangement) || saving} onClick={submit}>
-          {saving ? 'Saving…' : verb}
+        <Button disabled={(canChoose && !arrangement) || saving} onClick={selfieNeeded ? () => setStep('selfie') : submit}>
+          {selfieNeeded ? 'Continue' : sendLabel}
         </Button>
       </>
     );
@@ -690,20 +718,30 @@ export function TapModal({
       title={verb}
       description={
         step === 'selfie'
-          ? 'HR requires a selfie at this location.'
-          : isIn
-            ? 'Choose your work type, then tap in.'
-            : 'Add a note if you need to, then tap out.'
+          ? `HR requires a selfie for ${choice ?? 'these'} taps.`
+          : !canChoose
+            ? `Add a note if you need to, then ${verb.toLowerCase()}.`
+            : isIn
+              ? 'Choose where you work, then tap in.'
+              : 'Check where you worked, then tap out.'
       }
       footer={footer}
     >
       <div className="flex flex-col gap-4">
         <StepMarker steps={steps} current={step} />
 
+        {/* Jam yang dicatat = saat tombol tap ditekan (`punch_at`), jadi tampil di setiap langkah. */}
+        <div className="flex items-center gap-3 rounded-md border border-border-1 bg-cloud px-3 py-2.5">
+          <span className="grid size-10 place-items-center rounded-md bg-vapor text-fg-3 [&_svg]:size-4">
+            <Clock />
+          </span>
+          <TapClock label={isIn ? 'Clock-in time' : 'Clock-out time'} />
+        </div>
+
         {step === 'selfie' ? (
           <div className="flex flex-col gap-2">
             {/* Tinggi dibatasi viewport supaya modal + footer muat tanpa gulir di zoom 100%. */}
-            <div className="relative mx-auto flex aspect-[4/3] max-h-[44vh] w-full items-center justify-center overflow-hidden rounded-xl bg-obsidian">
+            <div className="relative mx-auto flex aspect-[4/3] max-h-[40vh] w-full items-center justify-center overflow-hidden rounded-xl bg-obsidian">
               {frame?.dataUrl ? (
                 <img src={frame.dataUrl} alt="Captured selfie" className="size-full object-cover" />
               ) : frame ? (
@@ -718,29 +756,17 @@ export function TapModal({
               )}
             </div>
             <span className="font-body text-xs font-medium text-fg-3">
-              {frame ? 'Looks good? Continue, or retake.' : 'Face the camera in good light. Live camera only.'}
+              {frame ? `Looks good? ${verb}, or retake.` : 'Face the camera in good light. Live camera only.'}
             </span>
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 rounded-md border border-border-1 bg-cloud px-3 py-2.5">
-              {selfieRequired && frame?.dataUrl ? (
-                <img src={frame.dataUrl} alt="Your selfie" className="size-10 rounded-md object-cover" />
-              ) : (
-                <span className="grid size-10 place-items-center rounded-md bg-vapor text-fg-3 [&_svg]:size-4">
-                  {selfieRequired ? <Camera /> : <Clock />}
-                </span>
-              )}
-              <TapClock label={isIn ? 'Clock-in time' : 'Clock-out time'} />
-            </div>
-
-            {isIn && (
-            <div className="flex flex-col gap-2">
-              <Label>
-                Work type
-                {isIn && <span className="ml-0.5 text-error-500">*</span>}
-              </Label>
-              {isIn ? (
+            {canChoose ? (
+              <div className="flex flex-col gap-2">
+                <Label>
+                  Work type
+                  <span className="ml-0.5 text-error-500">*</span>
+                </Label>
                 <RadioBranch<WorkArrangement>
                   name="work-type"
                   value={arrangement as WorkArrangement}
@@ -751,8 +777,16 @@ export function TapModal({
                     description: describe(value),
                   }))}
                 />
-              ) : null}
-            </div>
+              </div>
+            ) : (
+              policy?.profileWorkArrangement && (
+                <div className="flex flex-col gap-1">
+                  <Label>Work type</Label>
+                  <span className="font-body text-[13px] font-medium text-fg-2">
+                    {ARRANGEMENT_LABEL[policy.profileWorkArrangement]} — set on your profile
+                  </span>
+                </div>
+              )
             )}
 
             {outside && (

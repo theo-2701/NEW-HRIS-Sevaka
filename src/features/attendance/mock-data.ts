@@ -22,7 +22,7 @@ export const VIEWERS: AttendanceSession[] = [
   { employeeId: 'emp-rina', role: 'EMPLOYEE' },
   { employeeId: 'emp-sari', role: 'HR_STAFF' },
   { employeeId: 'emp-hendra', role: 'HR_MANAGER' },
-  // Cabang Makassar (geo-3) tanpa selfie — memperlihatkan tap yang langsung ke langkah tipe kerja.
+  // Cabang Makassar (geo-3): WFO cukup radius tanpa selfie, WFH wajib selfie — swafoto mengikuti pilihan (UIC 0.26).
   { employeeId: 'emp-budi', role: 'DEPT_MANAGER' },
   // Kantor Cabang Bandung (geo-4): tanpa radius dan tanpa selfie — jalur tap yang selalu berhasil.
   { employeeId: 'emp-dewi', role: 'EMPLOYEE' },
@@ -74,11 +74,11 @@ export const GEOFENCES: Geofence[] = [
     radiusMeters: 100,
     isActive: true,
     usedByPunch: false,
-    // Setelan admin contoh: cabang ini cukup radius, tanpa selfie.
+    // Setelan admin contoh: di kantor cukup radius; dari rumah lokasi tak dicek, jadi swafoto yang membuktikan orangnya.
     rules: ALL_ARRANGEMENTS({
       WFO: { radius: true, selfie: false },
       HYBRID: { radius: true, selfie: false },
-      WFH: { radius: false, selfie: false },
+      WFH: { radius: false, selfie: true },
       MOBILE: { radius: false, selfie: false },
     }),
   },

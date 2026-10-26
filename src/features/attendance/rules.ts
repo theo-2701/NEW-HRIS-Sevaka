@@ -8,11 +8,11 @@ import type {
   Correction,
   Geofence,
   Punch,
+  PunchPolicy,
   PunchType,
   TapLocation,
   WorkArrangement,
 } from '@/features/attendance/types';
-import { TAP_ARRANGEMENTS } from '@/features/attendance/types';
 
 /**
  * Aturan murni Attendance — tidak menyentuh jaringan, jadi bisa diuji apa
@@ -32,13 +32,40 @@ export function resolveGeofence(employeeId: string) {
 }
 
 /**
- * Selfie diminta di awal tap in, SEBELUM tipe kerja dipilih. Keputusan tim dev (23 Okt 2026):
- * setelan selfie TIDAK dipisah per WFO/WFH dan akan diatur per karyawan — layar cukup membaca satu
- * flag "wajib selfie". Selama setelan itu belum ada, flag diturunkan dari matriks titik kerja.
+ * Kebijakan tap (UIC-TIME 0.26 §6.1.4) versi mode dummy: diturunkan dari matriks titik kerja cabang +
+ * status kerja profil. Profil `MOBILE` tak ditawari pilihan; profil WFH ⇒ pilihan awal WFH, selain itu WFO.
  */
-export function selfieRequiredAtTap(geofence: Geofence): boolean {
-  return TAP_ARRANGEMENTS.some((arrangement) => geofence.rules[arrangement]?.selfie);
+export function punchPolicy(geofence: Geofence, profile: WorkArrangement = 'WFO'): PunchPolicy {
+  const canChoose = profile !== 'MOBILE';
+  return {
+    profileWorkArrangement: profile,
+    canChoose,
+    defaultWorkArrangement: canChoose ? (profile === 'WFH' ? 'WFH' : 'WFO') : null,
+    selfieRequiredWfo: geofence.rules.WFO.selfie,
+    selfieRequiredWfh: geofence.rules.WFH.selfie,
+    selfieRequiredProfile: geofence.rules[profile].selfie,
+  };
 }
+
+/** Swafoto wajib untuk pilihan ini; tanpa pilihan (profil lapangan) aturan profil yang berlaku. */
+export function selfieRequiredFor(policy: PunchPolicy, arrangement: WorkArrangement | null): boolean {
+  if (arrangement === 'WFO') return policy.selfieRequiredWfo;
+  if (arrangement === 'WFH') return policy.selfieRequiredWfh;
+  return policy.selfieRequiredProfile;
+}
+
+/**
+ * Kebijakan gagal dibaca (`403`, server lama) ⇒ perilaku lama (UIC §6.1.4): pilihan WFO/WFH tetap ada,
+ * swafoto tidak diminta layar dan server yang memutus lewat `422`.
+ */
+export const LEGACY_PUNCH_POLICY: PunchPolicy = {
+  profileWorkArrangement: null,
+  canChoose: true,
+  defaultWorkArrangement: 'WFO',
+  selfieRequiredWfo: false,
+  selfieRequiredWfh: false,
+  selfieRequiredProfile: false,
+};
 
 /** Jarak dua titik (haversine), meter. */
 export function distanceMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {

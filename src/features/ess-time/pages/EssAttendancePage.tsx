@@ -9,14 +9,12 @@ import { usePagedRows } from '@/hooks/usePagedRows';
 import { EssActorPicker } from '@/features/ess-time/components/EssActorPicker';
 import { PunchConsole, PunchSavedModal, TapModal } from '@/features/attendance/components/PunchConsole';
 import type { TapSubmission } from '@/features/attendance/components/PunchConsole';
-import { useRecordPunch, useShiftToday, useTapGate } from '@/features/attendance/hooks/useAttendance';
+import { usePunchPolicy, useRecordPunch, useShiftToday, useTapGate } from '@/features/attendance/hooks/useAttendance';
 import { AttendanceStatusReference } from '@/features/attendance/components/StatusReference';
 import {
-  arrangementToday,
   newIdempotencyKey,
   nextPunchType,
   resolveGeofence,
-  selfieRequiredAtTap,
 } from '@/features/attendance/rules';
 import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
@@ -61,9 +59,8 @@ export function EssAttendancePage() {
   const [legendOpen, setLegendOpen] = useState(false);
 
   const today = punches.data ?? [];
-  const allDays = days.data ?? [];
   const geofence = resolveGeofence(session.employeeId);
-  const selfieRequired = selfieRequiredAtTap(geofence);
+  const policy = usePunchPolicy(session);
   const nextType = nextPunchType(session.employeeId, today);
   const { data: shiftToday } = useShiftToday(session.employeeId);
   const { data: gateToday } = useTapGate(session.employeeId);
@@ -105,7 +102,7 @@ export function EssAttendancePage() {
               employeeId={session.employeeId}
               workDate={ATTENDANCE_TODAY}
               geofence={geofence}
-              selfieRequired={selfieRequired}
+              policy={policy}
               nextType={nextType}
               today={today}
               shift={shiftToday}
@@ -175,8 +172,8 @@ export function EssAttendancePage() {
           open={Boolean(tapKey)}
           type={nextType}
           geofence={geofence}
-          selfieRequired={selfieRequired}
-          defaultArrangement={arrangementToday(session.employeeId, allDays)}
+          policy={policy}
+          tapInArrangement={today.find((row) => row.punchType === 'IN')?.workArrangement ?? null}
           busy={punch.isPending}
           onSubmit={doPunch}
           onClose={() => setTapKey(null)}

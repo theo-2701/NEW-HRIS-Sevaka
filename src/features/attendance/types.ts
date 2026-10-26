@@ -96,8 +96,22 @@ export interface Punch {
   gpsAccuracyMeters?: number | null;
 }
 
-/** Pilihan tipe kerja di form tap — permintaan tambahan Attendance (WFO/WFH saja). */
+/** Pilihan tipe kerja di form tap — UIC-TIME 0.26 §6.1.1 `work_arrangement` (WFO/WFH saja; HYBRID/MOBILE `422`). */
 export const TAP_ARRANGEMENTS: WorkArrangement[] = ['WFO', 'WFH'];
+
+/**
+ * Kebijakan tap pemanggil sendiri — UIC-TIME 0.26 §6.1.4 `GET /attendance-punches/policy`, dibaca sebelum tap.
+ * Swafoto mengikuti kolom Required matriks titik kerja untuk pilihan WFO/WFH; profil `MOBILE` tak ditawari
+ * pilihan dan memakai aturan profilnya.
+ */
+export interface PunchPolicy {
+  profileWorkArrangement: WorkArrangement | null;
+  canChoose: boolean;
+  defaultWorkArrangement: 'WFO' | 'WFH' | null;
+  selfieRequiredWfo: boolean;
+  selfieRequiredWfh: boolean;
+  selfieRequiredProfile: boolean;
+}
 
 export const PUNCH_NOTE_MAX = 500;
 

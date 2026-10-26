@@ -55,17 +55,16 @@ import {
   useRecordPunch,
   useShiftToday,
   useTapGate,
+  usePunchPolicy,
   useTapHistory,
   useTodayPunches,
 } from '@/features/attendance/hooks/useAttendance';
 import { ATTENDANCE_TODAY, VIEWERS, employeeName } from '@/features/attendance/mock-data';
 import {
-  arrangementToday,
   eligibleDays,
   newIdempotencyKey,
   nextPunchType,
   resolveGeofence,
-  selfieRequiredAtTap,
 } from '@/features/attendance/rules';
 import {
   ARRANGEMENT_LABEL,
@@ -158,7 +157,7 @@ export function AttendancePage() {
 
   const punch = useRecordPunch(session);
   const geofence = resolveGeofence(session.employeeId);
-  const selfieRequired = selfieRequiredAtTap(geofence);
+  const policy = usePunchPolicy(session);
   const next = nextPunchType(session.employeeId, today);
   const { data: shiftToday } = useShiftToday(session.employeeId);
   const { data: gateToday } = useTapGate(session.employeeId);
@@ -272,7 +271,7 @@ export function AttendancePage() {
               employeeId={session.employeeId}
               workDate={ATTENDANCE_TODAY}
               geofence={geofence}
-              selfieRequired={selfieRequired}
+              policy={policy}
               nextType={next}
               today={today}
               shift={shiftToday}
@@ -609,8 +608,8 @@ export function AttendancePage() {
           open={Boolean(tapKey)}
           type={next}
           geofence={geofence}
-          selfieRequired={selfieRequired}
-          defaultArrangement={arrangementToday(session.employeeId, allDays)}
+          policy={policy}
+          tapInArrangement={today.find((row) => row.punchType === 'IN')?.workArrangement ?? null}
           busy={punch.isPending}
           onSubmit={doPunch}
           onClose={() => setTapKey(null)}
