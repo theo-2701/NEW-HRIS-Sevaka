@@ -12,6 +12,8 @@ export interface ServiceCode {
 
 const SERVICE_BY_PREFIX: [prefix: string, service: ServiceCode][] = [
   ['/auth', { code: '301', name: 'Auth service' }],
+  // Pembaca log sistem milik auth-service (UIC-AUTH 0.28 §8A).
+  ['/company-management/system-log', { code: '301', name: 'Auth service' }],
   ['/company', { code: '302', name: 'Company service' }],
   ['/employees', { code: '303', name: 'Employee Directory service' }],
   ['/me/profile', { code: '304', name: 'Employee Profile service' }],

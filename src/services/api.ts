@@ -46,7 +46,7 @@ export function expireSession() {
   if (sessionExpiring) return;
   sessionExpiring = true;
   // Tetap toast (bukan modal hasil): layar dialihkan ke login sendiri setelah jeda.
-  toast('Sesi berakhir, silakan masuk lagi', 'warn');
+  toast('Your session ended. Please sign in again.', 'warn');
   setTimeout(() => {
     useAuthStore.getState().clear();
     sessionExpiring = false;

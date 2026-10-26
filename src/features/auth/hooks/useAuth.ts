@@ -6,6 +6,7 @@ import { ApiError } from '@/services/api';
 import { useAuthFlowStore } from '@/features/auth/store/authFlow.store';
 import { useAuthStore } from '@/store/auth.store';
 import { toast } from '@/store/ui.store';
+import { clearReturnPath, takeReturnPath } from '@/lib/returnPath';
 import type {
   LoginEmailPayload,
   LoginUsernamePayload,
@@ -58,7 +59,7 @@ export function useLoginWhatsapp() {
   });
 }
 
-/** Menyimpan sesi lalu masuk ke dashboard. */
+/** Menyimpan sesi lalu masuk ke alamat asal (bila ada, FSD-AUTH 0.21 §2) atau dashboard. */
 function useCompleteSession() {
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
@@ -67,7 +68,7 @@ function useCompleteSession() {
   return (session: SessionResponse) => {
     setSession(session);
     reset();
-    navigate('/', { replace: true });
+    navigate(takeReturnPath() ?? '/', { replace: true });
   };
 }
 
@@ -128,12 +129,15 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => authService.logout(useAuthStore.getState().user?.id ?? ''),
     onSuccess: () => {
-      clear();
+      // Pindah dulu, baru hapus sesi: penjaga rute tidak sempat menyimpan halaman ini sebagai alamat asal, dan
+      // alamat lama dibuang — login berikutnya (mungkin orang lain) mendarat di beranda (FSD-AUTH 0.21 §2).
       navigate('/auth/login');
+      clear();
+      clearReturnPath();
     },
     onError: () =>
       toast(
-        'Sesi belum ditutup di server, jadi Anda masih masuk. Coba tekan Keluar sekali lagi; kalau tetap gagal, jangan tinggalkan perangkat ini dalam keadaan masuk.',
+        "Your session wasn't closed on the server, so you're still signed in. Press Log out again; if it still fails, don't leave this device signed in.",
         'danger',
       ),
   });

@@ -428,6 +428,15 @@ export const NAV: NavSection[] = [
           { label: 'Document Templates', path: '/company-management/files/templates', source: 'document-templates.html', status: 'done' },
         ],
       },
+      {
+        label: 'System Log',
+        icon: 'scroll-text',
+        note: 'FSD-AUTH 0.22 §7A/§7B — Super Admin saja; anak diurut A→Z (Error Code sebelum Trace ID).',
+        children: [
+          { label: 'Error Code', path: '/company-management/system-log/error-code', status: 'done' },
+          { label: 'Trace ID', path: '/company-management/system-log/trace-id', status: 'done' },
+        ],
+      },
     ],
   },
 

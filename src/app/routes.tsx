@@ -37,6 +37,8 @@ import { CostCenterPage } from '@/features/company/pages/CostCenterPage';
 import { SbuPage } from '@/features/company/pages/SbuPage';
 import { VendorPage } from '@/features/company/pages/VendorPage';
 import { ActivityLogPage } from '@/features/activity-log/pages/ActivityLogPage';
+import { SystemLogErrorCodePage } from '@/features/system-log/pages/SystemLogErrorCodePage';
+import { SystemLogTracePage } from '@/features/system-log/pages/SystemLogTracePage';
 import { NotificationInboxPage } from '@/features/notification/pages/NotificationInboxPage';
 import {
   CompanyFilesPage,
@@ -215,6 +217,8 @@ const IMPLEMENTED: RouteObject[] = [
   /* Asset Detail tidak punya baris menu — dibuka dari baris Asset List / Assigned Assets. */
   { path: 'company-management/assets/detail', element: <AssetDetailPage /> },
   { path: 'company-management/activity-log', element: <ActivityLogPage /> },
+  { path: 'company-management/system-log/trace-id', element: <SystemLogTracePage /> },
+  { path: 'company-management/system-log/error-code', element: <SystemLogErrorCodePage /> },
   { path: 'company-management/notifications', element: <NotificationInboxPage /> },
   { path: 'company-management/files/company', element: <CompanyFilesPage /> },
   { path: 'company-management/files/employee', element: <EmployeeFilesPage /> },
@@ -356,6 +360,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/company-management/assets/disposal',
   '/company-management/assets/detail',
   '/company-management/activity-log',
+  '/company-management/system-log/trace-id',
+  '/company-management/system-log/error-code',
   '/company-management/notifications',
   '/company-management/files/company',
   '/company-management/files/employee',
