@@ -26,7 +26,7 @@ beforeEach(() => {
 afterEach(() => resetApprovalMocks());
 
 describe('Antrean persetujuan (P4.04)', () => {
-  it('identitas penyetuju dari token; HRS & EMP tanpa antrean', async () => {
+  it('identitas penyetuju dari token; HRS tanpa antrean, EMP bukan penyetuju = antrean kosong (FSD 0.25)', async () => {
     await expect(approvalService.pending(RINA, page)).resolves.toMatchObject({ totalData: 0 });
     await submitDedi();
     const queue = await approvalService.pending(RINA, page);
@@ -40,7 +40,7 @@ describe('Antrean persetujuan (P4.04)', () => {
     });
     await expect(approvalService.pending(BUDI, page)).resolves.toMatchObject({ totalData: 0 });
     await expect(approvalService.pending(LUKMAN, page)).rejects.toMatchObject({ status: 403 });
-    await expect(approvalService.pending(DEDI, page)).rejects.toMatchObject({ status: 403 });
+    await expect(approvalService.pending(DEDI, page)).resolves.toMatchObject({ totalData: 0 });
   });
 });
 

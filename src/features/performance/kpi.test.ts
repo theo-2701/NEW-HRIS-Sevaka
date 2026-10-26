@@ -21,11 +21,11 @@ const DRAFT: KpiDraft = {
 beforeEach(() => resetKpiMocks());
 
 describe('Daftar Induk & Bobot — akses (FSD Matriks Menu/Tab → Peran)', () => {
-  it('HRM/HRS/DM boleh membaca; Employee nol akses', async () => {
+  it('HRM/HRS/DM boleh membaca; Employee lewat pemilih baris lembar yang ia nilai (FSD 0.25)', async () => {
     await expect(kpiService.search(HRS, { page: 1, size: 50 })).resolves.toMatchObject({ totalData: 6 });
     await expect(kpiService.search(DM, { page: 1, size: 50 })).resolves.toMatchObject({ totalData: 6 });
-    await expect(kpiService.search(EMP, { page: 1, size: 50 })).rejects.toMatchObject({ status: 403 });
-    await expect(kpiService.jobGrades(EMP)).rejects.toMatchObject({ status: 403 });
+    await expect(kpiService.search(EMP, { page: 1, size: 50 })).resolves.toMatchObject({ totalData: 6 });
+    await expect(kpiService.jobGrades(EMP)).resolves.not.toHaveLength(0);
   });
 
   it('HR Staff baca saja — buat, ubah, dan nonaktifkan ditolak 403', async () => {

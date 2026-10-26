@@ -22,13 +22,14 @@ beforeEach(() => {
 });
 
 describe('Lembar Penilaian — rezim baca PF-10', () => {
-  it('DM hanya lembar yang ia nilai; HR bercakupan ALL; EMP tanpa daftar', async () => {
+  it('DM & EMP hanya lembar yang ia nilai; HR bercakupan ALL (FSD 0.25)', async () => {
     const budi = await sheetService.search(BUDI, { dataScope: 'ALL', page: 1, size: 20 });
     expect(budi.rows.map((row) => row.id).sort()).toEqual(['rs-0001', 'rs-0004']);
     await expect(sheetService.search(LUKMAN, { dataScope: 'ALL', page: 1, size: 20 })).resolves.toMatchObject({ totalData: 4 });
     const mine = await sheetService.search(HESTI, { dataScope: 'ASSESSOR', page: 1, size: 20 });
     expect(mine.rows.map((row) => row.id)).toEqual(['rs-0003']);
-    await expect(sheetService.search(DEDI, { dataScope: 'ASSESSOR', page: 1, size: 20 })).rejects.toMatchObject({ status: 403 });
+    // Karyawan bukan penilai: antrean kosong, bukan 403.
+    await expect(sheetService.search(DEDI, { dataScope: 'ASSESSOR', page: 1, size: 20 })).resolves.toMatchObject({ totalData: 0 });
   });
 
   it('detail: rantai di atas penilai boleh membaca, orang lain 404 anti-enumerasi', async () => {

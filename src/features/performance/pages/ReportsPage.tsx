@@ -5,7 +5,7 @@ import { AccessLogPanel } from '@/features/performance/components/AccessLogPanel
 import { HrReportsPanel } from '@/features/performance/components/HrReportsPanel';
 import { ReviewHistoryPanel, SignalBoardPanel } from '@/features/performance/components/MonitorPanels';
 import { NoAccess, PerfActorPicker } from '@/features/performance/components/PerfBits';
-import { canReadAccessLog, canReadHrReports, canReadOthersBoard, hasOwnBoard } from '@/features/performance/rules';
+import { canReadAccessLog, canReadHrReports, canReadOthersBoard, hasOwnBoard, readsOwnReports } from '@/features/performance/rules';
 import { usePerfActor } from '@/features/performance/store/perfActor.store';
 import type { PerfRole } from '@/features/performance/types';
 
@@ -24,7 +24,7 @@ export function ReportsPage() {
   const faces = [
     ...(readsBoards ? [{ value: 'board' as const, label: 'Papan pantau' }] : []),
     ...(readsBoards ? [{ value: 'history' as const, label: 'Riwayat beku' }] : []),
-    ...(isSuper(role) || canReadHrReports(role) || role === 'ROLE_DEPT_MANAGER'
+    ...(isSuper(role) || canReadHrReports(role) || readsOwnReports(role)
       ? [{ value: 'reports' as const, label: 'Laporan HR' }]
       : []),
     ...(isSuper(role) || canReadAccessLog(role) ? [{ value: 'access' as const, label: 'Jejak akses' }] : []),

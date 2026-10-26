@@ -22,6 +22,7 @@ import {
   canReadHrReports,
   canReadManagerReports,
   canReadOthersBoard,
+  readsOwnReports,
   hasOwnBoard,
 } from '@/features/performance/rules';
 import type {
@@ -92,10 +93,15 @@ function chainBelow(supervisorId: string): string[] {
   return below;
 }
 
-/** Hak baca orang lain: HR seluruh company, atasan pada rantai; selebihnya 404 anti-enumerasi. */
+/** Karyawan yang lembarnya dipegang pemanggil (penilai pemegang, termasuk hasil alih `KV-4`). */
+const heldBy = (actorId: string) =>
+  [...new Set(sheetStore.all().filter((sheet) => sheet.assessorId === actorId).map((sheet) => sheet.employeeId))];
+
+/** Hak baca orang lain: HR seluruh company, atasan pada rantai, karyawan penilai pemegang; selebihnya 404. */
 function canReadOther(actor: PerfActor, employeeId: string) {
   if (actor.employeeId === employeeId) return false;
   if (isHr(actor)) return true;
+  if (actor.role === 'ROLE_EMPLOYEE') return heldBy(actor.employeeId).includes(employeeId);
   return actor.role === 'ROLE_DEPT_MANAGER' && chainBelow(actor.employeeId).includes(employeeId);
 }
 
@@ -188,7 +194,9 @@ export const monitorService = {
       ? Object.keys(SIGNAL_SEED)
       : actor.role === 'ROLE_DEPT_MANAGER'
         ? chainBelow(actor.employeeId)
-        : [];
+        : actor.role === 'ROLE_EMPLOYEE'
+          ? heldBy(actor.employeeId)
+          : [];
     return ids
       .filter((id) => id !== actor.employeeId)
       .map((id) => ({ employeeId: id, name: PERF_DIRECTORY[id] ?? id }))
@@ -300,7 +308,8 @@ export const monitorService = {
       return report('task-distribution', { review_period_id: periodId, supervisor_employee_id: supervisorId });
     }
     await delay();
-    const dm = actor.role === 'ROLE_DEPT_MANAGER';
+    // I1 ter-scope ke dirinya bagi atasan dan karyawan penilai (FSD 0.25).
+    const dm = readsOwnReports(actor.role);
     if (!isHr(actor) && !dm) throw forbidden();
     if (dm && supervisorId && supervisorId !== actor.employeeId) throw notFound();
     const target = dm ? actor.employeeId : supervisorId;
@@ -408,7 +417,7 @@ export const monitorService = {
     if (!MOCK) return report('pending-objections', { holder_employee_id: holderId });
     await delay();
     const holder = isHr(actor) ? holderId : holderId ?? actor.employeeId;
-    if (!isHr(actor) && (actor.role !== 'ROLE_DEPT_MANAGER' || holder !== actor.employeeId)) throw forbidden();
+    if (!isHr(actor) && (!readsOwnReports(actor.role) || holder !== actor.employeeId)) throw forbidden();
     const now = Date.now();
     return objectionStore
       .all()

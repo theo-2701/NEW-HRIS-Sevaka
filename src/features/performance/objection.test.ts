@@ -20,13 +20,14 @@ beforeEach(() => {
 });
 
 describe('Rezim baca berjenjang (P5.02–P5.04)', () => {
-  it('DM hanya sanggahan yang dibebankan kepadanya; HR company-wide; EMP tanpa grid', async () => {
+  it('DM & EMP hanya sanggahan yang dibebankan kepadanya; HR company-wide (FSD 0.25)', async () => {
     const rina = await objectionService.search(RINA, { ...page, holderEmployeeId: 'emp-hesti' });
     expect(rina.rows.map((row) => row.id).sort()).toEqual(['obj-0001', 'obj-0002']);
     await expect(objectionService.search(BUDI, page)).resolves.toMatchObject({ totalData: 0 });
     const hr = await objectionService.search(LUKMAN, { ...page, status: 'SUBMITTED' });
     expect(hr.rows.map((row) => row.id)).toEqual(['obj-0001']);
-    await expect(objectionService.search(DEDI, page)).rejects.toMatchObject({ status: 403 });
+    // Karyawan bukan pemikul: daftar kosong, bukan 403 — server menyaring per hubungan.
+    await expect(objectionService.search(DEDI, page)).resolves.toMatchObject({ totalData: 0 });
   });
 
   it('detail: pengaju, pemikul, dan HR; lainnya 404', async () => {

@@ -19,7 +19,7 @@ import {
 } from '@/features/performance/hooks/useMonitor';
 import { usePeriods } from '@/features/performance/hooks/usePeriods';
 import { useSheets } from '@/features/performance/hooks/useSheets';
-import { canReadHrReports, canReadManagerReports } from '@/features/performance/rules';
+import { canReadHrReports, canReadManagerReports, readsOwnReports } from '@/features/performance/rules';
 import {
   ELIGIBILITY_REASON_LABEL,
   type PerfActor,
@@ -56,7 +56,7 @@ const DESCRIPTION: Record<ReportKey, string> = {
 const visible = (role: PerfRole, audience: Audience) => {
   if (role === 'ROLE_SUPER_ADMIN' || canReadManagerReports(role)) return true;
   if (canReadHrReports(role)) return audience !== 'manager';
-  return role === 'ROLE_DEPT_MANAGER' && audience === 'dm';
+  return readsOwnReports(role) && audience === 'dm';
 };
 
 const percent = (value: number) => `${value.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
@@ -270,7 +270,7 @@ export function HrReportsPanel({ actor }: { actor: PerfActor }) {
   const hr = canReadHrReports(actor.role) || actor.role === 'ROLE_SUPER_ADMIN';
   const periods = usePeriods(actor, { page: 1, size: 50 }, hr);
   /* DM tidak berhak grid periode (#3) — periodenya diambil dari lembar yang ia nilai (`P3.02`). */
-  const ownSheets = useSheets(actor, { dataScope: 'ASSESSOR', page: 1, size: 1 }, !hr && actor.role === 'ROLE_DEPT_MANAGER');
+  const ownSheets = useSheets(actor, { dataScope: 'ASSESSOR', page: 1, size: 1 }, !hr && readsOwnReports(actor.role));
   const [periodPick, setPeriodPick] = useState('');
   const periodId = hr
     ? periodPick || periods.data?.rows.find((row) => row.phase !== 'CLOSED')?.id || periods.data?.rows[0]?.id || ''

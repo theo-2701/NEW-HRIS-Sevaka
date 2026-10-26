@@ -3,7 +3,7 @@ import { MOCK } from '@/services/mock';
 import { companyService } from '@/features/company/services/company.service';
 import { KPI_SEED, KPI_USAGE } from '@/features/performance/mock-data';
 import { delay, uuidV7 } from '@/features/performance/services/ids';
-import { canReadKpi, canWriteKpi } from '@/features/performance/rules';
+import { canPickKpi, canWriteKpi } from '@/features/performance/rules';
 import type {
   JobGradeOption,
   KpiDraft,
@@ -114,7 +114,7 @@ export const kpiService = {
   async search(actor: PerfActor, query: KpiSearch): Promise<{ rows: KpiItem[]; totalData: number }> {
     if (MOCK) {
       await delay();
-      if (!canReadKpi(actor.role)) throw new ApiError('Peran Anda tidak berhak atas daftar induk.', 403, 'FORBIDDEN');
+      if (!canPickKpi(actor.role)) throw new ApiError('Peran Anda tidak berhak atas daftar induk.', 403, 'FORBIDDEN');
       const by = query.sortBy ?? 'created_at';
       const dir = query.sortDirection === 'ASC' ? 1 : -1;
       const rows = store
@@ -146,7 +146,7 @@ export const kpiService = {
   async get(actor: PerfActor, id: string): Promise<KpiItemDetail> {
     if (MOCK) {
       await delay(150);
-      if (!canReadKpi(actor.role)) throw new ApiError('Peran Anda tidak berhak atas daftar induk.', 403, 'FORBIDDEN');
+      if (!canPickKpi(actor.role)) throw new ApiError('Peran Anda tidak berhak atas daftar induk.', 403, 'FORBIDDEN');
       return { ...strip(live(id)), usedInSheetCount: KPI_USAGE[id] ?? 0 };
     }
     const { data } = await api.get<RawKpi>(`/performance/kpi-items/${id}`);
@@ -229,7 +229,7 @@ export const kpiService = {
   async jobGrades(actor: PerfActor): Promise<JobGradeOption[]> {
     if (MOCK) {
       await delay(100);
-      if (!canReadKpi(actor.role)) throw new ApiError('Peran Anda tidak berhak atas daftar golongan.', 403, 'FORBIDDEN');
+      if (!canPickKpi(actor.role)) throw new ApiError('Peran Anda tidak berhak atas daftar golongan.', 403, 'FORBIDDEN');
       return (await companyService.jobGrades())
         .map((row) => ({ id: row.id, name: row.name }))
         .sort((a, b) => a.name.localeCompare(b.name, 'id'));

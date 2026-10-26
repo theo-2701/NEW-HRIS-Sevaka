@@ -86,7 +86,8 @@ function chainAbove(assessorId: string): string[] {
 function canRead(actor: PerfActor, sheet: SheetSeed): boolean {
   if (actor.role === 'ROLE_SUPER_ADMIN' || canScopeAllSheets(actor.role)) return true;
   if (actor.role === 'ROLE_DEPT_MANAGER') return isHolder(actor, sheet) || chainAbove(sheet.assessorId).includes(actor.employeeId);
-  return isOwner(actor, sheet);
+  // FSD 0.25: karyawan penilai/pemikul hasil alih membaca lembar yang ia pegang, selain lembarnya sendiri.
+  return isOwner(actor, sheet) || isHolder(actor, sheet);
 }
 
 const anyInitial = (sheet: SheetSeed) => live(sheet).some((row) => row.initialValueRecordedAt);
