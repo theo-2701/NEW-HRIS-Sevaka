@@ -31,6 +31,17 @@ const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let mockRows: OncallAssignment[] = ONCALL.map((row) => ({ ...row }));
 
+/** Mode dummy: roster siaga yang sudah disetujui menyentuh `date` — panggilan dideteksi dari tap (K40). */
+export function oncallOn(employeeId: string, date: string): boolean {
+  return mockRows.some(
+    (row) =>
+      row.employeeId === employeeId &&
+      (row.oncallStatus === 'SCHEDULED' || row.oncallStatus === 'ACTIVATED') &&
+      row.standbyStartAt.slice(0, 10) <= date &&
+      date <= row.standbyEndAt.slice(0, 10),
+  );
+}
+
 export function resetOncallMocks() {
   mockRows = ONCALL.map((row) => ({ ...row }));
 }

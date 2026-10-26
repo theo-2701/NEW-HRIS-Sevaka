@@ -89,6 +89,21 @@ function writeLedger(row: LeaveRequest, source: 'LEAVE_TAKEN' | 'LEAVE_REVERSED'
   });
 }
 
+/**
+ * Mode dummy: cuti yang sudah disetujui (APPROVED/AUTO_APPROVED) pada `date`. Dibaca gerbang tap Attendance —
+ * karyawan yang cuti seharian tidak dapat tap in (keputusan Theo, 26 Okt 2026).
+ */
+export function approvedLeaveOn(employeeId: string, date: string): { leaveTypeName: string; daySession: LeaveRequest['daySession'] } | null {
+  const row = mockRequests.find(
+    (item) =>
+      item.employeeId === employeeId &&
+      (item.status === 'APPROVED' || item.status === 'AUTO_APPROVED') &&
+      item.startDate <= date &&
+      date <= item.endDate,
+  );
+  return row ? { leaveTypeName: leaveTypeOf(row.leaveTypeId)?.name ?? 'Time off', daySession: row.daySession } : null;
+}
+
 export const timeOffService = {
   async leaveTypes(): Promise<LeaveType[]> {
     if (MOCK) {

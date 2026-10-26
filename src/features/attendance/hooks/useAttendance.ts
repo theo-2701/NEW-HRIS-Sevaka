@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { tapGate } from '@/features/attendance/tapGate';
 import { attendanceService } from '@/features/attendance/services/attendance.service';
 import { canSearchPunch } from '@/features/attendance/types';
 import { ATTENDANCE_TODAY } from '@/features/attendance/mock-data';
@@ -46,6 +47,14 @@ export function useTapHistory(session: AttendanceSession, filter: TapFilter) {
 }
 
 /** Shift hari ini dari roster Scheduler — kolom Shift di kartu tap. */
+/** Gerbang tap in hari ini: cuti seharian atau hari libur roster (lihat `tapGate`). */
+export function useTapGate(employeeId: string) {
+  return useQuery({
+    queryKey: ['attendance', 'gate', employeeId, ATTENDANCE_TODAY],
+    queryFn: () => tapGate(employeeId, ATTENDANCE_TODAY),
+  });
+}
+
 export function useShiftToday(employeeId: string) {
   return useQuery({
     queryKey: ['attendance', 'shift', employeeId, ATTENDANCE_TODAY],

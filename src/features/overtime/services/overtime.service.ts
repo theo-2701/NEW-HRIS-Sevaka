@@ -38,6 +38,13 @@ const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 let mockRequests: OvertimeRequest[] = OT_REQUESTS.map((row) => ({ ...row }));
 let mockDaily: OvertimeDaily[] = OT_DAILY.map((row) => ({ ...row }));
 
+/** Mode dummy: lembur yang sudah disetujui pada `date` — membuka tap di hari libur (lembur hari libur). */
+export function approvedOvertimeOn(employeeId: string, date: string): boolean {
+  return mockRequests.some(
+    (row) => row.employeeId === employeeId && row.overtimeDate === date && (row.overtimeStatus === 'APPROVED' || row.overtimeStatus === 'AUTO_APPROVED'),
+  );
+}
+
 export function resetOvertimeMocks() {
   mockRequests = OT_REQUESTS.map((row) => ({ ...row }));
   mockDaily = OT_DAILY.map((row) => ({ ...row }));

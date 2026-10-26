@@ -11,6 +11,7 @@ import {
   selfieRequiredAtTap,
   withinCorrectionWindow,
 } from '@/features/attendance/rules';
+import { tapBlockText, tapGate } from '@/features/attendance/tapGate';
 import {
   CORRECTION_WINDOW_DAYS,
   EXCUSED_FROM_REASON,
@@ -230,6 +231,11 @@ export const attendanceService = {
       const arrangement = type === 'IN' ? input.workArrangement : (tappedIn?.workArrangement ?? input.workArrangement);
       if (type === 'IN' && !arrangement) {
         throw new Error('422 — Choose a work type (WFO or WFH) before tapping in.');
+      }
+      // Cuti seharian / hari libur roster tanpa lembur atau siaga yang disetujui = tap in ditutup (tapGate).
+      if (type === 'IN') {
+        const gate = await tapGate(session.employeeId, ATTENDANCE_TODAY);
+        if (gate.block) throw new Error(`422 — ${tapBlockText(gate.block).detail}`);
       }
 
       const geofence = resolveGeofence(session.employeeId);

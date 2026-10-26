@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Camera, CircleCheck, Info, MapPin, MapPinOff, TriangleAlert } from 'lucide-react';
+import { CalendarOff, Camera, CircleCheck, Clock, Info, MapPin, MapPinOff, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/
 import type { Geofence, Punch, TapLocation, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import type { ShiftOn } from '@/features/scheduler/services/scheduler.service';
+import { tapBlockText, type TapGate } from '@/features/attendance/tapGate';
 import { MOCK } from '@/services/mock';
 import { cn } from '@/lib/utils';
 
@@ -80,7 +81,7 @@ function TodayCell({ label, value, sub }: { label: string; value: ReactNode; sub
 
 /** Kolom Shift dari roster: jam, Day off, tanpa roster, atau memuat (`undefined`). */
 function shiftLabel(roster: ShiftOn | null | undefined): { value: string; sub: string } {
-  if (roster === undefined) return { value: '…', sub: '' };
+  if (roster === undefined) return { value: 'Loading…', sub: 'Checking your roster' };
   if (!roster) return { value: 'No shift assigned', sub: 'Ask HR if this looks wrong' };
   const { shift } = roster;
   if (roster.assignment.isOffDay || !shift) return { value: 'Day off', sub: 'Rest day on your roster' };
@@ -114,6 +115,7 @@ export function PunchConsole({
   nextType,
   today,
   shift,
+  gate,
   onStart,
 }: {
   workDate: string;
@@ -123,6 +125,8 @@ export function PunchConsole({
   today: Punch[];
   /** Roster hari ini; `undefined` = masih memuat. */
   shift: ShiftOn | null | undefined;
+  /** Gerbang tap in (cuti / hari libur); `undefined` = masih memuat. */
+  gate?: TapGate;
   onStart: () => void;
 }) {
   const [clock, setClock] = useState(() => new Date());
@@ -142,12 +146,19 @@ export function PunchConsole({
   const tapIn = today.find((row) => row.punchType === 'IN');
   const tapOut = today.find((row) => row.punchType === 'OUT');
 
+  // Tap out tidak pernah ditutup; gerbang hanya berlaku untuk tap in.
+  const blocked = nextType === 'IN' && gate?.block ? tapBlockText(gate.block) : null;
+  const onTimeOff = gate?.block?.reason === 'TIME_OFF' ? gate.block : null;
+  const shiftCell = onTimeOff ? { value: 'Time off', sub: `${onTimeOff.leaveTypeName} · approved` } : shiftLabel(shift);
+
   const hint = !nextType
     ? 'Both taps are in. Anything wrong? File a correction.'
     : nextType === 'IN'
-      ? selfieRequired
-        ? 'Selfie first, then choose WFO or WFH.'
-        : 'Choose WFO or WFH, add a note if needed.'
+      ? gate?.restDayException
+        ? 'Rest day — tap in for your approved overtime or on-call.'
+        : selfieRequired
+          ? 'Selfie first, then choose WFO or WFH.'
+          : 'Choose WFO or WFH, add a note if needed.'
       : 'Add a note if needed, then tap out.';
 
   return (
@@ -163,8 +174,12 @@ export function PunchConsole({
       </header>
 
       <div className="mt-2 grid divide-y divide-border-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <TodayCell label="Shift" {...shiftLabel(shift)} />
-        <TodayCell label="Tap in" value={tapIn ? hhmm(tapIn.punchAt) : '—'} sub={tapIn ? tapSub(tapIn) : 'Not yet'} />
+        <TodayCell label="Shift" {...shiftCell} />
+        <TodayCell
+          label="Tap in"
+          value={tapIn ? hhmm(tapIn.punchAt) : '—'}
+          sub={tapIn ? tapSub(tapIn) : blocked ? 'Not available today' : 'Not yet'}
+        />
         <TodayCell
           label="Tap out"
           value={tapOut ? hhmm(tapOut.punchAt) : '—'}
@@ -173,11 +188,43 @@ export function PunchConsole({
       </div>
 
       <footer className="-mx-5 mt-1 flex flex-wrap items-center justify-between gap-3 border-t border-border-1 px-5 py-3.5">
-        <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
-        {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan. */}
-        {nextType && <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>}
+        {blocked ? (
+          <span className="flex items-start gap-2 font-body text-xs font-medium leading-normal text-fg-2">
+            <CalendarOff className="mt-px size-4 shrink-0 text-fg-3" />
+            <span>
+              <strong className="font-semibold text-fg-1">{blocked.title}.</strong> {blocked.detail}
+            </span>
+          </span>
+        ) : (
+          <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
+        )}
+        {/* FSD-TIME 0.13 #35 (K1): IN dan OUT sudah ada ⇒ tombol tap DISEMBUNYIKAN, bukan dinonaktifkan.
+            Sama untuk gerbang cuti/hari libur: tombol tidak tampil, alasannya tertulis di kiri. */}
+        {nextType && !blocked && gate !== undefined && <Button onClick={onStart}>{nextType === 'IN' ? 'Tap in' : 'Tap out'}</Button>}
       </footer>
     </section>
+  );
+}
+
+/**
+ * Jam tap yang berjalan di modal. Waktu yang tersimpan adalah saat tombol Tap in/Tap out ditekan
+ * (`punch_at` server), bukan saat selfie diambil — jadi yang ditampilkan jam sekarang, bukan jam foto.
+ */
+function TapClock({ label, verb }: { label: string; verb: string }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map((part) => String(part).padStart(2, '0')).join(':');
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span className="font-body text-xs font-medium text-fg-3">{label}</span>
+      <span className="font-display text-lg font-bold leading-tight tabular-nums text-fg-1" aria-live="off">
+        {time} <span className="font-body text-xs font-semibold text-fg-3">WIB</span>
+      </span>
+      <span className="font-body text-[11.5px] font-medium text-fg-3">Recorded when you press {verb}.</span>
+    </span>
   );
 }
 
@@ -486,18 +533,16 @@ export function TapModal({
           </div>
         ) : (
           <>
-            {selfieRequired && (
-              <div className="flex items-center gap-3 rounded-md border border-border-1 bg-cloud px-3 py-2.5">
-                {frame?.dataUrl ? (
-                  <img src={frame.dataUrl} alt="" className="size-10 rounded-md object-cover" />
-                ) : (
-                  <span className="grid size-10 place-items-center rounded-md bg-vapor text-fg-3 [&_svg]:size-4">
-                    <Camera />
-                  </span>
-                )}
-                <span className="font-body text-[13px] font-semibold text-fg-1">Selfie captured</span>
-              </div>
-            )}
+            <div className="flex items-center gap-3 rounded-md border border-border-1 bg-cloud px-3 py-2.5">
+              {selfieRequired && frame?.dataUrl ? (
+                <img src={frame.dataUrl} alt="Your selfie" className="size-10 rounded-md object-cover" />
+              ) : (
+                <span className="grid size-10 place-items-center rounded-md bg-vapor text-fg-3 [&_svg]:size-4">
+                  {selfieRequired ? <Camera /> : <Clock />}
+                </span>
+              )}
+              <TapClock label={isIn ? 'Clock-in time' : 'Clock-out time'} verb={verb} />
+            </div>
 
             {isIn && (
             <div className="flex flex-col gap-2">

@@ -113,6 +113,26 @@ export const LEAVE_BALANCES: LeaveBalance[] = [
 ];
 
 export const LEAVE_REQUESTS: LeaveRequest[] = [
+  // Demo tap in ditolak saat cuti: Hendra cuti disetujui pada hari ini di layar Attendance (30 Juli).
+  {
+    id: 'leave-today',
+    employeeId: 'emp-hendra',
+    leaveTypeId: 'lt-annual',
+    daySession: 'FULL',
+    startDate: '2026-07-30',
+    endDate: '2026-07-30',
+    totalDays: 1,
+    reason: 'Family matter at home.',
+    hasDoctorNote: false,
+    status: 'APPROVED',
+    extraApprovalReason: null,
+    rejectDeadlineAt: null,
+    rejectReason: null,
+    rejectNote: null,
+    submittedAt: '2026-07-27T09:00:00+07:00',
+    approvedBy: 'emp-budi',
+    approvedAt: '2026-07-27T13:00:00+07:00',
+  },
   {
     id: 'leave-1',
     employeeId: 'emp-rina',
