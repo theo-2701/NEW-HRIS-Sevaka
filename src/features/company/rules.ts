@@ -39,8 +39,24 @@ export function letterFromRank(rank: number): string {
   return out || 'A';
 }
 
-/** `grade_code` server-generated = `<level>.<huruf>` — level = kedalaman (root = 1). */
-export const computeGradeCode = (level: number, rank: number) => `${level}.${letterFromRank(rank)}`;
+/** Kode Grade `<tingkat><huruf>` (3A, 3B) — huruf = urutan dibuat di antara Grade setara, bukan pangkat (FSD-COMPANY 0.55). */
+export const gradeCodeOf = (level: number, rank: number) => `${level}${letterFromRank(rank)}`;
+/** Kode Class `<kode Grade>.<nomor urut>` (3A.1). */
+export const classCodeOf = (gradeCode: string, rank: number) => `${gradeCode}.${rank}`;
+
+/** Label dropdown Grade: `Nama (kode)` — dua Grade setara tidak ambigu (FSD-COMPANY 0.55). */
+export const gradeLabel = (row: JobGrade) => `${row.name} (${row.gradeCode})`;
+
+/** Urutan tampil: tingkat, huruf, lalu Class di bawah Grade-nya (`10A` sesudah `9A`). */
+export function compareGradeCode(a: string, b: string): number {
+  const parse = (code: string): [number, string, number] => {
+    const match = /^(\d+)([A-Z]+)(?:\.(\d+))?$/.exec(code);
+    return match ? [Number(match[1]), match[2], match[3] ? Number(match[3]) : 0] : [Number.MAX_SAFE_INTEGER, code, 0];
+  };
+  const [levelA, letterA, classA] = parse(a);
+  const [levelB, letterB, classB] = parse(b);
+  return levelA - levelB || letterA.length - letterB.length || letterA.localeCompare(letterB) || classA - classB;
+}
 
 /** Nominal dan bilangan bulat dari isian teks. */
 export function parseNumber(value: string): number | null {
@@ -62,8 +78,8 @@ export const isGrade = (row: JobGrade) => row.parentId === null;
 /** Class wajib membawa rentang gaji, dan batas atas tidak boleh di bawah batas bawah. */
 export function salaryRangeError(parentId: string, from: number | null, to: number | null): string | null {
   if (!parentId) return null;
-  if (from === null || to === null) return 'Rentang gaji wajib diisi untuk Class.';
-  if (to < from) return 'Batas atas rentang gaji tidak boleh lebih kecil dari batas bawahnya.';
+  if (from === null || to === null) return 'Salary From and Salary To are required for a class.';
+  if (to < from) return 'Salary To cannot be lower than Salary From.';
   return null;
 }
 

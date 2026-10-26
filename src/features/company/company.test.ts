@@ -39,8 +39,8 @@ describe('rules', () => {
 
   it('mewajibkan rentang gaji hanya untuk Class', () => {
     expect(salaryRangeError('', null, null)).toBeNull();
-    expect(salaryRangeError('jg-staff', null, null)).toMatch(/wajib diisi/);
-    expect(salaryRangeError('jg-staff', 9000000, 4000000)).toMatch(/lebih kecil/);
+    expect(salaryRangeError('jg-staff', null, null)).toMatch(/required/);
+    expect(salaryRangeError('jg-staff', 9000000, 4000000)).toMatch(/cannot be lower/);
     expect(salaryRangeError('jg-staff', 4000000, 9000000)).toBeNull();
   });
 
@@ -268,70 +268,61 @@ describe('module group struct map (GS-11)', () => {
   });
 });
 
-describe('grade & class', () => {
-  it('menolak Class tanpa rentang gaji', async () => {
+describe('grade & class — tangga tingkat (FSD-COMPANY 0.54/0.55)', () => {
+  const grade = (name: string, level: string, className = `${name} 1`) => ({
+    name,
+    level,
+    defaultClass: { name: className, salaryRangeFrom: '1000000', salaryRangeTo: '2000000' },
+  });
+
+  it('kode server-generated: Grade <tingkat><huruf> menurut urutan dibuat, Class <kode Grade>.<n>', async () => {
+    const rows = await companyService.jobGrades();
+    const code = (id: string) => rows.find((row) => row.id === id)?.gradeCode;
+    expect(code('jg-manager')).toBe('3A');
+    expect(code('jg-head')).toBe('3B');
+    expect(code('jg-staff-2')).toBe('5A.2');
+    // Urut tampil: tingkat, huruf, lalu Class di bawah Grade-nya.
+    expect(rows.map((row) => row.gradeCode).slice(0, 3)).toEqual(['1A', '1A.1', '2A']);
+  });
+
+  it('Grade baru membawa Class default dalam satu transaksi; setara = nomor tingkat sama', async () => {
+    const created = await companyService.createGrade(grade('Chief', '3'));
+    expect(created.gradeCode).toBe('3C');
+    const rows = await companyService.jobGrades();
+    expect(rows.find((row) => row.parentId === created.id)).toMatchObject({ gradeCode: '3C.1', salaryRangeFrom: 1000000 });
+  });
+
+  it('menolak Class default tanpa rentang gaji, nama kembar aktif, dan Level bukan angka ≥ 1', async () => {
     await expect(
-      companyService.saveJobGrade({
-        name: 'Staff 3',
-        parentId: 'jg-staff',
-        sortOrder: '3',
-        salaryRangeFrom: '',
-        salaryRangeTo: '',
-      }),
-    ).rejects.toThrow(/Rentang gaji wajib/);
+      companyService.createGrade({ ...grade('Chief', '3'), defaultClass: { name: 'Chief 1', salaryRangeFrom: '', salaryRangeTo: '' } }),
+    ).rejects.toThrow(/^422/);
+    await expect(companyService.createGrade(grade('Manager', '6'))).rejects.toThrow(/^409/);
+    await expect(companyService.createGrade(grade('Chief', '0'))).rejects.toThrow(/Level/);
   });
 
-  it('Grade boleh membawa rentang gaji; induk berupa keturunan sendiri ditolak 422 (FSD-COMPANY 0.38)', async () => {
-    const grade = await companyService.saveJobGrade({
-      name: 'Direksi',
-      parentId: '',
-      sortOrder: '3',
-      salaryRangeFrom: '10000000',
-      salaryRangeTo: '20000000',
-    });
-    expect(grade.salaryRangeFrom).toBe(10000000);
-    const child = await companyService.saveJobGrade({
-      name: 'Direksi Muda',
-      parentId: grade.id,
-      sortOrder: '1',
-      salaryRangeFrom: '1',
-      salaryRangeTo: '2',
-    });
+  it('pindah tingkat lewat Edit Grade menghitung ulang kode Grade setara dan Class-nya', async () => {
+    await companyService.updateGrade('jg-manager', { name: 'Manager', level: '4', isActive: true });
+    const rows = await companyService.jobGrades();
+    const code = (id: string) => rows.find((row) => row.id === id)?.gradeCode;
+    expect(code('jg-head')).toBe('3A');
+    // Huruf mengikuti urutan dibuat di antara Grade setara, bukan pangkat.
+    expect([code('jg-manager'), code('jg-supervisor')].sort()).toEqual(['4A', '4B']);
+    expect(code('jg-manager-1')).toBe(`${code('jg-manager')}.1`);
+  });
+
+  it('Class wajib Grade aktif dan rentang to ≥ from; Class aktif terakhir tidak dapat dihapus; hapus Grade ikut Class-nya', async () => {
     await expect(
-      companyService.saveJobGrade(
-        { name: 'Direksi', parentId: child.id, sortOrder: '3', salaryRangeFrom: '', salaryRangeTo: '' },
-        grade.id,
-      ),
-    ).rejects.toThrow(/422/);
-  });
-
-  it('menolak penghapusan Grade yang masih memayungi Class', async () => {
-    await expect(companyService.deleteJobGrade('jg-staff')).rejects.toThrow(/Class/);
-  });
-
-  it('men-generate kode <level>.<huruf> dan menghitungnya ulang untuk seluruh saudara', async () => {
-    const root = await companyService.saveJobGrade({ name: 'Direksi', parentId: '', sortOrder: '3', salaryRangeFrom: '', salaryRangeTo: '' });
-    expect(root.gradeCode).toBe('1.C');
-
-    const staff3 = await companyService.saveJobGrade({
-      name: 'Staff 3',
-      parentId: 'jg-staff',
-      sortOrder: '3',
-      salaryRangeFrom: '3000000',
-      salaryRangeTo: '4000000',
-    });
-    expect(staff3.gradeCode).toBe('2.C');
-    const grades = await companyService.jobGrades();
-    expect(grades.find((row) => row.id === 'jg-staff-1')?.gradeCode).toBe('2.A');
-    expect(grades.find((row) => row.id === 'jg-staff-2')?.gradeCode).toBe('2.B');
-    // Kode boleh duplikat lintas subtree — Manager 1 tetap "2.A" pada grupnya sendiri.
-    expect(grades.find((row) => row.id === 'jg-manager-1')?.gradeCode).toBe('2.A');
-  });
-
-  it('menolak sortOrder kembar antar saudara sekandung', async () => {
+      companyService.saveClass({ name: 'Staff 3', parentId: 'jg-staff-1', salaryRangeFrom: '1', salaryRangeTo: '2', isActive: true }),
+    ).rejects.toThrow(/active grade/);
     await expect(
-      companyService.saveJobGrade({ name: 'Staff Kembar', parentId: 'jg-staff', sortOrder: '1', salaryRangeFrom: '1', salaryRangeTo: '2' }),
-    ).rejects.toThrow(/409/);
+      companyService.saveClass({ name: 'Staff 3', parentId: 'jg-staff', salaryRangeFrom: '9', salaryRangeTo: '2', isActive: true }),
+    ).rejects.toThrow(/^422/);
+    const added = await companyService.saveClass({ name: 'Staff 3', parentId: 'jg-staff', salaryRangeFrom: '9000000', salaryRangeTo: '12000000', isActive: true });
+    expect(added.gradeCode).toBe('5A.3');
+    await expect(companyService.deleteJobGrade('jg-manager-1')).rejects.toThrow(/last active class/);
+    await companyService.deleteJobGrade('jg-staff');
+    const rows = await companyService.jobGrades();
+    expect(rows.some((row) => row.id === 'jg-staff' || row.parentId === 'jg-staff')).toBe(false);
   });
 });
 

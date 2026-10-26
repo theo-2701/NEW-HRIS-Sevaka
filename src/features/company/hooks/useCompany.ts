@@ -8,7 +8,9 @@ import type {
   CostCenterDraft,
   GroupLevelDraft,
   GroupStructDraft,
-  JobGradeDraft,
+  ClassDraft,
+  GradeDraft,
+  GradeEditDraft,
   ModuleCode,
   SbuDraft,
   VendorDraft,
@@ -169,14 +171,26 @@ export const useClearModuleGroupStructMap = () =>
     (row) => `Pemetaan modul ${row.moduleCode} dikosongkan.`,
   );
 
-export const useSaveJobGrade = () =>
+export const useCreateGrade = () =>
   useCompanyMutation(
-    ({ draft, id }: { draft: JobGradeDraft; id?: string }) => companyService.saveJobGrade(draft, id),
-    (row) => `${row.name} (${row.gradeCode}) tersimpan.`,
+    (draft: GradeDraft) => companyService.createGrade(draft),
+    (row) => `${row.name} (${row.gradeCode}) and its default class are saved.`,
+  );
+
+export const useUpdateGrade = () =>
+  useCompanyMutation(
+    ({ id, draft }: { id: string; draft: GradeEditDraft }) => companyService.updateGrade(id, draft),
+    (row) => `${row.name} (${row.gradeCode}) is saved.`,
+  );
+
+export const useSaveClass = () =>
+  useCompanyMutation(
+    ({ draft, id }: { draft: ClassDraft; id?: string }) => companyService.saveClass(draft, id),
+    (row) => `${row.name} (${row.gradeCode}) is saved.`,
   );
 
 export const useDeleteJobGrade = () =>
-  useCompanyMutation((id: string) => companyService.deleteJobGrade(id), () => 'Baris Grade/Class dihapus.');
+  useCompanyMutation((id: string) => companyService.deleteJobGrade(id), () => 'Deleted.');
 
 export const useSaveCostCenterCategory = () =>
   useCompanyMutation(

@@ -229,41 +229,52 @@ export const POSITION_LOG_SEED: PositionLog[] = [
 ];
 
 /**
- * `gradeCode` mengikuti bentuk server-generated `<level>.<huruf>` (root level 1, huruf
- * peringkat `sortOrder` ASC) — lihat `computeGradeCode` di `rules.ts`. Duplikat kode lintas
- * subtree (mis. `2.A` pada Staff maupun Manager) memang disengaja kontrak.
+ * Tangga tingkat jabatan (FSD-COMPANY 0.54/0.55): Grade = tingkat (`sortOrder` 1 = puncak, setara = nomor sama),
+ * Class = kelas gaji di dalam Grade. `gradeCode` dihitung ulang service saat dimuat (`recomputeGradeCodes`);
+ * nilai di sini hanya cerminannya. Manager (3A) dan Head of Unit (3B) setara di tingkat 3.
  */
 export const JOB_GRADE_SEED: JobGrade[] = [
-  { id: 'jg-staff', name: 'Staff', gradeCode: '1.A', parentId: null, sortOrder: 1, salaryRangeFrom: null, salaryRangeTo: null, createdAt: at('2026-01-12') },
-  { id: 'jg-manager', name: 'Manager', gradeCode: '1.B', parentId: null, sortOrder: 2, salaryRangeFrom: null, salaryRangeTo: null, createdAt: at('2026-01-12') },
+  { id: 'jg-director', name: 'Director', gradeCode: '1A', parentId: null, sortOrder: 1, salaryRangeFrom: null, salaryRangeTo: null, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'jg-gm', name: 'General Manager', gradeCode: '2A', parentId: null, sortOrder: 2, salaryRangeFrom: null, salaryRangeTo: null, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'jg-manager', name: 'Manager', gradeCode: '3A', parentId: null, sortOrder: 3, salaryRangeFrom: null, salaryRangeTo: null, isActive: true, createdAt: at('2026-01-12') },
+  { id: 'jg-head', name: 'Head of Unit', gradeCode: '3B', parentId: null, sortOrder: 3, salaryRangeFrom: null, salaryRangeTo: null, isActive: true, createdAt: at('2026-02-03') },
+  { id: 'jg-supervisor', name: 'Supervisor', gradeCode: '4A', parentId: null, sortOrder: 4, salaryRangeFrom: null, salaryRangeTo: null, isActive: true, createdAt: at('2026-01-12') },
+  { id: 'jg-staff', name: 'Staff', gradeCode: '5A', parentId: null, sortOrder: 5, salaryRangeFrom: null, salaryRangeTo: null, isActive: true, createdAt: at('2026-01-12') },
+  { id: 'jg-director-1', name: 'Director 1', gradeCode: '1A.1', parentId: 'jg-director', sortOrder: 1, salaryRangeFrom: 60000000, salaryRangeTo: 90000000, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'jg-gm-1', name: 'General Manager 1', gradeCode: '2A.1', parentId: 'jg-gm', sortOrder: 1, salaryRangeFrom: 35000000, salaryRangeTo: 55000000, isActive: true, createdAt: at('2026-01-10') },
+  { id: 'jg-head-1', name: 'Head 1', gradeCode: '3B.1', parentId: 'jg-head', sortOrder: 1, salaryRangeFrom: 18000000, salaryRangeTo: 26000000, isActive: true, createdAt: at('2026-02-03') },
+  { id: 'jg-supervisor-1', name: 'Supervisor 1', gradeCode: '4A.1', parentId: 'jg-supervisor', sortOrder: 1, salaryRangeFrom: 9000000, salaryRangeTo: 14000000, isActive: true, createdAt: at('2026-01-12') },
   {
     id: 'jg-staff-1',
     name: 'Staff 1',
-    gradeCode: '2.A',
+    gradeCode: '5A.1',
     parentId: 'jg-staff',
     sortOrder: 1,
     salaryRangeFrom: 4000000,
     salaryRangeTo: 6000000,
+    isActive: true,
     createdAt: at('2026-01-12'),
   },
   {
     id: 'jg-staff-2',
     name: 'Staff 2',
-    gradeCode: '2.B',
+    gradeCode: '5A.2',
     parentId: 'jg-staff',
     sortOrder: 2,
     salaryRangeFrom: 6000000,
     salaryRangeTo: 9000000,
+    isActive: true,
     createdAt: at('2026-01-12'),
   },
   {
     id: 'jg-manager-1',
     name: 'Manager 1',
-    gradeCode: '2.A',
+    gradeCode: '3A.1',
     parentId: 'jg-manager',
     sortOrder: 1,
     salaryRangeFrom: 15000000,
     salaryRangeTo: 25000000,
+    isActive: true,
     createdAt: at('2026-01-12'),
   },
 ];

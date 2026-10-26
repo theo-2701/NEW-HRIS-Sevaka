@@ -6,68 +6,78 @@ import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { TableToolbar } from '@/components/TableToolbar';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { StatusBadge } from '@/components/StatusBadge';
 import { AddButton, RowActions } from '@/components/RowActions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePagedRows } from '@/hooks/usePagedRows';
-import { JobGradeFormModal } from '@/features/company/components/CompanyModals';
+import { GradeChart } from '@/features/company/components/GradeChart';
+import { ClassFormModal, GradeCreateModal, GradeEditModal } from '@/features/company/components/GradeClassModals';
 import { useDeleteJobGrade, useJobGrades } from '@/features/company/hooks/useCompany';
+import { compareGradeCode, gradeLabel } from '@/features/company/rules';
 import type { JobGrade } from '@/features/company/types';
 import { formatCurrency } from '@/lib/format';
 
 type Tab = 'grade' | 'class';
+type GradeView = 'chart' | 'table';
+
+const ActiveBadge = ({ active }: { active: boolean }) =>
+  active ? <StatusBadge tone="ok">Active</StatusBadge> : <StatusBadge tone="mute">Inactive</StatusBadge>;
 
 /**
- * Settings › Company › Grade & Class — port `_prototype/company-grade-class.html`
- * (UIC-001-COMPANY-0.22 §2.4).
+ * Settings › Company › Grade & Class — FSD-COMPANY 0.54/0.55/0.59 §3 · UIC-COMPANY 0.40/0.41/0.46 §2.4.
  *
- * Dua tab terpisah (permintaan pengguna 23 September 2026, supaya Grade dan Class tidak
- * bercampur dalam satu tabel): **Grade** — jenjang puncak, tanpa induk, tanpa rentang gaji.
- * **Class** — selalu berada di bawah sebuah Grade dan wajib membawa rentang gaji. Keduanya
- * tetap satu dataset `mst_job_grade`; kode tetap dibuat otomatis oleh sistem dari kedalaman +
- * urutan (server-generated sejak `T49`, lihat `rules.ts`).
+ * **Grade** = tingkat jabatan berupa tangga (nomor tingkat 1 = puncak, nomor sama = setara, tanpa induk-anak
+ * antar Grade, tanpa rentang gaji), tampil sebagai Chart View (bawaan) atau Table View. **Class** = kelas gaji di
+ * dalam satu Grade, satu-satunya pemegang rentang gaji — tab Class wajib memilih Grade lebih dulu.
+ * Kode server-generated: Grade `3A`, Class `3A.1`.
  */
 export function GradeClassPage() {
   const grades = useJobGrades();
   const remove = useDeleteJobGrade();
 
   const [tab, setTab] = useState<Tab>('grade');
+  const [view, setView] = useState<GradeView>('chart');
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState(false);
-  const [editing, setEditing] = useState<JobGrade | null>(null);
+  const [classGradeId, setClassGradeId] = useState('');
+
+  const [creatingGrade, setCreatingGrade] = useState(false);
+  const [editingGrade, setEditingGrade] = useState<JobGrade | null>(null);
+  const [classForm, setClassForm] = useState(false);
+  const [editingClass, setEditingClass] = useState<JobGrade | null>(null);
   const [deleting, setDeleting] = useState<JobGrade | null>(null);
 
   const rows = useMemo(() => grades.data ?? [], [grades.data]);
-  const gradeRows = useMemo(() => rows.filter((row) => row.parentId === null), [rows]);
-  const classRows = useMemo(() => rows.filter((row) => row.parentId !== null), [rows]);
-  const gradeName = (id: string | null) => (id ? (rows.find((row) => row.id === id)?.name ?? '—') : '—');
+  const gradeRows = useMemo(
+    () => rows.filter((row) => row.parentId === null).sort((a, b) => compareGradeCode(a.gradeCode, b.gradeCode)),
+    [rows],
+  );
+  const classCount = (gradeId: string) => rows.filter((row) => row.parentId === gradeId && row.isActive).length;
 
-  const filteredGrades = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return gradeRows;
-    return gradeRows.filter((row) => row.name.toLowerCase().includes(query) || row.gradeCode.toLowerCase().includes(query));
-  }, [gradeRows, search]);
-  const filteredClasses = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return classRows;
-    return classRows.filter(
-      (row) =>
-        row.name.toLowerCase().includes(query) ||
-        row.gradeCode.toLowerCase().includes(query) ||
-        (rows.find((item) => item.id === row.parentId)?.name.toLowerCase() ?? '').includes(query),
-    );
-  }, [classRows, rows, search]);
+  const query = search.trim().toLowerCase();
+  const filteredGrades = useMemo(
+    () =>
+      query
+        ? gradeRows.filter((row) => row.name.toLowerCase().includes(query) || row.gradeCode.toLowerCase().includes(query))
+        : gradeRows,
+    [gradeRows, query],
+  );
+  const classRows = useMemo(
+    () =>
+      rows
+        .filter((row) => classGradeId && row.parentId === classGradeId)
+        .filter((row) => !query || row.name.toLowerCase().includes(query) || row.gradeCode.toLowerCase().includes(query))
+        .sort((a, b) => compareGradeCode(a.gradeCode, b.gradeCode)),
+    [rows, classGradeId, query],
+  );
   const pagedGrades = usePagedRows(filteredGrades);
-  const pagedClasses = usePagedRows(filteredClasses);
-
-  const closeForm = () => {
-    setForm(false);
-    setEditing(null);
-  };
+  const pagedClasses = usePagedRows(classRows);
+  const selectedGrade = gradeRows.find((row) => row.id === classGradeId);
 
   return (
     <PageShell
       crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'Grade & Class' }]}
       title="Grade & Class"
-      description="Jenjang jabatan dua tingkat beserta rentang gaji yang menjadi acuan penempatan karyawan."
+      description="Job levels as a ladder (Grades) and the salary classes inside each grade."
     >
       <div className="flex flex-col gap-5">
         <TabMenu<Tab>
@@ -78,140 +88,184 @@ export function GradeClassPage() {
           }}
           items={[
             { value: 'grade', label: 'Grade', count: gradeRows.length },
-            { value: 'class', label: 'Class', count: classRows.length },
+            { value: 'class', label: 'Class', count: rows.length - gradeRows.length },
           ]}
         />
 
         {tab === 'grade' && (
           <Card>
-            <CardHead title="Grade" sub="Jenjang puncak — tanpa induk dan tanpa rentang gaji" />
+            <CardHead title="Grade" sub="Level 1 is the top; grades with the same number are on the same level" />
             <div>
               <TableToolbar
-                search={{ value: search, onChange: setSearch, placeholder: 'Cari nama atau kode' }}
-                actions={<AddButton onClick={() => setForm(true)}>Add Grade</AddButton>}
+                search={
+                  view === 'table' ? { value: search, onChange: setSearch, placeholder: 'Search name or code' } : undefined
+                }
+                actions={<AddButton onClick={() => setCreatingGrade(true)}>Add Grade</AddButton>}
               />
-              <DataTable<JobGrade>
-                rows={pagedGrades.rows}
-                rowKey={(row) => row.id}
-                loading={grades.isLoading}
-                empty={grades.error ? String(grades.error.message) : 'Belum ada Grade.'}
-                columns={[
-                  { key: 'name', header: 'Nama', strong: true, render: (row) => row.name },
-                  {
-                    key: 'code',
-                    header: 'Kode',
-                    nowrap: true,
-                    render: (row) => <span className="font-mono text-xs">{row.gradeCode}</span>,
-                  },
-                  {
-                    key: 'classes',
-                    header: 'Jumlah Class',
-                    align: 'center',
-                    muted: true,
-                    render: (row) => (
-                      <span className="tabular-nums">{classRows.filter((item) => item.parentId === row.id).length}</span>
-                    ),
-                  },
+              <TabMenu<GradeView>
+                className="mb-3"
+                value={view}
+                onChange={setView}
+                items={[
+                  { value: 'chart', label: 'Chart View' },
+                  { value: 'table', label: 'Table View' },
                 ]}
-                actions={(row) => (
-                  <RowActions
-                    actions={[
-                      {
-                        label: 'Ubah',
-                        onSelect: () => {
-                          setEditing(row);
-                          setForm(true);
-                        },
-                      },
-                      { label: 'Hapus', danger: true, onSelect: () => setDeleting(row) },
+              />
+
+              {view === 'chart' ? (
+                <GradeChart grades={rows} />
+              ) : (
+                <>
+                  <DataTable<JobGrade>
+                    rows={pagedGrades.rows}
+                    rowKey={(row) => row.id}
+                    loading={grades.isLoading}
+                    empty={grades.error ? String(grades.error.message) : 'No grade yet.'}
+                    columns={[
+                      { key: 'level', header: 'Level', nowrap: true, render: (row) => `Level ${row.sortOrder}` },
+                      { key: 'code', header: 'Code', nowrap: true, render: (row) => <span className="font-mono text-xs">{row.gradeCode}</span> },
+                      { key: 'name', header: 'Name', strong: true, render: (row) => row.name },
+                      { key: 'classes', header: 'Classes', align: 'center', muted: true, render: (row) => <span className="tabular-nums">{classCount(row.id)}</span> },
+                      { key: 'status', header: 'Status', render: (row) => <ActiveBadge active={row.isActive} /> },
                     ]}
+                    actions={(row) => (
+                      <RowActions
+                        actions={[
+                          { label: 'Edit', onSelect: () => setEditingGrade(row) },
+                          { label: 'Delete', danger: true, onSelect: () => setDeleting(row) },
+                        ]}
+                      />
+                    )}
                   />
-                )}
-              />
-              <Pagination
-                page={pagedGrades.page}
-                pageSize={pagedGrades.pageSize}
-                total={pagedGrades.total}
-                noun="grades"
-                onPageChange={pagedGrades.setPage}
-                onPageSizeChange={pagedGrades.setPageSize}
-              />
+                  <Pagination
+                    page={pagedGrades.page}
+                    pageSize={pagedGrades.pageSize}
+                    total={pagedGrades.total}
+                    noun="grades"
+                    onPageChange={pagedGrades.setPage}
+                    onPageSizeChange={pagedGrades.setPageSize}
+                  />
+                  <p className="mt-2 font-body text-xs font-medium text-fg-4">
+                    To move a grade to another level, edit it and change its Level. Codes are renumbered by the system.
+                  </p>
+                </>
+              )}
             </div>
           </Card>
         )}
 
         {tab === 'class' && (
           <Card>
-            <CardHead title="Class" sub="Selalu berada di bawah sebuah Grade dan wajib membawa rentang gaji" />
+            <CardHead title="Class" sub="Salary steps inside one grade — the only place a salary range is kept" />
             <div>
               <TableToolbar
-                search={{ value: search, onChange: setSearch, placeholder: 'Cari nama, kode, atau Grade' }}
-                actions={<AddButton onClick={() => setForm(true)}>Add Class</AddButton>}
+                filters={
+                  <Select
+                    value={classGradeId}
+                    onValueChange={(value) => {
+                      setClassGradeId(value);
+                      pagedClasses.resetPage();
+                    }}
+                  >
+                    <SelectTrigger className="h-10 w-[260px]" aria-label="Grade">
+                      <SelectValue placeholder="Select a grade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gradeRows.map((row) => (
+                        <SelectItem key={row.id} value={row.id}>
+                          {gradeLabel(row)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                }
+                search={classGradeId ? { value: search, onChange: setSearch, placeholder: 'Search name or code' } : undefined}
+                actions={
+                  <AddButton disabled={!selectedGrade?.isActive} onClick={() => setClassForm(true)}>
+                    Add Class
+                  </AddButton>
+                }
               />
-              <DataTable<JobGrade>
-                rows={pagedClasses.rows}
-                rowKey={(row) => row.id}
-                loading={grades.isLoading}
-                empty={grades.error ? String(grades.error.message) : 'Belum ada Class.'}
-                columns={[
-                  { key: 'name', header: 'Nama', strong: true, render: (row) => row.name },
-                  {
-                    key: 'code',
-                    header: 'Kode',
-                    nowrap: true,
-                    render: (row) => <span className="font-mono text-xs">{row.gradeCode}</span>,
-                  },
-                  { key: 'parent', header: 'Grade', render: (row) => gradeName(row.parentId) },
-                  {
-                    key: 'range',
-                    header: 'Rentang gaji',
-                    align: 'right',
-                    render: (row) =>
-                      row.salaryRangeFrom === null || row.salaryRangeTo === null ? (
-                        <span className="text-fg-4">—</span>
-                      ) : (
-                        <span className="tabular-nums">
-                          {formatCurrency(row.salaryRangeFrom)} – {formatCurrency(row.salaryRangeTo)}
-                        </span>
-                      ),
-                  },
-                ]}
-                actions={(row) => (
-                  <RowActions
-                    actions={[
+              {classGradeId ? (
+                <>
+                  <DataTable<JobGrade>
+                    rows={pagedClasses.rows}
+                    rowKey={(row) => row.id}
+                    loading={grades.isLoading}
+                    empty="This grade has no class matching the search."
+                    columns={[
+                      { key: 'code', header: 'Code', nowrap: true, render: (row) => <span className="font-mono text-xs">{row.gradeCode}</span> },
+                      { key: 'name', header: 'Name', strong: true, render: (row) => row.name },
                       {
-                        label: 'Ubah',
-                        onSelect: () => {
-                          setEditing(row);
-                          setForm(true);
-                        },
+                        key: 'range',
+                        header: 'Salary Range',
+                        align: 'right',
+                        render: (row) =>
+                          row.salaryRangeFrom === null || row.salaryRangeTo === null ? (
+                            <span className="text-fg-4">—</span>
+                          ) : (
+                            <span className="tabular-nums">
+                              {formatCurrency(row.salaryRangeFrom)} – {formatCurrency(row.salaryRangeTo)}
+                            </span>
+                          ),
                       },
-                      { label: 'Hapus', danger: true, onSelect: () => setDeleting(row) },
+                      { key: 'status', header: 'Status', render: (row) => <ActiveBadge active={row.isActive} /> },
                     ]}
+                    actions={(row) => (
+                      <RowActions
+                        actions={[
+                          {
+                            label: 'Edit',
+                            onSelect: () => {
+                              setEditingClass(row);
+                              setClassForm(true);
+                            },
+                          },
+                          { label: 'Delete', danger: true, onSelect: () => setDeleting(row) },
+                        ]}
+                      />
+                    )}
                   />
-                )}
-              />
-              <Pagination
-                page={pagedClasses.page}
-                pageSize={pagedClasses.pageSize}
-                total={pagedClasses.total}
-                noun="classes"
-                onPageChange={pagedClasses.setPage}
-                onPageSizeChange={pagedClasses.setPageSize}
-              />
+                  <Pagination
+                    page={pagedClasses.page}
+                    pageSize={pagedClasses.pageSize}
+                    total={pagedClasses.total}
+                    noun="classes"
+                    onPageChange={pagedClasses.setPage}
+                    onPageSizeChange={pagedClasses.setPageSize}
+                  />
+                </>
+              ) : (
+                <p className="m-0 rounded-lg border border-dashed border-border-1 py-10 text-center font-body text-[13px] font-medium text-fg-3">
+                  Select a Grade to view its classes
+                </p>
+              )}
             </div>
           </Card>
         )}
       </div>
 
-      <JobGradeFormModal open={form} editing={editing} grades={rows} mode={tab} onClose={closeForm} />
+      <GradeCreateModal open={creatingGrade} grades={gradeRows} onClose={() => setCreatingGrade(false)} />
+      <GradeEditModal grade={editingGrade} onClose={() => setEditingGrade(null)} />
+      <ClassFormModal
+        open={classForm}
+        editing={editingClass}
+        grades={gradeRows}
+        gradeId={classGradeId}
+        onClose={() => {
+          setClassForm(false);
+          setEditingClass(null);
+        }}
+      />
 
       <ConfirmDialog
         open={Boolean(deleting)}
-        title={`Hapus ${tab === 'grade' ? 'Grade' : 'Class'} ini?`}
+        title={`Delete ${deleting?.parentId === null ? 'this grade' : 'this class'}?`}
         description={
           deleting
-            ? `${deleting.name} tidak lagi bisa dipilih.${tab === 'grade' ? ' Grade yang masih memayungi Class tidak bisa dihapus.' : ''}`
+            ? deleting.parentId === null
+              ? `${deleting.name} and all ${classCount(deleting.id)} of its classes will no longer be selectable.`
+              : `${deleting.name} will no longer be selectable. The last active class of a grade cannot be deleted.`
             : undefined
         }
         loading={remove.isPending}

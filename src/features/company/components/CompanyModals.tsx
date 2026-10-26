@@ -18,7 +18,6 @@ import {
   useGroupLevels,
   useSaveGroupLevel,
   useSaveGroupStruct,
-  useSaveJobGrade,
   useSavePosition,
   useSaveSbu,
   useSaveSbuGroup,
@@ -46,8 +45,6 @@ import type {
   GroupPosition,
   GroupStruct,
   GroupStructDraft,
-  JobGrade,
-  JobGradeDraft,
   PicPosition,
   PositionLog,
   Sbu,
@@ -699,134 +696,6 @@ export function PositionHistoryModal({
           { key: 'at', header: 'Waktu', muted: true, nowrap: true, render: (row) => formatDateTime(row.createdAt) },
         ]}
       />
-    </Modal>
-  );
-}
-
-// ---------- Grade & Class ----------
-
-const EMPTY_JOB_GRADE: JobGradeDraft = { name: '', parentId: '', sortOrder: '1', salaryRangeFrom: '', salaryRangeTo: '' };
-
-/**
- * `mode` memisahkan form Grade (tanpa induk, tanpa rentang gaji) dari form Class (induk wajib,
- * rentang gaji wajib) — dipakai dua tab terpisah di `GradeClassPage` (permintaan pengguna
- * 23 September 2026, supaya dua konsep ini tidak lagi bercampur dalam satu form).
- */
-export function JobGradeFormModal({
-  open,
-  editing,
-  grades,
-  mode,
-  onClose,
-}: {
-  open: boolean;
-  editing: JobGrade | null;
-  grades: JobGrade[];
-  mode: 'grade' | 'class';
-  onClose: () => void;
-}) {
-  const save = useSaveJobGrade();
-  const [draft, setDraft] = useState<JobGradeDraft>(EMPTY_JOB_GRADE);
-
-  useEffect(() => {
-    if (!open) return;
-    setDraft(
-      editing
-        ? {
-            name: editing.name,
-            parentId: editing.parentId ?? '',
-            sortOrder: String(editing.sortOrder),
-            salaryRangeFrom: editing.salaryRangeFrom === null ? '' : String(editing.salaryRangeFrom),
-            salaryRangeTo: editing.salaryRangeTo === null ? '' : String(editing.salaryRangeTo),
-          }
-        : EMPTY_JOB_GRADE,
-    );
-  }, [open, editing]);
-
-  /**
-   * FSD-COMPANY 0.38 §3 (CMP-379): satu layar Edit Grade/Class — bentuk mengikuti `parent_id`, Parent boleh
-   * diubah (N-level). Pilihan induk = seluruh Grade/Class aktif kecuali baris ini dan keturunannya.
-   * Rentang gaji tampil di kedua cabang saat Edit, jadi tidak dikosongkan; wajib hanya untuk Class.
-   */
-  const isClass = editing ? Boolean(draft.parentId) : mode === 'class';
-  const excluded = new Set<string>(editing ? [editing.id] : []);
-  for (let grew = true; grew; ) {
-    grew = false;
-    for (const row of grades) {
-      if (row.parentId && excluded.has(row.parentId) && !excluded.has(row.id)) {
-        excluded.add(row.id);
-        grew = true;
-      }
-    }
-  }
-  const parentOptions = grades
-    .filter((row) => !excluded.has(row.id) && (editing || row.parentId === null))
-    .map((row) => ({ value: row.id, label: `${row.name} (${row.gradeCode})` }));
-
-  return (
-    <Modal
-      open={open}
-      onOpenChange={(next) => !next && onClose()}
-      title={editing ? `Ubah ${editing.name}` : mode === 'grade' ? 'Grade baru' : 'Class baru'}
-      description={
-        editing
-          ? `Kode saat ini ${editing.gradeCode} — dibuat otomatis oleh sistem dari kedalaman dan urutan, tidak bisa diketik langsung.`
-          : mode === 'grade'
-            ? 'Grade adalah jenjang puncak, tanpa induk dan tanpa rentang gaji. Kode dibuat otomatis oleh sistem.'
-            : 'Class selalu berada di bawah sebuah Grade dan wajib membawa rentang gaji. Kode dibuat otomatis oleh sistem.'
-      }
-      footer={
-        <FooterButtons
-          onClose={onClose}
-          saving={save.isPending}
-          onSave={() =>
-            save.mutate(
-              { draft: !editing && mode === 'grade' ? { ...draft, parentId: '' } : draft, id: editing?.id },
-              { onSuccess: onClose },
-            )
-          }
-        />
-      }
-    >
-      <FieldGrid>
-        <TextRow label="Nama" required value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
-        <TextRow
-          label="Urutan"
-          required
-          hint="Peringkat di antara saudara sekandung; menentukan huruf pada kode otomatis."
-          value={draft.sortOrder}
-          onChange={(sortOrder) => setDraft({ ...draft, sortOrder })}
-        />
-      </FieldGrid>
-      {(editing || mode === 'class') && (
-        <SelectRow
-          label="Induk"
-          required={!editing}
-          allowEmpty={Boolean(editing)}
-          emptyLabel="Tanpa induk (Grade)"
-          hint={editing ? 'Mengubah induk atau urutan menghitung ulang kode seluruh baris.' : undefined}
-          value={draft.parentId}
-          onChange={(parentId) => setDraft({ ...draft, parentId })}
-          options={parentOptions}
-        />
-      )}
-      {(editing || mode === 'class') && (
-        <FieldGrid>
-          <TextRow
-            label="Rentang gaji dari"
-            required={isClass}
-            value={draft.salaryRangeFrom}
-            onChange={(salaryRangeFrom) => setDraft({ ...draft, salaryRangeFrom })}
-          />
-          <TextRow
-            label="Rentang gaji sampai"
-            required={isClass}
-            hint="Batas atas tidak boleh lebih kecil dari batas bawah."
-            value={draft.salaryRangeTo}
-            onChange={(salaryRangeTo) => setDraft({ ...draft, salaryRangeTo })}
-          />
-        </FieldGrid>
-      )}
     </Modal>
   );
 }

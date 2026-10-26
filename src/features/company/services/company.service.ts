@@ -20,7 +20,9 @@ import {
 } from '@/features/company/mock-data';
 import {
   canReadModuleMap,
-  computeGradeCode,
+  classCodeOf,
+  compareGradeCode,
+  gradeCodeOf,
   deriveZip,
   isCompanyAdmin,
   isDescendantNode,
@@ -46,7 +48,9 @@ import type {
   GroupStruct,
   GroupStructDraft,
   JobGrade,
-  JobGradeDraft,
+  ClassDraft,
+  GradeDraft,
+  GradeEditDraft,
   ModuleCode,
   ModuleGroupStructMap,
   PersonSnapshot,
@@ -95,6 +99,7 @@ export function resetCompanyMocks() {
   positions = GROUP_POSITION_SEED.map((row) => ({ ...row }));
   positionLogs = POSITION_LOG_SEED.map((row) => ({ ...row }));
   jobGrades = JOB_GRADE_SEED.map((row) => ({ ...row }));
+  recomputeGradeCodes();
   costCenterCategories = COST_CENTER_CATEGORY_SEED.map((row) => ({ ...row }));
   costCenters = COST_CENTER_SEED.map((row) => ({ ...row }));
   sbuGroups = SBU_GROUP_SEED.map((row) => ({ ...row }));
@@ -125,16 +130,57 @@ function requireMode(mode: AssignmentMode, menu: string) {
 }
 
 /**
- * `grade_code` server-generated (`T49`, `ERD-001-COMPANY` §7.7.1) — dihitung ulang untuk
- * SELURUH baris aktif sesama `parentId` (level = kedalaman, root = 1) tiap kali ada baris
- * dibuat/dipindah induk/diurutkan ulang/dihapus. Duplikat kode lintas subtree memang disengaja.
+ * `grade_code` server-generated (FSD-COMPANY 0.55 · UIC 0.41) — dihitung ulang untuk seluruh baris tiap kali
+ * ada Grade/Class dibuat, dipindah tingkat/Grade, atau dihapus: Grade `<tingkat><huruf>` dengan huruf = urutan
+ * dibuat di antara Grade setara; Class `<kode Grade>.<nomor urut>` menurut urutannya di dalam Grade.
  */
-function recomputeGradeCodes(parentId: string | null) {
-  const level = parentId === null ? 1 : 2;
-  const siblings = jobGrades.filter((row) => row.parentId === parentId).sort((a, b) => a.sortOrder - b.sortOrder);
-  siblings.forEach((row, index) => {
-    row.gradeCode = computeGradeCode(level, index + 1);
-  });
+const activeClassesOf = (gradeId: string | null) =>
+  jobGrades.filter((row) => row.parentId === gradeId && row.isActive).length;
+
+function recomputeGradeCodes() {
+  const grades = jobGrades.filter((row) => row.parentId === null);
+  const byLevel = new Map<number, JobGrade[]>();
+  for (const grade of grades) byLevel.set(grade.sortOrder, [...(byLevel.get(grade.sortOrder) ?? []), grade]);
+  byLevel.forEach((rows, level) =>
+    rows
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
+      .forEach((row, index) => {
+        row.gradeCode = gradeCodeOf(level, index + 1);
+      }),
+  );
+  for (const grade of grades) {
+    jobGrades
+      .filter((row) => row.parentId === grade.id)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt))
+      .forEach((row, index) => {
+        row.gradeCode = classCodeOf(grade.gradeCode, index + 1);
+      });
+  }
+}
+
+/** Nama wajib, ≤ 25 karakter, unik di antara baris aktif (UIC-COMPANY §2.4: `409`). */
+function requireGradeName(raw: string, exceptId?: string): string {
+  const name = raw.trim();
+  if (!name) throw new Error('422 VALIDATION_ERROR — Name is required.');
+  if (name.length > 25) throw new Error('422 VALIDATION_ERROR — Name can be at most 25 characters.');
+  if (jobGrades.some((row) => row.id !== exceptId && row.isActive && row.name.toLowerCase() === name.toLowerCase())) {
+    throw new Error(`409 — "${name}" is already used by another active grade or class.`);
+  }
+  return name;
+}
+
+function requireLevel(raw: string): number {
+  const level = parseInteger(raw);
+  if (level === null || level < 1) throw new Error('422 VALIDATION_ERROR — Level must be a whole number from 1.');
+  return level;
+}
+
+function requireSalary(from: string, to: string): { from: number; to: number } {
+  const low = from.trim() ? parseNumber(from) : null;
+  const high = to.trim() ? parseNumber(to) : null;
+  const error = salaryRangeError('class', low, high);
+  if (error || low === null || high === null) throw new Error(`422 VALIDATION_ERROR — ${error}`);
+  return { from: low, to: high };
 }
 
 function writePositionLog(position: GroupPosition, activity: PositionActivity, note: string) {
@@ -622,85 +668,141 @@ export const companyService = {
   async jobGrades(): Promise<JobGrade[]> {
     if (MOCK) {
       await delay();
-      return jobGrades.map((row) => ({ ...row })).sort((a, b) => a.gradeCode.localeCompare(b.gradeCode));
+      return jobGrades.map((row) => ({ ...row })).sort((a, b) => compareGradeCode(a.gradeCode, b.gradeCode));
     }
     const { data } = await api.post<{ data: JobGrade[] }>('/job-grades/search', {});
     return data.data;
   },
 
-  /**
-   * Class wajib membawa rentang gaji; Grade justru tidak boleh punya rentang. `gradeCode`
-   * BUKAN input klien sejak `T49` — dihitung ulang di sini untuk seluruh saudara sekandung
-   * lewat `recomputeGradeCodes`, bukan disimpan langsung dari draft.
-   */
-  async saveJobGrade(draft: JobGradeDraft, id?: string): Promise<JobGrade> {
+  /** Grade + Class default dalam satu transaksi (FSD-COMPANY 0.54 §3, `POST /job-grades` + `default_class`). */
+  async createGrade(draft: GradeDraft): Promise<JobGrade> {
     if (MOCK) {
       await delay(260);
-      const name = draft.name.trim();
-      const parentId = draft.parentId || null;
-      const sortOrder = parseInteger(draft.sortOrder);
-      if (!name) throw new Error('422 VALIDATION_ERROR — nama wajib diisi.');
-      if (sortOrder === null || sortOrder < 1) throw new Error('422 VALIDATION_ERROR — urutan wajib angka mulai 1.');
-      if (jobGrades.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase())) {
-        throw new Error(`409 — nama ${name} sudah dipakai baris aktif lain.`);
-      }
-      if (jobGrades.some((row) => row.id !== id && row.parentId === parentId && row.sortOrder === sortOrder)) {
-        throw new Error(`409 — urutan ${sortOrder} sudah dipakai baris saudara lain.`);
-      }
-      const from = draft.salaryRangeFrom.trim() ? parseNumber(draft.salaryRangeFrom) : null;
-      const to = draft.salaryRangeTo.trim() ? parseNumber(draft.salaryRangeTo) : null;
-      const rangeError = salaryRangeError(parentId ?? '', from, to);
-      if (rangeError) throw new Error(`422 VALIDATION_ERROR — ${rangeError}`);
-      // FSD-COMPANY 0.38 §3: Grade boleh membawa rentang gaji (opsional); induk yang membentuk siklus = 422.
-      for (let cursor = parentId; cursor; cursor = jobGrades.find((item) => item.id === cursor)?.parentId ?? null) {
-        if (cursor === id) throw new Error('422 VALIDATION_ERROR — induk tidak boleh baris ini sendiri atau keturunannya.');
-      }
-
-      const previousParentId = id ? (jobGrades.find((item) => item.id === id)?.parentId ?? null) : null;
-
-      if (id) {
-        const row = jobGrades.find((item) => item.id === id);
-        if (!row) throw new Error('404 NOT_FOUND — baris tidak ditemukan.');
-        Object.assign(row, {
-          name,
-          parentId,
-          sortOrder,
-          salaryRangeFrom: from,
-          salaryRangeTo: to,
-        });
-      } else {
-        const row: JobGrade = {
-          id: nextId('jg'),
-          name,
-          gradeCode: '',
-          parentId,
-          sortOrder,
-          salaryRangeFrom: from,
-          salaryRangeTo: to,
-          createdAt: now(),
-        };
-        jobGrades.push(row);
-      }
-
-      recomputeGradeCodes(parentId);
-      if (previousParentId !== null && previousParentId !== parentId) recomputeGradeCodes(previousParentId);
-      const saved = jobGrades.find((item) => item.id === id) ?? jobGrades[jobGrades.length - 1];
-      return { ...saved };
+      const name = requireGradeName(draft.name);
+      const level = requireLevel(draft.level);
+      const className = requireGradeName(draft.defaultClass.name);
+      if (className.toLowerCase() === name.toLowerCase()) throw new Error('409 — The default class needs a name of its own.');
+      const salary = requireSalary(draft.defaultClass.salaryRangeFrom, draft.defaultClass.salaryRangeTo);
+      const createdAt = now();
+      const grade: JobGrade = {
+        id: nextId('jg'),
+        name,
+        gradeCode: '',
+        parentId: null,
+        sortOrder: level,
+        salaryRangeFrom: null,
+        salaryRangeTo: null,
+        isActive: true,
+        createdAt,
+      };
+      const defaultClass: JobGrade = {
+        id: nextId('jg'),
+        name: className,
+        gradeCode: '',
+        parentId: grade.id,
+        sortOrder: 1,
+        salaryRangeFrom: salary.from,
+        salaryRangeTo: salary.to,
+        isActive: true,
+        createdAt,
+      };
+      jobGrades.push(grade, defaultClass);
+      recomputeGradeCodes();
+      return { ...grade };
     }
-    const { data } = await api.post<JobGrade>('/job-grades', draft);
+    const { data } = await api.post<JobGrade>('/job-grades', {
+      name: draft.name,
+      sort_order: Number(draft.level),
+      default_class: {
+        name: draft.defaultClass.name,
+        salary_range_from: Number(draft.defaultClass.salaryRangeFrom),
+        salary_range_to: Number(draft.defaultClass.salaryRangeTo),
+      },
+    });
     return data;
   },
 
+  /** Edit Grade: Name, Level (pindah tingkat), aktif — tanpa rentang gaji; kode Grade lain & Class dihitung ulang. */
+  async updateGrade(id: string, draft: GradeEditDraft): Promise<JobGrade> {
+    if (MOCK) {
+      await delay(260);
+      const row = jobGrades.find((item) => item.id === id && item.parentId === null);
+      if (!row) throw new Error('404 NOT_FOUND — Grade not found.');
+      Object.assign(row, { name: requireGradeName(draft.name, id), sortOrder: requireLevel(draft.level), isActive: draft.isActive });
+      recomputeGradeCodes();
+      return { ...row };
+    }
+    const { data } = await api.put<JobGrade>(`/job-grades/${id}`, {
+      name: draft.name,
+      sort_order: Number(draft.level),
+      is_active: draft.isActive,
+    });
+    return data;
+  },
+
+  /** Class: Grade induk wajib (Grade aktif, bukan Class), rentang gaji wajib `to ≥ from`; Class baru di urutan akhir. */
+  async saveClass(draft: ClassDraft, id?: string): Promise<JobGrade> {
+    if (MOCK) {
+      await delay(260);
+      const name = requireGradeName(draft.name, id);
+      const grade = jobGrades.find((row) => row.id === draft.parentId && row.parentId === null && row.isActive);
+      if (!grade) throw new Error('422 VALIDATION_ERROR — Choose an active grade for this class.');
+      const salary = requireSalary(draft.salaryRangeFrom, draft.salaryRangeTo);
+      const nextOrder = Math.max(0, ...jobGrades.filter((row) => row.parentId === grade.id).map((row) => row.sortOrder)) + 1;
+      if (id) {
+        const row = jobGrades.find((item) => item.id === id && item.parentId !== null);
+        if (!row) throw new Error('404 NOT_FOUND — Class not found.');
+        if (!draft.isActive && row.isActive && activeClassesOf(row.parentId) === 1) {
+          throw new Error('422 — A grade needs at least one active class.');
+        }
+        Object.assign(row, {
+          name,
+          sortOrder: row.parentId === grade.id ? row.sortOrder : nextOrder,
+          parentId: grade.id,
+          salaryRangeFrom: salary.from,
+          salaryRangeTo: salary.to,
+          isActive: draft.isActive,
+        });
+        recomputeGradeCodes();
+        return { ...row };
+      }
+      const row: JobGrade = {
+        id: nextId('jg'),
+        name,
+        gradeCode: '',
+        parentId: grade.id,
+        sortOrder: nextOrder,
+        salaryRangeFrom: salary.from,
+        salaryRangeTo: salary.to,
+        isActive: draft.isActive,
+        createdAt: now(),
+      };
+      jobGrades.push(row);
+      recomputeGradeCodes();
+      return { ...row };
+    }
+    const body = {
+      name: draft.name,
+      parent_id: draft.parentId,
+      salary_range_from: Number(draft.salaryRangeFrom),
+      salary_range_to: Number(draft.salaryRangeTo),
+      is_active: draft.isActive,
+    };
+    const { data } = id ? await api.put<JobGrade>(`/job-grades/${id}`, body) : await api.post<JobGrade>('/job-grades', body);
+    return data;
+  },
+
+  /** Hapus Grade ikut menghapus Class-nya; Class aktif terakhir sebuah Grade tidak dapat dihapus (`422`). */
   async deleteJobGrade(id: string): Promise<{ id: string }> {
     if (MOCK) {
       await delay(200);
       const row = jobGrades.find((item) => item.id === id);
-      if (!row) throw new Error('404 NOT_FOUND — baris tidak ditemukan.');
-      if (jobGrades.some((item) => item.parentId === id)) {
-        throw new Error('409 — Grade ini masih memayungi Class di bawahnya.');
+      if (!row) throw new Error('404 NOT_FOUND — Row not found.');
+      if (row.parentId !== null && row.isActive && activeClassesOf(row.parentId) === 1) {
+        throw new Error('422 — This is the last active class of its grade. Add another class first, or delete the grade.');
       }
-      jobGrades = jobGrades.filter((item) => item.id !== id);
-      recomputeGradeCodes(row.parentId);
+      jobGrades = jobGrades.filter((item) => item.id !== id && item.parentId !== id);
+      recomputeGradeCodes();
       return { id };
     }
     const { data } = await api.delete<{ id: string }>(`/job-grades/${id}`);

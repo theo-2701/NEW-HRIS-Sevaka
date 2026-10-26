@@ -224,24 +224,46 @@ export interface PositionLog {
  * baris dibuat/dipindah induk/diurutkan ulang/dihapus. Duplikat lintas subtree (mis. dua baris
  * `2.A` pada dua Grade berbeda) memang disengaja, bukan bug.
  */
+/**
+ * Satu tabel `mst_job_grade`, dua jenis baris (FSD-COMPANY 0.54/0.55 · UIC-COMPANY 0.40/0.41):
+ * **Grade** (`parentId = null`) = tingkat jabatan — `sortOrder` = nomor tingkat (1 = puncak), nomor sama = setara,
+ * tanpa rentang gaji; **Class** (`parentId` = Grade) = sub-tingkat gaji, satu-satunya pemegang rentang gaji.
+ */
 export interface JobGrade {
   id: string;
   name: string;
+  /** Server-generated: Grade `<tingkat><huruf>` (3A), Class `<kode Grade>.<nomor urut>` (3A.1). */
   gradeCode: string;
   parentId: string | null;
-  /** Peringkat di antara saudara sekandung (sesama `parentId`); unik per grup itu. */
+  /** Grade: nomor tingkat (boleh kembar = setara). Class: urutan di dalam Grade-nya. */
   sortOrder: number;
   salaryRangeFrom: number | null;
   salaryRangeTo: number | null;
+  isActive: boolean;
   createdAt: string;
 }
 
-export interface JobGradeDraft {
+/** Form Grade bertahap — Grade (Name, Level) lalu Class default, dibuat dalam satu transaksi. */
+export interface GradeDraft {
   name: string;
+  level: string;
+  defaultClass: { name: string; salaryRangeFrom: string; salaryRangeTo: string };
+}
+
+/** Edit Grade: Name, Level (pindah tingkat), aktif — tanpa rentang gaji. */
+export interface GradeEditDraft {
+  name: string;
+  level: string;
+  isActive: boolean;
+}
+
+export interface ClassDraft {
+  name: string;
+  /** Grade induk — wajib, tidak dapat dikosongkan; boleh diganti saat Edit. */
   parentId: string;
-  sortOrder: string;
   salaryRangeFrom: string;
   salaryRangeTo: string;
+  isActive: boolean;
 }
 
 export interface CostCenterCategory {
