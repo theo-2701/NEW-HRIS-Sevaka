@@ -37,9 +37,11 @@ export const ZIP_BOOK: Record<string, { province: string; city: string; timezone
 };
 
 export const BRANCH_GROUP_SEED: BranchGroup[] = [
-  { id: 'bg-hq', name: 'Kantor Pusat', levelOrder: 1, canViewChildData: true, isActive: true, createdAt: at('2026-01-05') },
-  { id: 'bg-regional', name: 'Regional', levelOrder: 2, canViewChildData: true, isActive: true, createdAt: at('2026-01-05') },
-  { id: 'bg-cabang', name: 'Cabang', levelOrder: 3, canViewChildData: false, isActive: true, createdAt: at('2026-01-05') },
+  // Empat kategori bawaan (FSD-COMPANY 0.56): 1 HQ · 2 Regional · 3 Branch Office · 4 Sub-branch.
+  { id: 'bg-hq', name: 'HQ', levelOrder: 1, isActive: true, createdAt: at('2026-01-05') },
+  { id: 'bg-regional', name: 'Regional', levelOrder: 2, isActive: true, createdAt: at('2026-01-05') },
+  { id: 'bg-cabang', name: 'Branch Office', levelOrder: 3, isActive: true, createdAt: at('2026-01-05') },
+  { id: 'bg-sub', name: 'Sub-branch', levelOrder: 4, isActive: true, createdAt: at('2026-01-05') },
 ];
 
 export const BRANCH_SEED: Branch[] = [
@@ -64,6 +66,11 @@ export const BRANCH_SEED: Branch[] = [
     taxKlu: '70209',
     attendanceRadius: 100,
     attendanceOnMobile: true,
+    altPoints: [],
+    isHeadOffice: true,
+    useBranchLetterhead: false,
+    logoDocumentId: null,
+    logoPreviewUrl: null,
     employeeCount: 18,
     createdAt: at('2026-01-06'),
   },
@@ -88,6 +95,12 @@ export const BRANCH_SEED: Branch[] = [
     taxKlu: '70209',
     attendanceRadius: 150,
     attendanceOnMobile: false,
+    // Contoh FSD 0.57: gerbang belakang kantor Bandung, radius 150 m.
+    altPoints: [{ id: 'alt-bdg-1', latitude: -6.9012, longitude: 107.6031, radiusMeters: 150, allowMobileClockIn: false }],
+    isHeadOffice: false,
+    useBranchLetterhead: false,
+    logoDocumentId: null,
+    logoPreviewUrl: null,
     employeeCount: 9,
     createdAt: at('2026-01-08'),
   },
@@ -112,6 +125,11 @@ export const BRANCH_SEED: Branch[] = [
     taxKlu: null,
     attendanceRadius: null,
     attendanceOnMobile: false,
+    altPoints: [],
+    isHeadOffice: false,
+    useBranchLetterhead: false,
+    logoDocumentId: null,
+    logoPreviewUrl: null,
     employeeCount: 7,
     createdAt: at('2026-02-02'),
   },

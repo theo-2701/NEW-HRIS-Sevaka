@@ -65,6 +65,16 @@ export function parseNumber(value: string): number | null {
   return Number(clean);
 }
 
+/**
+ * Koordinat desimal (`-6.2247`) — BUKAN `parseNumber`, yang membuang titik sebagai pemisah ribuan rupiah
+ * sehingga `-6.2` terbaca `-62`.
+ */
+export function parseCoordinate(value: string): number | null {
+  const clean = value.trim();
+  if (!/^-?\d+(\.\d+)?$/.test(clean)) return null;
+  return Number(clean);
+}
+
 export function parseInteger(value: string): number | null {
   const clean = value.trim();
   if (!/^\d+$/.test(clean)) return null;

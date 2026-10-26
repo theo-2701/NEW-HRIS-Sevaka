@@ -28,12 +28,15 @@ import {
   isDescendantNode,
   isDescendantPosition,
   parentLevelError,
+  parseCoordinate,
   parseInteger,
   parseNumber,
   salaryRangeError,
 } from '@/features/company/rules';
+import { MAX_ALT_POINTS } from '@/features/company/types';
 import type {
   Branch,
+  BranchAltPoint,
   BranchDraft,
   BranchGroup,
   BranchGroupDraft,
@@ -125,6 +128,31 @@ const snapshotOf = (employeeId: string | null): PersonSnapshot | null => {
  * Branch Group: API-nya tetap hidup berapa pun `BRANCH_HIERARCHY_MODE`-nya (`branch_group_id`
  * tetap wajib dirujuk tiap cabang), hanya visibilitas menu yang diatur mode itu di UI.
  */
+/** Nomor level kategori cabang (`levelOrder`); kategori tak dikenal = level terendah. */
+const levelOfGroup = (groupId: string) => branchGroups.find((row) => row.id === groupId)?.levelOrder ?? Number.MAX_SAFE_INTEGER;
+
+/** Tepat satu Cabang Utama: menyalakan HQ di satu cabang mematikannya di cabang lain (satu transaksi server). */
+function moveHeadOffice(headOfficeId: string) {
+  for (const row of branches) if (row.id !== headOfficeId) row.isHeadOffice = false;
+}
+
+/** Titik koordinat alternatif (FSD 0.57 §1.2.1): maks. 10, koordinat sah, radius kosong atau > 0. */
+function parseAltPoints(points: BranchDraft['altPoints']): BranchAltPoint[] {
+  if (points.length > MAX_ALT_POINTS) throw new Error('422 CMP-VAL-582 — A branch can have at most 10 alternative coordinate points.');
+  return points.map((point) => {
+    const latitude = parseCoordinate(point.latitude);
+    const longitude = parseCoordinate(point.longitude);
+    if (latitude === null || longitude === null || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+      throw new Error('422 CMP-VAL-583 — Each point needs a latitude from -90 to 90 and a longitude from -180 to 180.');
+    }
+    const radius = point.radiusMeters.trim() ? parseNumber(point.radiusMeters) : null;
+    if (point.radiusMeters.trim() && (radius === null || radius <= 0)) {
+      throw new Error('422 CMP-VAL-584 — The clock-in radius must be more than 0, or left empty.');
+    }
+    return { id: point.id || nextId('alt'), latitude, longitude, radiusMeters: radius, allowMobileClockIn: false };
+  });
+}
+
 function requireMode(mode: AssignmentMode, menu: string) {
   if (mode === 'DISABLED') throw new Error(`422 — menu ${menu} dimatikan pada Company Setup perusahaan ini.`);
 }
@@ -228,25 +256,25 @@ export const companyService = {
       await delay(240);
       const name = draft.name.trim();
       const levelOrder = parseInteger(draft.levelOrder);
-      if (!name) throw new Error('422 VALIDATION_ERROR — nama kategori wajib diisi.');
-      if (levelOrder === null || levelOrder < 1) throw new Error('422 VALIDATION_ERROR — urutan level wajib angka mulai 1.');
+      if (!name) throw new Error('422 VALIDATION_ERROR — Category name is required.');
+      if (levelOrder === null || levelOrder < 1) throw new Error('422 VALIDATION_ERROR — Level order must be a whole number from 1.');
       if (branchGroups.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase())) {
-        throw new Error(`409 — kategori bernama ${name} sudah ada.`);
+        throw new Error(`409 — A category named ${name} already exists.`);
       }
       if (branchGroups.some((row) => row.id !== id && row.levelOrder === levelOrder)) {
-        throw new Error(`409 — urutan level ${levelOrder} sudah dipakai kategori lain.`);
+        throw new Error(`409 — Level order ${levelOrder} is already used by another category.`);
       }
+      // `can_view_child_data` dihapus dari kontrak (UIC-COMPANY 0.42, FSD 0.56 `KV-6`).
       if (id) {
         const row = branchGroups.find((item) => item.id === id);
-        if (!row) throw new Error('404 NOT_FOUND — kategori tidak ditemukan.');
-        Object.assign(row, { name, levelOrder, canViewChildData: draft.canViewChildData });
+        if (!row) throw new Error('404 NOT_FOUND — Category not found.');
+        Object.assign(row, { name, levelOrder });
         return { ...row };
       }
       const row: BranchGroup = {
         id: nextId('bg'),
         name,
         levelOrder,
-        canViewChildData: draft.canViewChildData,
         isActive: true,
         createdAt: now(),
       };
@@ -319,9 +347,26 @@ export const companyService = {
         throw new Error('422 VALIDATION_ERROR — cabang induk tidak boleh dirinya sendiri atau turunannya.');
       }
       const parent = parentId ? branches.find((row) => row.id === parentId) : undefined;
+      // Aturan level cabang (FSD-COMPANY 0.56 §1.2, UIC 0.42): level 1 tanpa induk; level N ≥ 2 wajib induk ber-level < N.
+      const level = levelOfGroup(draft.branchGroupId);
+      if (hierarchy && level === 1 && parentId) throw new Error('422 CMP-VAL-578 — A level 1 branch cannot have a parent branch.');
+      if (hierarchy && level > 1 && !parent) throw new Error('422 CMP-VAL-579 — Choose a parent branch for this category.');
+      if (hierarchy && parent && levelOfGroup(parent.branchGroupId) >= level) {
+        throw new Error('422 CMP-VAL-580 — The parent branch must be at a higher level than this branch.');
+      }
+      const current = id ? branches.find((row) => row.id === id) : undefined;
+      // Cabang Utama + kop surat (FSD 0.58 §1.2.2).
+      if (draft.isHeadOffice && level !== 1) throw new Error('422 CMP-VAL-586 — Only a level 1 branch can be the main branch.');
+      if (current?.isHeadOffice && !draft.isHeadOffice) {
+        throw new Error('422 CMP-BIZ-587 — To move the main branch, turn it on at another level 1 branch.');
+      }
+      if (draft.useBranchLetterhead && !current?.logoDocumentId) {
+        throw new Error('422 CMP-VAL-589 — Upload a branch logo before using the branch letterhead.');
+      }
+      const altPoints = parseAltPoints(draft.altPoints);
 
-      const latitude = draft.latitude.trim() ? parseNumber(draft.latitude) : null;
-      const longitude = draft.longitude.trim() ? parseNumber(draft.longitude) : null;
+      const latitude = draft.latitude.trim() ? parseCoordinate(draft.latitude) : null;
+      const longitude = draft.longitude.trim() ? parseCoordinate(draft.longitude) : null;
       const attendanceRadius = draft.attendanceRadius.trim() ? parseNumber(draft.attendanceRadius) : null;
       if (draft.attendanceRadius.trim() && (attendanceRadius === null || attendanceRadius < 0)) {
         throw new Error('422 VALIDATION_ERROR — radius absensi wajib angka tidak negatif.');
@@ -349,8 +394,13 @@ export const companyService = {
           taxNitku: draft.taxNitku.trim() || null,
           taxKlu: draft.taxKlu.trim() || null,
           attendanceRadius,
-          attendanceOnMobile: draft.attendanceOnMobile,
+          // Saklar clock-in dari ponsel disembunyikan sejak FSD 0.60 — nilai terkirim selalu false.
+          attendanceOnMobile: false,
+          altPoints,
+          isHeadOffice: draft.isHeadOffice,
+          useBranchLetterhead: draft.useBranchLetterhead,
         });
+        if (draft.isHeadOffice) moveHeadOffice(row.id);
         return { ...row };
       }
 
@@ -374,14 +424,48 @@ export const companyService = {
         taxNitku: draft.taxNitku.trim() || null,
         taxKlu: draft.taxKlu.trim() || null,
         attendanceRadius,
-        attendanceOnMobile: draft.attendanceOnMobile,
+        attendanceOnMobile: false,
+        altPoints,
+        isHeadOffice: draft.isHeadOffice,
+        // Logo butuh id cabang — kop baru bisa dinyalakan sesudah disimpan dan logo diunggah.
+        useBranchLetterhead: false,
+        logoDocumentId: null,
+        logoPreviewUrl: null,
         employeeCount: 0,
         createdAt: now(),
       };
       branches.push(row);
+      if (draft.isHeadOffice) moveHeadOffice(row.id);
       return { ...row };
     }
     const { data } = await api.post<Branch>('/branches', draft);
+    return data;
+  },
+
+  /** `POST /branches/{id}/logo` (multipart `file` + `Idempotency-Key`) — JPEG/PNG saja; cabang harus sudah ada. */
+  async uploadBranchLogo(id: string, file: { name: string; type: string; previewUrl: string }): Promise<Branch> {
+    if (MOCK) {
+      await delay(300);
+      const row = branches.find((item) => item.id === id);
+      if (!row) throw new Error('404 NOT_FOUND — Branch not found.');
+      if (!['image/jpeg', 'image/png'].includes(file.type)) throw new Error('422 — Upload a JPEG or PNG image.');
+      Object.assign(row, { logoDocumentId: nextId('doc'), logoPreviewUrl: file.previewUrl });
+      return { ...row };
+    }
+    throw new Error('Logo upload needs the multipart call — see UIC-COMPANY 0.45 §2.2.');
+  },
+
+  /** `DELETE /branches/{id}/logo` — ditolak selama kop cabang menyala (`CMP-BIZ-590`). */
+  async deleteBranchLogo(id: string): Promise<Branch> {
+    if (MOCK) {
+      await delay(200);
+      const row = branches.find((item) => item.id === id);
+      if (!row) throw new Error('404 NOT_FOUND — Branch not found.');
+      if (row.useBranchLetterhead) throw new Error('422 CMP-BIZ-590 — Turn off the branch letterhead before removing the logo.');
+      Object.assign(row, { logoDocumentId: null, logoPreviewUrl: null });
+      return { ...row };
+    }
+    const { data } = await api.delete<Branch>(`/branches/${id}/logo`);
     return data;
   },
 
@@ -389,7 +473,10 @@ export const companyService = {
     if (MOCK) {
       await delay(220);
       if (branches.some((row) => row.parentId === id)) {
-        throw new Error('409 — cabang ini masih menjadi induk cabang lain.');
+        throw new Error('409 — This branch is still the parent of another branch.');
+      }
+      if (branches.find((row) => row.id === id)?.isHeadOffice) {
+        throw new Error('422 CMP-BIZ-588 — The main branch cannot be deleted. Make another level 1 branch the main branch first.');
       }
       branches = branches.filter((row) => row.id !== id);
       return { id };

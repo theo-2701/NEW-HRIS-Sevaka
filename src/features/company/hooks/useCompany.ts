@@ -112,7 +112,7 @@ function useCompanyMutation<TVars, TResult>(
 export const useSaveBranchGroup = () =>
   useCompanyMutation(
     ({ draft, id }: { draft: BranchGroupDraft; id?: string }) => companyService.saveBranchGroup(draft, id),
-    (row) => `Kategori cabang ${row.name} tersimpan.`,
+    (row) => `Branch category ${row.name} is saved.`,
   );
 
 export const useDeleteBranchGroup = () =>
@@ -121,8 +121,18 @@ export const useDeleteBranchGroup = () =>
 export const useSaveBranch = () =>
   useCompanyMutation(
     ({ draft, id }: { draft: BranchDraft; id?: string }) => companyService.saveBranch(draft, id),
-    (row) => `Cabang ${row.branchName} tersimpan.`,
+    (row) => `Branch ${row.branchName} is saved.`,
   );
+
+export const useUploadBranchLogo = () =>
+  useCompanyMutation(
+    ({ id, file }: { id: string; file: { name: string; type: string; previewUrl: string } }) =>
+      companyService.uploadBranchLogo(id, file),
+    (row) => `The logo of ${row.branchName} is uploaded.`,
+  );
+
+export const useDeleteBranchLogo = () =>
+  useCompanyMutation((id: string) => companyService.deleteBranchLogo(id), (row) => `The logo of ${row.branchName} is removed.`);
 
 export const useDeleteBranch = () =>
   useCompanyMutation((id: string) => companyService.deleteBranch(id), () => 'Cabang dihapus.');

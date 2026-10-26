@@ -22,6 +22,9 @@ const BRANCH: BranchDraft = {
   taxKlu: '',
   attendanceRadius: '',
   attendanceOnMobile: false,
+  altPoints: [],
+  isHeadOffice: false,
+  useBranchLetterhead: false,
 };
 
 beforeEach(() => resetCompanyMocks());
@@ -55,6 +58,58 @@ describe('rules', () => {
   });
 });
 
+describe('branch — level, HQ, kop surat, titik alternatif (FSD-COMPANY 0.56–0.60)', () => {
+  it('kaskade kategori → induk: level 1 tanpa induk, level N wajib induk ber-level < N', async () => {
+    await expect(companyService.saveBranch({ ...BRANCH, branchGroupId: 'bg-hq' })).rejects.toThrow(/CMP-VAL-578/);
+    await expect(companyService.saveBranch({ ...BRANCH, parentId: '' })).rejects.toThrow(/CMP-VAL-579/);
+    // Semarang = Branch Office (level 3); induk bagi Branch Office lain harus lebih tinggi.
+    await expect(companyService.saveBranch({ ...BRANCH, parentId: 'br-smg' })).rejects.toThrow(/CMP-VAL-580/);
+    await expect(companyService.saveBranch({ ...BRANCH, branchGroupId: 'bg-sub', parentId: 'br-smg' })).resolves.toMatchObject({
+      parentInfo: { branchName: 'Cabang Semarang' },
+    });
+  });
+
+  it('Cabang Utama: hanya level 1, tepat satu, tak dapat dimatikan langsung, tak dapat dihapus', async () => {
+    await expect(companyService.saveBranch({ ...BRANCH, isHeadOffice: true })).rejects.toThrow(/CMP-VAL-586/);
+    const hq = await companyService.saveBranch({
+      ...BRANCH,
+      branchName: 'Kantor Pusat Baru',
+      branchCode: 'BR-HQ-02',
+      branchGroupId: 'bg-hq',
+      parentId: '',
+      isHeadOffice: true,
+    });
+    const rows = await companyService.branches();
+    expect(rows.filter((row) => row.isHeadOffice).map((row) => row.id)).toEqual([hq.id]);
+    await expect(
+      companyService.saveBranch({ ...BRANCH, branchName: 'Kantor Pusat Baru', branchCode: 'BR-HQ-02', branchGroupId: 'bg-hq', parentId: '' }, hq.id),
+    ).rejects.toThrow(/CMP-BIZ-587/);
+    await expect(companyService.deleteBranch(hq.id)).rejects.toThrow(/CMP-BIZ-588/);
+  });
+
+  it('kop cabang butuh logo; logo hanya JPEG/PNG dan tak dapat dihapus selama kop menyala', async () => {
+    const draft = { ...BRANCH, branchName: 'Cabang Bandung', branchCode: 'BR-BDG-01', branchGroupId: 'bg-regional', parentId: 'br-jkt' };
+    await expect(companyService.saveBranch({ ...draft, useBranchLetterhead: true }, 'br-bdg')).rejects.toThrow(/CMP-VAL-589/);
+    await expect(companyService.uploadBranchLogo('br-bdg', { name: 'logo.gif', type: 'image/gif', previewUrl: '' })).rejects.toThrow(/JPEG or PNG/);
+    await companyService.uploadBranchLogo('br-bdg', { name: 'logo.png', type: 'image/png', previewUrl: 'data:image/png;base64,AA' });
+    await expect(companyService.saveBranch({ ...draft, useBranchLetterhead: true }, 'br-bdg')).resolves.toMatchObject({ useBranchLetterhead: true });
+    await expect(companyService.deleteBranchLogo('br-bdg')).rejects.toThrow(/CMP-BIZ-590/);
+  });
+
+  it('titik alternatif: maks. 10, koordinat sah, radius kosong atau > 0', async () => {
+    const point = { id: '', latitude: '-8.65', longitude: '115.2', radiusMeters: '' };
+    const saved = await companyService.saveBranch({ ...BRANCH, altPoints: [point, { ...point, radiusMeters: '150' }] });
+    expect(saved.altPoints.map((row) => row.radiusMeters)).toEqual([null, 150]);
+    expect(saved.altPoints[0].latitude).toBe(-8.65);
+    expect(saved.altPoints.every((row) => row.allowMobileClockIn === false)).toBe(true);
+    await expect(
+      companyService.saveBranch({ ...BRANCH, branchCode: 'BR-DPS-02', altPoints: Array.from({ length: 11 }, () => point) }),
+    ).rejects.toThrow(/CMP-VAL-582/);
+    await expect(companyService.saveBranch({ ...BRANCH, branchCode: 'BR-DPS-03', altPoints: [{ ...point, latitude: '95' }] })).rejects.toThrow(/CMP-VAL-583/);
+    await expect(companyService.saveBranch({ ...BRANCH, branchCode: 'BR-DPS-04', altPoints: [{ ...point, radiusMeters: '0' }] })).rejects.toThrow(/CMP-VAL-584/);
+  });
+});
+
 describe('branch', () => {
   it('menyimpan cabang baru dengan wilayah hasil kode pos dibekukan di snapshot', async () => {
     const row = await companyService.saveBranch(BRANCH);
@@ -65,7 +120,7 @@ describe('branch', () => {
     expect(await companyService.branches()).toHaveLength(4);
   });
 
-  it('menyimpan Tax dan Attendance sebagai kolom asli, bukan lagi GAP', async () => {
+  it('menyimpan Tax dan radius sebagai kolom asli; saklar clock-in ponsel disembunyikan = false (FSD 0.60)', async () => {
     const row = await companyService.saveBranch({
       ...BRANCH,
       taxNpwp: '03.111.222.3-000.000',
@@ -75,7 +130,7 @@ describe('branch', () => {
     expect(row.taxNpwp).toBe('03.111.222.3-000.000');
     expect(row.taxNitku).toBeNull();
     expect(row.attendanceRadius).toBe(75);
-    expect(row.attendanceOnMobile).toBe(true);
+    expect(row.attendanceOnMobile).toBe(false);
   });
 
   it('menolak kode cabang yang sudah dipakai cabang aktif', async () => {
@@ -93,7 +148,7 @@ describe('branch', () => {
   });
 
   it('menolak penghapusan cabang yang masih menjadi induk', async () => {
-    await expect(companyService.deleteBranch('br-jkt')).rejects.toThrow(/induk/);
+    await expect(companyService.deleteBranch('br-jkt')).rejects.toThrow(/parent/);
   });
 
   it('tetap membolehkan Branch Group walau hierarki dimatikan (UIC 0.16 mencabut gerbang mode)', async () => {
@@ -104,7 +159,7 @@ describe('branch', () => {
     });
     const groups = await companyService.branchGroups();
     expect(groups.length).toBeGreaterThan(0);
-    const created = await companyService.saveBranchGroup({ name: 'Kategori Baru', levelOrder: '9', canViewChildData: false });
+    const created = await companyService.saveBranchGroup({ name: 'Kategori Baru', levelOrder: '9' });
     expect(created.name).toBe('Kategori Baru');
   });
 });

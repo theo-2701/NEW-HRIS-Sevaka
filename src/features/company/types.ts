@@ -43,14 +43,29 @@ export interface PersonSnapshot {
 }
 
 /** `cnf_branch_group_struct` — kategori cabang, hanya saat hierarki menyala. */
+/** Kategori cabang. `levelOrder` kecil = level lebih tinggi; pembanding aturan level cabang (FSD-COMPANY 0.56). */
 export interface BranchGroup {
   id: string;
   name: string;
   levelOrder: number;
-  canViewChildData: boolean;
   isActive: boolean;
   createdAt: string;
 }
+
+/**
+ * Titik koordinat alternatif cabang (`mst_branch_alt_point`, FSD-COMPANY 0.57 §1.2.1) — maks. 10 per cabang.
+ * `allowMobileClockIn` disembunyikan dari layar sejak 0.60; titik baru selalu `false`.
+ */
+export interface BranchAltPoint {
+  id: string;
+  latitude: number;
+  longitude: number;
+  /** Kosong = jarak clock-in tidak dibatasi. */
+  radiusMeters: number | null;
+  allowMobileClockIn: boolean;
+}
+
+export const MAX_ALT_POINTS = 10;
 
 /** `mst_branch`. */
 export interface Branch {
@@ -78,6 +93,14 @@ export interface Branch {
   /** `RESOLVED PROB-FRONTEND-001` — radius (meter) toleransi lokasi absen; null = tak dibatasi. */
   attendanceRadius: number | null;
   attendanceOnMobile: boolean;
+  altPoints: BranchAltPoint[];
+  /** Cabang Utama (HQ) — hanya kategori level 1, tepat satu per perusahaan (FSD-COMPANY 0.58 §1.2.2). */
+  isHeadOffice: boolean;
+  /** Surat pegawai cabang ini memakai kop + penanda tangan cabang; butuh logo cabang. */
+  useBranchLetterhead: boolean;
+  logoDocumentId: string | null;
+  /** Mode dummy: pratinjau logo (pada API = unduhan ber-token). */
+  logoPreviewUrl: string | null;
   employeeCount: number;
   createdAt: string;
 }
@@ -101,12 +124,14 @@ export interface BranchDraft {
   lateToleranceMinutes: string;
   latitude: string;
   longitude: string;
+  altPoints: { id: string; latitude: string; longitude: string; radiusMeters: string }[];
+  isHeadOffice: boolean;
+  useBranchLetterhead: boolean;
 }
 
 export interface BranchGroupDraft {
   name: string;
   levelOrder: string;
-  canViewChildData: boolean;
 }
 
 /** `cnf_group_struct_main` — satu struktur boleh menjadi holding area bawaan. */
