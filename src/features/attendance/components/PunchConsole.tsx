@@ -75,44 +75,52 @@ function useLiveLocation(geofence: Geofence) {
   return { state, locate };
 }
 
-/** Syarat tap per tipe kerja — isi ikon info di samping status lokasi. */
+/**
+ * Syarat tap per tipe kerja — isi ikon info di samping status lokasi. Sengaja ringkas: nama titik kerja sudah
+ * ada di chip, dan selfie hanya disebut bila wajib. WFH tetap ditulis ("Anywhere") supaya karyawan yang jauh
+ * dari kantor tahu ia masih bisa tap.
+ *
+ * Dibuka dengan klik/tap, ditutup dengan klik di luar atau Esc (bawaan Radix). Bukan hover: isinya panel, bukan
+ * label satu baris, ESS banyak dibuka di HP yang tak punya hover — dan pola hover + fokus dulu membuat popover
+ * terbuka lagi sendiri karena Radix mengembalikan fokus ke tombol saat menutup.
+ */
 function TapRules({ geofence }: { geofence: Geofence }) {
-  const [open, setOpen] = useState(false);
-  const rule = (value: WorkArrangement) =>
-    geofence.rules[value].radius ? `Within ${geofence.radiusMeters} m of the work point` : 'Anywhere — location is not checked';
+  const rule = (value: WorkArrangement) => (geofence.rules[value].radius ? `Within ${geofence.radiusMeters} m of the work point` : 'Anywhere');
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover>
       <PopoverTrigger asChild>
+        {/* Area tekan 28 px; -m-1 menjaga tata letak tetap seukuran ikon 20 px. */}
         <button
           type="button"
-          aria-label="Where you can tap in"
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setOpen(false)}
-          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30"
+          aria-label="Tap in rules"
+          className="-m-1 inline-flex size-7 shrink-0 items-center justify-center rounded-full text-fg-3 transition-colors duration-150 ease-standard hover:bg-vapor hover:text-fg-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30 data-[state=open]:bg-vapor data-[state=open]:text-fg-1"
         >
           <Info className="size-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent side="bottom" align="end" className="w-[320px] p-3.5" onOpenAutoFocus={(event) => event.preventDefault()}>
-        <p className="m-0 font-body text-[11px] font-bold uppercase tracking-[0.06em] text-fg-3">Where you can tap in</p>
-        <p className="m-0 mt-1.5 font-body text-[13px] font-semibold leading-snug text-fg-1">{geofence.geofenceName}</p>
+      <PopoverContent side="bottom" align="end" className="w-[300px] max-w-[calc(100vw-32px)] p-3.5" onOpenAutoFocus={(event) => event.preventDefault()}>
+        <p className="m-0 font-body text-[13px] font-bold text-fg-1">Tap in rules</p>
         {/* Setelan per karyawan dibuat tim dev; layar ini hanya membaca hasilnya. */}
-        <dl className="m-0 mt-2.5 grid grid-cols-[96px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
+        <dl className="m-0 mt-2 grid grid-cols-[56px_1fr] gap-x-3 gap-y-1.5 font-body text-[13px] leading-snug">
           {TAP_ARRANGEMENTS.map((value) => (
             <Fragment key={value}>
-              <dt className="font-medium text-fg-3">{ARRANGEMENT_LABEL[value]}</dt>
+              <dt className="font-medium text-fg-3">{value}</dt>
               <dd className="m-0 font-semibold text-fg-1">{rule(value)}</dd>
             </Fragment>
           ))}
-          <dt className="font-medium text-fg-3">Selfie</dt>
-          <dd className="m-0 font-semibold text-fg-1">{selfieRequiredAtTap(geofence) ? 'Required at tap in' : 'Not required'}</dd>
+          {selfieRequiredAtTap(geofence) && (
+            <>
+              <dt className="font-medium text-fg-3">Selfie</dt>
+              <dd className="m-0 font-semibold text-fg-1">Required at tap in</dd>
+            </>
+          )}
         </dl>
-        <p className="m-0 mt-2.5 font-body text-[11.5px] font-medium leading-snug text-fg-3">
-          Set by HR for you. A tap outside the radius is still saved, marked outside radius.
-        </p>
+        {TAP_ARRANGEMENTS.some((value) => geofence.rules[value].radius) && (
+          <p className="m-0 mt-2.5 border-t border-border-1 pt-2 font-body text-[11.5px] font-medium leading-snug text-fg-3">
+            Taps outside the radius are still saved, flagged.
+          </p>
+        )}
       </PopoverContent>
     </Popover>
   );

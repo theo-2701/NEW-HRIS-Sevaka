@@ -9,8 +9,8 @@ import type { OvertimeDaily, OvertimeRequest, OvertimeSession } from '@/features
 /** Jam demo kontrak; `submitted_at` §8.1.1 memakai tanggal ini. */
 export const OVERTIME_TODAY = '2026-07-27';
 
-/** `overtime.retroactive_window_days` — nilainya belum berangka di dokumen (GAP §7 #9). */
-export const RETRO_WINDOW_DAYS = 7;
+/** `overtime.retroactive_window_days` — default 2 hari (FSD-TIME 0.18 §7.1; sama dengan mock Settings). */
+export const RETRO_WINDOW_DAYS = 2;
 
 /** Plafon jam harian company — belum berangka di dokumen (GAP "perlu dikonfirmasi" #1). */
 export const DAILY_HOUR_CAP = 4;

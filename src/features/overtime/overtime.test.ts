@@ -59,7 +59,7 @@ describe('Pengajuan', () => {
     await expect(
       overtimeService.save(RINA, { overtimeDate: '2026-07-01', requestedHours: '2', requestReason: 'Telat lapor.' }),
     ).rejects.toThrow(/retroactive window/);
-    expect(retroWindowStart()).toBe('2026-07-20');
+    expect(retroWindowStart()).toBe('2026-07-25');
   });
 
   it('menolak dua pengajuan menunggu keputusan pada tanggal yang sama', async () => {
