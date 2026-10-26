@@ -269,6 +269,7 @@ export function AttendancePage() {
 
           {tab === 'punch' && (
             <PunchConsole
+              employeeId={session.employeeId}
               workDate={ATTENDANCE_TODAY}
               geofence={geofence}
               selfieRequired={selfieRequired}

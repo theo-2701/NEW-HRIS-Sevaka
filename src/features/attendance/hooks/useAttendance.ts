@@ -46,15 +46,19 @@ export function useTapHistory(session: AttendanceSession, filter: TapFilter) {
   });
 }
 
-/** Shift hari ini dari roster Scheduler — kolom Shift di kartu tap. */
-/** Gerbang tap in hari ini: cuti seharian atau hari libur roster (lihat `tapGate`). */
+/**
+ * Gerbang tap in hari ini (lihat `tapGate`). `staleTime: 0`: cuti yang ditarik atau lembur yang baru
+ * diajukan di halaman lain harus langsung terbaca saat karyawan kembali ke kartu tap.
+ */
 export function useTapGate(employeeId: string) {
   return useQuery({
     queryKey: ['attendance', 'gate', employeeId, ATTENDANCE_TODAY],
     queryFn: () => tapGate(employeeId, ATTENDANCE_TODAY),
+    staleTime: 0,
   });
 }
 
+/** Shift hari ini dari roster Scheduler — kolom Shift di kartu tap. */
 export function useShiftToday(employeeId: string) {
   return useQuery({
     queryKey: ['attendance', 'shift', employeeId, ATTENDANCE_TODAY],

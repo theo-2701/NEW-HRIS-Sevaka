@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PageShell } from '@/components/PageShell';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
@@ -44,11 +45,14 @@ const CATEGORY_LABEL = {
  * berbeda dari yang diajukan; keduanya ditampilkan berdampingan supaya selisihnya terbaca.
  */
 export function EssOvertimePage() {
-  const [actor, setActor] = useState(ESS_VIEWERS[0]);
+  // Dibuka dari "Request overtime" di kartu tap hari libur: form langsung terbuka dengan tanggalnya.
+  const ask = (useLocation().state as { requestOvertime?: { employeeId: string; date: string } } | null)?.requestOvertime;
+  const [actor, setActor] = useState(() => ESS_VIEWERS.find((row) => row.employeeId === ask?.employeeId) ?? ESS_VIEWERS[0]);
   /* Lembur adalah scope EMPLOYEE — tidak pernah diajukan atas nama orang lain. */
   const session = { employeeId: actor.employeeId, role: 'EMPLOYEE' as const };
   const overtime = useMyOvertime(actor);
-  const [form, setForm] = useState(false);
+  const [form, setForm] = useState(Boolean(ask));
+  const [prefillDate, setPrefillDate] = useState(ask?.date ?? '');
   const [editing, setEditing] = useState<OvertimeRequest | null>(null);
   const [withdrawing, setWithdrawing] = useState<OvertimeRequest | null>(null);
 
@@ -149,9 +153,11 @@ export function EssOvertimePage() {
         session={session}
         rows={rows}
         editing={editing}
+        defaultDate={prefillDate}
         onClose={() => {
           setForm(false);
           setEditing(null);
+          setPrefillDate('');
         }}
       />
       <OvertimeWithdrawModal row={withdrawing} session={session} onClose={() => setWithdrawing(null)} />

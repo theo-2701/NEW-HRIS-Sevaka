@@ -232,7 +232,7 @@ export const attendanceService = {
       if (type === 'IN' && !arrangement) {
         throw new Error('422 — Choose a work type (WFO or WFH) before tapping in.');
       }
-      // Cuti seharian / hari libur roster tanpa lembur atau siaga yang disetujui = tap in ditutup (tapGate).
+      // Cuti seharian yang disetujui = tap in ditutup; hari libur tetap terbuka (tapGate).
       if (type === 'IN') {
         const gate = await tapGate(session.employeeId, ATTENDANCE_TODAY);
         if (gate.block) throw new Error(`422 — ${tapBlockText(gate.block)}`);

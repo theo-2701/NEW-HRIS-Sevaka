@@ -132,12 +132,15 @@ export function OvertimeFormModal({
   session,
   rows,
   editing,
+  defaultDate = '',
   onClose,
 }: {
   open: boolean;
   session: OvertimeSession;
   rows: OvertimeRequest[];
   editing: OvertimeRequest | null;
+  /** Tanggal terisi saat dibuka dari kartu tap hari libur. */
+  defaultDate?: string;
   onClose: () => void;
 }) {
   const save = useSaveOvertime(session);
@@ -148,7 +151,7 @@ export function OvertimeFormModal({
         requestedHours: String(editing.requestedHours ?? ''),
         requestReason: editing.requestReason ?? '',
       }
-    : { overtimeDate: '', requestedHours: '', requestReason: '' };
+    : { overtimeDate: defaultDate, requestedHours: '', requestReason: '' };
 
   return (
     <Formik<OvertimeDraft>

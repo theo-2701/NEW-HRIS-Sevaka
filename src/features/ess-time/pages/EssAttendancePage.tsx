@@ -102,6 +102,7 @@ export function EssAttendancePage() {
         {tab === 'today' && (
           <>
             <PunchConsole
+              employeeId={session.employeeId}
               workDate={ATTENDANCE_TODAY}
               geofence={geofence}
               selfieRequired={selfieRequired}

@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { Camera, CircleCheck, Clock, Coffee, Info, MapPin, MapPinOff, Palmtree, TriangleAlert } from 'lucide-react';
+import { Camera, CircleCheck, Clock, Info, MapPin, MapPinOff, Palmtree, TriangleAlert } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { RadioBranch } from '@/components/RadioBranch';
 import { Button } from '@/components/ui/button';
@@ -181,30 +181,59 @@ function TodayCell({ label, value, sub }: { label: string; value: ReactNode; sub
     <div className="flex min-w-0 flex-col gap-0.5 py-3 sm:px-5 sm:first:pl-0">
       <span className="font-body text-xs font-medium text-fg-3">{label}</span>
       <span className="font-display text-lg font-bold leading-tight tabular-nums text-fg-1">{value}</span>
-      <span className="truncate font-body text-xs font-medium text-fg-3">{sub}</span>
+      <span className="font-body text-xs font-medium leading-snug text-fg-3">{sub}</span>
     </div>
   );
 }
 
 const HALF_LABEL = { HALF_AM: 'morning', HALF_PM: 'afternoon' } as const;
 
+const REST_DAY_SUB = {
+  OVERTIME_PENDING: 'Overtime requested — awaiting approval',
+  OVERTIME_APPROVED: 'Overtime approved for today',
+  ONCALL: 'You are on call today',
+} as const;
+
+// TSD-TIME O-4: dibayar = MIN(jam dari tap, jam disetujui) — butuh pengajuan disetujui DAN tap. Siaga (K40):
+// tap di jendela siaga melahirkan lembur AUTO_APPROVED, tanpa pengajuan.
+const REST_DAY_HINT = {
+  NONE: 'Overtime is paid only with an approved request and your tap in and tap out.',
+  OVERTIME_PENDING: 'Overtime is paid only with an approved request and your tap in and tap out.',
+  OVERTIME_APPROVED: 'Overtime is paid from your taps, up to the approved hours.',
+  ONCALL: 'Called out? Tap in — the overtime is logged automatically, no request needed.',
+} as const;
+
 /**
- * Kolom Shift dari jadwal kerja (Scheduler): jam shift, hari libur yang dibuka lembur/siaga, tanpa jadwal,
- * atau memuat (`undefined`). Istilah "roster" diganti "work schedule" — itu kata yang dikenal karyawan.
+ * Kolom Shift dari jadwal kerja (Scheduler): jam shift, hari libur, tanpa jadwal, atau memuat (`undefined`).
+ * Istilah "roster" diganti "work schedule" — itu kata yang dikenal karyawan. Hari libur tanpa lembur
+ * membawa tautan "Request overtime": tap tetap terbuka, tetapi jamnya baru dibayar bila lembur disetujui.
  */
-function shiftLabel(roster: ShiftOn | null | undefined, gate: TapGate | undefined): { value: string; sub: string } {
+function shiftLabel(
+  roster: ShiftOn | null | undefined,
+  gate: TapGate | undefined,
+  requestOvertime: { employeeId: string; date: string },
+): { value: string; sub: ReactNode } {
   if (roster === undefined) return { value: 'Loading…', sub: 'Checking your work schedule' };
   if (!roster) return { value: 'No shift assigned', sub: 'Ask HR if this looks wrong' };
   const { shift } = roster;
   if (roster.assignment.isOffDay || !shift) {
+    const restDay = gate?.restDay ?? null;
+    if (!restDay) return { value: 'Day off', sub: 'No shift in your work schedule' };
+    if (restDay !== 'NONE') return { value: 'Day off', sub: REST_DAY_SUB[restDay] };
     return {
       value: 'Day off',
-      sub:
-        gate?.restDayOpenedBy === 'OVERTIME'
-          ? 'Overtime approved — you can tap in'
-          : gate?.restDayOpenedBy === 'ONCALL'
-            ? 'On call today — you can tap in'
-            : 'No shift in your work schedule',
+      sub: (
+        <>
+          Working today?{' '}
+          <Link
+            to="/me/time/overtime"
+            state={{ requestOvertime }}
+            className="whitespace-nowrap rounded font-semibold text-secondary-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500/30"
+          >
+            Request overtime
+          </Link>
+        </>
+      ),
     };
   }
   const half = gate?.halfDayLeave;
@@ -225,31 +254,23 @@ function tapSub(punch: Punch) {
 }
 
 /**
- * Hari tanpa tap in: cuti seharian yang disetujui atau hari libur jadwal. Kolom Shift/Tap in/Tap out disembunyikan
- * — isinya hanya tanda "—" yang membingungkan — dan diganti satu pernyataan: kenapa hari ini tertutup dan apa
- * yang bisa dilakukan bila karyawan ternyata tetap bekerja.
+ * Cuti seharian yang disetujui: kepala tanggal/jam dan kolom Shift/Tap in/Tap out disembunyikan — isinya hanya
+ * tanda "—" yang membingungkan, dan tanggal cutinya sudah tertulis di sini — diganti satu pernyataan: kenapa tap
+ * in tertutup dan apa yang bisa dilakukan bila karyawan ternyata tetap bekerja.
  */
 function ClosedDay({ block }: { block: TapBlock }) {
-  const timeOff = block.reason === 'TIME_OFF';
-  const Icon = timeOff ? Palmtree : Coffee;
   return (
-    <div className="flex items-start gap-3.5 py-4">
+    <div className="flex items-start gap-3.5 pb-4 pt-0.5">
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-50 text-secondary-600 [&_svg]:size-5">
-        <Icon strokeWidth={1.75} />
+        <Palmtree strokeWidth={1.75} />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="m-0 font-display text-base font-bold leading-tight text-fg-1">
-          {timeOff ? `You're on ${block.leaveTypeName} today` : 'Day off today'}
-        </p>
+        <p className="m-0 font-display text-base font-bold leading-tight text-fg-1">You&rsquo;re on {block.leaveTypeName} today</p>
         <p className="m-0 font-body text-[13px] font-medium text-fg-2">
-          {timeOff
-            ? `Approved · ${formatDateRange(block.startDate, block.endDate)} · ${block.totalDays} day${block.totalDays === 1 ? '' : 's'}`
-            : 'Your work schedule has no shift today.'}
+          Approved · {formatDateRange(block.startDate, block.endDate)} · {block.totalDays} day{block.totalDays === 1 ? '' : 's'}
         </p>
         <p className="m-0 font-body text-xs font-medium leading-normal text-fg-3">
-          {timeOff
-            ? 'No tap needed. Working after all? Withdraw the time off first, or ask HR.'
-            : 'No tap needed. If you are asked to work, the overtime has to be approved first — then tap in opens.'}
+          No tap needed. Working after all? Withdraw the time off first, or ask HR.
         </p>
       </div>
     </div>
@@ -262,6 +283,7 @@ function ClosedDay({ block }: { block: TapBlock }) {
  * Detail tap (selfie, tipe kerja, catatan, lokasi) ada di modal; riwayat lengkap di tab History.
  */
 export function PunchConsole({
+  employeeId,
   workDate,
   geofence,
   selfieRequired,
@@ -271,6 +293,7 @@ export function PunchConsole({
   gate,
   onStart,
 }: {
+  employeeId: string;
   workDate: string;
   geofence: Geofence;
   selfieRequired: boolean;
@@ -278,7 +301,7 @@ export function PunchConsole({
   today: Punch[];
   /** Roster hari ini; `undefined` = masih memuat. */
   shift: ShiftOn | null | undefined;
-  /** Gerbang tap in (cuti / hari libur); `undefined` = masih memuat. */
+  /** Gerbang tap in (cuti seharian) + keadaan hari libur; `undefined` = masih memuat. */
   gate?: TapGate;
   onStart: () => void;
 }) {
@@ -303,35 +326,41 @@ export function PunchConsole({
   const closed = nextType === 'IN' && gate?.block ? gate.block : null;
   // Selama gerbang dimuat, jangan tampilkan lokasi & petunjuk tap yang bisa langsung hilang.
   const checking = nextType === 'IN' && gate === undefined;
+  // Hari libur: tap tetap dibuka karena jam aktual lembur dihitung dari tap (TSD-TIME O-4).
+  const restDay = nextType === 'IN' ? (gate?.restDay ?? null) : null;
 
   const hint = !nextType
     ? 'Both taps are in. Anything wrong? File a correction.'
     : checking
       ? 'Checking whether tap in is open today…'
-      : nextType === 'IN'
-        ? selfieRequired
-          ? 'Selfie first, then choose WFO or WFH.'
-          : 'Choose WFO or WFH, add a note if needed.'
-        : 'Add a note if needed, then tap out.';
+      : restDay
+        ? REST_DAY_HINT[restDay]
+        : nextType === 'IN'
+          ? selfieRequired
+            ? 'Selfie first, then choose WFO or WFH.'
+            : 'Choose WFO or WFH, add a note if needed.'
+          : 'Add a note if needed, then tap out.';
 
   return (
     <section className="flex flex-col rounded-xl border border-border-1 bg-bg-surface px-5 pt-[18px] shadow-card-sm">
-      <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
-        <div className="min-w-0">
-          <h3 className="m-0 font-display text-base font-bold leading-tight text-fg-1">{dateLabel}</h3>
-          <p className="mt-1 font-body text-xs font-medium text-fg-3">
-            <span className="tabular-nums">{now}</span> WIB
-          </p>
-        </div>
-        {/* Lokasi tidak relevan di hari tanpa tap in. */}
-        {!closed && !checking && <LocationStatus geofence={geofence} />}
-      </header>
+      {/* Saat cuti, tanggal & jam tidak berguna (tanggal cutinya ada di panel) dan lokasi tidak relevan. */}
+      {!closed && (
+        <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
+          <div className="min-w-0">
+            <h3 className="m-0 font-display text-base font-bold leading-tight text-fg-1">{dateLabel}</h3>
+            <p className="mt-1 font-body text-xs font-medium text-fg-3">
+              <span className="tabular-nums">{now}</span> WIB
+            </p>
+          </div>
+          {!checking && <LocationStatus geofence={geofence} />}
+        </header>
+      )}
 
       {closed ? (
         <ClosedDay block={closed} />
       ) : (
         <div className="mt-2 grid divide-y divide-border-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          <TodayCell label="Shift" {...shiftLabel(shift, gate)} />
+          <TodayCell label="Shift" {...shiftLabel(shift, gate, { employeeId, date: workDate })} />
           <TodayCell label="Tap in" value={tapIn ? hhmm(tapIn.punchAt) : '—'} sub={tapIn ? tapSub(tapIn) : 'Not yet'} />
           <TodayCell
             label="Tap out"
@@ -344,11 +373,9 @@ export function PunchConsole({
       <footer className="-mx-5 mt-1 flex flex-wrap items-center justify-between gap-3 border-t border-border-1 px-5 py-3.5">
         {closed ? (
           <>
-            <span className="font-body text-xs font-medium text-fg-3">
-              {closed.reason === 'TIME_OFF' ? 'Tap in opens again after your time off.' : 'Tap in opens again on your next shift.'}
-            </span>
-            <Button variant="secondary" onClick={() => navigate(closed.reason === 'TIME_OFF' ? '/me/time/time-off' : '/me/time/overtime')}>
-              {closed.reason === 'TIME_OFF' ? 'View My Time Off' : 'View My Overtime'}
+            <span className="font-body text-xs font-medium text-fg-3">Tap in opens again after your time off.</span>
+            <Button variant="secondary" onClick={() => navigate('/me/time/time-off')}>
+              View My Time Off
             </Button>
           </>
         ) : (
@@ -367,20 +394,17 @@ export function PunchConsole({
  * Jam tap yang berjalan di modal. Waktu yang tersimpan adalah saat tombol Tap in/Tap out ditekan
  * (`punch_at` server), bukan saat selfie diambil — jadi yang ditampilkan jam sekarang, bukan jam foto.
  */
-function TapClock({ label, verb }: { label: string; verb: string }) {
+function TapClock({ label }: { label: string }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map((part) => String(part).padStart(2, '0')).join(':');
+  const time = [now.getHours(), now.getMinutes()].map((part) => String(part).padStart(2, '0')).join(':');
   return (
-    <span className="flex flex-col gap-0.5">
+    <span className="flex flex-col">
       <span className="font-body text-xs font-medium text-fg-3">{label}</span>
-      <span className="font-display text-lg font-bold leading-tight tabular-nums text-fg-1" aria-live="off">
-        {time} <span className="font-body text-xs font-semibold text-fg-3">WIB</span>
-      </span>
-      <span className="font-body text-[11.5px] font-medium text-fg-3">Recorded when you press {verb}.</span>
+      <span className="font-body text-sm font-semibold tabular-nums text-fg-1">{time} WIB</span>
     </span>
   );
 }
@@ -570,7 +594,8 @@ export function TapModal({
   const [arrangement, setArrangement] = useState<WorkArrangement | ''>('');
   const [note, setNote] = useState('');
   const [locating, setLocating] = useState(false);
-  const camera = useSelfieCamera(open && step === 'selfie' && !frame);
+  // `selfieRequired` ikut dicek: step bisa masih 'selfie' dari identitas sebelumnya sesaat setelah modal dibuka.
+  const camera = useSelfieCamera(open && selfieRequired && step === 'selfie' && !frame);
   const fallback = useMemo(
     () => ({ latitude: geofence.centerLatitude, longitude: geofence.centerLongitude, accuracyMeters: 10 }),
     [geofence.centerLatitude, geofence.centerLongitude],
@@ -698,7 +723,7 @@ export function TapModal({
                   {selfieRequired ? <Camera /> : <Clock />}
                 </span>
               )}
-              <TapClock label={isIn ? 'Clock-in time' : 'Clock-out time'} verb={verb} />
+              <TapClock label={isIn ? 'Clock-in time' : 'Clock-out time'} />
             </div>
 
             {isIn && (

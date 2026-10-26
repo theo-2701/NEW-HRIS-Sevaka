@@ -3,7 +3,6 @@ import { attendanceService, resetAttendanceMocks } from '@/features/attendance/s
 import { captureChannel, eligibleDays, nextPunchType } from '@/features/attendance/rules';
 import { DAILY, VIEWERS } from '@/features/attendance/mock-data';
 import type { AttendanceSession } from '@/features/attendance/types';
-import { schedulerService } from '@/features/scheduler/services/scheduler.service';
 
 const RINA: AttendanceSession = { employeeId: 'emp-rina', role: 'EMPLOYEE' };
 const SARI: AttendanceSession = { employeeId: 'emp-sari', role: 'HR_STAFF' };
@@ -54,9 +53,7 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
   it('cabang tanpa selfie langsung merekam tap; koordinat menentukan radius WFO', async () => {
     const BUDI: AttendanceSession = { employeeId: 'emp-budi', role: 'DEPT_MANAGER' };
     const near = { latitude: -5.1478, longitude: 119.4328, accuracyMeters: 8 };
-    // 30 Juli Budi hari libur (tap in ditutup); jadwalkan masuk dulu supaya jalur cabang tanpa selfie teruji.
-    await expect(attendanceService.recordPunch(BUDI, { selfieCaptured: false, idempotencyKey: 'budi-off', workArrangement: 'WFO', location: near })).rejects.toThrow(/day off in your work schedule/);
-    await schedulerService.saveAssignment({ employeeId: 'emp-budi', workDate: '2026-07-30', shiftId: 'sh-1', isOffDay: false }, 'as-13');
+    // 30 Juli Budi hari libur jadwal — tap in tetap terbuka (jam lembur hari libur dibayar dari tap, O-4).
     const result = await attendanceService.recordPunch(BUDI, {
       selfieCaptured: false,
       idempotencyKey: 'budi-in',
@@ -254,13 +251,13 @@ describe('Scope pemilik baris', () => {
 });
 
 describe('Gerbang tap in — cuti dan hari libur (Theo, 26 Okt 2026)', () => {
-  it('cuti seharian yang disetujui dan hari libur roster menutup tap in; hari kerja biasa terbuka', async () => {
+  it('hanya cuti seharian yang menutup tap in; hari libur terbuka dan menyebut lembur yang menaunginya', async () => {
     const { tapGate } = await import('@/features/attendance/tapGate');
-    expect((await tapGate('emp-hendra', '2026-07-30')).block).toMatchObject({ reason: 'TIME_OFF', leaveTypeName: 'Annual Leave' });
-    // Hari libur tertutup sudah diuji lewat Budi di atas. Rina libur roster 29 Juli tapi punya lembur yang
-    // disetujui — tap in tetap terbuka (lembur hari libur).
-    expect(await tapGate('emp-rina', '2026-07-29')).toEqual({ block: null, restDayOpenedBy: 'OVERTIME', halfDayLeave: null });
-    expect((await tapGate('emp-rina', '2026-07-30')).block).toBeNull();
+    expect((await tapGate('emp-hendra', '2026-07-30')).block).toMatchObject({ leaveTypeName: 'Annual Leave', totalDays: 1 });
+    expect(await tapGate('emp-budi', '2026-07-30')).toEqual({ block: null, restDay: 'NONE', halfDayLeave: null });
+    // Rina libur roster 29 Juli dengan lembur yang sudah disetujui.
+    expect(await tapGate('emp-rina', '2026-07-29')).toEqual({ block: null, restDay: 'OVERTIME_APPROVED', halfDayLeave: null });
+    expect(await tapGate('emp-rina', '2026-07-30')).toEqual({ block: null, restDay: null, halfDayLeave: null });
   });
 
   it('server menolak tap in saat cuti (422)', async () => {
