@@ -271,10 +271,10 @@ export function DisbursementPage() {
                     selectionBar={
                       pickedRows.length > 0 ? (
                         <SelectionBar count={pickedRows.length} total={selectable.length} onToggleAll={toggleAll}>
-                          <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
                           <RowButton variant="primary" onClick={() => setMarking(pickedRows)}>
                             Mark as Paid
                           </RowButton>
+                          <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
                         </SelectionBar>
                       ) : null
                     }

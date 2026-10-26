@@ -377,7 +377,8 @@ Inggris seperti di prototype. Tanpa emoji.
 - **Tombol kolom aksi** (`RowButton`, `RowActions`): lebar minimal **84px** = lebar "Action ▾", jadi
   tombol berlabel pendek ("Edit", "Open") tidak terlihat lebih kecil. Sudah ada di `ROW_CONTROL`.
 - **Bilah seleksi tabel** (`SelectionBar`): tombolnya `RowButton` (30px, sama dengan kolom aksi). Aksi
-  utama memakai `variant="primary"`, sisanya default.
+  utama memakai `variant="primary"`, sisanya default. Tombol **menempel tepat setelah "N selected"**
+  (dipisah garis tipis), bukan rata kanan; urutan: aksi utama → aksi lain → "Clear Selection".
 - **Menu maker/checker** memakai pola New Joiner: `TabMenu` **Activity** (`Segmented`: "Needs approval" =
   diajukan orang lain, terlama dulu · "My requests/uploads" = ajuan sendiri yang masih berjalan) dan
   **Information** (seluruh data + filter). Contoh: New Joiner, Temporary Assignment, Employee Bulk Import.

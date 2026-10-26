@@ -279,10 +279,10 @@ export function BulkActivationPage() {
                 selectionBar={
                   picked.length > 0 ? (
                     <SelectionBar count={picked.length} total={pickable.length} onToggleAll={toggleAll}>
-                      <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
                       <RowButton variant="primary" disabled={tooMany} onClick={() => setConfirmSend(true)}>
                         Send Invitations ({picked.length})
                       </RowButton>
+                      <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
                     </SelectionBar>
                   ) : null
                 }

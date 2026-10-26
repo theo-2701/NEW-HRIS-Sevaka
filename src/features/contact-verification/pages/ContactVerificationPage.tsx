@@ -317,13 +317,13 @@ export function ContactVerificationPage() {
                 selectionBar={
                   picked.length > 0 ? (
                     <SelectionBar count={picked.length} total={paged.rows.length} onToggleAll={toggleAll}>
-                      <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
-                      <RowButton disabled={tooMany} onClick={() => askSend('PHONE', picked)}>
-                        Send WhatsApp Links
-                      </RowButton>
                       <RowButton variant="primary" disabled={tooMany} onClick={() => askSend('EMAIL', picked)}>
                         Send Email Links
                       </RowButton>
+                      <RowButton disabled={tooMany} onClick={() => askSend('PHONE', picked)}>
+                        Send WhatsApp Links
+                      </RowButton>
+                      <RowButton onClick={() => setPicked([])}>Clear Selection</RowButton>
                     </SelectionBar>
                   ) : null
                 }

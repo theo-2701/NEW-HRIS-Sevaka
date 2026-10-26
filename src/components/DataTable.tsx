@@ -226,8 +226,9 @@ export function DataTable<T>({
 }
 
 /**
- * Isi `selectionBar` standar: checkbox pilih-semua (indeterminate saat sebagian) + "N selected" di
- * kiri, aksi massal di kanan (sekunder dulu, primer paling kanan).
+ * Isi `selectionBar` standar: checkbox pilih-semua (indeterminate saat sebagian) + "N selected", lalu aksi
+ * massal menempel tepat di sebelahnya (Theo, 26 Okt 2026) — mata dan kursor sudah ada di kiri setelah
+ * mencentang, jadi tak perlu menyeberang ke ujung kanan. Urutan: aksi primer dulu, "Clear Selection" terakhir.
  */
 export function SelectionBar({
   count,
@@ -248,8 +249,9 @@ export function SelectionBar({
         checked={count >= total ? true : 'indeterminate'}
         onCheckedChange={onToggleAll}
       />
-      <span className="font-body text-sm font-bold text-fg-1">{count} selected</span>
-      <div className="ml-auto flex items-center gap-2">{children}</div>
+      <span className="font-body text-sm font-bold tabular-nums text-fg-1">{count} selected</span>
+      <span aria-hidden className="mx-1 h-5 w-px bg-border-1" />
+      <div className="flex items-center gap-2">{children}</div>
     </>
   );
 }
