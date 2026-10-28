@@ -91,6 +91,10 @@ describe('Portal kandidat (FSD-001-EMPLOYEE §4B)', () => {
     await expect(candidatePortalService.saveProfile(token, 'DIKA', { ...profile, idCardNumber: '123' })).rejects.toMatchObject({
       fields: { idCardNumber: expect.any(String) },
     });
+    // HP seluler Indonesia saja (FSD §4B.1) — nomor luar negeri ditolak.
+    await expect(candidatePortalService.saveProfile(token, 'DIKA', { ...profile, candidatePhone: '+6591234567' })).rejects.toMatchObject({
+      fields: { candidatePhone: expect.any(String) },
+    });
   });
 
   it('CV harus PDF', async () => {

@@ -639,7 +639,8 @@ function ProfileStep({
             )}
           </Section>
 
-          <Section title="Contact" sub={`Your email is ${state.candidateEmail}, the address this invitation was sent to.`}>
+          {/* Email hanya di header, tersamar (FSD-001-EMPLOYEE §4B.1) — bukan isian kandidat. */}
+          <Section title="Contact">
             <TextField
               name="candidatePhone"
               label="Mobile phone number"
