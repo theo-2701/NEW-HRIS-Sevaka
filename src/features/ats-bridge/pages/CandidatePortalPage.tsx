@@ -9,7 +9,6 @@ import {
   IdCard,
   Link2Off,
   Lock,
-  Mail,
   Search,
   ShieldCheck,
 } from 'lucide-react';
@@ -361,25 +360,24 @@ function ConsentStep({
             checked && 'cursor-pointer border-secondary-500 bg-primary-50/60',
           )}
         >
-          <input
+          <Checkbox
             id="consent-agree"
-            type="checkbox"
             checked={checked}
             disabled={!atEnd}
-            onChange={(event) => setChecked(event.target.checked)}
-            className="mt-0.5 size-4 shrink-0 cursor-[inherit] accent-secondary-600"
+            onCheckedChange={(next) => setChecked(next === true)}
+            className="mt-0.5"
           />
           <span className="font-body text-[13px] font-semibold leading-[1.5] text-fg-1">
             I have read the whole consent text and agree to the processing of my personal data as described above.
           </span>
         </label>
-        <span
-          aria-live="polite"
-          className={cn('flex items-center gap-1.5 font-body text-xs font-semibold', atEnd ? 'text-success-700' : 'text-fg-3')}
-        >
-          {atEnd ? <Check className="size-3.5" /> : <ArrowDown className="size-3.5 motion-safe:animate-bounce" />}
-          {atEnd ? 'You have read the whole text' : 'Scroll to the end of the text to tick this box'}
-        </span>
+        {/* Petunjuk hanya selama teks belum habis digulir; setelah itu centang sendiri yang jadi langkah berikutnya. */}
+        {!atEnd && (
+          <span className="flex items-center gap-1.5 font-body text-xs font-semibold text-fg-3">
+            <ArrowDown className="size-3.5 motion-safe:animate-bounce" />
+            Scroll to the end of the text to tick this box
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap justify-end gap-2.5 border-t border-fog pt-5">
@@ -1087,6 +1085,17 @@ export function CandidatePortalPage() {
             <span className="inline-flex items-center gap-2" aria-label="SEVAKA">
               <SevakaWordmark className="text-[22px] text-white" />
             </span>
+            {state && !invalid && progress !== 'DONE' && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-body text-xs font-semibold',
+                  urgent ? 'bg-warning-100 text-warning-800' : 'bg-white/15 text-white',
+                )}
+              >
+                <Clock className="size-3.5" />
+                Link valid until {formatDateTime(state.expiresAt)}
+              </span>
+            )}
           </div>
           <div className="flex max-w-2xl flex-col gap-2.5">
             <h1 className="m-0 font-display text-[28px] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[32px]">
@@ -1097,25 +1106,6 @@ export function CandidatePortalPage() {
               same link.
             </p>
           </div>
-          {state && !invalid && (
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-pill bg-white/15 px-3 py-1.5 font-body text-xs font-semibold text-white">
-                <Mail className="size-3.5" />
-                Sent to {state.candidateEmail}
-              </span>
-              {progress !== 'DONE' && (
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-body text-xs font-semibold',
-                    urgent ? 'bg-warning-100 text-warning-800' : 'bg-white/15 text-white',
-                  )}
-                >
-                  <Clock className="size-3.5" />
-                  Link valid until {formatDateTime(state.expiresAt)}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </header>
 
