@@ -595,7 +595,7 @@ function ProfileStep({
             sub="Fill in your details exactly as they appear on your identity documents."
             aside={
               MOCK && (
-                <Button variant="ghost" type="button" onClick={() => void setValues({ ...values, ...SAMPLE })}>
+                <Button variant="ghost" type="button" onClick={() => void setValues({ ...values, ...SAMPLE })} className="min-w-0 px-0">
                   Fill sample data
                 </Button>
               )
@@ -838,7 +838,7 @@ function DocumentsStep({
         onPick={(file) => onPick('id-card', file)}
       />
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-fog pt-5">
-        <Button variant="ghost" onClick={onBack}>
+        <Button variant="ghost" onClick={onBack} className="min-w-0 px-0">
           Back to my data
         </Button>
         <Button disabled={!ready} onClick={onNext}>
@@ -857,7 +857,7 @@ function Facts({ title, onEdit, rows }: { title: string; onEdit?: () => void; ro
       <header className="flex items-center justify-between gap-3">
         <h3 className="m-0 font-display text-[15px] font-bold text-fg-1">{title}</h3>
         {onEdit && (
-          <Button variant="ghost" onClick={onEdit}>
+          <Button variant="ghost" onClick={onEdit} className="h-auto min-w-0 px-0">
             Edit
           </Button>
         )}
