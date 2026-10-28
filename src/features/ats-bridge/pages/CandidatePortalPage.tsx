@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SevakaWordmark } from '@/components/brand/SevakaLogo';
 import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
-import { CheckboxField } from '@/components/form/CheckboxField';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
@@ -167,10 +167,11 @@ function StepHeading({ title, sub, aside }: { title: string; sub?: ReactNode; as
 
 function Section({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
   return (
-    <section className="flex min-w-0 flex-col gap-4 border-t border-fog pt-6 first-of-type:border-t-0 first-of-type:pt-0">
-      <header>
-        <h3 className="m-0 font-display text-[15px] font-bold text-fg-1">{title}</h3>
-        {sub && <p className="m-0 mt-0.5 font-body text-xs font-medium text-fg-3">{sub}</p>}
+    <section className="flex min-w-0 flex-col gap-4 border-t border-fog pt-7 first-of-type:border-t-0 first-of-type:pt-0">
+      {/* Judul section 18px — satu tingkat di atas label field (16/700) supaya terbaca sebagai pembatas. */}
+      <header className="mb-1">
+        <h3 className="m-0 font-display text-lg font-bold leading-tight text-fg-1">{title}</h3>
+        {sub && <p className="m-0 mt-1 font-body text-xs font-medium text-fg-3">{sub}</p>}
       </header>
       {children}
     </section>
@@ -234,6 +235,24 @@ function ChoiceCards({
       </div>
       {error && <span className="font-body text-xs font-medium text-error-700">{error}</span>}
     </div>
+  );
+}
+
+/**
+ * Pilihan biasa, bukan pernyataan — jadi checkbox polos tanpa kotak `CheckboxField`
+ * (kotak itu untuk atestasi), satu baris, sejajar tengah dengan labelnya.
+ */
+function SameAddressCheckbox() {
+  const { values, setFieldValue } = useFormikContext<CandidateProfile>();
+  return (
+    <label className="flex w-fit cursor-pointer items-center gap-2.5 py-1">
+      <Checkbox
+        id="isDomicileSameAsIdCard"
+        checked={values.isDomicileSameAsIdCard}
+        onCheckedChange={(next) => void setFieldValue('isDomicileSameAsIdCard', next === true)}
+      />
+      <span className="font-body text-[13px] font-medium text-fg-1">My domicile is the same as the address above</span>
+    </label>
   );
 }
 
@@ -422,7 +441,9 @@ function ZipPicker({ token, name, label }: { token: string; name: 'idCardZip' | 
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <div className="flex flex-col gap-1">
+      {/* Kode pos = isian yang diketik, sebaris sendiri setengah lebar (pola Mobile phone / KTP);
+          empat wilayah hasil pencarian menyusul rapi 2×2. */}
+      <div className="flex flex-col gap-1 sm:col-span-2 sm:max-w-[calc(50%-8px)]">
         <Label htmlFor={`${name}-search`}>
           {label}
           <em>*</em>
@@ -660,7 +681,7 @@ function ProfileStep({
           <Section title="Address">
             <TextField name="idCardAddress" label="Address on identity document" required autoComplete="street-address" placeholder="Street, number, RT / RW" />
             <ZipPicker token={token} name="idCardZip" label="Postal code" />
-            <CheckboxField name="isDomicileSameAsIdCard">My domicile is the same as the address above</CheckboxField>
+            <SameAddressCheckbox />
             {!values.isDomicileSameAsIdCard && (
               <div className="flex flex-col gap-4 rounded-xl border border-border-1 bg-bg-subtle p-4">
                 <TextField name="domicileAddress" label="Domicile address" required placeholder="Street, number, RT / RW" />
