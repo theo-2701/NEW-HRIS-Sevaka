@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { Form, Formik, useFormikContext } from 'formik';
-import { Check, FileText, IdCard, Link2Off, ShieldCheck } from 'lucide-react';
+import {
+  ArrowDown,
+  Check,
+  Clock,
+  FileText,
+  IdCard,
+  Link2Off,
+  Lock,
+  Mail,
+  MapPin,
+  Receipt,
+  ShieldCheck,
+  UserRound,
+  Users,
+} from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SevakaLogo } from '@/components/brand/SevakaLogo';
 import { Modal } from '@/components/Modal';
@@ -15,13 +29,17 @@ import { Button } from '@/components/ui/button';
 import { Note } from '@/features/time-off/components/TimeOffBits';
 import { candidatePortalService } from '@/features/ats-bridge/services/ats-bridge.service';
 import type { CandidateProfile, PortalState, PortalStep, ZipArea } from '@/features/ats-bridge/types';
+import { MOCK } from '@/services/mock';
 import { cn } from '@/lib/utils';
-import { formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 /**
- * Portal Kandidat — FSD-001-EMPLOYEE 0.46 §4B, UIC §4B. PUBLIK tanpa login: tautan
+ * Portal Kandidat — FSD-001-EMPLOYEE §4B, UIC-EMPLOYEE 0.76 §4B. PUBLIK tanpa login: tautan
  * `/candidate/{COMPANY_CODE}#t=<token>`. Token dipindah ke sessionStorage lalu dibuang dari alamat;
  * tiap panggilan membawa header `X-Candidate-Token`. Nol sidebar, nol menu HRIS.
+ *
+ * Urutan server `CONSENT → PROFILE → DOCUMENTS → READY → DONE`; layar menampilkan empat langkah
+ * (READY = langkah "Review and submit", DONE = semua langkah selesai).
  */
 const TOKEN_KEY = 'sevaka.candidate-token';
 
@@ -33,7 +51,8 @@ function readToken(): string {
     } catch {
       // sessionStorage bisa tidak tersedia (mode privat) — token tetap dipakai di memori.
     }
-    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    // Hanya potongan `t=` yang dibuang, supaya rute hash (pratinjau artifact) tetap utuh.
+    window.history.replaceState(null, '', window.location.href.replace(/[#&]t=[^&]*/, ''));
     return match[1];
   }
   try {
@@ -48,50 +67,302 @@ const maskEmail = (email: string) => {
   return `${name.slice(0, 2)}${'•'.repeat(Math.max(1, name.length - 2))}@${domain}`;
 };
 
-const STEPS: { step: PortalStep[]; label: string }[] = [
-  { step: ['CONSENT'], label: 'Consent' },
-  { step: ['PROFILE'], label: 'Your data' },
-  { step: ['DOCUMENTS', 'READY'], label: 'Documents' },
-  { step: ['DONE'], label: 'Done' },
-];
+const wipe = (message: string) => message.replace(/^\d{3} — /, '');
 
-function Stepper({ current }: { current: PortalStep }) {
-  const index = STEPS.findIndex((item) => item.step.includes(current));
+/* ─────────────────────────── Langkah ─────────────────────────── */
+
+const STEPS: { step: PortalStep; label: string; sub: string }[] = [
+  { step: 'CONSENT', label: 'Consent', sub: 'How we use your data' },
+  { step: 'PROFILE', label: 'Your data', sub: 'Identity, contact, address' },
+  { step: 'DOCUMENTS', label: 'Documents', sub: 'CV and ID card photo' },
+  { step: 'READY', label: 'Review and submit', sub: 'Check once, then send' },
+];
+const ORDER: PortalStep[] = ['CONSENT', 'PROFILE', 'DOCUMENTS', 'READY', 'DONE'];
+const indexOf = (step: PortalStep) => ORDER.indexOf(step);
+
+/** Langkah yang sudah dilewati boleh dibuka lagi — kecuali Consent (sudah dijawab) dan setelah kirim. */
+const canOpen = (target: PortalStep, progress: PortalStep) =>
+  target !== 'CONSENT' && progress !== 'DONE' && indexOf(target) <= indexOf(progress);
+
+function StepRail({ progress, view, onOpen }: { progress: PortalStep; view: PortalStep; onOpen: (step: PortalStep) => void }) {
   return (
-    <ol className="m-0 grid list-none grid-cols-4 gap-2 p-0">
-      {STEPS.map((item, i) => (
-        <li key={item.label} className="flex flex-col gap-2">
-          <span className={cn('h-1 rounded-full', i <= index ? 'bg-secondary-500' : 'bg-fog')} />
-          <span className={cn('flex items-center gap-1.5 font-body text-xs font-semibold', i === index ? 'text-fg-1' : 'text-fg-3')}>
-            {i < index ? <Check className="size-3.5 text-secondary-600" /> : <span className="tabular-nums">{i + 1}.</span>}
-            {item.label}
-          </span>
-        </li>
-      ))}
+    <ol className="m-0 flex list-none flex-col p-0">
+      {STEPS.map((item, i) => {
+        const done = indexOf(progress) > i;
+        const current = item.step === view && progress !== 'DONE';
+        const open = canOpen(item.step, progress) && !current;
+        const body = (
+          <>
+            <span
+              className={cn(
+                'relative z-[1] grid size-7 shrink-0 place-items-center rounded-full font-body text-xs font-bold tabular-nums transition-colors duration-200 ease-standard',
+                done && !current && 'bg-success-500 text-white',
+                current && 'bg-secondary-600 text-white ring-4 ring-secondary-500/15',
+                !done && !current && 'border border-silver bg-white text-fg-3',
+              )}
+            >
+              {done && !current ? <Check className="size-3.5" strokeWidth={2.5} /> : i + 1}
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5 pt-1 text-left">
+              <span className={cn('font-body text-[13px] font-bold group-hover:text-secondary-700', current || done ? 'text-fg-1' : 'text-fg-3')}>{item.label}</span>
+              <span className="font-body text-xs font-medium text-fg-3">
+                {item.step === 'CONSENT' && done ? 'Agreed' : item.sub}
+              </span>
+            </span>
+          </>
+        );
+        return (
+          <li key={item.step} className="relative pb-5 last:pb-0">
+            {i < STEPS.length - 1 && (
+              <span
+                aria-hidden
+                className={cn('absolute left-[13px] top-7 h-[calc(100%-28px)] w-0.5', done ? 'bg-success-500' : 'bg-fog')}
+              />
+            )}
+            {open ? (
+              <button
+                type="button"
+                onClick={() => onOpen(item.step)}
+                className="group flex w-full cursor-pointer items-start gap-3 rounded-md outline-none focus-visible:ring-4 focus-visible:ring-secondary-500/20"
+              >
+                {body}
+              </button>
+            ) : (
+              <div className="flex items-start gap-3" aria-current={current ? 'step' : undefined}>
+                {body}
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ol>
   );
 }
 
-function Section({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+/** Pengganti rail di layar sempit: "Step 2 of 4" + batang kemajuan. */
+function StepBar({ progress, view }: { progress: PortalStep; view: PortalStep }) {
+  const at = progress === 'DONE' ? STEPS.length : Math.min(indexOf(view), STEPS.length - 1);
   return (
-    <section className="flex flex-col gap-4 border-t border-fog pt-5 first:border-t-0 first:pt-0">
-      <header>
-        <h3 className="m-0 font-display text-base font-bold text-fg-1">{title}</h3>
-        {sub && <p className="m-0 mt-0.5 font-body text-xs font-medium text-fg-3">{sub}</p>}
+    <div className="flex flex-col gap-2 lg:hidden">
+      <div className="flex items-baseline justify-between font-body text-xs font-semibold">
+        <span className="text-fg-1">{progress === 'DONE' ? 'All steps done' : STEPS[at].label}</span>
+        <span className="tabular-nums text-fg-3">
+          {progress === 'DONE' ? `${STEPS.length} of ${STEPS.length}` : `Step ${at + 1} of ${STEPS.length}`}
+        </span>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {STEPS.map((item, i) => (
+          <span key={item.step} className={cn('h-1 rounded-full', i <= at || progress === 'DONE' ? 'bg-secondary-500' : 'bg-fog')} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Bagian umum ─────────────────────────── */
+
+function StepHeading({ title, sub, aside }: { title: string; sub?: ReactNode; aside?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex min-w-0 flex-col gap-1">
+        <h2 className="m-0 font-display text-xl font-bold leading-tight text-fg-1">{title}</h2>
+        {sub && <p className="m-0 max-w-[62ch] font-body text-[13px] font-medium leading-[1.55] text-fg-3">{sub}</p>}
+      </div>
+      {aside}
+    </div>
+  );
+}
+
+function Section({ icon, title, sub, children }: { icon: ReactNode; title: string; sub?: string; children: ReactNode }) {
+  return (
+    <section className="flex min-w-0 flex-col gap-4 border-t border-fog pt-6 first-of-type:border-t-0 first-of-type:pt-0">
+      <header className="flex items-center gap-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-50 text-secondary-600 [&_svg]:size-4">{icon}</span>
+        <div>
+          <h3 className="m-0 font-display text-[15px] font-bold text-fg-1">{title}</h3>
+          {sub && <p className="m-0 font-body text-xs font-medium text-fg-3">{sub}</p>}
+        </div>
       </header>
       {children}
     </section>
   );
 }
 
+/** Pilihan pendek bergaya kartu (kewarganegaraan, jenis kelamin) — radio asli, fokus keyboard terlihat. */
+function ChoiceCards({
+  name,
+  label,
+  options,
+}: {
+  name: 'nationality' | 'gender';
+  label: string;
+  options: { value: string; title: string; description?: string }[];
+}) {
+  const { values, setFieldValue, errors, touched } = useFormikContext<CandidateProfile>();
+  const error = touched[name] ? (errors[name] as string | undefined) : undefined;
+  return (
+    <div className="flex flex-col gap-2" role="radiogroup" aria-label={label}>
+      <span className="font-body text-sm font-bold text-fg-1">
+        {label} <span className="text-error-500">*</span>
+      </span>
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {options.map((option) => {
+          const active = values[name] === option.value;
+          return (
+            <label
+              key={option.value}
+              className={cn(
+                'group flex cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 transition-[border-color,background,box-shadow] duration-200 ease-standard',
+                active ? 'border-secondary-500 bg-primary-50/60 shadow-[0_0_0_3px_rgba(2,132,199,.10)]' : 'border-silver bg-white hover:border-secondary-500',
+                error && !active && 'border-error-500',
+              )}
+            >
+              <input
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={active}
+                onChange={() => void setFieldValue(name, option.value)}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden
+                className={cn(
+                  'mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full border-2 bg-white peer-focus-visible:ring-4 peer-focus-visible:ring-secondary-500/20',
+                  active ? 'border-secondary-500' : 'border-silver',
+                )}
+              >
+                {active && <span className="size-2 rounded-full bg-secondary-500" />}
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="font-body text-[13px] font-bold text-fg-1">{option.title}</span>
+                {option.description && <span className="font-body text-xs font-medium text-fg-3">{option.description}</span>}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      {error && <span className="font-body text-xs font-medium text-error-700">{error}</span>}
+    </div>
+  );
+}
+
 const opts = (values: string[]) => values.map((value) => ({ value, label: value }));
-const GENDER = opts(['Male', 'Female']);
 const MARITAL = opts(['Single', 'Married', 'Divorced', 'Widowed']);
 const EDUCATION = opts(['High school', 'Diploma (D3)', "Bachelor's degree (S1)", "Master's degree (S2)", 'Doctorate (S3)']);
 const RELIGION = opts(['Islam', 'Protestant', 'Catholic', 'Hindu', 'Buddhist', 'Confucian', 'Other']);
 const BLOOD = opts(['A', 'B', 'AB', 'O', 'Unknown']);
 const HOME = opts(['Own', 'Rent', 'Family home', 'Other']);
 const DISABILITY = opts(['None', 'Physical', 'Sensory', 'Intellectual', 'Mental', 'Prefer not to say']);
+
+/* ─────────────────────────── Consent ─────────────────────────── */
+
+/** Blok dipisah baris kosong; baris pertama bernomor ("1. …") dibaca sebagai subjudul. */
+function ConsentText({ content }: { content: string }) {
+  return (
+    <>
+      {content.split(/\n\s*\n/).map((block, i) => {
+        const [first, ...rest] = block.split('\n');
+        const heading = /^\d+(\.\d+)*\.?\s/.test(first);
+        return (
+          <div key={i} className="flex flex-col gap-1.5">
+            {heading ? (
+              <h3 className="m-0 font-display text-sm font-bold text-fg-1">{first}</h3>
+            ) : (
+              <p className="m-0">{first}</p>
+            )}
+            {rest.map((line, j) => (
+              <p key={j} className="m-0">
+                {line}
+              </p>
+            ))}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function ConsentStep({
+  state,
+  declined,
+  pending,
+  onAnswer,
+}: {
+  state: PortalState;
+  declined: boolean;
+  pending: boolean;
+  onAnswer: (accepted: boolean) => void;
+}) {
+  const [read, setRead] = useState(0);
+  const atEnd = read >= 0.99;
+  const measure = (el: HTMLDivElement) => {
+    const room = el.scrollHeight - el.clientHeight;
+    setRead(room <= 4 ? 1 : Math.max(read, el.scrollTop / room));
+  };
+
+  if (!state.consent) return null;
+  return (
+    <div className="flex flex-col gap-5">
+      <StepHeading
+        title="Personal data consent"
+        sub="Before you fill in anything, please read how we will use your data. The agree button turns on once you reach the end."
+        aside={<StatusBadge tone="mute">Version {state.consent.versionNo}</StatusBadge>}
+      />
+      <div className="relative">
+        <div
+          tabIndex={0}
+          aria-label="Consent text"
+          onScroll={(event) => measure(event.currentTarget)}
+          ref={(el) => {
+            if (el && read === 0) measure(el);
+          }}
+          className="flex max-h-[340px] flex-col gap-4 overflow-y-auto rounded-xl border border-border-1 bg-bg-subtle px-5 py-4 font-body text-[13px] font-medium leading-[1.65] text-fg-2 outline-none focus-visible:ring-4 focus-visible:ring-secondary-500/20"
+        >
+          <ConsentText content={state.consent.content} />
+        </div>
+        {/* Bayangan bawah memberi tahu masih ada teks; hilang saat sudah di akhir. */}
+        <span
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute inset-x-px bottom-px h-16 rounded-b-xl bg-gradient-to-t from-bg-subtle to-transparent transition-opacity duration-200',
+            atEnd && 'opacity-0',
+          )}
+        />
+        <span aria-hidden className="absolute inset-x-5 bottom-0 h-0.5 overflow-hidden rounded-full">
+          <span className="block h-full origin-left bg-secondary-500 transition-transform duration-150" style={{ transform: `scaleX(${read})` }} />
+        </span>
+      </div>
+
+      {declined && (
+        <Note tone="warn" icon={<ShieldCheck />}>
+          You chose not to agree, so we cannot continue your hiring through this form. Changed your mind? You can still
+          agree below.
+        </Note>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span
+          aria-live="polite"
+          className={cn('flex items-center gap-1.5 font-body text-xs font-semibold', atEnd ? 'text-success-700' : 'text-fg-3')}
+        >
+          {atEnd ? <Check className="size-3.5" /> : <ArrowDown className="size-3.5 motion-safe:animate-bounce" />}
+          {atEnd ? 'You have read the whole text' : 'Scroll to the end to continue'}
+        </span>
+        <div className="flex gap-2.5">
+          <Button variant="secondary" disabled={pending} onClick={() => onAnswer(false)}>
+            I do not agree
+          </Button>
+          <Button disabled={!atEnd || pending} onClick={() => onAnswer(true)}>
+            I agree
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Data diri ─────────────────────────── */
 
 /** Kode pos → wilayah; provinsi s.d. kelurahan terisi otomatis dan tidak dapat diketik. */
 function ZipPicker({ token, name, label }: { token: string; name: 'idCardZip' | 'domicileZip'; label: string }) {
@@ -102,58 +373,74 @@ function ZipPicker({ token, name, label }: { token: string; name: 'idCardZip' | 
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => setZip(area?.zip ?? ''), [area?.zip]);
+
   const search = async () => {
     setError('');
     setBusy(true);
     try {
       const found = await candidatePortalService.zips(token, zip.trim());
-      if (!found.length) setError('No area found for this postal code.');
+      if (!found.length) setError('No area uses this postal code. Check the number and try again.');
       else if (found.length === 1) void setFieldValue(name, found[0]);
       else setChoices(found);
     } catch (err) {
-      setError((err as Error).message.replace(/^\d{3} — /, ''));
+      setError(wipe((err as Error).message));
     } finally {
       setBusy(false);
     }
   };
 
-  const fieldError = submitCount > 0 ? (errors[name] as string | undefined) : undefined;
-  const readOnly = (text: string, value?: string) => (
-    <div className="flex flex-col gap-1">
-      <span className="font-body text-xs font-semibold text-fg-3">{text}</span>
-      <span className="flex h-9 items-center rounded-md border border-fog bg-vapor px-3 font-body text-xs font-medium text-fg-2">
-        {value || '—'}
-      </span>
-    </div>
-  );
+  const fieldError = submitCount > 0 && !area ? (errors[name] as string | undefined) : undefined;
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1">
-          <span className="font-body text-sm font-bold text-fg-1">
-            {label} <span className="text-error-500">*</span>
-          </span>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={`${name}-search`} className="font-body text-sm font-bold text-fg-1">
+          {label} <span className="text-error-500">*</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
           <input
+            id={`${name}-search`}
             inputMode="numeric"
+            autoComplete="postal-code"
             maxLength={5}
             value={zip}
+            aria-invalid={Boolean(error || fieldError)}
             onChange={(event) => setZip(event.target.value.replace(/\D/g, ''))}
-            placeholder="e.g. 12950"
-            className="h-9 w-[160px] rounded-md border border-silver bg-cloud px-3 font-body text-xs font-medium text-fg-2 outline-none focus:border-secondary-500 focus:shadow-[0_0_0_4px_rgba(2,132,199,.16)]"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                if (zip.length === 5) void search();
+              }
+            }}
+            placeholder="5 digits, e.g. 12950"
+            className="h-9 w-[180px] rounded-md border border-silver bg-white px-3 font-body text-xs font-medium tabular-nums text-fg-2 outline-none focus:border-secondary-500 focus:shadow-[0_0_0_4px_rgba(2,132,199,.16)] aria-[invalid=true]:border-error-500"
           />
-        </label>
-        <Button variant="secondary" type="button" onClick={search} disabled={busy || zip.length !== 5}>
-          {busy ? 'Searching…' : 'Search postal code'}
-        </Button>
+          <Button variant="secondary" type="button" onClick={search} disabled={busy || zip.length !== 5}>
+            {busy ? 'Searching…' : 'Find area'}
+          </Button>
+        </div>
+        {(error || fieldError) && <span className="font-body text-xs font-medium text-error-700">{error || fieldError}</span>}
       </div>
-      {(error || fieldError) && <span className="font-body text-xs font-medium text-error-700">{error || fieldError}</span>}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {readOnly('Province', area?.provinceName)}
-        {readOnly('City / regency', area?.regencyName)}
-        {readOnly('District', area?.districtName)}
-        {readOnly('Village', area?.villageName)}
-      </div>
+
+      {area ? (
+        <div className="flex items-start gap-3 rounded-lg border border-success-200 bg-success-50 px-3.5 py-3">
+          <MapPin className="mt-0.5 size-4 shrink-0 text-success-700" />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="font-body text-[13px] font-bold text-fg-1">
+              {area.villageName}, {area.districtName}
+            </span>
+            <span className="font-body text-xs font-medium text-fg-3">
+              {area.regencyName} · {area.provinceName} · {area.zip}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="m-0 font-body text-xs font-medium text-fg-3">
+          Province, city, district and village fill in by themselves after you choose your area.
+        </p>
+      )}
+
       <Modal
         open={choices.length > 0}
         onOpenChange={(next) => !next && setChoices([])}
@@ -188,43 +475,109 @@ function ZipPicker({ token, name, label }: { token: string; name: 'idCardZip' | 
   );
 }
 
-function ProfileForm({ token, state, onSaved }: { token: string; state: PortalState; onSaved: (next: PortalState) => void }) {
+/** Isian contoh untuk pratinjau mode dummy — tidak pernah tampil saat tersambung backend. */
+const SAMPLE: Partial<CandidateProfile> = {
+  candidateName: 'Andi Wijaya',
+  nationality: 'CITIZEN',
+  idCardNumber: '3174012505980004',
+  candidatePhone: '0812 3456 7890',
+  placeOfBirth: 'Jakarta',
+  dateOfBirth: '1998-05-25',
+  gender: 'Male',
+  maritalStatus: 'Single',
+  lastEducation: "Bachelor's degree (S1)",
+  religion: 'Islam',
+  bloodType: 'O',
+  homeOwnershipStatus: 'Family home',
+  disabilityStatus: 'None',
+  motherMaidenName: 'Sri Lestari',
+  idCardAddress: 'Jl. Karet Pedurenan No. 12, RT 004 / RW 002',
+  idCardZip: {
+    zipId: 'z-12950',
+    zip: '12950',
+    provinceName: 'DKI Jakarta',
+    regencyName: 'Jakarta Selatan',
+    districtName: 'Setiabudi',
+    villageName: 'Karet Kuningan',
+  },
+  isDomicileSameAsIdCard: true,
+};
+
+function ProfileStep({
+  token,
+  state,
+  onSaved,
+}: {
+  token: string;
+  state: PortalState;
+  onSaved: (next: PortalState) => void;
+}) {
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
   return (
     <Formik<CandidateProfile>
       initialValues={state.profile}
       onSubmit={async (values, helpers) => {
         setBusy(true);
+        setFailed(false);
         try {
           onSaved(await candidatePortalService.saveProfile(token, state.companyCode, values));
         } catch (err) {
-          const fields = (err as Error & { fields?: Record<string, string> }).fields;
-          if (fields) helpers.setErrors(fields);
-          helpers.setTouched(Object.fromEntries(Object.keys(fields ?? {}).map((key) => [key, true])));
+          const fields = (err as Error & { fields?: Record<string, string> }).fields ?? {};
+          // `false` = tanpa validasi ulang — form ini tak punya skema, jadi validasi ulang menghapus galat server.
+          void helpers.setTouched(Object.fromEntries(Object.keys(fields).map((key) => [key, true])), false);
+          helpers.setErrors(fields);
+          setFailed(true);
+          // Fokus ke isian salah pertama supaya kandidat tidak perlu mencari.
+          setTimeout(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
         } finally {
           setBusy(false);
         }
       }}
     >
-      {({ values }) => (
-        <Form className="flex flex-col gap-6">
-          <Section title="Identity">
-            <TextField name="candidateName" label="Full name" required placeholder="As written on your ID" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField
-                name="nationality"
-                label="Nationality"
-                required
-                placeholder="Select nationality"
-                options={[
-                  { value: 'CITIZEN', label: 'Indonesian citizen' },
-                  { value: 'FOREIGNER', label: 'Foreign national' },
-                ]}
-              />
-              <TextField name="candidatePhone" label="Mobile phone number" required placeholder="0812 3456 7890" />
-            </div>
+      {({ values, setValues, errors }) => (
+        <Form ref={formRef} className="flex flex-col gap-6" noValidate>
+          <StepHeading
+            title="Your data"
+            sub="Fill in your details exactly as they appear on your identity documents."
+            aside={
+              MOCK && (
+                <Button variant="ghost" type="button" onClick={() => void setValues({ ...values, ...SAMPLE })}>
+                  Fill sample data
+                </Button>
+              )
+            }
+          />
+
+          {failed && Object.keys(errors).length > 0 && (
+            <Note tone="danger" icon={<Link2Off />}>
+              {Object.keys(errors).length === 1 ? 'One field needs' : `${Object.keys(errors).length} fields need`} your
+              attention. They are marked in red below.
+            </Note>
+          )}
+
+          <Section icon={<UserRound />} title="Identity">
+            <TextField name="candidateName" label="Full name" required autoComplete="name" placeholder="As written on your ID" />
+            <ChoiceCards
+              name="nationality"
+              label="Nationality"
+              options={[
+                { value: 'CITIZEN', title: 'Indonesian citizen', description: 'I have an ID card (KTP)' },
+                { value: 'FOREIGNER', title: 'Foreign national', description: 'I have a passport and visa' },
+              ]}
+            />
             {values.nationality === 'CITIZEN' && (
-              <TextField name="idCardNumber" label="ID card (KTP) number" required maxLength={16} hint="16 digits." />
+              <TextField
+                name="idCardNumber"
+                label="ID card (KTP) number"
+                required
+                inputMode="numeric"
+                maxLength={16}
+                hint={`16 digits · ${values.idCardNumber.length}/16`}
+                containerClassName="sm:max-w-[50%]"
+              />
             )}
             {values.nationality === 'FOREIGNER' && (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -234,44 +587,72 @@ function ProfileForm({ token, state, onSaved }: { token: string; state: PortalSt
             )}
           </Section>
 
-          <Section title="Personal details">
+          <Section icon={<Mail />} title="Contact" sub={`Your email is ${maskEmail(state.candidateEmail)}, the address this invitation was sent to.`}>
+            <TextField
+              name="candidatePhone"
+              label="Mobile phone number"
+              required
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="0812 3456 7890"
+              hint="An Indonesian mobile number. We use it to contact you about your application."
+              containerClassName="sm:max-w-[50%]"
+            />
+          </Section>
+
+          <Section icon={<Users />} title="Personal details">
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField name="placeOfBirth" label="Place of birth" required />
               <DateField name="dateOfBirth" label="Date of birth" required placeholder="Select a date" />
-              <SelectField name="gender" label="Gender" required placeholder="Select" options={GENDER} />
+            </div>
+            <ChoiceCards
+              name="gender"
+              label="Gender"
+              options={[
+                { value: 'Male', title: 'Male' },
+                { value: 'Female', title: 'Female' },
+              ]}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
               <SelectField name="maritalStatus" label="Marital status" required placeholder="Select" options={MARITAL} />
               <SelectField name="lastEducation" label="Last education" required placeholder="Select" options={EDUCATION} />
               <SelectField name="religion" label="Religion" required placeholder="Select" options={RELIGION} />
               <SelectField name="bloodType" label="Blood type" placeholder="Select" options={BLOOD} />
               <SelectField name="homeOwnershipStatus" label="Home ownership" placeholder="Select" options={HOME} />
-              <SelectField name="disabilityStatus" label="Disability" placeholder="Select" options={DISABILITY} />
+              <SelectField name="disabilityStatus" label="Disability status" placeholder="Select" options={DISABILITY} />
               <TextField name="motherMaidenName" label="Mother's maiden name" />
             </div>
           </Section>
 
-          <Section title="Tax and insurance" sub="Optional — leave empty if you don't have them yet.">
+          <Section icon={<Receipt />} title="Tax and insurance" sub="Optional. Leave empty if you do not have them yet.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <TextField name="npwp" label="NPWP" />
-              <TextField name="npwpName" label="Name on NPWP" />
-              <TextField name="bpjsTenagaKerjaNumber" label="BPJS Ketenagakerjaan" />
-              <TextField name="bpjsKesehatanNumber" label="BPJS Kesehatan" />
+              <TextField name="npwp" label="Tax ID (NPWP)" inputMode="numeric" />
+              <TextField name="npwpName" label="Name on tax ID" />
+              <TextField name="bpjsTenagaKerjaNumber" label="BPJS Employment number" inputMode="numeric" />
+              <TextField name="bpjsKesehatanNumber" label="BPJS Health number" inputMode="numeric" />
             </div>
           </Section>
 
-          <Section title="Address">
-            <TextAreaField name="idCardAddress" label="Address on your ID card" required rows={2} />
+          <Section icon={<MapPin />} title="Address">
+            <TextAreaField name="idCardAddress" label="Address on your ID card" required rows={2} placeholder="Street, number, RT / RW" />
             <ZipPicker token={token} name="idCardZip" label="Postal code" />
-            <CheckboxField name="isDomicileSameAsIdCard">My domicile is the same as the address above</CheckboxField>
+            <CheckboxField name="isDomicileSameAsIdCard">I live at the address on my ID card</CheckboxField>
             {!values.isDomicileSameAsIdCard && (
-              <>
-                <TextAreaField name="domicileAddress" label="Domicile address" required rows={2} />
-                <ZipPicker token={token} name="domicileZip" label="Domicile postal code" />
-              </>
+              <div className="flex flex-col gap-4 rounded-xl border border-border-1 bg-bg-subtle p-4">
+                <TextAreaField name="domicileAddress" label="Where you live now" required rows={2} placeholder="Street, number, RT / RW" />
+                <ZipPicker token={token} name="domicileZip" label="Postal code" />
+              </div>
             )}
           </Section>
 
-          <div className="flex justify-end border-t border-fog pt-5">
-            <Button type="submit" disabled={busy}>
+          {/* Bilah aksi menempel di bawah supaya tombol simpan selalu terjangkau di formulir panjang. */}
+          <div className="sticky bottom-0 z-[2] -mx-5 -mb-5 flex flex-wrap items-center justify-between gap-3 rounded-b-2xl border-t border-fog bg-white/95 px-5 py-3.5 backdrop-blur sm:-mx-8 sm:-mb-8 sm:px-8">
+            <span className="hidden items-center gap-1.5 font-body text-xs font-medium text-fg-3 sm:flex">
+              <Clock className="size-3.5" />
+              Saving keeps your answers on this link until {formatDateTime(state.expiresAt)}.
+            </span>
+            <Button type="submit" disabled={busy} className="w-full sm:w-auto">
               {busy ? 'Saving…' : 'Save and continue'}
             </Button>
           </div>
@@ -281,12 +662,22 @@ function ProfileForm({ token, state, onSaved }: { token: string; state: PortalSt
   );
 }
 
-function DocumentCard({
+/* ─────────────────────────── Dokumen ─────────────────────────── */
+
+type DocKind = 'cv' | 'id-card';
+
+const sizeLabel = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+function UploadTile({
   icon,
   title,
   hint,
   accept,
   uploaded,
+  file,
+  busy,
+  error,
   onPick,
 }: {
   icon: ReactNode;
@@ -294,19 +685,57 @@ function DocumentCard({
   hint: string;
   accept: string;
   uploaded: boolean;
+  file?: { name: string; size: number };
+  busy: boolean;
+  error?: string;
   onPick: (file: File) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border-1 p-4">
-      <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-primary-50 text-secondary-600 [&_svg]:size-5">{icon}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="font-body text-sm font-bold text-fg-1">{title}</span>
-        <span className="font-body text-xs font-medium text-fg-3">{hint}</span>
+    <div
+      onDragOver={(event) => {
+        event.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setOver(false);
+        const dropped = event.dataTransfer.files?.[0];
+        if (dropped) onPick(dropped);
+      }}
+      className={cn(
+        'flex flex-col gap-3 rounded-xl border px-4 py-4 transition-[border-color,background] duration-200 ease-standard sm:flex-row sm:items-center sm:gap-4',
+        uploaded ? 'border-success-200 bg-success-50/60' : 'border-dashed border-silver bg-white',
+        over && 'border-solid border-secondary-500 bg-primary-50',
+        error && 'border-error-500',
+      )}
+    >
+      <span
+        className={cn(
+          'grid size-11 shrink-0 place-items-center rounded-lg [&_svg]:size-5',
+          uploaded ? 'bg-success-100 text-success-700' : 'bg-primary-50 text-secondary-600',
+        )}
+      >
+        {uploaded ? <Check /> : icon}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="flex flex-wrap items-center gap-2 font-body text-sm font-bold text-fg-1">
+          {title}
+          {uploaded && <StatusBadge tone="ok">Uploaded</StatusBadge>}
+        </span>
+        {uploaded && file ? (
+          <span className="truncate font-body text-xs font-medium text-fg-2" title={file.name}>
+            {file.name} · {sizeLabel(file.size)}
+          </span>
+        ) : (
+          <span className="font-body text-xs font-medium text-fg-3">{busy ? 'Uploading…' : hint}</span>
+        )}
+        {error && <span className="font-body text-xs font-medium text-error-700">{error}</span>}
       </div>
-      <StatusBadge tone={uploaded ? 'ok' : 'mute'}>{uploaded ? 'Uploaded' : 'Not uploaded yet'}</StatusBadge>
-      <Button variant="secondary" onClick={() => input.current?.click()}>
-        {uploaded ? 'Replace file' : 'Choose file'}
+      <Button variant="secondary" disabled={busy} onClick={() => input.current?.click()}>
+        {busy ? 'Uploading…' : uploaded ? 'Replace file' : 'Choose file'}
       </Button>
       <input
         ref={input}
@@ -314,8 +743,8 @@ function DocumentCard({
         accept={accept}
         hidden
         onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) onPick(file);
+          const picked = event.target.files?.[0];
+          if (picked) onPick(picked);
           event.target.value = '';
         }}
       />
@@ -323,7 +752,219 @@ function DocumentCard({
   );
 }
 
-const wipe = (message: string) => message.replace(/^\d{3} — /, '');
+function DocumentsStep({
+  state,
+  files,
+  pendingKind,
+  errors,
+  onPick,
+  onBack,
+  onNext,
+}: {
+  state: PortalState;
+  files: Partial<Record<DocKind, { name: string; size: number }>>;
+  pendingKind: DocKind | null;
+  errors: Partial<Record<DocKind, string>>;
+  onPick: (kind: DocKind, file: File) => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const ready = state.cvUploaded && state.idPhotoUploaded;
+  return (
+    <div className="flex flex-col gap-5">
+      <StepHeading title="Documents" sub="Upload your CV and a clear photo of your ID card. Each file can be up to 5 MB. You can also drag a file onto its box." />
+      <UploadTile
+        icon={<FileText />}
+        title="CV"
+        hint="PDF only, up to 5 MB."
+        accept="application/pdf"
+        uploaded={state.cvUploaded}
+        file={files.cv}
+        busy={pendingKind === 'cv'}
+        error={errors.cv}
+        onPick={(file) => onPick('cv', file)}
+      />
+      <UploadTile
+        icon={<IdCard />}
+        title="ID card photo"
+        hint="JPEG or PNG, up to 5 MB. Make sure all text is readable."
+        accept="image/jpeg,image/png"
+        uploaded={state.idPhotoUploaded}
+        file={files['id-card']}
+        busy={pendingKind === 'id-card'}
+        error={errors['id-card']}
+        onPick={(file) => onPick('id-card', file)}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-fog pt-5">
+        <Button variant="ghost" onClick={onBack}>
+          Back to my data
+        </Button>
+        <Button disabled={!ready} onClick={onNext}>
+          Continue to review
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Review ─────────────────────────── */
+
+function Facts({ title, onEdit, rows }: { title: string; onEdit?: () => void; rows: [string, ReactNode][] }) {
+  return (
+    <section className="flex flex-col gap-3 rounded-xl border border-border-1 p-4">
+      <header className="flex items-center justify-between gap-3">
+        <h3 className="m-0 font-display text-[15px] font-bold text-fg-1">{title}</h3>
+        {onEdit && (
+          <Button variant="ghost" onClick={onEdit}>
+            Edit
+          </Button>
+        )}
+      </header>
+      <dl className="m-0 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex min-w-0 flex-col gap-0.5">
+            <dt className="font-body text-xs font-medium text-fg-3">{label}</dt>
+            <dd className="m-0 break-words font-body text-[13px] font-semibold text-fg-1">{value || '—'}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+const areaLine = (area: ZipArea | null) =>
+  area ? `${area.villageName}, ${area.districtName}, ${area.regencyName}, ${area.provinceName} ${area.zip}` : '';
+
+function ReviewStep({
+  state,
+  files,
+  pending,
+  onEditData,
+  onEditDocuments,
+  onSubmit,
+}: {
+  state: PortalState;
+  files: Partial<Record<DocKind, { name: string; size: number }>>;
+  pending: boolean;
+  onEditData: () => void;
+  onEditDocuments: () => void;
+  onSubmit: () => void;
+}) {
+  const p = state.profile;
+  const citizen = p.nationality === 'CITIZEN';
+  return (
+    <div className="flex flex-col gap-5">
+      <StepHeading title="Review and submit" sub="Check your details once more. After you submit, the HR team receives your data and this link stops working." />
+      <Facts
+        title="Identity and contact"
+        onEdit={onEditData}
+        rows={[
+          ['Full name', p.candidateName],
+          ['Nationality', citizen ? 'Indonesian citizen' : 'Foreign national'],
+          ...(citizen
+            ? ([['ID card (KTP) number', <span className="tabular-nums">{p.idCardNumber}</span>]] as [string, ReactNode][])
+            : ([
+                ['Passport number', p.passportNumber],
+                ['Visa number', p.visaNumber],
+              ] as [string, ReactNode][])),
+          ['Mobile phone number', <span className="tabular-nums">{p.candidatePhone}</span>],
+        ]}
+      />
+      <Facts
+        title="Personal details"
+        onEdit={onEditData}
+        rows={[
+          ['Place and date of birth', `${p.placeOfBirth}${p.dateOfBirth ? `, ${formatDate(p.dateOfBirth)}` : ''}`],
+          ['Gender', p.gender],
+          ['Marital status', p.maritalStatus],
+          ['Last education', p.lastEducation],
+        ]}
+      />
+      <Facts
+        title="Address"
+        onEdit={onEditData}
+        rows={[
+          ['Address on ID card', `${p.idCardAddress}. ${areaLine(p.idCardZip)}`],
+          ['Where you live now', p.isDomicileSameAsIdCard ? 'Same as ID card' : `${p.domicileAddress}. ${areaLine(p.domicileZip)}`],
+        ]}
+      />
+      <Facts
+        title="Documents"
+        onEdit={onEditDocuments}
+        rows={[
+          ['CV', files.cv?.name ?? 'Uploaded'],
+          ['ID card photo', files['id-card']?.name ?? 'Uploaded'],
+        ]}
+      />
+      <div className="flex flex-col gap-3 rounded-xl bg-primary-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <span className="flex items-start gap-2 font-body text-[13px] font-medium leading-[1.5] text-secondary-800">
+          <Lock className="mt-0.5 size-4 shrink-0" />
+          Your data goes only to the HR team that invited you.
+        </span>
+        <Button disabled={pending} onClick={onSubmit} className="shrink-0">
+          {pending ? 'Submitting…' : 'Submit my data'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Selesai & tautan mati ─────────────────────────── */
+
+function DoneStep({ name }: { name: string }) {
+  const first = name.trim().split(/\s+/)[0];
+  return (
+    <div className="flex flex-col items-center gap-6 py-6 text-center">
+      <span className="grid size-16 place-items-center rounded-full bg-success-100 text-success-700 ring-8 ring-success-50 motion-safe:animate-card-reveal">
+        <Check className="size-8" strokeWidth={2.25} />
+      </span>
+      <div className="flex flex-col gap-2">
+        <h2 className="m-0 font-display text-2xl font-bold text-fg-1">{first ? `Thank you, ${first}!` : 'Thank you!'}</h2>
+        <p className="m-0 max-w-[46ch] font-body text-sm font-medium leading-[1.55] text-fg-3">
+          Your data was sent to the HR team. This link no longer works, so you can close this page.
+        </p>
+      </div>
+      <ol className="m-0 flex w-full max-w-md list-none flex-col gap-0 rounded-xl border border-border-1 p-0 text-left">
+        {[
+          ['The HR team checks your data', 'They make sure everything matches your documents.'],
+          ['They contact you about the next step', 'By email or the phone number you gave us.'],
+        ].map(([title, sub], i) => (
+          <li key={title} className="flex items-start gap-3 border-t border-fog px-4 py-3.5 first:border-t-0">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-50 font-body text-xs font-bold tabular-nums text-secondary-700">
+              {i + 1}
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="font-body text-[13px] font-bold text-fg-1">{title}</span>
+              <span className="font-body text-xs font-medium text-fg-3">{sub}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function DeadLink({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-8 text-center">
+      <span className="grid size-14 place-items-center rounded-full bg-vapor text-fg-3">
+        <Link2Off className="size-6" />
+      </span>
+      <div className="flex flex-col gap-2">
+        <h2 className="m-0 font-display text-xl font-bold text-fg-1">This link cannot be used</h2>
+        <p className="m-0 max-w-[48ch] font-body text-[13px] font-medium leading-[1.55] text-fg-3">
+          It may have expired, been used already, or been replaced by a newer link. Ask the HR team that invited you to send
+          a new one.
+        </p>
+      </div>
+      <Button variant="secondary" onClick={onRetry}>
+        Try again
+      </Button>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Halaman ─────────────────────────── */
 
 export function CandidatePortalPage() {
   const { companyCode = 'DIKA' } = useParams();
@@ -339,15 +980,23 @@ export function CandidatePortalPage() {
   const state = done ?? query.data;
   /** Langkah yang sedang dilihat — kandidat boleh kembali ke langkah sebelumnya tanpa kehilangan isian. */
   const [view, setView] = useState<PortalStep | null>(null);
-  const step = view ?? state?.step ?? 'CONSENT';
+  const progress = state?.step ?? 'CONSENT';
+  const step = view ?? progress;
   const [declined, setDeclined] = useState(false);
-  const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [error, setError] = useState('');
+  const [files, setFiles] = useState<Partial<Record<DocKind, { name: string; size: number }>>>({});
+  const [fileErrors, setFileErrors] = useState<Partial<Record<DocKind, string>>>({});
+  const main = useRef<HTMLDivElement>(null);
+
+  const open = (next: PortalStep | null) => {
+    setView(next);
+    main.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const apply = (next: PortalState) => {
     setError('');
-    setView(null);
     queryClient.setQueryData(['candidate-portal', token], next);
+    open(null);
   };
 
   const consent = useMutation({
@@ -359,16 +1008,21 @@ export function CandidatePortalPage() {
     onError: (err: Error) => setError(wipe(err.message)),
   });
   const upload = useMutation({
-    mutationFn: ({ kind, file }: { kind: 'cv' | 'id-card'; file: File }) =>
-      candidatePortalService.upload(token, companyCode, kind, file),
-    onSuccess: apply,
-    onError: (err: Error) => setError(wipe(err.message)),
+    mutationFn: ({ kind, file }: { kind: DocKind; file: File }) => candidatePortalService.upload(token, companyCode, kind, file),
+    onMutate: ({ kind }) => setFileErrors((prev) => ({ ...prev, [kind]: undefined })),
+    onSuccess: (next, { kind, file }) => {
+      setFiles((prev) => ({ ...prev, [kind]: { name: file.name, size: file.size } }));
+      // Tetap di layar Documents setelah unggah; kandidat sendiri yang lanjut ke Review.
+      queryClient.setQueryData(['candidate-portal', token], next);
+      setView('DOCUMENTS');
+    },
+    onError: (err: Error, { kind }) => setFileErrors((prev) => ({ ...prev, [kind]: wipe(err.message) })),
   });
   const submit = useMutation({
     mutationFn: () => candidatePortalService.submit(token, companyCode),
     onSuccess: (next) => {
       setDone(next);
-      setView(null);
+      open(null);
     },
     onError: (err: Error) => setError(wipe(err.message)),
   });
@@ -378,42 +1032,82 @@ export function CandidatePortalPage() {
   }, []);
 
   const invalid = !token || query.isError;
+  const urgent = state && progress !== 'DONE' && Date.parse(state.expiresAt) - Date.now() < 3 * 3_600_000;
 
   return (
-    <div className="min-h-screen bg-bg-app px-4 py-8">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <SevakaLogo size="sm" />
-          <span className="font-body text-xs font-bold uppercase tracking-[0.08em] text-fg-3">
-            {companyCode} · Candidate data
-          </span>
-        </header>
-
-        <main className="flex flex-col gap-5 rounded-2xl border border-border-1 bg-white p-6 shadow-card-sm">
-          {invalid ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <Link2Off className="size-8 text-fg-3" />
-              <h1 className="m-0 font-display text-xl font-bold text-fg-1">This link cannot be used</h1>
-              <p className="m-0 max-w-md font-body text-[13px] font-medium leading-[1.5] text-fg-3">
-                The link may have expired, been used already, or replaced by a newer one. Ask the HR team that invited
-                you to send a new link.
-              </p>
-              <Button variant="secondary" onClick={() => void query.refetch()}>
-                Try again
-              </Button>
+    <div className="flex min-h-screen flex-col bg-bg-app">
+      {/* Pita merek — gradien yang sama dengan halaman masuk, supaya kandidat mengenali SEVAKA. */}
+      <header className="bg-[linear-gradient(140deg,var(--color-secondary-600)_0%,var(--color-secondary-500)_42%,var(--color-primary-500)_100%)] px-4 pb-24 pt-6 sm:px-6">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="rounded-lg bg-white px-3 py-2 shadow-card-sm">
+              <SevakaLogo size="sm" />
+            </span>
+            <span className="rounded-pill bg-white/15 px-3 py-1 font-body text-xs font-bold uppercase tracking-[0.08em] text-white">
+              {companyCode} · Candidate invitation
+            </span>
+          </div>
+          <div className="flex max-w-2xl flex-col gap-2.5">
+            <h1 className="m-0 font-display text-[28px] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[32px]">
+              Complete your application data
+            </h1>
+            <p className={cn('m-0 font-body text-sm font-medium leading-[1.55] text-white/85', invalid && 'hidden')}>
+              Four short steps, about 10 minutes. Each step is saved when you continue, so you can stop and come back with the
+              same link.
+            </p>
+          </div>
+          {state && !invalid && (
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-white/15 px-3 py-1.5 font-body text-xs font-semibold text-white">
+                <Mail className="size-3.5" />
+                Sent to {maskEmail(state.candidateEmail)}
+              </span>
+              {progress !== 'DONE' && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-body text-xs font-semibold',
+                    urgent ? 'bg-warning-100 text-warning-800' : 'bg-white/15 text-white',
+                  )}
+                >
+                  <Clock className="size-3.5" />
+                  Link valid until {formatDateTime(state.expiresAt)}
+                </span>
+              )}
             </div>
+          )}
+        </div>
+      </header>
+
+      <div ref={main} className="mx-auto -mt-16 grid w-full max-w-5xl scroll-mt-4 gap-5 px-4 pb-10 sm:px-6 lg:grid-cols-[264px_minmax(0,1fr)] lg:items-start">
+        {state && !invalid && (
+          <aside className="hidden flex-col gap-4 lg:sticky lg:top-6 lg:flex">
+            <div className="rounded-2xl border border-border-1 bg-white p-5 shadow-card-sm">
+              <StepRail progress={progress} view={step} onOpen={open} />
+            </div>
+            <div className="flex items-start gap-2.5 rounded-xl px-1 font-body text-xs font-medium leading-[1.5] text-fg-3">
+              <ShieldCheck className="mt-px size-4 shrink-0 text-secondary-600" />
+              This link is personal. Do not forward it, because anyone with the link can fill in this form.
+            </div>
+          </aside>
+        )}
+
+        <main
+          className={cn(
+            'flex min-w-0 flex-col gap-5 rounded-2xl border border-border-1 bg-white p-5 shadow-card sm:p-8',
+            (invalid || !state) && 'lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl',
+          )}
+        >
+          {invalid ? (
+            <DeadLink onRetry={() => void query.refetch()} />
           ) : !state ? (
-            <p className="m-0 py-10 text-center font-body text-[13px] text-fg-3">Loading…</p>
+            <div className="flex flex-col gap-3 py-2" aria-busy="true" aria-label="Loading">
+              <span className="h-6 w-1/2 animate-pulse rounded-md bg-fog" />
+              <span className="h-4 w-3/4 animate-pulse rounded-md bg-fog" />
+              <span className="mt-2 h-48 animate-pulse rounded-xl bg-vapor" />
+            </div>
           ) : (
             <>
-              <div className="flex flex-col gap-1">
-                <h1 className="m-0 font-display text-xl font-bold text-fg-1">Complete your candidate data</h1>
-                <p className="m-0 font-body text-[13px] font-medium text-fg-3">
-                  Invitation sent to {maskEmail(state.candidateEmail)}
-                  {step !== 'DONE' && ` · This link is valid until ${formatDateTime(state.expiresAt)}`}
-                </p>
-              </div>
-              <Stepper current={step} />
+              {state && <StepBar progress={progress} view={step} />}
 
               {error && (
                 <Note tone="danger" icon={<Link2Off />}>
@@ -421,102 +1115,42 @@ export function CandidatePortalPage() {
                 </Note>
               )}
 
-              {step === 'CONSENT' && state.consent && (
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <h2 className="m-0 font-display text-base font-bold text-fg-1">Consent to process your data</h2>
-                    <p className="m-0 mt-0.5 font-body text-xs font-medium text-fg-3">
-                      Read until the end to continue · version {state.consent.versionNo}
-                    </p>
-                  </div>
-                  <div
-                    onScroll={(event) => {
-                      const el = event.currentTarget;
-                      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) setScrolledToEnd(true);
-                    }}
-                    ref={(el) => {
-                      // Naskah pendek yang tak perlu digulir langsung dianggap terbaca.
-                      if (el && el.scrollHeight <= el.clientHeight + 4 && !scrolledToEnd) setScrolledToEnd(true);
-                    }}
-                    className="max-h-[260px] overflow-y-auto whitespace-pre-line rounded-lg border border-border-1 bg-cloud p-4 font-body text-[13px] leading-[1.6] text-fg-2"
-                  >
-                    {state.consent.content}
-                  </div>
-                  {declined && (
-                    <Note tone="warn" icon={<ShieldCheck />}>
-                      You did not agree. Without your consent we cannot continue your hiring through this form — you can
-                      still change your mind below.
-                    </Note>
-                  )}
-                  <div className="flex flex-wrap justify-end gap-2.5">
-                    <Button variant="secondary" disabled={consent.isPending} onClick={() => consent.mutate(false)}>
-                      I do not agree
-                    </Button>
-                    <Button disabled={!scrolledToEnd || consent.isPending} onClick={() => consent.mutate(true)}>
-                      I agree
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 'PROFILE' && <ProfileForm token={token} state={state} onSaved={apply} />}
-
-              {(step === 'DOCUMENTS' || step === 'READY') && (
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <h2 className="m-0 font-display text-base font-bold text-fg-1">Documents</h2>
-                    <p className="m-0 mt-0.5 font-body text-xs font-medium text-fg-3">Each file at most 5 MB.</p>
-                  </div>
-                  <DocumentCard
-                    icon={<FileText />}
-                    title="CV (PDF)"
-                    hint="Your latest CV as a PDF file."
-                    accept="application/pdf"
-                    uploaded={state.cvUploaded}
-                    onPick={(file) => upload.mutate({ kind: 'cv', file })}
+              <div key={step} className="flex flex-col motion-safe:animate-card-reveal">
+                {step === 'CONSENT' && (
+                  <ConsentStep state={state} declined={declined} pending={consent.isPending} onAnswer={(ok) => consent.mutate(ok)} />
+                )}
+                {step === 'PROFILE' && <ProfileStep token={token} state={state} onSaved={apply} />}
+                {step === 'DOCUMENTS' && (
+                  <DocumentsStep
+                    state={state}
+                    files={files}
+                    pendingKind={upload.isPending ? (upload.variables?.kind ?? null) : null}
+                    errors={fileErrors}
+                    onPick={(kind, file) => upload.mutate({ kind, file })}
+                    onBack={() => open('PROFILE')}
+                    onNext={() => open('READY')}
                   />
-                  <DocumentCard
-                    icon={<IdCard />}
-                    title="ID card photo (JPEG or PNG)"
-                    hint="A clear photo of your KTP or passport."
-                    accept="image/jpeg,image/png"
-                    uploaded={state.idPhotoUploaded}
-                    onPick={(file) => upload.mutate({ kind: 'id-card', file })}
+                )}
+                {step === 'READY' && (
+                  <ReviewStep
+                    state={state}
+                    files={files}
+                    pending={submit.isPending}
+                    onEditData={() => open('PROFILE')}
+                    onEditDocuments={() => open('DOCUMENTS')}
+                    onSubmit={() => submit.mutate()}
                   />
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-fog pt-5">
-                    <Button variant="ghost" onClick={() => setView('PROFILE')}>
-                      Back to my data
-                    </Button>
-                    {state.step === 'READY' && (
-                      <Button disabled={submit.isPending} onClick={() => submit.mutate()}>
-                        {submit.isPending ? 'Submitting…' : 'Submit my data'}
-                      </Button>
-                    )}
-                  </div>
-                  {state.step === 'READY' && (
-                    <p className="m-0 text-right font-body text-xs font-medium text-fg-3">
-                      After you submit, this link can no longer be used.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {step === 'DONE' && (
-                <div className="flex flex-col items-center gap-3 py-8 text-center">
-                  <span className="grid size-12 place-items-center rounded-full bg-success-100 text-success-700">
-                    <Check className="size-6" />
-                  </span>
-                  <h2 className="m-0 font-display text-xl font-bold text-fg-1">Thank you!</h2>
-                  <p className="m-0 max-w-md font-body text-[13px] font-medium leading-[1.5] text-fg-3">
-                    Your data has been sent to the HR team. They will contact you about the next steps. You can close this
-                    page.
-                  </p>
-                </div>
-              )}
+                )}
+                {step === 'DONE' && <DoneStep name={state.profile.candidateName} />}
+              </div>
             </>
           )}
         </main>
       </div>
+
+      <footer className="mt-auto pb-6 text-center font-body text-[11px] font-medium text-fg-4">
+        © 2025 PT Danamas Insan Kreasi Andalan · Powered by SEVAKA
+      </footer>
     </div>
   );
 }
