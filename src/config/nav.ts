@@ -515,13 +515,13 @@ export const NAV_RECRUITMENT: NavSection[] = [
   {
     section: 'Recruitment',
     children: [
-      { label: 'Home', icon: 'home', path: '/recruitment', source: 'recruitment-home.html', status: 'todo' },
+      { label: 'Home', icon: 'home', path: '/recruitment', source: 'recruitment-home.html', status: 'done' },
       {
         label: 'Job Listings',
         icon: 'briefcase',
         path: '/recruitment/job-listings',
         source: 'recruitment-job-listings.html',
-        status: 'todo',
+        status: 'done',
       },
       { label: 'Talent Pool', icon: 'user-round' },
       { label: 'Candidates', icon: 'users' },

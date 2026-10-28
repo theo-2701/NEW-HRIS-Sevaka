@@ -69,6 +69,12 @@ import { SheetDetailPage } from '@/features/performance/pages/SheetDetailPage';
 import { ApprovalsPage } from '@/features/performance/pages/ApprovalsPage';
 import { ObjectionsPage } from '@/features/performance/pages/ObjectionsPage';
 import { ReportsPage } from '@/features/performance/pages/ReportsPage';
+import { RecruitmentHomePage } from '@/features/recruitment/pages/RecruitmentHomePage';
+import { JobListingsPage } from '@/features/recruitment/pages/JobListingsPage';
+import { JobListingFormPage } from '@/features/recruitment/pages/JobListingFormPage';
+import { JobListingDetailPage } from '@/features/recruitment/pages/JobListingDetailPage';
+import { ImportLogDetailPage, ImportLogsPage } from '@/features/recruitment/pages/ImportLogsPage';
+import { AddCandidatePage } from '@/features/recruitment/pages/AddCandidatePage';
 import { AssetListPage, AssignedAssetsPage } from '@/features/assets/pages/AssetListPage';
 import { AssetCategoryPage } from '@/features/assets/pages/AssetCategoryPage';
 import { AssetDetailPage } from '@/features/assets/pages/AssetDetailPage';
@@ -259,6 +265,13 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'performance/approvals', element: <ApprovalsPage /> },
   { path: 'performance/objections', element: <ObjectionsPage /> },
   { path: 'performance/reports', element: <ReportsPage /> },
+  { path: 'recruitment', element: <RecruitmentHomePage /> },
+  { path: 'recruitment/job-listings', element: <JobListingsPage /> },
+  { path: 'recruitment/job-listings/create', element: <JobListingFormPage /> },
+  { path: 'recruitment/job-listings/detail', element: <JobListingDetailPage /> },
+  { path: 'recruitment/job-listings/import-logs', element: <ImportLogsPage /> },
+  { path: 'recruitment/job-listings/import-logs/detail', element: <ImportLogDetailPage /> },
+  { path: 'recruitment/candidates/add', element: <AddCandidatePage /> },
   /* Archive = sisi ARSIP dari page-pair Project; URL sendiri, tanpa baris menu (sidebar hanya 'Project'). */
   { path: 'productivity/projects/archive', element: <ProjectsPage key="archive" state="ARSIP" /> },
   { path: 'productivity/tasks', element: <TasksPage /> },
@@ -384,6 +397,10 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/settings/erasure-requests',
   '/productivity/projects',
   '/performance/cycles',
+  '/recruitment',
+  '/recruitment/job-listings',
+  '/recruitment/job-listings/create',
+  '/recruitment/job-listings/detail',
   '/performance/cycles/detail',
   '/performance/kpi-items',
   '/performance/sheets',
