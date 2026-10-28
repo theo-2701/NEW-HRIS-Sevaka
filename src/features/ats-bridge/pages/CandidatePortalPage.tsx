@@ -9,6 +9,7 @@ import {
   IdCard,
   Link2Off,
   Lock,
+  Mail,
   Search,
   ShieldCheck,
 } from 'lucide-react';
@@ -27,7 +28,7 @@ import { candidatePortalService } from '@/features/ats-bridge/services/ats-bridg
 import type { CandidateProfile, PortalState, PortalStep, ZipArea } from '@/features/ats-bridge/types';
 import { MOCK } from '@/services/mock';
 import { cn } from '@/lib/utils';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime, maskEmail } from '@/lib/format';
 
 /**
  * Portal Kandidat — FSD-001-EMPLOYEE §4B, UIC-EMPLOYEE 0.76 §4B. PUBLIK tanpa login: tautan
@@ -1081,30 +1082,45 @@ export function CandidatePortalPage() {
       {/* Pita merek — gradien yang sama dengan halaman masuk, supaya kandidat mengenali SEVAKA. */}
       <header className="bg-[linear-gradient(140deg,var(--color-secondary-600)_0%,var(--color-secondary-500)_42%,var(--color-primary-500)_100%)] px-4 pb-24 pt-6 sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2" aria-label="SEVAKA">
-              <SevakaWordmark className="text-[22px] text-white" />
-            </span>
+          <span className="inline-flex items-center gap-2" aria-label="SEVAKA">
+            <SevakaWordmark className="text-[22px] text-white" />
+          </span>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex max-w-2xl flex-col gap-2.5">
+              <h1 className="m-0 font-display text-[28px] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[32px]">
+                Complete your application data
+              </h1>
+              <p className={cn('m-0 font-body text-sm font-medium leading-[1.55] text-white/85', invalid && 'hidden')}>
+                Four short steps, about 10 minutes. Each step is saved when you continue, so you can stop and come back with
+                the same link.
+              </p>
+            </div>
+            {/* Kartu undangan (FSD-001-EMPLOYEE §4B.1): penerima tersamar + masa berlaku, penyeimbang judul di kanan. */}
             {state && !invalid && progress !== 'DONE' && (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-body text-xs font-semibold',
-                  urgent ? 'bg-warning-100 text-warning-800' : 'bg-white/15 text-white',
-                )}
-              >
-                <Clock className="size-3.5" />
-                Link valid until {formatDateTime(state.expiresAt)}
-              </span>
+              <dl className="m-0 flex shrink-0 flex-col gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 font-body text-xs font-semibold text-white backdrop-blur-sm lg:min-w-[248px]">
+                <div className="flex items-center gap-2">
+                  <Mail className="size-3.5 shrink-0 text-white/75" />
+                  <dt className="sr-only">Invitation sent to</dt>
+                  <dd className="m-0 min-w-0 truncate">
+                    <span className="text-white/75">Sent to </span>
+                    {maskEmail(state.candidateEmail)}
+                  </dd>
+                </div>
+                <div
+                  className={cn(
+                    '-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-0.5',
+                    urgent && 'bg-warning-100 text-warning-800',
+                  )}
+                >
+                  <Clock className={cn('size-3.5 shrink-0', urgent ? 'text-warning-800' : 'text-white/75')} />
+                  <dt className="sr-only">Link validity</dt>
+                  <dd className="m-0">
+                    <span className={urgent ? undefined : 'text-white/75'}>Valid until </span>
+                    {formatDateTime(state.expiresAt)}
+                  </dd>
+                </div>
+              </dl>
             )}
-          </div>
-          <div className="flex max-w-2xl flex-col gap-2.5">
-            <h1 className="m-0 font-display text-[28px] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[32px]">
-              Complete your application data
-            </h1>
-            <p className={cn('m-0 font-body text-sm font-medium leading-[1.55] text-white/85', invalid && 'hidden')}>
-              Four short steps, about 10 minutes. Each step is saved when you continue, so you can stop and come back with the
-              same link.
-            </p>
           </div>
         </div>
       </header>
