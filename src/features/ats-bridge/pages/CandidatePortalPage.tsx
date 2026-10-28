@@ -12,20 +12,22 @@ import {
   Mail,
   MapPin,
   Receipt,
+  Search,
   ShieldCheck,
   UserRound,
   Users,
 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SevakaLogo } from '@/components/brand/SevakaLogo';
+import { SevakaMark, SevakaWordmark } from '@/components/brand/SevakaLogo';
 import { Modal } from '@/components/Modal';
+import { RadioBranch } from '@/components/RadioBranch';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CheckboxField } from '@/components/form/CheckboxField';
 import { DateField } from '@/components/form/DateField';
 import { SelectField } from '@/components/form/SelectField';
-import { TextAreaField } from '@/components/form/TextAreaField';
 import { TextField } from '@/components/form/TextField';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Note } from '@/features/time-off/components/TimeOffBits';
 import { candidatePortalService } from '@/features/ats-bridge/services/ats-bridge.service';
 import type { CandidateProfile, PortalState, PortalStep, ZipArea } from '@/features/ats-bridge/types';
@@ -61,11 +63,6 @@ function readToken(): string {
     return '';
   }
 }
-
-const maskEmail = (email: string) => {
-  const [name, domain = ''] = email.split('@');
-  return `${name.slice(0, 2)}${'•'.repeat(Math.max(1, name.length - 2))}@${domain}`;
-};
 
 const wipe = (message: string) => message.replace(/^\d{3} — /, '');
 
@@ -202,9 +199,10 @@ function ChoiceCards({
   const error = touched[name] ? (errors[name] as string | undefined) : undefined;
   return (
     <div className="flex flex-col gap-2" role="radiogroup" aria-label={label}>
-      <span className="font-body text-sm font-bold text-fg-1">
-        {label} <span className="text-error-500">*</span>
-      </span>
+      <Label>
+        {label}
+        <em>*</em>
+      </Label>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {options.map((option) => {
           const active = values[name] === option.value;
@@ -242,6 +240,30 @@ function ChoiceCards({
           );
         })}
       </div>
+      {error && <span className="font-body text-xs font-medium text-error-700">{error}</span>}
+    </div>
+  );
+}
+
+function GenderRadios() {
+  const { values, setFieldValue, errors, touched } = useFormikContext<CandidateProfile>();
+  const error = touched.gender ? errors.gender : undefined;
+  return (
+    <div className="flex flex-col gap-2">
+      <Label>
+        Gender
+        <em>*</em>
+      </Label>
+      <RadioBranch
+        name="gender"
+        value={values.gender}
+        onChange={(value) => void setFieldValue('gender', value)}
+        options={[
+          { value: 'Male', title: 'Male' },
+          { value: 'Female', title: 'Female' },
+        ]}
+        className="flex-row gap-6"
+      />
       {error && <span className="font-body text-xs font-medium text-error-700">{error}</span>}
     </div>
   );
@@ -295,6 +317,7 @@ function ConsentStep({
   onAnswer: (accepted: boolean) => void;
 }) {
   const [read, setRead] = useState(0);
+  const [checked, setChecked] = useState(false);
   const atEnd = read >= 0.99;
   const measure = (el: HTMLDivElement) => {
     const room = el.scrollHeight - el.clientHeight;
@@ -306,7 +329,7 @@ function ConsentStep({
     <div className="flex flex-col gap-5">
       <StepHeading
         title="Personal data consent"
-        sub="Before you fill in anything, please read how we will use your data. The agree button turns on once you reach the end."
+        sub="Before you fill in anything, please read how we will use your data. You can tick the box below once you reach the end of the text."
         aside={<StatusBadge tone="mute">Version {state.consent.versionNo}</StatusBadge>}
       />
       <div className="relative">
@@ -341,22 +364,43 @@ function ConsentStep({
         </Note>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-2">
+        <label
+          className={cn(
+            'flex items-start gap-3 rounded-lg border px-4 py-3.5 transition-[border-color,background,opacity] duration-200 ease-standard',
+            !atEnd && 'cursor-not-allowed border-border-1 bg-white opacity-60',
+            atEnd && !checked && 'cursor-pointer border-silver bg-white hover:border-secondary-500',
+            checked && 'cursor-pointer border-secondary-500 bg-primary-50/60',
+          )}
+        >
+          <input
+            id="consent-agree"
+            type="checkbox"
+            checked={checked}
+            disabled={!atEnd}
+            onChange={(event) => setChecked(event.target.checked)}
+            className="mt-0.5 size-4 shrink-0 cursor-[inherit] accent-secondary-600"
+          />
+          <span className="font-body text-[13px] font-semibold leading-[1.5] text-fg-1">
+            I have read the whole consent text and agree to the processing of my personal data as described above.
+          </span>
+        </label>
         <span
           aria-live="polite"
           className={cn('flex items-center gap-1.5 font-body text-xs font-semibold', atEnd ? 'text-success-700' : 'text-fg-3')}
         >
           {atEnd ? <Check className="size-3.5" /> : <ArrowDown className="size-3.5 motion-safe:animate-bounce" />}
-          {atEnd ? 'You have read the whole text' : 'Scroll to the end to continue'}
+          {atEnd ? 'You have read the whole text' : 'Scroll to the end of the text to tick this box'}
         </span>
-        <div className="flex gap-2.5">
-          <Button variant="secondary" disabled={pending} onClick={() => onAnswer(false)}>
-            I do not agree
-          </Button>
-          <Button disabled={!atEnd || pending} onClick={() => onAnswer(true)}>
-            I agree
-          </Button>
-        </div>
+      </div>
+
+      <div className="flex flex-wrap justify-end gap-2.5 border-t border-fog pt-5">
+        <Button variant="secondary" disabled={pending} onClick={() => onAnswer(false)}>
+          I do not agree
+        </Button>
+        <Button disabled={!checked || pending} onClick={() => onAnswer(true)}>
+          {pending ? 'Saving…' : 'Agree and continue'}
+        </Button>
       </div>
     </div>
   );
@@ -392,13 +436,34 @@ function ZipPicker({ token, name, label }: { token: string; name: 'idCardZip' | 
 
   const fieldError = submitCount > 0 && !area ? (errors[name] as string | undefined) : undefined;
 
+  const readOnly = (text: string, value?: string) => (
+    <div className="flex flex-col gap-1">
+      <Label>{text}</Label>
+      <span
+        aria-readonly="true"
+        className={cn(
+          'flex h-9 items-center truncate rounded-md border border-fog bg-vapor px-3 font-body text-xs font-medium',
+          value ? 'text-fg-2' : 'text-fg-4',
+        )}
+      >
+        {value || 'Fills in from postal code'}
+      </span>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid gap-4 sm:grid-cols-2">
       <div className="flex flex-col gap-1">
-        <label htmlFor={`${name}-search`} className="font-body text-sm font-bold text-fg-1">
-          {label} <span className="text-error-500">*</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
+        <Label htmlFor={`${name}-search`}>
+          {label}
+          <em>*</em>
+        </Label>
+        <div
+          className={cn(
+            'flex h-9 items-stretch overflow-hidden rounded-md border border-silver bg-white focus-within:border-secondary-500 focus-within:shadow-[0_0_0_4px_rgba(2,132,199,.16)]',
+            (error || fieldError) && 'border-error-500',
+          )}
+        >
           <input
             id={`${name}-search`}
             inputMode="numeric"
@@ -413,33 +478,31 @@ function ZipPicker({ token, name, label }: { token: string; name: 'idCardZip' | 
                 if (zip.length === 5) void search();
               }
             }}
-            placeholder="5 digits, e.g. 12950"
-            className="h-9 w-[180px] rounded-md border border-silver bg-white px-3 font-body text-xs font-medium tabular-nums text-fg-2 outline-none focus:border-secondary-500 focus:shadow-[0_0_0_4px_rgba(2,132,199,.16)] aria-[invalid=true]:border-error-500"
+            placeholder="e.g. 12950"
+            className="min-w-0 flex-1 bg-transparent px-3 font-body text-xs font-medium tabular-nums text-fg-2 outline-none"
           />
-          <Button variant="secondary" type="button" onClick={search} disabled={busy || zip.length !== 5}>
-            {busy ? 'Searching…' : 'Find area'}
-          </Button>
+          <button
+            type="button"
+            aria-label="Search postal code"
+            onClick={search}
+            disabled={busy || zip.length !== 5}
+            className="grid w-10 shrink-0 cursor-pointer place-items-center border-l border-silver text-fg-3 transition-colors duration-200 ease-standard hover:bg-vapor hover:text-secondary-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy ? <span className="size-3.5 animate-spin rounded-full border-2 border-fog border-t-secondary-600" /> : <Search className="size-4" strokeWidth={1.75} />}
+          </button>
         </div>
-        {(error || fieldError) && <span className="font-body text-xs font-medium text-error-700">{error || fieldError}</span>}
+        {error || fieldError ? (
+          <span className="font-body text-xs font-medium text-error-700">{error || fieldError}</span>
+        ) : (
+          <span className="font-body text-xs font-medium text-fg-3">
+            Type the 5-digit postal code, then press search and choose the matching area.
+          </span>
+        )}
       </div>
-
-      {area ? (
-        <div className="flex items-start gap-3 rounded-lg border border-success-200 bg-success-50 px-3.5 py-3">
-          <MapPin className="mt-0.5 size-4 shrink-0 text-success-700" />
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="font-body text-[13px] font-bold text-fg-1">
-              {area.villageName}, {area.districtName}
-            </span>
-            <span className="font-body text-xs font-medium text-fg-3">
-              {area.regencyName} · {area.provinceName} · {area.zip}
-            </span>
-          </div>
-        </div>
-      ) : (
-        <p className="m-0 font-body text-xs font-medium text-fg-3">
-          Province, city, district and village fill in by themselves after you choose your area.
-        </p>
-      )}
+      {readOnly('Province', area?.provinceName)}
+      {readOnly('City / regency', area?.regencyName)}
+      {readOnly('District', area?.districtName)}
+      {readOnly('Village', area?.villageName)}
 
       <Modal
         open={choices.length > 0}
@@ -587,7 +650,7 @@ function ProfileStep({
             )}
           </Section>
 
-          <Section icon={<Mail />} title="Contact" sub={`Your email is ${maskEmail(state.candidateEmail)}, the address this invitation was sent to.`}>
+          <Section icon={<Mail />} title="Contact" sub={`Your email is ${state.candidateEmail}, the address this invitation was sent to.`}>
             <TextField
               name="candidatePhone"
               label="Mobile phone number"
@@ -596,7 +659,7 @@ function ProfileStep({
               inputMode="tel"
               autoComplete="tel"
               placeholder="0812 3456 7890"
-              hint="An Indonesian mobile number. We use it to contact you about your application."
+              hint="We use it to contact you about your application."
               containerClassName="sm:max-w-[50%]"
             />
           </Section>
@@ -606,14 +669,7 @@ function ProfileStep({
               <TextField name="placeOfBirth" label="Place of birth" required />
               <DateField name="dateOfBirth" label="Date of birth" required placeholder="Select a date" />
             </div>
-            <ChoiceCards
-              name="gender"
-              label="Gender"
-              options={[
-                { value: 'Male', title: 'Male' },
-                { value: 'Female', title: 'Female' },
-              ]}
-            />
+            <GenderRadios />
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectField name="maritalStatus" label="Marital status" required placeholder="Select" options={MARITAL} />
               <SelectField name="lastEducation" label="Last education" required placeholder="Select" options={EDUCATION} />
@@ -635,12 +691,12 @@ function ProfileStep({
           </Section>
 
           <Section icon={<MapPin />} title="Address">
-            <TextAreaField name="idCardAddress" label="Address on your ID card" required rows={2} placeholder="Street, number, RT / RW" />
+            <TextField name="idCardAddress" label="Address on identity document" required autoComplete="street-address" placeholder="Street, number, RT / RW" />
             <ZipPicker token={token} name="idCardZip" label="Postal code" />
-            <CheckboxField name="isDomicileSameAsIdCard">I live at the address on my ID card</CheckboxField>
+            <CheckboxField name="isDomicileSameAsIdCard">My domicile is the same as the address above</CheckboxField>
             {!values.isDomicileSameAsIdCard && (
               <div className="flex flex-col gap-4 rounded-xl border border-border-1 bg-bg-subtle p-4">
-                <TextAreaField name="domicileAddress" label="Where you live now" required rows={2} placeholder="Street, number, RT / RW" />
+                <TextField name="domicileAddress" label="Domicile address" required placeholder="Street, number, RT / RW" />
                 <ZipPicker token={token} name="domicileZip" label="Postal code" />
               </div>
             )}
@@ -1040,11 +1096,12 @@ export function CandidatePortalPage() {
       <header className="bg-[linear-gradient(140deg,var(--color-secondary-600)_0%,var(--color-secondary-500)_42%,var(--color-primary-500)_100%)] px-4 pb-24 pt-6 sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="rounded-lg bg-white px-3 py-2 shadow-card-sm">
-              <SevakaLogo size="sm" />
+            <span className="inline-flex items-center gap-2" aria-label="SEVAKA">
+              <SevakaMark className="h-7 brightness-0 invert" />
+              <SevakaWordmark className="text-lg text-white" />
             </span>
             <span className="rounded-pill bg-white/15 px-3 py-1 font-body text-xs font-bold uppercase tracking-[0.08em] text-white">
-              {companyCode} · Candidate invitation
+              Invitation from {companyCode}
             </span>
           </div>
           <div className="flex max-w-2xl flex-col gap-2.5">
@@ -1060,7 +1117,7 @@ export function CandidatePortalPage() {
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-pill bg-white/15 px-3 py-1.5 font-body text-xs font-semibold text-white">
                 <Mail className="size-3.5" />
-                Sent to {maskEmail(state.candidateEmail)}
+                Sent to {state.candidateEmail}
               </span>
               {progress !== 'DONE' && (
                 <span

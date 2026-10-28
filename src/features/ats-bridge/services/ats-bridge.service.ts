@@ -411,8 +411,11 @@ export function validateProfile(profile: CandidateProfile): Record<string, strin
     need('passportNumber', 'Enter your passport number.');
     need('visaNumber', 'Enter your visa number.');
   }
-  if (!/^(\+62|62|0)8\d{7,12}$/.test(profile.candidatePhone.replace(/[\s-]/g, ''))) {
-    errors.candidatePhone = 'Enter an Indonesian mobile number, e.g. 0812 3456 7890.';
+  // Nomor Indonesia (08…/62…/+62…) atau nomor luar negeri berawalan kode negara (+65…) untuk kandidat WNA.
+  // ponytail: format luar negeri hanya dicek panjangnya (E.164, 8–15 digit); aturan pasti menunggu kontrak HP WNA.
+  const phone = profile.candidatePhone.replace(/[\s-]/g, '');
+  if (!/^(\+62|62|0)8\d{7,12}$/.test(phone) && !/^\+[1-9]\d{7,14}$/.test(phone)) {
+    errors.candidatePhone = 'Enter a mobile number, e.g. 0812 3456 7890, or start with the country code, e.g. +65 9123 4567.';
   }
   need('placeOfBirth', 'Enter your place of birth.');
   need('dateOfBirth', 'Enter your date of birth.');
@@ -431,7 +434,7 @@ export function validateProfile(profile: CandidateProfile): Record<string, strin
 
 const normalizePhone = (value: string) => {
   const digits = value.replace(/[\s-]/g, '');
-  if (digits.startsWith('+62')) return digits;
+  if (digits.startsWith('+')) return digits;
   if (digits.startsWith('62')) return `+${digits}`;
   return `+62${digits.replace(/^0/, '')}`;
 };
