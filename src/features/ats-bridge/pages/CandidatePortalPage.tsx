@@ -10,17 +10,12 @@ import {
   Link2Off,
   Lock,
   Mail,
-  MapPin,
-  Receipt,
   Search,
   ShieldCheck,
-  UserRound,
-  Users,
 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SevakaMark, SevakaWordmark } from '@/components/brand/SevakaLogo';
+import { SevakaWordmark } from '@/components/brand/SevakaLogo';
 import { Modal } from '@/components/Modal';
-import { RadioBranch } from '@/components/RadioBranch';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CheckboxField } from '@/components/form/CheckboxField';
 import { DateField } from '@/components/form/DateField';
@@ -170,15 +165,12 @@ function StepHeading({ title, sub, aside }: { title: string; sub?: ReactNode; as
   );
 }
 
-function Section({ icon, title, sub, children }: { icon: ReactNode; title: string; sub?: string; children: ReactNode }) {
+function Section({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
   return (
     <section className="flex min-w-0 flex-col gap-4 border-t border-fog pt-6 first-of-type:border-t-0 first-of-type:pt-0">
-      <header className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-50 text-secondary-600 [&_svg]:size-4">{icon}</span>
-        <div>
-          <h3 className="m-0 font-display text-[15px] font-bold text-fg-1">{title}</h3>
-          {sub && <p className="m-0 font-body text-xs font-medium text-fg-3">{sub}</p>}
-        </div>
+      <header>
+        <h3 className="m-0 font-display text-[15px] font-bold text-fg-1">{title}</h3>
+        {sub && <p className="m-0 mt-0.5 font-body text-xs font-medium text-fg-3">{sub}</p>}
       </header>
       {children}
     </section>
@@ -245,31 +237,8 @@ function ChoiceCards({
   );
 }
 
-function GenderRadios() {
-  const { values, setFieldValue, errors, touched } = useFormikContext<CandidateProfile>();
-  const error = touched.gender ? errors.gender : undefined;
-  return (
-    <div className="flex flex-col gap-2">
-      <Label>
-        Gender
-        <em>*</em>
-      </Label>
-      <RadioBranch
-        name="gender"
-        value={values.gender}
-        onChange={(value) => void setFieldValue('gender', value)}
-        options={[
-          { value: 'Male', title: 'Male' },
-          { value: 'Female', title: 'Female' },
-        ]}
-        className="flex-row gap-6"
-      />
-      {error && <span className="font-body text-xs font-medium text-error-700">{error}</span>}
-    </div>
-  );
-}
-
 const opts = (values: string[]) => values.map((value) => ({ value, label: value }));
+const GENDER = opts(['Male', 'Female']);
 const MARITAL = opts(['Single', 'Married', 'Divorced', 'Widowed']);
 const EDUCATION = opts(['High school', 'Diploma (D3)', "Bachelor's degree (S1)", "Master's degree (S2)", 'Doctorate (S3)']);
 const RELIGION = opts(['Islam', 'Protestant', 'Catholic', 'Hindu', 'Buddhist', 'Confucian', 'Other']);
@@ -621,7 +590,7 @@ function ProfileStep({
             </Note>
           )}
 
-          <Section icon={<UserRound />} title="Identity">
+          <Section title="Identity">
             <TextField name="candidateName" label="Full name" required autoComplete="name" placeholder="As written on your ID" />
             <ChoiceCards
               name="nationality"
@@ -650,7 +619,7 @@ function ProfileStep({
             )}
           </Section>
 
-          <Section icon={<Mail />} title="Contact" sub={`Your email is ${state.candidateEmail}, the address this invitation was sent to.`}>
+          <Section title="Contact" sub={`Your email is ${state.candidateEmail}, the address this invitation was sent to.`}>
             <TextField
               name="candidatePhone"
               label="Mobile phone number"
@@ -664,13 +633,11 @@ function ProfileStep({
             />
           </Section>
 
-          <Section icon={<Users />} title="Personal details">
+          <Section title="Personal details">
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField name="placeOfBirth" label="Place of birth" required />
               <DateField name="dateOfBirth" label="Date of birth" required placeholder="Select a date" />
-            </div>
-            <GenderRadios />
-            <div className="grid gap-4 sm:grid-cols-2">
+              <SelectField name="gender" label="Gender" required placeholder="Select" options={GENDER} />
               <SelectField name="maritalStatus" label="Marital status" required placeholder="Select" options={MARITAL} />
               <SelectField name="lastEducation" label="Last education" required placeholder="Select" options={EDUCATION} />
               <SelectField name="religion" label="Religion" required placeholder="Select" options={RELIGION} />
@@ -681,7 +648,7 @@ function ProfileStep({
             </div>
           </Section>
 
-          <Section icon={<Receipt />} title="Tax and insurance" sub="Optional. Leave empty if you do not have them yet.">
+          <Section title="Tax and insurance" sub="Optional. Leave empty if you do not have them yet.">
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField name="npwp" label="Tax ID (NPWP)" inputMode="numeric" />
               <TextField name="npwpName" label="Name on tax ID" />
@@ -690,7 +657,7 @@ function ProfileStep({
             </div>
           </Section>
 
-          <Section icon={<MapPin />} title="Address">
+          <Section title="Address">
             <TextField name="idCardAddress" label="Address on identity document" required autoComplete="street-address" placeholder="Street, number, RT / RW" />
             <ZipPicker token={token} name="idCardZip" label="Postal code" />
             <CheckboxField name="isDomicileSameAsIdCard">My domicile is the same as the address above</CheckboxField>
@@ -1097,11 +1064,7 @@ export function CandidatePortalPage() {
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="inline-flex items-center gap-2" aria-label="SEVAKA">
-              <SevakaMark className="h-7 brightness-0 invert" />
-              <SevakaWordmark className="text-lg text-white" />
-            </span>
-            <span className="rounded-pill bg-white/15 px-3 py-1 font-body text-xs font-bold uppercase tracking-[0.08em] text-white">
-              Invitation from {companyCode}
+              <SevakaWordmark className="text-[22px] text-white" />
             </span>
           </div>
           <div className="flex max-w-2xl flex-col gap-2.5">
