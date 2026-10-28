@@ -342,13 +342,32 @@ export function previewLink(id: string, companyCode = 'DIKA'): string | null {
   return found?.token && found.atsStatus === 'WAITING_CANDIDATE' ? `/candidate/${companyCode}#t=${found.token}` : null;
 }
 
-const CONSENT_TEXT = `By continuing, you agree that PT Danamas Insan Kreasi Andalan may collect and process the personal data you provide in this form — identity, contact details, address, tax and insurance numbers, your CV and a photo of your ID card — for the purpose of evaluating and completing your employment.
+/**
+ * Naskah contoh. Kontrak mengirim `content_html`; mode dummy memakai teks biasa — blok dipisah baris
+ * kosong, baris pertama blok yang diawali nomor ("1. …") dibaca layar sebagai subjudul.
+ */
+const CONSENT_TEXT = `By continuing, you agree that PT Danamas Insan Kreasi Andalan may collect and process the personal data you provide in this form, under Law No. 27 of 2022 on Personal Data Protection.
 
-Your data is stored securely and only used by the HR team and the people involved in your hiring. It is kept for as long as required by labour and tax regulations, then deleted.
+1. Data we collect
+Identity data: full name, ID card (KTP) or passport and visa number, place and date of birth, gender, religion, marital status, blood type, disability status and mother's maiden name.
+Contact data: mobile number, email and the address on your ID card and your domicile.
+Tax and insurance data: tax ID (NPWP) and BPJS numbers, if you have them.
+Documents: your CV and a photo of your ID card.
 
-You may ask to see, correct or delete your data at any time by contacting the HR team that invited you. You may also decline; in that case we cannot continue your hiring through this form.
+2. Why we use it
+Your data is used only to assess your application and, if you are hired, to prepare your employment record, payroll, tax and BPJS registration.
 
-Please read until the end before choosing an option below.`;
+3. Who can see it
+Only the HR team that invited you and the people directly involved in your hiring. We do not sell your data or share it for marketing.
+
+4. How long we keep it
+If you are hired, your data moves to your employee record. If you are not hired, we delete it within 12 months, unless a regulation requires us to keep it longer.
+
+5. Your rights
+You may ask to see, correct or delete your data, or withdraw this consent, by contacting the HR team that invited you. Withdrawing consent stops your application process.
+
+6. If you do not agree
+You may decline. Your data will not be processed, and we cannot continue your hiring through this form.`;
 
 /** Kode pos contoh — referensi wilayah dummy. */
 const ZIPS: ZipArea[] = [
@@ -364,9 +383,13 @@ function state(target: Stored, companyCode: string): PortalState {
     step: target.step,
     candidateEmail: target.candidateEmail,
     companyCode,
-    expiresAt: target.tokenExpiresAt ?? new Date().toISOString(),
+    // ponytail: tanggal seed sudah lewat; pratinjau menampilkan sisa masa berlaku yang wajar (+20 jam dari sekarang).
+    expiresAt:
+      target.tokenExpiresAt && Date.parse(target.tokenExpiresAt) > Date.now()
+        ? target.tokenExpiresAt
+        : new Date(Date.now() + 20 * 3_600_000).toISOString(),
     consentStatus: target.consentStatus,
-    consent: target.step === 'CONSENT' ? { versionNo: '1.0', content: CONSENT_TEXT } : null,
+    consent: target.step === 'CONSENT' ? { versionNo: '3', content: CONSENT_TEXT } : null,
     profile: { ...target.profile },
     cvUploaded: target.cvUploaded,
     idPhotoUploaded: target.idPhotoUploaded,
