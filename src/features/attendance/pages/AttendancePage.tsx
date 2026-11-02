@@ -23,7 +23,6 @@ import {
   RadiusCell,
 } from '@/features/attendance/components/AttendanceBits';
 import { PunchConsole, PunchSavedModal, SelfieModal } from '@/features/attendance/components/PunchConsole';
-import { WfhPermissionPanel } from '@/features/attendance/components/WfhPermissionPanel';
 import {
   CorrectionDecisionModal,
   CorrectionDetailModal,
@@ -70,7 +69,7 @@ import type { AttendanceDay, AttendanceSession, Correction, Punch, WorkArrangeme
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { formatDate, formatDateTime } from '@/lib/format';
 
-type Tab = 'punch' | 'history' | 'correction' | 'wfh';
+type Tab = 'punch' | 'history' | 'correction';
 type SubTab = 'daily' | 'taps';
 
 const hhmm = (iso: string) => iso.slice(11, 16);
@@ -269,7 +268,6 @@ export function AttendancePage() {
               { value: 'punch', label: 'Punch' },
               { value: 'history', label: 'History & Summary', count: days.length },
               { value: 'correction', label: 'Correction', count: corrections.length },
-              { value: 'wfh', label: 'WFH Permission' },
             ]}
           />
 
@@ -485,8 +483,6 @@ export function AttendancePage() {
               )}
             </div>
           )}
-
-          {tab === 'wfh' && <WfhPermissionPanel session={session} />}
 
           {tab === 'correction' && (
             <Card>

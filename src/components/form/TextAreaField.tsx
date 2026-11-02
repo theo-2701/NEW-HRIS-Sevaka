@@ -26,7 +26,14 @@ export function TextAreaField({
 
   return (
     <FormField name={name} label={label} required={required} hint={hint} error={error} className={containerClassName}>
-      <Textarea id={name} rows={rows} aria-invalid={Boolean(error)} {...field} {...props} />
+      <Textarea
+        id={name}
+        rows={rows}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error || hint ? `${name}-desc` : undefined}
+        {...field}
+        {...props}
+      />
     </FormField>
   );
 }

@@ -61,6 +61,9 @@ export function resetAttendanceMocks() {
 
 export interface WfhFilter {
   requestStatus?: string;
+  /** Rentang `work_date` (inklusif). */
+  from?: string;
+  to?: string;
 }
 
 export interface DayFilter {
@@ -359,10 +362,15 @@ export const attendanceService = {
       return mockWfh
         .filter((row) => canApproveCorrection(session) || row.employeeId === session.employeeId)
         .filter((row) => !filter.requestStatus || row.requestStatus === filter.requestStatus)
+        .filter((row) => (!filter.from || row.workDate >= filter.from) && (!filter.to || row.workDate <= filter.to))
         .map((row) => ({ ...row }));
     }
     const { data } = await api.post<{ data: WfhPermission[] }>('/wfh-permissions/search', {
-      filters: { request_status: filter.requestStatus ? [filter.requestStatus] : undefined },
+      filters: {
+        request_status: filter.requestStatus ? [filter.requestStatus] : undefined,
+        start_date: filter.from || undefined,
+        end_date: filter.to || undefined,
+      },
       sort_by: 'work_date',
       sort_direction: 'DESC',
     });

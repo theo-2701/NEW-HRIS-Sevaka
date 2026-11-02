@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DatePicker } from '@/components/DatePicker';
 import { Card, CardHead } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
@@ -23,9 +24,13 @@ import { formatDate, formatDateTime } from '@/lib/format';
  */
 export function WfhPermissionPanel({ session }: { session: AttendanceSession }) {
   const [status, setStatus] = useState<WfhStatus | 'ALL'>('ALL');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [open, setOpen] = useState<WfhPermission | null>(null);
   const { data: rows = [], isLoading } = useWfhPermissions(session, {
     requestStatus: status === 'ALL' ? undefined : status,
+    from,
+    to,
   });
   const paged = usePagedRows(rows);
 
@@ -36,25 +41,48 @@ export function WfhPermissionPanel({ session }: { session: AttendanceSession }) 
         <div className="flex flex-col">
           <TableToolbar
             filters={
-              <Select
-                value={status}
-                onValueChange={(value) => {
-                  setStatus(value as WfhStatus | 'ALL');
-                  paged.resetPage();
-                }}
-              >
-                <SelectTrigger className="w-[220px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All statuses</SelectItem>
-                  {(Object.keys(WFH_STATUS_LABEL) as WfhStatus[]).map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {WFH_STATUS_LABEL[value]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <>
+                <Select
+                  value={status}
+                  onValueChange={(value) => {
+                    setStatus(value as WfhStatus | 'ALL');
+                    paged.resetPage();
+                  }}
+                >
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All statuses</SelectItem>
+                    {(Object.keys(WFH_STATUS_LABEL) as WfhStatus[]).map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {WFH_STATUS_LABEL[value]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {/* Satu filter rentang tanggal kerja — dua kotak. */}
+                <DatePicker
+                  className="w-[170px]"
+                  value={from}
+                  max={to || undefined}
+                  placeholder="Work date from"
+                  onChange={(value) => {
+                    setFrom(value);
+                    paged.resetPage();
+                  }}
+                />
+                <DatePicker
+                  className="w-[170px]"
+                  value={to}
+                  min={from || undefined}
+                  placeholder="Work date to"
+                  onChange={(value) => {
+                    setTo(value);
+                    paged.resetPage();
+                  }}
+                />
+              </>
             }
           />
           <DataTable<WfhPermission>

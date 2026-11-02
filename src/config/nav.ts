@@ -181,6 +181,12 @@ export const NAV: NavSection[] = [
         children: [
           { label: 'Attendance', path: '/time/attendance', source: 'time-attendance.html', status: 'done' },
           { label: 'Settings', path: '/time/attendance/settings', source: 'time-attendance-settings.html', status: 'done' },
+          {
+            label: 'WFH Permission',
+            path: '/time/attendance/wfh-permission',
+            status: 'done',
+            note: 'FSD-001-TIME 0.21 Peta Menu #12 + §11A; UIC-001-TIME 0.27 §6.4',
+          },
         ],
       },
       { label: 'Overtime', icon: 'timer', path: '/time/overtime', source: 'time-overtime.html', status: 'done' },

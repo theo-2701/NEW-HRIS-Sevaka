@@ -105,15 +105,18 @@ Kalau prototype dan kontrak (FSD/UIC atau `_prototype/*-GAP-NOTES.md`) bertabrak
 **ikuti kontrak dan laporkan selisihnya**. Jangan diam-diam menambah atau menghapus
 field.
 
-## Sidebar terkunci
+## Sidebar mengikuti dokumen kontrak
 
-Pohon menu sidebar berasal dari kontrak dan sudah dibekukan di
-`_prototype/js/shell.js` (`NAV`) — plus `recruitment-shell.js` dan
-`performance-shell.js` untuk nav produk. `src/config/nav.ts` **hanya menyalin**
-pohon itu dan menambahkan `path`, `source`, dan `status`.
+Pohon menu sidebar dasarnya disalin dari `_prototype/js/shell.js` (`NAV`) — plus
+`recruitment-shell.js` dan `performance-shell.js` untuk nav produk.
+`src/config/nav.ts` menyalin pohon itu dan menambahkan `path`, `source`, dan `status`.
 
-Dilarang: menambah baris menu, mengganti nama label, memecah satu baris jadi
-beberapa anak, atau membuat section baru. Layar yang tidak punya baris menu
+Sejak 2 November 2026 (keputusan pengguna) baris menu **boleh ditambah** bila dokumen
+kontrak terbaru menyebutnya sebagai menu — Peta Menu FSD, UIC, atau
+`CATATAN-PERUBAHAN.md` FE. Sumbernya wajib dicantumkan di `note` leaf `nav.ts`.
+
+Tetap dilarang: menu karangan tanpa dasar dokumen, mengganti nama label, memecah
+satu baris jadi beberapa anak, atau membuat section baru tanpa dasar dokumen. Layar yang tidak punya baris menu
 (mis. `add-employee.html`, `transition-dashboard.html`) dibuka lewat tombol di
 dalam halaman, dan otomatis tercatat di bagian "Belum masuk peta nav"
 `docs/PAGE-INVENTORY.md` saat inventaris diregenerasi.

@@ -11,6 +11,7 @@ import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { TimeOffSettingsPage } from '@/features/time-off/pages/TimeOffSettingsPage';
 import { AttendancePage } from '@/features/attendance/pages/AttendancePage';
 import { AttendanceSettingsPage } from '@/features/attendance/pages/AttendanceSettingsPage';
+import { WfhPermissionPage } from '@/features/attendance/pages/WfhPermissionPage';
 import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { CalendarPage } from '@/features/calendar/pages/CalendarPage';
 import { SchedulerIndexPage } from '@/features/scheduler/pages/SchedulerIndexPage';
@@ -90,6 +91,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/time-off/settings', element: <TimeOffSettingsPage /> },
   { path: 'time/attendance', element: <AttendancePage /> },
   { path: 'time/attendance/settings', element: <AttendanceSettingsPage /> },
+  { path: 'time/attendance/wfh-permission', element: <WfhPermissionPage /> },
   { path: 'time/overtime', element: <OvertimePage /> },
   { path: 'time/calendar', element: <CalendarPage /> },
   { path: 'time/scheduler', element: <SchedulerIndexPage /> },
@@ -152,6 +154,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/time-off/settings',
   '/time/attendance',
   '/time/attendance/settings',
+  '/time/attendance/wfh-permission',
   '/time/overtime',
   '/time/calendar',
   '/time/scheduler',

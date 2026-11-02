@@ -21,7 +21,13 @@ export function TextField({ name, label, hint, required, containerClassName, ...
 
   return (
     <FormField name={name} label={label} required={required} hint={hint} error={error} className={containerClassName}>
-      <Input id={name} aria-invalid={Boolean(error)} {...field} {...props} />
+      <Input
+        id={name}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error || hint ? `${name}-desc` : undefined}
+        {...field}
+        {...props}
+      />
     </FormField>
   );
 }

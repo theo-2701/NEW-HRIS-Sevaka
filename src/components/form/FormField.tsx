@@ -12,6 +12,9 @@ interface FormFieldProps {
   className?: string;
 }
 
+/** Id pesan bantu/galat = `${name}-desc`; kontrol input merujuknya lewat `aria-describedby`. */
+const describedBy = (name: string) => `${name}-desc`;
+
 /**
  * Pembungkus field standar — `form-standard.css`: label 16/700 Slate,
  * **jarak label → kotak input 4px**, lalu hint/error di bawahnya.
@@ -26,10 +29,17 @@ export function FormField({ name, label, required, hint, error, children, classN
         </Label>
       )}
       {children}
+      {/* Galat diumumkan pembaca layar (role=alert) dan ditautkan ke kontrolnya lewat id. */}
       {error ? (
-        <span className="font-body text-xs font-medium text-error-800">{error}</span>
+        <span id={describedBy(name)} role="alert" className="font-body text-xs font-medium text-error-800">
+          {error}
+        </span>
       ) : (
-        hint && <span className="font-body text-xs font-normal text-fg-3">{hint}</span>
+        hint && (
+          <span id={describedBy(name)} className="font-body text-xs font-normal text-fg-3">
+            {hint}
+          </span>
+        )
       )}
     </div>
   );
