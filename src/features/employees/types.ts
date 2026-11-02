@@ -58,7 +58,33 @@ export interface EmployeeDetail extends EmployeeRow {
   bank: EmployeeBankAccount;
   email: string;
   phone: string;
+  /** `work_status_id` — nama dari lookup `work-statuses/lookup`; uuid tidak dirender (T31). */
+  workStatusId?: string | null;
 }
+
+/**
+ * Body `PATCH /employees/{id}/work-data` (CATATAN 20 Okt 2026, T31): subset-field — hanya
+ * medan yang berubah. Rekening/nama pemilik yang diketik selalu membawa `bankCode`.
+ */
+export interface WorkDataPatch {
+  workStatusId?: string;
+  branchId?: string;
+  costCenter?: string;
+  sbu?: string;
+  bankCode?: string;
+  accountNumber?: string;
+  accountHolderName?: string;
+}
+
+export const COST_CENTERS = ['CC-FIN-PPA', 'CC-HR-HO', 'CC-ENG-HO', 'CC-OPS-SBY', 'CC-SLS-BDG'];
+export const SBUS = ['SBU Pusat', 'SBU Barat', 'SBU Timur'];
+/** Master bank auth-service (`POST /master-info/banks/search`), dideduplikasi per kode. */
+export const BANKS: { code: string; name: string }[] = [
+  { code: 'BCA', name: 'Bank Central Asia' },
+  { code: 'Mandiri', name: 'Bank Mandiri' },
+  { code: 'BNI', name: 'Bank Negara Indonesia' },
+  { code: 'BRI', name: 'Bank Rakyat Indonesia' },
+];
 
 /** Body `POST /employees/search` (search berkriteria, bukan query-string). */
 export interface EmployeeSearchCriteria {

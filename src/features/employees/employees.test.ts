@@ -1,3 +1,6 @@
+import { employeeService } from '@/features/employees/services/employee.service';
+import { detailErrorKind } from '@/features/employees/detailError';
+import { ApiError } from '@/services/api';
 import { describe, expect, it } from 'vitest';
 import { employeeSearchSchema } from '@/features/employees/validation';
 import { maskAccountHolder, maskAccountNumber, maskNik } from '@/features/employees/masking';
@@ -49,5 +52,29 @@ describe('masking PII karyawan (UIC §1.8)', () => {
   it('menyamarkan nama pemilik rekening subjek lain', () => {
     expect(maskAccountHolder('Eka Saputra', false)).toBe('Eka •••');
     expect(maskAccountHolder('Eka Saputra', true)).toBe('Eka Saputra');
+  });
+});
+
+describe('DIR-DETAIL — keadaan galat (T13) dan Edit Work Data (T31)', () => {
+  it('membedakan 404, 403 aturan cabang, dan 503', async () => {
+    await expect(employeeService.getById('nope')).rejects.toSatisfy((e) => detailErrorKind(e) === 'NOT_FOUND');
+    await expect(employeeService.getById('emp-branch-rule')).rejects.toSatisfy(
+      (e) => detailErrorKind(e) === 'BRANCH_RULE',
+    );
+    await expect(employeeService.getById('emp-unavailable')).rejects.toSatisfy(
+      (e) => detailErrorKind(e) === 'UNAVAILABLE',
+    );
+    expect(detailErrorKind(new ApiError('Forbidden', 403))).toBe('NOT_FOUND');
+  });
+
+  it('menyimpan subset-field dan menolak rekening tanpa bank', async () => {
+    await expect(
+      employeeService.updateWorkData('emp-eka', { accountNumber: '1234567890' }, 'HR_STAFF'),
+    ).rejects.toThrow(/bank/);
+    await expect(employeeService.updateWorkData('emp-eka', { sbu: 'SBU Barat' }, 'EMPLOYEE')).rejects.toThrow();
+    const row = await employeeService.updateWorkData('emp-eka', { sbu: 'SBU Barat', workStatusId: 'ws-1' }, 'HR_STAFF');
+    expect(row.sbu).toBe('SBU Barat');
+    expect(row.workStatusId).toBe('ws-1');
+    expect(row.costCenter).toBe('CC-FIN-PPA');
   });
 });

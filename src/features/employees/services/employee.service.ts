@@ -1,10 +1,11 @@
-import { api } from '@/services/api';
+import { ApiError, api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { BRANCHES } from '@/features/employees/types';
 import type {
   EmployeeDetail,
   EmployeeSearchRequest,
   EmployeeSearchResponse,
+  WorkDataPatch,
 } from '@/features/employees/types';
 
 /**
@@ -360,6 +361,23 @@ export function registerMaterializedEmployee(input: {
   return row;
 }
 
+// Tiap pegawai mock memegang satu Work Status (lookup employee-masters).
+MOCK_EMPLOYEES.forEach((row) => {
+  if (row.workStatusId === undefined) row.workStatusId = row.contractEndDate ? 'ws-2' : 'ws-1';
+});
+
+/**
+ * Pegawai demo untuk tiga keadaan galat Detail (EMP-2610242024 T13): buka
+ * `?id=emp-branch-rule` atau `?id=emp-unavailable` di mode dummy.
+ */
+const DEMO_ERRORS: Record<string, () => ApiError> = {
+  'emp-branch-rule': () =>
+    new ApiError('Branch setup rule: this employee is outside the branches you may open.', 403, 'EMP-AUZ-724'),
+  'emp-unavailable': () => new ApiError('Employee data is temporarily unavailable.', 503, 'EMP-DEP-725'),
+};
+
+export const HR_WRITERS = ['SUPER_ADMIN', 'HR_MANAGER', 'HR_STAFF'];
+
 export const employeeService = {
   /** `POST /employees/search` — kriteria dikirim di body. */
   async search(request: EmployeeSearchRequest): Promise<EmployeeSearchResponse> {
@@ -375,11 +393,52 @@ export const employeeService = {
   async getById(id: string): Promise<EmployeeDetail> {
     if (MOCK) {
       await delay(250);
+      const demo = DEMO_ERRORS[id];
+      if (demo) throw demo();
       const found = MOCK_EMPLOYEES.find((e) => e.id === id);
-      if (!found) throw new Error('Data karyawan tidak ditemukan.');
-      return found;
+      // Anti-enumerasi: tak ada dan di luar scope sama-sama 404.
+      if (!found) throw new ApiError('Employee not found.', 404, 'EMP-NF-404');
+      return { ...found, bank: { ...found.bank } };
     }
     const { data } = await api.get<EmployeeDetail>(`/employees/${id}`);
+    return data;
+  },
+
+  /** Edit Work Data (T31) — subset-field; HR saja; rekening tanpa bank ditolak. */
+  async updateWorkData(id: string, patch: WorkDataPatch, role: string): Promise<EmployeeDetail> {
+    if ((patch.accountNumber || patch.accountHolderName) && !patch.bankCode) {
+      throw new ApiError('Pick a bank for the account number.', 422, 'EMP-VAL-458');
+    }
+    if (MOCK) {
+      await delay(300);
+      if (!HR_WRITERS.includes(role)) throw new ApiError('Not allowed to edit work data.', 403, 'EMP-AUZ-403');
+      const row = MOCK_EMPLOYEES.find((e) => e.id === id);
+      if (!row) throw new ApiError('Employee not found.', 404, 'EMP-NF-404');
+      if (!Object.keys(patch).length) throw new ApiError('Nothing changed.', 422, 'EMP-VAL-400');
+      if (patch.accountNumber !== undefined && !/^\d{6,20}$/.test(patch.accountNumber)) {
+        throw new ApiError('Account number must be 6–20 digits.', 422, 'EMP-VAL-459');
+      }
+      if (patch.workStatusId !== undefined) row.workStatusId = patch.workStatusId;
+      if (patch.branchId !== undefined) {
+        row.branchId = patch.branchId;
+        row.branchName = branchName(patch.branchId);
+      }
+      if (patch.costCenter !== undefined) row.costCenter = patch.costCenter;
+      if (patch.sbu !== undefined) row.sbu = patch.sbu;
+      if (patch.bankCode !== undefined) row.bank.bankCode = patch.bankCode;
+      if (patch.accountNumber !== undefined) row.bank.accountNumber = patch.accountNumber;
+      if (patch.accountHolderName !== undefined) row.bank.accountHolderName = patch.accountHolderName;
+      return { ...row, bank: { ...row.bank } };
+    }
+    const { data } = await api.patch<EmployeeDetail>(`/employees/${id}/work-data`, {
+      work_status_id: patch.workStatusId,
+      branch_id: patch.branchId,
+      cost_center_id: patch.costCenter,
+      sbu_id: patch.sbu,
+      bank_code: patch.bankCode,
+      account_number: patch.accountNumber,
+      account_holder_name: patch.accountHolderName,
+    });
     return data;
   },
 };

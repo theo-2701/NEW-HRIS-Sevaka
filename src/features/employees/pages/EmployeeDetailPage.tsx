@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Briefcase, IdCard, Landmark, Lock } from 'lucide-react';
+import { Briefcase, CircleAlert, IdCard, Landmark, Lock } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar';
 import { EmploymentStatusBadge, WorkArrangementTag } from '@/features/employees/components/EmployeeTags';
+import { EditWorkDataModal } from '@/features/employees/components/EditWorkDataModal';
 import { useEmployeeDetail } from '@/features/employees/hooks/useEmployees';
+import { useWorkStatuses } from '@/features/employee-masters/hooks/useMasters';
+import { DETAIL_ERROR_TEXT, detailErrorKind } from '@/features/employees/detailError';
 import { CURRENT_EMPLOYEE_ID } from '@/features/employees/services/employee.service';
 import { maskAccountHolder, maskAccountNumber, maskNik } from '@/features/employees/masking';
 import type { ActorScope } from '@/features/employees/types';
@@ -52,8 +56,12 @@ export function EmployeeDetailPage() {
   const scope = (params.get('scope') as ActorScope | null) ?? 'HR';
   const isHr = scope === 'HR';
 
-  const { data, isLoading } = useEmployeeDetail(employeeId);
+  const { data, isLoading, error, refetch, isFetching } = useEmployeeDetail(employeeId);
+  const { data: statuses = [] } = useWorkStatuses({});
+  const [editing, setEditing] = useState(false);
   const isSelf = data?.id === CURRENT_EMPLOYEE_ID;
+  const employmentType = statuses.find((row) => row.id === data?.workStatusId)?.workStatusName;
+  const errorKind = error ? detailErrorKind(error) : null;
 
   return (
     <PageShell
@@ -80,6 +88,11 @@ export function EmployeeDetailPage() {
           >
             Reprimand
           </Button>
+          {isHr && (
+            <Button variant="secondary" disabled={!data} onClick={() => setEditing(true)}>
+              Edit Work Data
+            </Button>
+          )}
           <Button
             disabled={!employeeId}
             onClick={() => navigate(`/me/profile?employee=${employeeId}${isHr ? '&as=HR' : ''}`)}
@@ -90,7 +103,24 @@ export function EmployeeDetailPage() {
       }
     >
       <Card>
-        {isLoading || !data ? (
+        {errorKind ? (
+          <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
+            <CircleAlert className="size-6 text-fg-3" strokeWidth={1.75} />
+            <h4 className="m-0 font-body text-base font-bold text-fg-1">{DETAIL_ERROR_TEXT[errorKind].title}</h4>
+            <p className="m-0 max-w-[460px] font-body text-[13px] font-medium text-fg-3">
+              {DETAIL_ERROR_TEXT[errorKind].body}
+            </p>
+            {errorKind === 'UNAVAILABLE' ? (
+              <Button variant="secondary" disabled={isFetching} onClick={() => void refetch()}>
+                {isFetching ? 'Retrying…' : 'Try again'}
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => navigate('/employees/directory')}>
+                Back to directory
+              </Button>
+            )}
+          </div>
+        ) : isLoading || !data ? (
           <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat data…</p>
         ) : (
           <div className="flex flex-col gap-4">
@@ -120,9 +150,7 @@ export function EmployeeDetailPage() {
               <Row label="Employment status">
                 <EmploymentStatusBadge status={data.employmentStatus} />
               </Row>
-              <Row label="Work status">
-                {data.contractEndDate ? 'Karyawan Kontrak (PKWT)' : 'Karyawan Tetap (permanent)'}
-              </Row>
+              <Row label="Employment Type">{employmentType ?? '—'}</Row>
               <Row label="Work arrangement">
                 <WorkArrangementTag arrangement={data.workArrangement} />
               </Row>
@@ -174,6 +202,7 @@ export function EmployeeDetailPage() {
           </div>
         )}
       </Card>
+      {editing && <EditWorkDataModal employee={data ?? null} role="HR_MANAGER" onClose={() => setEditing(false)} />}
     </PageShell>
   );
 }

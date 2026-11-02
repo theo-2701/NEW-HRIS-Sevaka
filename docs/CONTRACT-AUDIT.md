@@ -360,3 +360,18 @@ antrean HR `NO_SETUP`/`NO_ELIGIBLE_ASSIGNEE`. **Belum:** sapuan harian 01:00 (pi
 pengingat, `PAST_EFFECTIVE_DATE`), konsumsi kabar cuti/aset, kabar email §7.23.6, pemilih setup per
 subtipe di form simpan baru (setup baru belum bisa dibuat dari layar — hanya diubah).
 
+
+**Susulan 2 November 2026 (lanjutan).**
+
+| Perubahan | Dasar dokumen | Letak |
+| :--- | :--- | :--- |
+| New Joiner: undang lewat email/ATS, status Waiting for Candidate, portal kandidat publik, materialize baru | CATATAN 18 Okt T3 + Add Candidate §7.4.1/§7.4.11 | `/employees/new-joiner`, `/candidate/:companyCode` |
+| Toast galat menampilkan Error code + Trace ID (Copy); header `x-b3-traceid` per request | CATATAN 18 Okt LNT-2610141244 T16 | `src/lib/errorReference.ts`, `Toaster` |
+| Kembali ke alamat asal sesudah login (15 menit, sekali pakai, hapus saat Sign out) | CATATAN 25 Okt FRT-2610251334 T1 | `src/lib/returnPath.ts` |
+| Reprimand Type Setting: Clean Months 1..120 + standing turun bertahap saat dibaca | TSD-EMPLOYEE 0.186 §7.7.4/§7.7.6, CATATAN 22 Okt T88 | `/employees/reprimand/type-setting` |
+| Requisition: kaskade Unit → Supervisor + Requestor → checklist Positions to Open; Approve/Reject tersembunyi bagi pembuat | CATATAN 18 Okt T2, 21 Okt T55 | `/employees/manpower/requisition` |
+| Employee Detail: baris Employment Type + dialog Edit Work Data; pesan 404 / 403 aturan cabang / 503 | CATATAN 20 Okt T31, 25 Okt T13 | `/employees/directory/detail` (demo: `?id=emp-branch-rule`, `?id=emp-unavailable`) |
+
+Belum: segmen mode policy berversi di Type Setting tetap versi lama; Employment Type bagi
+`HR_STAFF` (lookup bergerbang `SUPER_ADMIN`/`HR_MANAGER`) belum dibedakan; peran di dialog Edit
+Work Data masih tetap `HR_MANAGER` (belum dari sesi).
