@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Card } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
@@ -13,7 +14,7 @@ import { cn } from '@/lib/utils';
  * dibuka-tutup. Rencana ACTIVE terbuka secara default; sisanya menutup supaya
  * daftar tetap ringkas.
  */
-export function PlanCard({ plan }: { plan: ManpowerPlan }) {
+export function PlanCard({ plan, actions }: { plan: ManpowerPlan; actions?: ReactNode }) {
   const [open, setOpen] = useState(plan.status === 'ACTIVE');
   const totals = planTotals(plan);
 
@@ -46,6 +47,8 @@ export function PlanCard({ plan }: { plan: ManpowerPlan }) {
           <PlanStatusBadge status={plan.status} />
         </span>
       </button>
+      {/* Aksi di luar tombol buka-tutup — tombol tidak boleh bersarang. */}
+      {actions && <div className="flex justify-end gap-2 border-t border-border-1 px-5 py-3">{actions}</div>}
 
       {open && (
         <div className="border-t border-border-1 px-5 pb-5 pt-4">

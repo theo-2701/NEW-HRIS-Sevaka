@@ -282,4 +282,32 @@ export const manpowerService = {
     const { data } = await api.post<ManpowerPlan>('/manpower-plans', draft);
     return data;
   },
+
+  /**
+   * `POST /manpower-plans/{id}/status` → ACTIVE (keputusan USER E15): Draf lain yang
+   * memuat unit sama pada periode beririsan dihapus otomatis oleh server.
+   * Mengembalikan jumlah Draf yang terhapus.
+   */
+  async activatePlan(id: string): Promise<number> {
+    if (MOCK) {
+      await delay();
+      const plan = mockPlans.find((row) => row.id === id);
+      if (!plan) throw new Error('404 — rencana tidak ditemukan.');
+      if (plan.status !== 'DRAFT') throw new Error('409 — hanya rencana Draft yang bisa diaktifkan.');
+      const units = new Set(plan.lines.map((line) => line.unitId));
+      const clashes = (row: ManpowerPlan) =>
+        row.periodStart <= plan.periodEnd &&
+        plan.periodStart <= row.periodEnd &&
+        row.lines.some((line) => units.has(line.unitId));
+      if (mockPlans.some((row) => row.status === 'ACTIVE' && clashes(row))) {
+        throw new Error('409 — ada rencana Active pada unit dan periode yang beririsan.');
+      }
+      const before = mockPlans.length;
+      mockPlans = mockPlans.filter((row) => row.id === id || row.status !== 'DRAFT' || !clashes(row));
+      plan.status = 'ACTIVE';
+      return before - mockPlans.length;
+    }
+    await api.post(`/manpower-plans/${id}/status`, { plan_status: 'ACTIVE' });
+    return 0;
+  },
 };

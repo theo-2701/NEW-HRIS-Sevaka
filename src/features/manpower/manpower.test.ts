@@ -137,3 +137,31 @@ describe('MP-OVERVIEW — gap dihitung, bukan disimpan', () => {
     expect(planTotals(untouched)).toEqual({ target: 5, actual: null, gap: null });
   });
 });
+
+describe('Planning — aktivasi rencana (TSD §3, keputusan USER E15)', () => {
+  it('Draft bentrok dengan rencana Active ditolak 409', async () => {
+    const plans = await manpowerService.plans();
+    const draft = plans.find((row) => row.status === 'DRAFT' && row.id === 'plan-2027');
+    expect(draft).toBeTruthy();
+    const clash = await manpowerService.createPlan({
+      title: 'Bentrok 2026',
+      periodStart: '2026-06-01',
+      periodEnd: '2026-12-31',
+      lines: [{ unitId: 'unit-eng-hq', target: 3 }],
+    });
+    await expect(manpowerService.activatePlan(clash.id)).rejects.toThrow(/409/);
+  });
+
+  it('mengaktifkan Draft menghapus Draft lain yang beririsan', async () => {
+    const twin = await manpowerService.createPlan({
+      title: 'Kembar 2027',
+      periodStart: '2027-03-01',
+      periodEnd: '2027-06-30',
+      lines: [{ unitId: 'unit-eng-hq', target: 2 }],
+    });
+    expect(await manpowerService.activatePlan('plan-2027')).toBeGreaterThanOrEqual(1);
+    const after = await manpowerService.plans();
+    expect(after.find((row) => row.id === 'plan-2027')?.status).toBe('ACTIVE');
+    expect(after.some((row) => row.id === twin.id)).toBe(false);
+  });
+});

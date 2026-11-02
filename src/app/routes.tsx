@@ -15,6 +15,8 @@ import { WfhPermissionPage } from '@/features/attendance/pages/WfhPermissionPage
 import { EmailDomainPage } from '@/features/employee-masters/pages/EmailDomainPage';
 import { WorkStatusPage } from '@/features/employee-masters/pages/WorkStatusPage';
 import { TempAssignmentPage } from '@/features/temp-assignment/pages/TempAssignmentPage';
+import { ManpowerPlanningPage } from '@/features/manpower/pages/ManpowerPlanningPage';
+import { PlanningHistoryPage } from '@/features/manpower/pages/PlanningHistoryPage';
 import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { CalendarPage } from '@/features/calendar/pages/CalendarPage';
 import { SchedulerIndexPage } from '@/features/scheduler/pages/SchedulerIndexPage';
@@ -96,6 +98,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/attendance/settings', element: <AttendanceSettingsPage /> },
   { path: 'time/attendance/wfh-permission', element: <WfhPermissionPage /> },
   { path: 'employees/temporary-assignment', element: <TempAssignmentPage /> },
+  { path: 'employees/manpower/overview', element: <ManpowerPlanningPage /> },
+  { path: 'employees/manpower/planning-history', element: <PlanningHistoryPage /> },
   { path: 'employees/work-status', element: <WorkStatusPage /> },
   { path: 'employees/email-domain', element: <EmailDomainPage /> },
   { path: 'time/overtime', element: <OvertimePage /> },
@@ -162,6 +166,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/attendance/settings',
   '/time/attendance/wfh-permission',
   '/employees/temporary-assignment',
+  '/employees/manpower/overview',
+  '/employees/manpower/planning-history',
   '/employees/work-status',
   '/employees/email-domain',
   '/time/overtime',

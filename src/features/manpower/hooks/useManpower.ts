@@ -71,6 +71,15 @@ export const useRejectRequisition = () =>
     manpowerKeys.requisitions,
   );
 
+export const useActivatePlan = () =>
+  useManpowerMutation<string, number>(
+    (id) => manpowerService.activatePlan(id),
+    (removed) => ({
+      text: removed ? `Plan activated. ${removed} overlapping draft(s) were removed.` : 'Plan activated.',
+    }),
+    manpowerKeys.plans,
+  );
+
 export const useCreatePlan = () =>
   useManpowerMutation<PlanDraft, ManpowerPlan>(
     (draft) => manpowerService.createPlan(draft),

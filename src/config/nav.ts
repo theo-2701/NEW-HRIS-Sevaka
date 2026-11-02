@@ -146,8 +146,18 @@ export const NAV: NavSection[] = [
         label: 'Manpower Planning',
         icon: 'clipboard-list',
         children: [
-          { label: 'Overview' },
-          { label: 'Planning History' },
+          {
+            label: 'Planning',
+            path: '/employees/manpower/overview',
+            status: 'done',
+            note: 'Menu `overview` berlabel Planning — TSD-001-EMPLOYEE 0.212 §3 (keputusan USER 11 Okt 2026 E9/E10)',
+          },
+          {
+            label: 'Planning History',
+            path: '/employees/manpower/planning-history',
+            status: 'done',
+            note: 'TSD-001-EMPLOYEE 0.212 §3; CATATAN-PERUBAHAN 18 Okt 2026 (EMP-2610181639 T1)',
+          },
           { label: 'Requisition', path: '/employees/manpower/requisition', source: 'manpower-requisition.html', status: 'done' },
         ],
       },
