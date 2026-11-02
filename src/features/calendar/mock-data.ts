@@ -29,9 +29,9 @@ export const HOLIDAYS: CalendarHoliday[] = [
 ];
 
 export const WORK_CALENDARS: WorkCalendar[] = [
-  { id: 'wc-1', calendarName: 'Kantor Pusat Senin-Jumat', scopeLevel: 'COMPANY', scopeRef: null, workingDays: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, effectiveFrom: '2026-01-01', effectiveUntil: null, createdBy: 'emp-sys' },
-  { id: 'wc-2', calendarName: 'Operations 6 Hari Kerja', scopeLevel: 'UNIT', scopeRef: 'unit-ops', workingDays: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: true, sun: false }, effectiveFrom: '2026-03-01', effectiveUntil: null, createdBy: 'emp-hendra' },
-  { id: 'wc-3', calendarName: 'Cabang Makassar 2025', scopeLevel: 'LOCATION', scopeRef: 'br-4', workingDays: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, effectiveFrom: '2025-01-01', effectiveUntil: '2025-12-31', createdBy: 'emp-hendra' },
+  { id: 'wc-1', calendarName: 'Kantor Pusat Senin-Jumat', scopeLevel: 'COMPANY', scopeRef: null, workingDays: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, workStartTime: '08:00', workEndTime: '17:00', effectiveFrom: '2026-01-01', effectiveUntil: null, createdBy: 'emp-sys' },
+  { id: 'wc-2', calendarName: 'Operations 6 Hari Kerja', scopeLevel: 'UNIT', scopeRef: 'unit-ops', workingDays: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: true, sun: false }, workStartTime: '07:00', workEndTime: '15:00', effectiveFrom: '2026-03-01', effectiveUntil: null, createdBy: 'emp-hendra' },
+  { id: 'wc-3', calendarName: 'Cabang Makassar 2025', scopeLevel: 'LOCATION', scopeRef: 'br-4', workingDays: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, workStartTime: null, workEndTime: null, effectiveFrom: '2025-01-01', effectiveUntil: '2025-12-31', createdBy: 'emp-hendra' },
 ];
 
 export function employeeName(id: string): string {

@@ -19,6 +19,8 @@ const patternDraft: WorkCalendarDraft = {
   scopeLevel: 'UNIT',
   scopeRef: 'unit-fin',
   workingDays: { mon: true, tue: true, wed: true, thu: true, fri: false, sat: false, sun: false },
+  workStartTime: '',
+  workEndTime: '',
   effectiveFrom: '2027-01-01',
   effectiveUntil: '',
 };
@@ -209,5 +211,25 @@ describe('Kalender efektif — FC-01', () => {
     // Sabtu 1 Agustus 2026: Operations bekerja, Finance libur.
     expect(resolveDay(HOLIDAYS, WORK_CALENDARS, 'emp-sari', '2026-08-01').working).toBe(true);
     expect(resolveDay(HOLIDAYS, WORK_CALENDARS, 'emp-rina', '2026-08-01').working).toBe(false);
+  });
+});
+
+describe('Work Calendar — jam kerja harian (UIC §2.2.1 0.25)', () => {
+  it('hanya satu jam terisi ditolak 422', async () => {
+    await expect(calendarService.saveWorkCalendar({ ...patternDraft, workStartTime: '08:00' })).rejects.toThrow(/422/);
+  });
+
+  it('jam masuk sama dengan jam pulang ditolak 422', async () => {
+    await expect(
+      calendarService.saveWorkCalendar({ ...patternDraft, workStartTime: '08:00', workEndTime: '08:00' }),
+    ).rejects.toThrow(/422/);
+  });
+
+  it('pola melewati tengah malam sah; kosong berdua tersimpan null', async () => {
+    const night = await calendarService.saveWorkCalendar({ ...patternDraft, workStartTime: '22:00', workEndTime: '06:00' });
+    expect([night.workStartTime, night.workEndTime]).toEqual(['22:00', '06:00']);
+    resetCalendarMocks();
+    const plain = await calendarService.saveWorkCalendar(patternDraft);
+    expect(plain.workStartTime).toBeNull();
   });
 });

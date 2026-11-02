@@ -247,7 +247,7 @@ export const calendarService = {
         if (until && row.scopeLevel === 'COMPANY' && liveCompanyPatterns().length === 1) {
           throw new Error('422 — pola company aktif terakhir tidak bisa diakhiri tanpa penggantinya.');
         }
-        // Scope, tujuh sakelar hari, dan tanggal mulai beku.
+        // Scope, tujuh sakelar hari, jam pola, dan tanggal mulai beku.
         row.calendarName = name;
         row.effectiveUntil = until;
         return cloneCalendar(row);
@@ -262,6 +262,12 @@ export const calendarService = {
       }
       if (until && until < draft.effectiveFrom) {
         throw new Error('422 — tanggal akhir tidak boleh mendahului tanggal mulai.');
+      }
+      if (Boolean(draft.workStartTime) !== Boolean(draft.workEndTime)) {
+        throw new Error('422 — jam masuk dan jam pulang diisi berdua atau dikosongkan berdua.');
+      }
+      if (draft.workStartTime && draft.workStartTime === draft.workEndTime) {
+        throw new Error('422 — jam masuk dan jam pulang tidak boleh sama.');
       }
 
       // Dua rentang [from, until] beririsan bila masing-masing mulai sebelum yang lain berakhir.
@@ -280,6 +286,8 @@ export const calendarService = {
         scopeLevel: draft.scopeLevel,
         scopeRef,
         workingDays: { ...draft.workingDays },
+        workStartTime: draft.workStartTime || null,
+        workEndTime: draft.workEndTime || null,
         effectiveFrom: draft.effectiveFrom,
         effectiveUntil: until,
         createdBy: ME,
@@ -290,7 +298,11 @@ export const calendarService = {
 
     const { data } = id
       ? await api.put<WorkCalendar>(`/work-calendars/${id}`, { calendar_name: draft.calendarName, effective_until: draft.effectiveUntil || null })
-      : await api.post<WorkCalendar>('/work-calendars', draft);
+      : await api.post<WorkCalendar>('/work-calendars', {
+          ...draft,
+          workStartTime: draft.workStartTime || null,
+          workEndTime: draft.workEndTime || null,
+        });
     return data;
   },
 
