@@ -3,19 +3,13 @@ import * as Yup from 'yup';
 /** Skema REQ-CREATE (FSD §3.2 · UIC §3.2). */
 export const requisitionSchema = Yup.object({
   planId: Yup.string(),
-  positionMode: Yup.string().oneOf(['NEW', 'EXISTING']).required(),
-  positionId: Yup.string().when('positionMode', {
-    is: 'EXISTING',
-    then: (schema) => schema.required('Select the existing position.'),
-  }),
-  unitId: Yup.string().required('Select a unit.'),
-  parentPositionId: Yup.string().required('Select who this position reports to.'),
-  title: Yup.string().trim().required('Position title is required.').max(150, 'Maximum 150 characters.'),
-  headcount: Yup.number()
-    .typeError('Headcount must be a number.')
-    .required('Headcount is required.')
-    .integer('Headcount must be a whole number.')
-    .min(1, 'Headcount must be at least 1.'),
+  unitId: Yup.string().required('Select an organization unit.'),
+  parentPositionId: Yup.string().required('Select a supervisor position, or No supervisor.'),
+  requestorId: Yup.string().required('Select the requestor.'),
+  positionIds: Yup.array()
+    .of(Yup.string().required())
+    .min(1, 'Tick at least one position to open.')
+    .max(50, 'At most 50 positions.'),
   reason: Yup.string().trim().required('Justification is required.').max(150, 'Maximum 150 characters.'),
   activeFrom: Yup.string().required('Start date is required.'),
   // Notulen 12 Okt 2026 #2: mulai 12 Okt, selesai 11 Okt harus ditolak.

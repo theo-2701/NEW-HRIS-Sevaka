@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Form, Formik } from 'formik';
+import { Form, Formik, useFormikContext } from 'formik';
 import { ShieldCheck } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -8,7 +8,7 @@ import { formatDate, formatDateRange, formatDateTime } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
-import { TextField } from '@/components/form/TextField';
+import { Checkbox } from '@/components/ui/checkbox';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { KeyValueList, KeyValueRow, Note, RequisitionStatusBadge } from '@/features/manpower/components/ManpowerBits';
@@ -21,28 +21,148 @@ import {
 } from '@/features/manpower/hooks/useManpower';
 import { requisitionSchema } from '@/features/manpower/validation';
 import {
-  EXISTING_POSITIONS,
-  PARENT_POSITION_OPTIONS,
-  POSITION_MODE_LABEL,
+  NO_SUPERVISOR,
+  ORG_POSITIONS,
   UNIT_OPTIONS,
   isOwnRequisition,
   labelOf,
+  openPositions,
+  positionTitle,
+  requestorOptions,
+  supervisorOptions,
 } from '@/features/manpower/types';
-import type { ManpowerPlan, PositionMode, Requisition, RequisitionDraft } from '@/features/manpower/types';
-import { Segmented } from '@/components/Segmented';
+import type { ManpowerPlan, Requisition, RequisitionDraft } from '@/features/manpower/types';
 
 const EMPTY: RequisitionDraft = {
   planId: '',
-  positionMode: 'NEW',
-  positionId: '',
   unitId: '',
   parentPositionId: '',
-  title: '',
-  headcount: 1,
+  requestorId: '',
+  positionIds: [],
   reason: '',
   activeFrom: '',
   activeUntil: '',
 };
+
+type ParentChange = { field: 'unitId' | 'parentPositionId'; value: string };
+
+/**
+ * Kaskade T2 (CATATAN 18 Okt; TSD-EMPLOYEE 0.212 §7.3.2): Organization Unit → { Supervisor Position,
+ * Requestor } → checklist Positions to Open (posisi KOSONG bawahan langsung supervisor; «No supervisor» =
+ * posisi teratas, 0.202). Mengganti induk mengosongkan anaknya dalam satu `setValues`; bila anaknya sudah
+ * berisi, minta konfirmasi dulu.
+ */
+function CascadeFields() {
+  const { values, setValues, setFieldValue, errors, submitCount } = useFormikContext<RequisitionDraft>();
+  const [pending, setPending] = useState<ParentChange | null>(null);
+
+  const apply = ({ field, value }: ParentChange) =>
+    void setValues(
+      field === 'unitId'
+        ? { ...values, unitId: value, parentPositionId: '', requestorId: '', positionIds: [] }
+        : { ...values, parentPositionId: value, positionIds: [] },
+    );
+
+  const change = (field: ParentChange['field']) => (value: string) => {
+    if (value === values[field]) return false;
+    const filled =
+      field === 'unitId'
+        ? Boolean(values.parentPositionId || values.requestorId || values.positionIds.length)
+        : values.positionIds.length > 0;
+    if (filled) setPending({ field, value });
+    else apply({ field, value });
+    return false;
+  };
+
+  const vacant = values.parentPositionId ? openPositions(values.unitId, values.parentPositionId) : [];
+  const toggle = (id: string, next: boolean) =>
+    void setFieldValue('positionIds', next ? [...values.positionIds, id] : values.positionIds.filter((item) => item !== id));
+  const positionError = submitCount > 0 && typeof errors.positionIds === 'string' ? errors.positionIds : undefined;
+
+  return (
+    <>
+      <SelectField
+        name="unitId"
+        label="Organization Unit"
+        required
+        placeholder="Select an organization unit"
+        options={UNIT_OPTIONS}
+        onValueChange={change('unitId')}
+      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <SelectField
+          name="parentPositionId"
+          label="Supervisor Position"
+          required
+          disabled={!values.unitId}
+          placeholder={values.unitId ? 'Select the supervisor position' : 'Select a unit first'}
+          options={supervisorOptions(values.unitId)}
+          onValueChange={change('parentPositionId')}
+        />
+        <SelectField
+          name="requestorId"
+          label="Requestor"
+          required
+          disabled={!values.unitId}
+          placeholder={values.unitId ? 'Select the requestor' : 'Select a unit first'}
+          options={requestorOptions(values.unitId)}
+        />
+      </div>
+
+      <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0" aria-describedby={positionError ? 'positionIds-desc' : undefined}>
+        <legend className="mb-1.5 font-body text-base font-bold text-fg-1">
+          Positions to Open<em className="ml-0.5 not-italic text-error-500">*</em>
+        </legend>
+        {!values.parentPositionId ? (
+          <span className="font-body text-xs font-medium text-fg-3">Select a supervisor position first.</span>
+        ) : vacant.length === 0 ? (
+          <span className="font-body text-xs font-medium text-fg-3">No vacant position reports directly here.</span>
+        ) : (
+          <div className="flex max-h-[180px] flex-col gap-2 overflow-y-auto rounded-md border border-border-1 bg-cloud p-3">
+            {vacant.map((row) => (
+              <label key={row.id} className="flex cursor-pointer items-center gap-3">
+                <Checkbox
+                  checked={values.positionIds.includes(row.id)}
+                  onCheckedChange={(next) => toggle(row.id, next === true)}
+                />
+                <span className="font-body text-xs font-medium text-fg-2">
+                  {row.title}
+                  <span className="ml-1.5 text-fg-4">{row.id}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+        <span className="font-body text-xs font-medium text-fg-3">
+          Number of positions = {values.positionIds.length} ticked.
+        </span>
+        {positionError && (
+          <span id="positionIds-desc" role="alert" className="font-body text-xs font-medium text-error-600">
+            {positionError}
+          </span>
+        )}
+      </fieldset>
+
+      <ConfirmDialog
+        open={Boolean(pending)}
+        title={pending?.field === 'unitId' ? 'Change organization unit?' : 'Change supervisor position?'}
+        description={
+          pending?.field === 'unitId'
+            ? 'Supervisor position, requestor, and ticked positions will be cleared.'
+            : 'Ticked positions will be cleared.'
+        }
+        confirmLabel="Change"
+        cancelLabel="Keep current"
+        tone="primary"
+        onOpenChange={(next) => !next && setPending(null)}
+        onConfirm={() => {
+          if (pending) apply(pending);
+          setPending(null);
+        }}
+      />
+    </>
+  );
+}
 
 /**
  * REQ-CREATE / Ubah — requisition lahir langsung IN_APPROVAL (FSD 0.24 §3.1,
@@ -56,7 +176,7 @@ export function CreateRequisitionModal({
 }: {
   open: boolean;
   plans: ManpowerPlan[];
-  editing?: Requisition | null;
+  editing: Requisition | null;
   onClose: () => void;
 }) {
   const create = useCreateRequisition();
@@ -71,12 +191,10 @@ export function CreateRequisitionModal({
   const initial: RequisitionDraft = editing
     ? {
         planId: editing.planId ?? '',
-        positionMode: editing.positionMode,
-        positionId: editing.positionId ?? '',
         unitId: editing.unitId,
-        parentPositionId: editing.parentPositionId,
-        title: editing.title,
-        headcount: editing.headcount,
+        parentPositionId: editing.parentPositionId || NO_SUPERVISOR,
+        requestorId: ORG_POSITIONS.find((row) => row.holderName === editing.requestor)?.holderId ?? '',
+        positionIds: editing.positionIds ?? [],
         reason: editing.reason,
         activeFrom: editing.activeFrom,
         activeUntil: editing.activeUntil,
@@ -95,31 +213,10 @@ export function CreateRequisitionModal({
         else create.mutate(values, done);
       }}
     >
-      {({ submitForm, resetForm, values, setFieldValue }) => {
+      {({ submitForm, resetForm }) => {
         const close = () => {
           resetForm();
           onClose();
-        };
-        const existing = values.positionMode === 'EXISTING';
-        const seat = EXISTING_POSITIONS.find((row) => row.id === values.positionId);
-        /** Kursi yang sudah ada mewarisi unit, atasan, dan nama posisinya — maker hanya menambah jumlah. */
-        const pickSeat = (positionId: string) => {
-          const picked = EXISTING_POSITIONS.find((row) => row.id === positionId);
-          void setFieldValue('positionId', positionId);
-          if (!picked) return;
-          void setFieldValue('unitId', picked.unitId);
-          void setFieldValue('parentPositionId', picked.parentPositionId);
-          void setFieldValue('title', picked.title);
-        };
-        const switchMode = (mode: PositionMode) => {
-          void setFieldValue('positionMode', mode);
-          // Field yang tidak berlaku dikosongkan supaya tidak terkirim diam-diam.
-          void setFieldValue('positionId', '');
-          if (mode === 'EXISTING') {
-            void setFieldValue('unitId', '');
-            void setFieldValue('parentPositionId', '');
-            void setFieldValue('title', '');
-          }
         };
 
         return (
@@ -141,23 +238,6 @@ export function CreateRequisitionModal({
             }
           >
             <Form className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Position</Label>
-                <Segmented<PositionMode>
-                  value={values.positionMode}
-                  onChange={switchMode}
-                  options={[
-                    { value: 'NEW', label: POSITION_MODE_LABEL.NEW },
-                    { value: 'EXISTING', label: POSITION_MODE_LABEL.EXISTING },
-                  ]}
-                />
-                <span className="font-body text-xs font-medium text-fg-3">
-                  {existing
-                    ? 'Request more seats on a position that already exists in the structure.'
-                    : 'Request a position that does not exist yet in the structure.'}
-                </span>
-              </div>
-
               <SelectField
                 name="planId"
                 label="Plan"
@@ -166,66 +246,7 @@ export function CreateRequisitionModal({
                 hint="Optional — leave empty for an ad-hoc requisition."
               />
 
-              {existing && (
-                <div className="flex flex-col gap-1">
-                  <SelectField
-                    name="positionId"
-                    label="Existing position"
-                    required
-                    placeholder="Select a position"
-                    options={EXISTING_POSITIONS.map((row) => ({
-                      value: row.id,
-                      label: `${row.title} — ${labelOf(UNIT_OPTIONS, row.unitId)}`,
-                    }))}
-                    onValueChange={pickSeat}
-                  />
-                  {seat && (
-                    <span className="font-body text-xs font-medium text-fg-3">
-                      Currently {seat.filled} of {seat.seats} seats filled · reports to{' '}
-                      {labelOf(PARENT_POSITION_OPTIONS, seat.parentPositionId)}.
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
-                  name="unitId"
-                  label="Unit"
-                  required
-                  disabled={existing}
-                  placeholder="Select a unit"
-                  options={UNIT_OPTIONS}
-                />
-                <SelectField
-                  name="parentPositionId"
-                  label="Reports to"
-                  required
-                  disabled={existing}
-                  placeholder="Select the supervising position"
-                  options={PARENT_POSITION_OPTIONS}
-                />
-              </div>
-
-              <TextField
-                name="title"
-                label="Position title"
-                required
-                disabled={existing}
-                maxLength={150}
-                placeholder="e.g. Finance Staff"
-                hint={existing ? 'Taken from the existing position.' : 'Maximum 150 characters.'}
-              />
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <TextField
-                  name="headcount"
-                  type="number"
-                  min={1}
-                  label={existing ? 'Additional seats' : 'Headcount'}
-                  required
-                />
-              </div>
+              <CascadeFields />
 
               <DateRangeField
                 fromName="activeFrom"
@@ -242,7 +263,7 @@ export function CreateRequisitionModal({
                 required
                 rows={4}
                 maxLength={150}
-                placeholder="Why is this position needed?"
+                placeholder="Why are these positions needed?"
                 hint="Maximum 150 characters."
               />
 
@@ -285,7 +306,6 @@ export function ReviewRequisitionModal({
   // Tombol keputusan disembunyikan bagi pembuatnya (Notulen 12 Okt 2026 #4, dicocokkan lewat ID).
   const canDecide = canCheck && !own && requisition?.status === 'IN_APPROVAL';
   const pending = approve.isPending || reject.isPending;
-  const seat = EXISTING_POSITIONS.find((row) => row.id === requisition?.positionId);
 
   return (
     <>
@@ -328,16 +348,14 @@ export function ReviewRequisitionModal({
           <div className="flex flex-col gap-4">
             <KeyValueList>
               <KeyValueRow label="Requisition">{requisition.id}</KeyValueRow>
-              <KeyValueRow label="Position">{POSITION_MODE_LABEL[requisition.positionMode]}</KeyValueRow>
-              <KeyValueRow label="Position title">{requisition.title}</KeyValueRow>
-              {seat && <KeyValueRow label="Current seats">{`${seat.filled} of ${seat.seats} filled`}</KeyValueRow>}
-              <KeyValueRow label="Unit">{labelOf(UNIT_OPTIONS, requisition.unitId)}</KeyValueRow>
-              <KeyValueRow label="Reports to">
-                {labelOf(PARENT_POSITION_OPTIONS, requisition.parentPositionId)}
+              <KeyValueRow label="Positions to open">
+                {requisition.positionIds?.length
+                  ? requisition.positionIds.map((id) => `${positionTitle(id)} (${id})`).join(', ')
+                  : requisition.title}
               </KeyValueRow>
-              <KeyValueRow label={requisition.positionMode === 'EXISTING' ? 'Additional seats' : 'Headcount'}>
-                {requisition.headcount}
-              </KeyValueRow>
+              <KeyValueRow label="Organization unit">{labelOf(UNIT_OPTIONS, requisition.unitId)}</KeyValueRow>
+              <KeyValueRow label="Supervisor position">{positionTitle(requisition.parentPositionId)}</KeyValueRow>
+              <KeyValueRow label="Number of positions">{requisition.headcount}</KeyValueRow>
               <KeyValueRow label="Status">
                 <RequisitionStatusBadge status={requisition.status} />
               </KeyValueRow>
@@ -345,7 +363,8 @@ export function ReviewRequisitionModal({
                 {formatDateRange(requisition.activeFrom, requisition.activeUntil)}
               </KeyValueRow>
               <KeyValueRow label="Filled">{`${requisition.filledCount} / ${requisition.headcount}`}</KeyValueRow>
-              <KeyValueRow label="Requestor">
+              <KeyValueRow label="Requestor">{requisition.requestor ?? requisition.maker}</KeyValueRow>
+              <KeyValueRow label="Created by">
                 {requisition.maker} · {formatDateTime(requisition.submittedAt)}
               </KeyValueRow>
               <KeyValueRow label="Justification">{requisition.reason}</KeyValueRow>

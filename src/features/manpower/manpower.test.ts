@@ -1,45 +1,57 @@
 import { describe, expect, it } from 'vitest';
 import { planSchema, requisitionSchema } from '@/features/manpower/validation';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
-import { CURRENT_USER, isOwnRequisition, planTotals } from '@/features/manpower/types';
+import { CURRENT_USER, NO_SUPERVISOR, isOwnRequisition, openPositions, planTotals, requestorOptions, titleOf } from '@/features/manpower/types';
 import type { ManpowerPlan, RequisitionDraft } from '@/features/manpower/types';
 
 const validRequisition: RequisitionDraft = {
   planId: '',
-  positionMode: 'NEW',
-  positionId: '',
   unitId: 'unit-fin-papua',
   parentPositionId: 'pos-fin-mgr',
-  title: 'Staff Finance',
-  headcount: 2,
-  reason: 'Cabang baru butuh dua staf finance.',
+  requestorId: 'emp-yohanes',
+  positionIds: ['pos-fin-staff-1'],
+  reason: 'Cabang baru butuh staf finance.',
   activeFrom: '2099-01-01',
   activeUntil: '2099-06-30',
 };
 
-describe('REQ-CREATE — validasi', () => {
-  it('menolak headcount di bawah 1', async () => {
-    await expect(requisitionSchema.validateAt('headcount', { ...validRequisition, headcount: 0 })).rejects.toThrow(
-      /at least 1/,
+describe('REQ-CREATE — kaskade posisi (TSD-EMPLOYEE 0.212 §7.3.2, T2)', () => {
+  it('wajib pemohon dan minimal satu posisi dicentang', async () => {
+    await expect(requisitionSchema.validateAt('positionIds', { ...validRequisition, positionIds: [] })).rejects.toThrow(
+      /at least one/,
     );
-  });
-
-  it('menolak justifikasi kosong dan judul lebih dari 150 karakter', async () => {
+    await expect(requisitionSchema.validateAt('requestorId', { ...validRequisition, requestorId: '' })).rejects.toThrow(
+      /requestor/,
+    );
     await expect(requisitionSchema.validateAt('reason', { ...validRequisition, reason: '  ' })).rejects.toThrow(
       /Justification is required/,
     );
-    await expect(
-      requisitionSchema.validateAt('title', { ...validRequisition, title: 'x'.repeat(151) }),
-    ).rejects.toThrow(/150 characters/);
   });
 
-  it('kursi yang sudah ada wajib memilih posisinya (Notulen 12 Okt 2026 #2)', async () => {
+  it('checklist = kursi kosong bawahan langsung; tanpa atasan = posisi teratas kosong (0.202)', () => {
+    expect(openPositions('unit-fin-papua', 'pos-fin-mgr').map((row) => row.id)).toEqual([
+      'pos-fin-staff-1',
+      'pos-fin-staff-2',
+      'pos-fin-ap',
+    ]);
+    expect(openPositions('unit-people-hq', NO_SUPERVISOR).map((row) => row.id)).toEqual(['pos-commissioner']);
+    expect(requestorOptions('unit-fin-papua').map((row) => row.value)).toEqual(['emp-yohanes', 'emp-maria']);
+    expect(titleOf(['pos-fin-staff-1', 'pos-fin-ap'])).toBe('AP Officer, Staff Finance');
+  });
+
+  it('server menolak kursi terisi (537), pemohon di luar unit (539), dan kursi ganda (538)', async () => {
     await expect(
-      requisitionSchema.validateAt('positionId', { ...validRequisition, positionMode: 'EXISTING', positionId: '' }),
-    ).rejects.toThrow(/existing position/);
+      manpowerService.createRequisition({ ...validRequisition, positionIds: ['pos-fin-ar'], activeFrom: '2099-02-01' }),
+    ).rejects.toThrow(/EMP-BIZ-537/);
     await expect(
-      manpowerService.createRequisition({ ...validRequisition, positionMode: 'EXISTING', positionId: '' }),
-    ).rejects.toThrow(/position_id/);
+      manpowerService.createRequisition({ ...validRequisition, requestorId: 'emp-andi' }),
+    ).rejects.toThrow(/EMP-BIZ-539/);
+    const row = await manpowerService.createRequisition({ ...validRequisition, positionIds: ['pos-fin-staff-2'] });
+    expect(row).toMatchObject({ headcount: 1, title: 'Staff Finance', requestor: 'Yohanes Wenda' });
+    await expect(
+      manpowerService.createRequisition({ ...validRequisition, positionIds: ['pos-fin-staff-2'] }),
+    ).rejects.toThrow(/EMP-BIZ-538/);
+    await manpowerService.cancelRequisition(row.id);
   });
 
   it('menerima requisition yang lengkap', async () => {
@@ -51,6 +63,7 @@ describe('REQ-CREATE — lahir IN_APPROVAL (FSD 0.24 §3.1)', () => {
   it('tanpa draf: requisition baru langsung IN_APPROVAL, terisi 0', async () => {
     const row = await manpowerService.createRequisition(validRequisition);
     expect(row).toMatchObject({ status: 'IN_APPROVAL', maker: CURRENT_USER, filledCount: 0 });
+    await manpowerService.cancelRequisition(row.id);
   });
 
   it('tanggal batas sebelum mulai ditolak skema; batas di masa lampau ditolak server', async () => {
@@ -66,8 +79,8 @@ describe('REQ-CREATE — lahir IN_APPROVAL (FSD 0.24 §3.1)', () => {
 describe('REQ — Ubah · Batalkan · Tutup', () => {
   it('Ubah dan Batalkan hanya saat IN_APPROVAL', async () => {
     const row = await manpowerService.createRequisition(validRequisition);
-    await manpowerService.updateRequisition(row.id, { ...validRequisition, headcount: 3 });
-    expect((await manpowerService.requisitions()).find((r) => r.id === row.id)!.headcount).toBe(3);
+    await manpowerService.updateRequisition(row.id, { ...validRequisition, positionIds: ['pos-fin-staff-1', 'pos-fin-ap'] });
+    expect((await manpowerService.requisitions()).find((r) => r.id === row.id)!.headcount).toBe(2);
     await manpowerService.cancelRequisition(row.id);
     await expect(manpowerService.updateRequisition(row.id, validRequisition)).rejects.toThrow(/422/);
   });

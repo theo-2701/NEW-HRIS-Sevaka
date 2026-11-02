@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { CURRENT_USER, CURRENT_USER_ID } from '@/features/manpower/types';
+import { CURRENT_USER, CURRENT_USER_ID, NO_SUPERVISOR, openPositions, requestorName, requestorOptions, titleOf } from '@/features/manpower/types';
 import type { ManpowerPlan, PlanDraft, Requisition, RequisitionDraft } from '@/features/manpower/types';
 
 /**
@@ -242,16 +242,39 @@ function assertStatus(row: Requisition, allowed: Requisition['status'][], action
 }
 
 /** Validasi field wajib REQ-CREATE / Ubah (UIC-EMPLOYEE 0.42 §3.2) — server tetap menegakkan. */
-function assertDraft(draft: RequisitionDraft, checkPast: boolean) {
-  const title = draft.title.trim();
-  if (!title || title.length > 150) throw new Error('422 — position_title wajib, maksimal 150 karakter.');
-  if (!Number.isInteger(Number(draft.headcount)) || Number(draft.headcount) < 1) {
-    throw new Error('422 — headcount minimal 1.');
+/** Body kontrak §7.3.2 — `parent_pos_id` kosong untuk posisi teratas (0.202). */
+function toBody(draft: RequisitionDraft) {
+  return {
+    plan_id: draft.planId || undefined,
+    group_struct_main_id: draft.unitId,
+    parent_pos_id: draft.parentPositionId && draft.parentPositionId !== NO_SUPERVISOR ? draft.parentPositionId : null,
+    requestor_employee_id: draft.requestorId,
+    position_ids: [...new Set(draft.positionIds)],
+    active_from: draft.activeFrom,
+    active_until: draft.activeUntil,
+    reason: draft.reason.trim(),
+  };
+}
+
+function assertDraft(draft: RequisitionDraft, checkPast: boolean, selfId?: string) {
+  if (!draft.reason.trim()) throw new Error('422 — Enter the justification.');
+  if (!draft.unitId) throw new Error('422 — Choose the organization unit.');
+  if (!draft.requestorId || !requestorOptions(draft.unitId).some((row) => row.value === draft.requestorId)) {
+    throw new Error('422 EMP-BIZ-539 — The requestor must hold a position in the chosen unit.');
   }
-  if (!draft.reason.trim()) throw new Error('422 — reason wajib diisi.');
-  if (!draft.unitId || !draft.parentPositionId) throw new Error('422 — unit dan atasan posisi wajib dipilih.');
-  if (draft.positionMode === 'EXISTING' && !draft.positionId)
-    throw new Error('422 — position_id wajib untuk kursi yang sudah ada.');
+  const ids = [...new Set(draft.positionIds)];
+  if (ids.length < 1 || ids.length > 50) throw new Error('422 EMP-VAL-532 — Tick 1 to 50 positions.');
+  const vacant = new Set(openPositions(draft.unitId, draft.parentPositionId || NO_SUPERVISOR).map((row) => row.id));
+  if (ids.some((id) => !vacant.has(id))) {
+    throw new Error('422 EMP-BIZ-537 — Each position must be vacant and report directly to the supervisor.');
+  }
+  const taken = mockRequisitions.some(
+    (row) =>
+      row.id !== selfId &&
+      (row.status === 'IN_APPROVAL' || row.status === 'APPROVED') &&
+      (row.positionIds ?? []).some((id) => ids.includes(id)),
+  );
+  if (taken) throw new Error('422 EMP-BIZ-538 — A ticked position is already in another open requisition.');
   if (!draft.activeFrom || !draft.activeUntil) throw new Error('422 — active_from dan active_until wajib diisi.');
   if (draft.activeUntil < draft.activeFrom) throw new Error('422 — active_until tidak boleh sebelum active_from.');
   if (checkPast && draft.activeUntil < new Date().toISOString().slice(0, 10)) {
@@ -283,18 +306,19 @@ export const manpowerService = {
     if (MOCK) {
       await delay();
       assertDraft(draft, true);
+      const positionIds = [...new Set(draft.positionIds)];
       const row: Requisition = {
         id: nextRequisitionId(),
-        title: draft.title.trim(),
+        title: titleOf(positionIds),
         unitId: draft.unitId,
-        parentPositionId: draft.parentPositionId,
-        headcount: Number(draft.headcount),
+        parentPositionId: draft.parentPositionId === NO_SUPERVISOR ? '' : draft.parentPositionId,
+        headcount: positionIds.length,
+        positionIds,
+        requestor: requestorName(draft.requestorId),
         status: 'IN_APPROVAL',
         maker: CURRENT_USER,
         makerId: CURRENT_USER_ID,
         submittedAt: new Date().toISOString(),
-        positionMode: draft.positionMode,
-        positionId: draft.positionMode === 'EXISTING' ? draft.positionId : undefined,
         reason: draft.reason.trim(),
         planId: draft.planId || undefined,
         activeFrom: draft.activeFrom,
@@ -304,7 +328,7 @@ export const manpowerService = {
       mockRequisitions = [row, ...mockRequisitions];
       return row;
     }
-    const { data } = await api.post<Requisition>('/requisitions', draft);
+    const { data } = await api.post<Requisition>('/requisitions', toBody(draft));
     return data;
   },
 
@@ -314,18 +338,23 @@ export const manpowerService = {
       await delay();
       const row = find(id);
       assertStatus(row, ['IN_APPROVAL'], 'ubah');
-      assertDraft(draft, false);
+      assertDraft(draft, false, id);
+      const positionIds = [...new Set(draft.positionIds)];
       Object.assign(row, {
-        ...draft,
-        title: draft.title.trim(),
+        unitId: draft.unitId,
+        parentPositionId: draft.parentPositionId === NO_SUPERVISOR ? '' : draft.parentPositionId,
+        positionIds,
+        title: titleOf(positionIds),
+        headcount: positionIds.length,
+        requestor: requestorName(draft.requestorId),
         reason: draft.reason.trim(),
-        headcount: Number(draft.headcount),
         planId: draft.planId || undefined,
-        positionId: draft.positionMode === 'EXISTING' ? draft.positionId : undefined,
+        activeFrom: draft.activeFrom,
+        activeUntil: draft.activeUntil,
       });
       return;
     }
-    await api.put(`/requisitions/${id}`, draft);
+    await api.put(`/requisitions/${id}`, toBody(draft));
   },
 
   async cancelRequisition(id: string): Promise<void> {

@@ -23,7 +23,7 @@ import {
 } from '@/features/manpower/components/RequisitionModals';
 import { useCancelRequisition, useManpowerPlans, useRequisitions } from '@/features/manpower/hooks/useManpower';
 import {
-  PARENT_POSITION_OPTIONS,
+  positionTitle,
   REQUISITION_STATUS_LABEL,
   REQUISITION_STATUS_MEANING,
   TERMINAL_REQUISITION,
@@ -124,24 +124,13 @@ export function ManpowerRequisitionPage() {
 
   const columns: Column<Requisition>[] = [
     { key: 'id', header: 'Requisition', strong: true, nowrap: true, render: (row) => row.id },
-    {
-      key: 'title',
-      header: 'Position',
-      render: (row) => (
-        <span className="flex flex-col gap-0.5">
-          <span>{row.title}</span>
-          <span className="font-body text-[11px] font-medium text-fg-3">
-            {row.positionMode === 'EXISTING' ? 'Existing position · add seats' : 'New position'}
-          </span>
-        </span>
-      ),
-    },
+    { key: 'title', header: 'Positions', render: (row) => row.title },
     { key: 'unit', header: 'Unit', render: (row) => labelOf(UNIT_OPTIONS, row.unitId) },
     {
       key: 'parent',
-      header: 'Reports to',
+      header: 'Supervisor Position',
       muted: true,
-      render: (row) => labelOf(PARENT_POSITION_OPTIONS, row.parentPositionId),
+      render: (row) => positionTitle(row.parentPositionId),
     },
     { key: 'headcount', header: 'Seats', align: 'center', strong: true, render: (row) => row.headcount },
     {
@@ -168,7 +157,7 @@ export function ManpowerRequisitionPage() {
       header: 'Requestor',
       muted: true,
       nowrap: true,
-      render: (row) => `${row.maker} · ${formatDate(row.submittedAt)}`,
+      render: (row) => (row.requestor && row.requestor !== row.maker ? `${row.requestor} · by ${row.maker}` : `${row.maker} · ${formatDate(row.submittedAt)}`),
     },
   ];
 

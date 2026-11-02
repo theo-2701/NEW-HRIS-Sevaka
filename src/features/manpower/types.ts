@@ -33,8 +33,15 @@ export interface Requisition {
    * Kursi baru (`NEW`) atau tambah kursi pada posisi yang sudah ada (`EXISTING`, Notulen 12 Okt 2026
    * keputusan #2). `positionId` terisi untuk `EXISTING`.
    */
-  positionMode: PositionMode;
+  positionMode?: PositionMode;
   positionId?: string;
+  /**
+   * `position_ids[]` (TSD-EMPLOYEE 0.212 §7.3.2, sejak 0.130 / CATATAN 18 Okt T2): kursi KOSONG bawahan
+   * langsung supervisor yang dibuka. Judul & jumlah diturunkan server. Baris lama boleh kosong.
+   */
+  positionIds?: string[];
+  /** `requestor_name` — pemohon pilihan HR (pemegang posisi di unit). */
+  requestor?: string;
   /** `emp_requisition.reason` — DTO `justification`→`reason` sejak TSD-EMPLOYEE 0.17 (audit 23 September 2026). */
   reason: string;
   planId?: string;
@@ -69,15 +76,14 @@ export interface ManpowerPlan {
   lines: PlanLine[];
 }
 
+/** Body `POST /requisitions` (TSD-EMPLOYEE 0.212 §7.3.2): tanpa `position_title`/`headcount`. */
 export interface RequisitionDraft {
   planId: string;
-  positionMode: PositionMode;
-  /** Wajib bila `positionMode = EXISTING`. */
-  positionId: string;
   unitId: string;
+  /** Opsional sejak 0.202 — kosong = posisi teratas tanpa atasan (mis. Komisaris). */
   parentPositionId: string;
-  title: string;
-  headcount: number;
+  requestorId: string;
+  positionIds: string[];
   reason: string;
   activeFrom: string;
   activeUntil: string;
@@ -217,3 +223,83 @@ export const REQUISITION_STATUS_MEANING: Record<RequisitionStatus, string> = {
   CANCELLED: 'Cancelled by the maker before a decision. Read-only.',
   CLOSED: 'Closed by the maker while approved; reason, actor and time are recorded. Read-only.',
 };
+
+/** Posisi struktur organisasi (company-service `group-struct-positions` mode picker) — `holderId` null = kosong. */
+export interface OrgPosition {
+  id: string;
+  title: string;
+  unitId: string;
+  parentId: string | null;
+  holderId: string | null;
+  holderName: string | null;
+}
+
+const pos = (id: string, title: string, unitId: string, parentId: string | null, holder: [string, string] | null = null): OrgPosition => ({
+  id,
+  title,
+  unitId,
+  parentId,
+  holderId: holder?.[0] ?? null,
+  holderName: holder?.[1] ?? null,
+});
+
+export const ORG_POSITIONS: OrgPosition[] = [
+  pos('pos-fin-mgr', 'Finance Manager', 'unit-fin-papua', null, ['emp-yohanes', 'Yohanes Wenda']),
+  pos('pos-fin-ar', 'AR Officer', 'unit-fin-papua', 'pos-fin-mgr', ['emp-maria', 'Maria Kogoya']),
+  pos('pos-fin-staff-1', 'Staff Finance', 'unit-fin-papua', 'pos-fin-mgr'),
+  pos('pos-fin-staff-2', 'Staff Finance', 'unit-fin-papua', 'pos-fin-mgr'),
+  pos('pos-fin-ap', 'AP Officer', 'unit-fin-papua', 'pos-fin-mgr'),
+  pos('pos-ops-lead', 'Operations Lead', 'unit-ops-jkt', null, ['emp-fajar', 'Fajar Nugroho']),
+  pos('pos-ops-wh', 'Warehouse Staff', 'unit-ops-jkt', 'pos-ops-lead'),
+  pos('pos-eng-mgr', 'Engineering Manager', 'unit-eng-hq', null, ['emp-andi', 'Andi Wijaya']),
+  pos('pos-be-1', 'Backend Engineer', 'unit-eng-hq', 'pos-eng-mgr', ['emp-dimas', 'Dimas Prabowo']),
+  pos('pos-be-2', 'Backend Engineer', 'unit-eng-hq', 'pos-eng-mgr'),
+  pos('pos-fe-1', 'Frontend Engineer', 'unit-eng-hq', 'pos-eng-mgr'),
+  // Posisi teratas kosong tanpa atasan (0.202): dibuka lewat «No supervisor».
+  pos('pos-commissioner', 'Commissioner', 'unit-people-hq', null),
+  pos('pos-head-people', 'Head of People', 'unit-people-hq', null, ['emp-dewi', 'Dewi Anggraini']),
+  pos('pos-hrbp', 'HR Business Partner', 'unit-people-hq', 'pos-head-people'),
+  pos('pos-sales-mgr', 'Sales Manager', 'unit-sales-sby', null, ['emp-bagus', 'Bagus Pratama']),
+  pos('pos-sales-exec-1', 'Sales Executive', 'unit-sales-sby', 'pos-sales-mgr', ['emp-nadia', 'Nadia Rahman']),
+  pos('pos-sales-exec-2', 'Sales Executive', 'unit-sales-sby', 'pos-sales-mgr'),
+];
+
+/** Nilai pemilih untuk «tanpa atasan» — dikirim sebagai `parent_pos_id` kosong. */
+export const NO_SUPERVISOR = '__top__';
+
+export const positionTitle = (id: string) =>
+  id === '' || id === NO_SUPERVISOR ? 'No supervisor (top position)' : (ORG_POSITIONS.find((row) => row.id === id)?.title ?? labelOf(PARENT_POSITION_OPTIONS, id));
+
+/** Supervisor = posisi di unit yang punya bawahan langsung, plus «tanpa atasan» (0.202). */
+export const supervisorOptions = (unitId: string): SelectOption[] => [
+  { value: NO_SUPERVISOR, label: 'No supervisor (top position)' },
+  ...ORG_POSITIONS.filter((row) => row.unitId === unitId && ORG_POSITIONS.some((child) => child.parentId === row.id)).map(
+    (row) => ({ value: row.id, label: row.holderName ? `${row.title} — ${row.holderName}` : row.title }),
+  ),
+];
+
+/** Pemohon = pemegang posisi di unit; posisi tanpa pemegang tidak ditawarkan (EMP-BIZ-539). */
+export const requestorOptions = (unitId: string): SelectOption[] =>
+  ORG_POSITIONS.filter((row) => row.unitId === unitId && row.holderId).map((row) => ({
+    value: row.holderId!,
+    label: `${row.holderName} — ${row.title}`,
+  }));
+
+/** Positions to Open = posisi KOSONG bawahan langsung supervisor; tanpa atasan = posisi teratas kosong di unit. */
+export const openPositions = (unitId: string, supervisorId: string) =>
+  ORG_POSITIONS.filter(
+    (row) =>
+      row.unitId === unitId &&
+      !row.holderId &&
+      (supervisorId === NO_SUPERVISOR ? row.parentId === null : row.parentId === supervisorId),
+  );
+
+export const requestorName = (employeeId: string) =>
+  ORG_POSITIONS.find((row) => row.holderId === employeeId)?.holderName ?? employeeId;
+
+/** Judul turunan server: nama posisi urut abjad dipisah koma, dipotong 150 karakter berakhiran `...`. */
+export function titleOf(positionIds: string[]): string {
+  const names = positionIds.map((id) => positionTitle(id)).sort((a, b) => a.localeCompare(b));
+  const joined = names.join(', ');
+  return joined.length > 150 ? `${joined.slice(0, 147)}...` : joined;
+}
