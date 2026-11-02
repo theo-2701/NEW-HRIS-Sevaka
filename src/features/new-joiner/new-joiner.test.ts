@@ -4,6 +4,7 @@ import { newJoinerService, rivalsOf } from '@/features/new-joiner/services/new-j
 import { STEP_SCHEMAS } from '@/features/new-joiner/addEmployee';
 import type { Candidate } from '@/features/new-joiner/types';
 import { employeeService } from '@/features/employees/services/employee.service';
+import { candidateDemoLink } from '@/features/new-joiner/services/new-joiner.service';
 import { transitionService } from '@/features/transitions/services/transition.service';
 
 const base = {
@@ -116,8 +117,10 @@ describe('NJ-MATERIALIZE & Add Employee', () => {
   it('mewajibkan tanggal, job grade, dan berkas kontrak', async () => {
     await expect(materializeSchema.validate({ joinDate: '', jobGradeId: '', contractFileName: '' })).rejects.toThrow();
     await expect(
-      materializeSchema.validate({ joinDate: '2026-10-01', jobGradeId: 'gr-3a', contractFileName: 'kontrak.pdf' }),
+      materializeSchema.validate({ ...MAT, contractFileName: 'kontrak.pdf' }),
     ).resolves.toBeTruthy();
+    // T59: username dan company email wajib.
+    await expect(materializeSchema.validate({ ...MAT, username: '' })).rejects.toThrow(/Username/);
   });
 
   it('memvalidasi langkah wizard secara terpisah', async () => {
@@ -160,7 +163,7 @@ describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)',
       sortDir: 'DESC',
     })).total;
 
-    await newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' });
+    await newJoinerService.materialize({ id: approved.id, ...MAT });
 
     const directoryAfter = await employeeService.search({
       keyword: approved.name,
@@ -182,8 +185,49 @@ describe('NJ — guard state & koneksi Directory/Onboarding (UIC-EMPLOYEE §4)',
     expect(onboarding?.status).toBe('IN_PROGRESS');
 
     await expect(
-      newJoinerService.materialize({ id: approved.id, joinDate: '2099-02-01', jobGradeId: 'gr-3a', contractFileName: 'k.pdf' }),
+      newJoinerService.materialize({ id: approved.id, ...MAT }),
     ).rejects.toThrow(/409/);
+  });
+});
+
+const MAT = {
+  joinDate: '2099-02-01',
+  jobGradeId: 'gr-3a',
+  contractFileName: 'k.pdf',
+  nik: 'NIK-0131',
+  username: 'kandidat.uji',
+  companyEmail: 'kandidat.uji@ptdika.co.id',
+  workArrangement: 'WFO' as const,
+  radiusValidation: true,
+  isSelfie: true,
+};
+
+describe('Alur New Joiner email-saja (TSD §7.4.1, §7.4.11)', () => {
+  it('undang ⇒ WAITING_CANDIDATE; portal mengisi data ⇒ DRAFT; token sekali pakai', async () => {
+    const row = await newJoinerService.invite({ source: 'INVITE', requisitionId: 'REQ-0230', positionId: 'pos-be', email: 'calon.baru@gmail.com', atsBridgeId: '' });
+    expect(row.status).toBe('WAITING_CANDIDATE');
+    await expect(newJoinerService.submit(row.id)).rejects.toThrow(/409/);
+    const token = candidateDemoLink(row.id)!.split('#t=')[1];
+    await newJoinerService.portalSubmit(token, {
+      name: 'Calon Baru',
+      nationality: 'CITIZEN',
+      idCardNumber: '3175012345678901',
+      passportNumber: '',
+      phone: '081234567890',
+      intendedJoinDate: '2099-03-01',
+      cvFileName: 'cv.pdf',
+      idPhotoFileName: 'ktp.jpg',
+    });
+    const after = (await newJoinerService.list()).find((item) => item.id === row.id)!;
+    expect(after).toMatchObject({ status: 'DRAFT', name: 'Calon Baru', idCardLast4: '8901' });
+    await expect(newJoinerService.portalState(token)).rejects.toThrow(/invalid/);
+  });
+
+  it('posisi harus bagian requisition; kandidat ATS Bulk Import tidak bisa dipilih', async () => {
+    await expect(
+      newJoinerService.invite({ source: 'INVITE', requisitionId: 'REQ-0230', positionId: 'pos-fin', email: 'x@y.com', atsBridgeId: '' }),
+    ).rejects.toThrow(/EMP-BIZ-545/);
+    expect(newJoinerService.atsOptions().every((row) => row.source !== 'BULK_IMPORT')).toBe(true);
   });
 });
 

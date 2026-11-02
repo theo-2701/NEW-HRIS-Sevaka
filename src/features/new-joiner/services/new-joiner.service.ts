@@ -3,7 +3,18 @@ import { MOCK } from '@/services/mock';
 import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
 import { CURRENT_USER } from '@/features/new-joiner/types';
-import type { Candidate, CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
+import type { Candidate, CandidateDraft, CandidateProfile, InviteDraft, MaterializePayload } from '@/features/new-joiner/types';
+import { REQUISITION_DETAIL } from '@/features/new-joiner/types';
+import {
+  availableForNewJoiner,
+  completeAtsCandidate,
+  dropAtsCandidate,
+  findAtsCandidate,
+  hasWaitingInvite,
+  inviteAtsCandidate,
+  markAtsUsed,
+} from '@/features/ats-bridge/services/ats-bridge.service';
+import { registerContactVerification } from '@/features/contact-verification/services/contact-verification.service';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
 import { JOB_GRADE_OPTIONS, POSITION_OPTIONS, labelOf } from '@/features/new-joiner/types';
 import { registerMaterializedEmployee } from '@/features/employees/services/employee.service';
@@ -203,7 +214,127 @@ function assertStatus(row: Candidate, allowed: Candidate['status'][], action: st
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Token portal kandidat → id calon. Backend hanya menyimpan SHA-256-nya (24 jam). */
+const tokens = new Map<string, string>();
+const issueToken = (candidateId: string) => {
+  tokens.forEach((value, key) => value === candidateId && tokens.delete(key));
+  const token = crypto.randomUUID().replace(/-/g, '');
+  tokens.set(token, candidateId);
+  return token;
+};
+
+/** Mock saja: tautan undangan terakhir per calon, supaya portal bisa dicoba. */
+export const candidateDemoLink = (candidateId: string) => {
+  for (const [token, id] of tokens) if (id === candidateId) return `/candidate/PTDIKA#t=${token}`;
+  return undefined;
+};
+
+/** Calon yang masih memegang baris ATS (status menahan, T41). */
+const HOLDING: Candidate['status'][] = ['WAITING_CANDIDATE', 'DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED', 'MATERIALIZED'];
+
+function assertCascade(draft: InviteDraft) {
+  const detail = REQUISITION_DETAIL[draft.requisitionId];
+  if (!detail) throw new Error('422 EMP-BIZ-544 — requisition wajib dipilih.');
+  if (!detail.positions.includes(draft.positionId)) throw new Error('422 EMP-BIZ-545 — posisi bukan bagian requisition ini.');
+}
+
 export const newJoinerService = {
+  /** Pemilih "From ATS": kandidat lengkap yang belum dipegang calon lain. */
+  atsOptions() {
+    const held = mockRows.filter((row) => row.atsBridgeId && HOLDING.includes(row.status)).map((row) => row.atsBridgeId!);
+    return availableForNewJoiner(held);
+  },
+
+  /**
+   * Add Candidate (TSD §7.4.1): sumber undangan email ⇒ WAITING_CANDIDATE + magic link;
+   * sumber ATS ⇒ DRAFT berisi data kandidat. Data diri tidak pernah diketik HR.
+   */
+  async invite(draft: InviteDraft): Promise<Candidate> {
+    if (MOCK) {
+      await delay();
+      assertCascade(draft);
+      const base = {
+        id: newId(),
+        phone: '',
+        positionId: draft.positionId,
+        requisitionId: draft.requisitionId,
+        nationality: 'CITIZEN' as const,
+        idCardLast4: '',
+        passportNumber: '',
+        intendedJoinDate: '',
+        maker: CURRENT_USER,
+      };
+      let row: Candidate;
+      if (draft.source === 'ATS') {
+        const ats = findAtsCandidate(draft.atsBridgeId);
+        if (!ats || ats.atsStatus !== 'COMPLETED' || ats.source === 'BULK_IMPORT') {
+          throw new Error('422 — kandidat ATS harus Completed dan bukan asal Bulk Import.');
+        }
+        if (!this.atsOptions().some((item) => item.id === ats.id)) throw new Error('409 — kandidat ATS ini sudah dipegang calon lain.');
+        row = { ...base, name: ats.candidateName ?? ats.candidateEmail, email: ats.candidateEmail, status: 'DRAFT', atsBridgeId: ats.id };
+      } else {
+        const email = draft.email.trim().toLowerCase();
+        if (!EMAIL.test(email)) throw new Error('422 EMP-VAL-242 — email kandidat tidak sah.');
+        if (hasWaitingInvite(email)) throw new Error('409 — email ini masih punya undangan yang menunggu; pakai Resend link.');
+        const ats = inviteAtsCandidate('NEW_JOINER', email, 'emp-sari', null);
+        row = { ...base, name: '', email, status: 'WAITING_CANDIDATE', atsBridgeId: ats.id };
+        issueToken(row.id);
+      }
+      mockRows = [row, ...mockRows];
+      return { ...row };
+    }
+    const body =
+      draft.source === 'ATS'
+        ? { requisition_id: draft.requisitionId, group_struct_pos_id: draft.positionId, ats_bridge_id: draft.atsBridgeId }
+        : { requisition_id: draft.requisitionId, group_struct_pos_id: draft.positionId, candidate_email: draft.email.trim() };
+    const { data } = await api.post<Candidate>('/new-joiners', body);
+    return data;
+  },
+
+  /** §7.4.10 — token lama mati, token baru 24 jam; hanya saat menunggu kandidat. */
+  async resendLink(id: string): Promise<void> {
+    if (MOCK) {
+      await delay(200);
+      assertStatus(find(id), ['WAITING_CANDIDATE'], 'kirim ulang link');
+      issueToken(id);
+      return;
+    }
+    await api.post(`/new-joiners/${id}/resend-link`);
+  },
+
+  /** Portal publik — token tak sah/kedaluwarsa ⇒ satu pesan seragam. */
+  async portalState(token: string): Promise<{ email: string; positionLabel: string }> {
+    await delay(200);
+    const row = mockRows.find((item) => item.id === tokens.get(token));
+    if (!row || row.status !== 'WAITING_CANDIDATE') throw new Error('This link is invalid or has expired. Ask HR to send a new one.');
+    return { email: row.email, positionLabel: labelOf(POSITION_OPTIONS, row.positionId) };
+  },
+
+  /** §7.4.11 submit — data kandidat disalin ke calon, status menjadi DRAFT; token sekali pakai. */
+  async portalSubmit(token: string, profile: CandidateProfile): Promise<void> {
+    await delay(400);
+    const row = mockRows.find((item) => item.id === tokens.get(token));
+    if (!row || row.status !== 'WAITING_CANDIDATE') throw new Error('This link is invalid or has expired. Ask HR to send a new one.');
+    const name = profile.name.trim();
+    if (!CANDIDATE_NAME.test(name)) throw new Error('Full name: letters, spaces, and . , \' - only.');
+    const phone = normalizePhone(profile.phone);
+    if (!CANDIDATE_PHONE.test(phone)) throw new Error('Phone: start with +62 8 or 08.');
+    if (profile.nationality === 'CITIZEN' && !/^\d{16}$/.test(profile.idCardNumber)) throw new Error('ID card number must be 16 digits.');
+    if (profile.nationality === 'FOREIGNER' && !/^[A-Z0-9]{6,15}$/.test(profile.passportNumber)) throw new Error('Passport number: 6–15 letters or digits.');
+    if (!profile.cvFileName || !profile.idPhotoFileName) throw new Error('Upload your CV and ID photo.');
+    Object.assign(row, {
+      name,
+      phone,
+      nationality: profile.nationality,
+      idCardLast4: profile.nationality === 'CITIZEN' ? profile.idCardNumber.slice(-4) : '',
+      passportNumber: profile.nationality === 'FOREIGNER' ? profile.passportNumber : '',
+      intendedJoinDate: profile.intendedJoinDate,
+      status: 'DRAFT',
+    });
+    tokens.delete(token);
+    if (row.atsBridgeId) completeAtsCandidate(row.atsBridgeId, name);
+  },
+
   async list(): Promise<Candidate[]> {
     if (MOCK) {
       await delay();
@@ -311,7 +442,12 @@ export const newJoinerService = {
     if (MOCK) {
       await delay();
       const row = find(id);
-      assertStatus(row, ['DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED'], 'cancel');
+      assertStatus(row, ['WAITING_CANDIDATE', 'DRAFT', 'SUBMITTED', 'IN_APPROVAL', 'APPROVED'], 'cancel');
+      // Batal saat menunggu kandidat: link mati (baris ATS INACTIVE).
+      if (row.status === 'WAITING_CANDIDATE') {
+        tokens.forEach((value, key) => value === id && tokens.delete(key));
+        if (row.atsBridgeId) dropAtsCandidate(row.atsBridgeId);
+      }
       row.status = 'CANCELLED';
       delete row.seatExpiry;
       return;
@@ -353,6 +489,10 @@ export const newJoinerService = {
       assertStatus(row, ['APPROVED'], 'materialize');
       if (!payload.joinDate) throw new Error('422 — join_date wajib diisi.');
       if (!payload.jobGradeId) throw new Error('422 — job_grade_id wajib (tingkat Class).');
+      if (!payload.nik.trim()) throw new Error('422 — NIK wajib diisi.');
+      if (!payload.username.trim() || !payload.companyEmail.trim()) {
+        throw new Error('422 — username dan company_email wajib diisi (T59).');
+      }
 
       row.status = 'MATERIALIZED';
       row.jobGradeId = payload.jobGradeId;
@@ -361,20 +501,38 @@ export const newJoinerService = {
 
       // Koneksi antar modul: karyawan baru di Directory + transisi Onboarding.
       const positionLabel = labelOf(POSITION_OPTIONS, row.positionId);
-      registerMaterializedEmployee({
+      const employee = registerMaterializedEmployee({
         name: row.name,
-        email: row.email,
+        email: payload.companyEmail.trim().toLowerCase(),
         positionLabel,
         jobGrade: labelOf(JOB_GRADE_OPTIONS, payload.jobGradeId),
         joinDate: payload.joinDate,
       });
+      // Email kantor + nomor HP baru jadi identitas login setelah dibuktikan (§7.20).
+      registerContactVerification({
+        employeeId: employee.id,
+        employeeName: row.name,
+        companyEmail: employee.email,
+        phoneMasked: row.phone ? `${row.phone.slice(0, 6)}****${row.phone.slice(-4)}` : null,
+        joinDate: payload.joinDate,
+      });
+      if (row.atsBridgeId) markAtsUsed(row.atsBridgeId, employee.id);
       startOnboardingForNewJoiner({ name: row.name, positionLabel, effectiveDate: payload.joinDate });
       return;
     }
     // Idempotency-Key: submit yang diulang tidak boleh membuat karyawan ganda.
     await api.post(
       `/new-joiners/${payload.id}/materialize`,
-      { joinDate: payload.joinDate, jobGradeId: payload.jobGradeId },
+      {
+        join_date: payload.joinDate,
+        job_grade_id: payload.jobGradeId,
+        nik: payload.nik.trim(),
+        username: payload.username.trim(),
+        company_email: payload.companyEmail.trim(),
+        work_arrangement: payload.workArrangement,
+        radius_validation: payload.radiusValidation,
+        is_selfie: payload.isSelfie,
+      },
       { headers: { 'Idempotency-Key': newId() } },
     );
   },

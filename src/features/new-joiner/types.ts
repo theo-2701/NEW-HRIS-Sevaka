@@ -8,6 +8,7 @@ import type { SelectOption } from '@/components/form/SelectField';
  * di posisi yang sama otomatis REJECTED.
  */
 export type CandidateStatus =
+  | 'WAITING_CANDIDATE'
   | 'DRAFT'
   | 'SUBMITTED'
   | 'IN_APPROVAL'
@@ -42,7 +43,41 @@ export interface Candidate {
   seatExpiry?: string;
   checkerNote?: string;
   jobGradeId?: string;
+  /** Baris ATS yang menjadi sumber/tujuan undangan (TSD §7.4.1, RNJ-D2). */
+  atsBridgeId?: string;
 }
+
+/** Sumber kandidat di Add Candidate (RNJ-D7). */
+export type CandidateSource = 'INVITE' | 'ATS';
+
+/** Add Candidate (TSD §7.4.1): tiga isian; data diri diisi kandidat sendiri. */
+export interface InviteDraft {
+  source: CandidateSource;
+  requisitionId: string;
+  positionId: string;
+  email: string;
+  atsBridgeId: string;
+}
+
+/** Isian portal kandidat (§7.4.11). KTP 16 digit transient. */
+export interface CandidateProfile {
+  name: string;
+  nationality: Nationality;
+  idCardNumber: string;
+  passportNumber: string;
+  phone: string;
+  intendedJoinDate: string;
+  cvFileName: string;
+  idPhotoFileName: string;
+}
+
+/** Requisition → unit (terkunci) → posisi checklist (CATATAN 18 Okt T3). */
+export const REQUISITION_DETAIL: Record<string, { unit: string; positions: string[] }> = {
+  'REQ-0230': { unit: 'Engineering HQ', positions: ['pos-be'] },
+  'REQ-0231': { unit: 'Finance BR-Papua', positions: ['pos-fin'] },
+};
+
+export type WorkArrangementChoice = 'WFO' | 'WFH';
 
 /** Payload NJ-CREATE. `idCardNumber` 16 digit transient, bukan bagian `Candidate`. */
 export interface CandidateDraft {
@@ -62,9 +97,19 @@ export interface MaterializePayload {
   joinDate: string;
   jobGradeId: string;
   contractFileName: string;
+  /** Usulan server (`materialize_suggestion`); NIK kembar = peringatan, bukan tolakan. */
+  nik: string;
+  /** Wajib sejak T59. */
+  username: string;
+  companyEmail: string;
+  /** FRT-2610271835 T1 — pola kerja + flag absen profil. */
+  workArrangement: WorkArrangementChoice;
+  radiusValidation: boolean;
+  isSelfie: boolean;
 }
 
 export const STATUS_LABEL: Record<CandidateStatus, string> = {
+  WAITING_CANDIDATE: 'Waiting for candidate',
   DRAFT: 'Draft',
   SUBMITTED: 'Submitted',
   IN_APPROVAL: 'In approval',
@@ -81,6 +126,7 @@ export const STATUS_ORDER: CandidateStatus[] = [
   'IN_APPROVAL',
   'APPROVED',
   'MATERIALIZED',
+  'WAITING_CANDIDATE',
   'DRAFT',
   'REJECTED',
   'EXPIRED',

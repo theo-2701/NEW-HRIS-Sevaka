@@ -17,6 +17,8 @@ interface SelectFieldProps {
   options: SelectOption[];
   disabled?: boolean;
   containerClassName?: string;
+  /** Kembalikan `false` untuk menahan perubahan (mis. minta konfirmasi dulu). */
+  onValueChange?: (value: string) => boolean | void;
 }
 
 /** Select terikat Formik. */
@@ -29,6 +31,7 @@ export function SelectField({
   options,
   disabled,
   containerClassName,
+  onValueChange,
 }: SelectFieldProps) {
   const [field, meta, helpers] = useField(name);
   const error = meta.touched && meta.error ? meta.error : undefined;
@@ -37,10 +40,18 @@ export function SelectField({
     <FormField name={name} label={label} required={required} hint={hint} error={error} className={containerClassName}>
       <Select
         value={field.value ?? ''}
-        onValueChange={(value) => helpers.setValue(value)}
+        onValueChange={(value) => {
+          if (onValueChange?.(value) === false) return;
+          void helpers.setValue(value);
+        }}
         disabled={disabled}
       >
-        <SelectTrigger id={name} onBlur={() => helpers.setTouched(true)}>
+        <SelectTrigger
+          id={name}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error || hint ? `${name}-desc` : undefined}
+          onBlur={() => helpers.setTouched(true)}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

@@ -4,6 +4,7 @@ import { STATUS_LABEL, type CandidateStatus } from '@/features/new-joiner/types'
 import { cn } from '@/lib/utils';
 
 const TONE: Record<CandidateStatus, BadgeTone> = {
+  WAITING_CANDIDATE: 'warn',
   DRAFT: 'mute',
   SUBMITTED: 'info',
   IN_APPROVAL: 'info',

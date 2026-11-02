@@ -71,7 +71,59 @@ export const candidateSchema = Yup.object({
 
 /** Skema NJ-MATERIALIZE (FSD §4.3): kontrak sudah ditandatangani. */
 export const materializeSchema = Yup.object({
-  joinDate: Yup.string().required('Tanggal masuk wajib diisi.'),
-  jobGradeId: Yup.string().required('Job grade wajib dipilih.'),
-  contractFileName: Yup.string().required('Kontrak yang sudah ditandatangani wajib diunggah.'),
+  joinDate: Yup.string().required('Join date is required.'),
+  jobGradeId: Yup.string().required('Grade is required.'),
+  contractFileName: Yup.string().required('Upload the signed contract.'),
+  nik: Yup.string().trim().required('NIK is required.'),
+  username: Yup.string()
+    .trim()
+    .required('Username is required.')
+    .matches(/^[a-z0-9.]+$/, 'Lowercase letters, digits, and dots only.'),
+  companyEmail: Yup.string().trim().required('Company email is required.').email('Enter a valid email address.'),
+  workArrangement: Yup.string().oneOf(['WFO', 'WFH']).required('Work arrangement is required.'),
+});
+
+/** Add Candidate (TSD §7.4.1): email ATAU kandidat ATS, keduanya tidak bersamaan. */
+export const inviteSchema = Yup.object({
+  requisitionId: Yup.string().required('Requisition is required.'),
+  positionId: Yup.string().required('Position is required.'),
+  email: Yup.string().when('source', {
+    is: 'INVITE',
+    then: (schema) => schema.trim().required('Candidate email is required.').email('Enter a valid email address.'),
+    otherwise: (schema) => schema,
+  }),
+  atsBridgeId: Yup.string().when('source', {
+    is: 'ATS',
+    then: (schema) => schema.required('Pick an ATS candidate.'),
+    otherwise: (schema) => schema,
+  }),
+});
+
+/** Portal kandidat (§7.4.11) — isian diri kandidat sendiri; teks layar Inggris. */
+export const portalSchema = Yup.object({
+  name: Yup.string()
+    .trim()
+    .required('Full name is required.')
+    .max(150, 'At most 150 characters.')
+    .matches(CANDIDATE_NAME, "Letters, spaces, and . , ' - only; start with a letter."),
+  nationality: Yup.string().oneOf(['CITIZEN', 'FOREIGNER']).required(),
+  idCardNumber: Yup.string().when('nationality', {
+    is: 'CITIZEN',
+    then: (schema) => schema.required('ID card number is required.').matches(/^\d{16}$/, 'Exactly 16 digits.'),
+    otherwise: (schema) => schema,
+  }),
+  passportNumber: Yup.string().when('nationality', {
+    is: 'FOREIGNER',
+    then: (schema) => schema.required('Passport number is required.').matches(/^[A-Z0-9]{6,15}$/, '6–15 capital letters or digits.'),
+    otherwise: (schema) => schema,
+  }),
+  phone: Yup.string()
+    .trim()
+    .required('Phone number is required.')
+    .test('phone', 'Start with 08 or +628.', (value) => !value || CANDIDATE_PHONE.test(normalizePhone(value))),
+  intendedJoinDate: Yup.string()
+    .required('Available start date is required.')
+    .test('not-past', 'Cannot be in the past.', (value) => !value || value >= today()),
+  cvFileName: Yup.string().required('Upload your CV (PDF).'),
+  idPhotoFileName: Yup.string().required('Upload a photo of your ID (JPEG or PNG).'),
 });

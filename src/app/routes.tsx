@@ -22,6 +22,7 @@ import { BulkActivationPage } from '@/features/bulk-activation/pages/BulkActivat
 import { AtsBridgePage } from '@/features/ats-bridge/pages/AtsBridgePage';
 import { BulkImportPage } from '@/features/bulk-import/pages/BulkImportPage';
 import { ContactVerificationConfirmPage } from '@/features/contact-verification/pages/ContactVerificationConfirmPage';
+import { CandidatePortalPage } from '@/features/new-joiner/pages/CandidatePortalPage';
 import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { CalendarPage } from '@/features/calendar/pages/CalendarPage';
 import { SchedulerIndexPage } from '@/features/scheduler/pages/SchedulerIndexPage';
@@ -279,6 +280,8 @@ export const routes: RouteObject[] = [
   },
   /* Verifikasi kontak karyawan — halaman publik tanpa login (TSD-EMPLOYEE §7.20). */
   { path: '/contact-verification/:companyCode', element: <ContactVerificationConfirmPage /> },
+  /* Portal kandidat publik — tanpa login (TSD-EMPLOYEE §7.4.11). */
+  { path: '/candidate/:companyCode', element: <CandidatePortalPage /> },
   /* Verifikasi surat publik — tanpa login dan memang tanpa baris menu (DOC-80). */
   {
     path: '/verify',

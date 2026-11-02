@@ -23,10 +23,13 @@ import { formatDate } from '@/lib/format';
 export function ReviewCandidateModal({
   candidate,
   rivals,
+  readOnly = false,
   onClose,
 }: {
   candidate: Candidate | null;
   rivals: number;
+  /** Pembuat pengajuan hanya melihat (T56; SoD tetap ditegakkan service 409). */
+  readOnly?: boolean;
   onClose: () => void;
 }) {
   const [note, setNote] = useState('');
@@ -49,59 +52,71 @@ export function ReviewCandidateModal({
       open={Boolean(candidate)}
       onOpenChange={(open) => !open && onClose()}
       size="wide"
-      title="Review candidate"
-      description="Menyetujui akan menahan kursi dan menolak otomatis kandidat saingan di posisi yang sama."
+      title={readOnly ? 'Candidate submission' : 'Review candidate'}
+      description={
+        readOnly
+          ? 'You submitted this candidate, so another HR decides.'
+          : 'Approving holds the seat and automatically rejects rival candidates for the same position.'
+      }
       footer={
+        readOnly ? (
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        ) : (
         <>
           <Button variant="danger" onClick={() => decide(reject)} disabled={pending}>
             Reject
           </Button>
           <Button onClick={() => decide(approve)} disabled={pending}>
-            {approve.isPending ? 'Memproses…' : 'Approve & reserve seat'}
+            {approve.isPending ? 'Processing…' : 'Approve & reserve seat'}
           </Button>
         </>
+        )
       }
     >
       {candidate && (
         <div className="flex flex-col gap-4">
           <KeyValueList>
-            <KeyValueRow label="Kandidat">{candidate.name}</KeyValueRow>
+            <KeyValueRow label="Candidate">{candidate.name}</KeyValueRow>
             <KeyValueRow label="Email">{candidate.email}</KeyValueRow>
-            <KeyValueRow label="No. HP">{candidate.phone}</KeyValueRow>
-            <KeyValueRow label="Posisi">{labelOf(POSITION_OPTIONS, candidate.positionId)}</KeyValueRow>
-            <KeyValueRow label="Kewarganegaraan">{NATIONALITY_LABEL[candidate.nationality]}</KeyValueRow>
-            <KeyValueRow label="Identitas">
+            <KeyValueRow label="Phone">{candidate.phone}</KeyValueRow>
+            <KeyValueRow label="Position">{labelOf(POSITION_OPTIONS, candidate.positionId)}</KeyValueRow>
+            <KeyValueRow label="Nationality">{NATIONALITY_LABEL[candidate.nationality]}</KeyValueRow>
+            <KeyValueRow label="Identity">
               {candidate.nationality === 'CITIZEN'
-                ? `KTP •••• ${candidate.idCardLast4}`
-                : `Paspor ${candidate.passportNumber}`}
+                ? `ID card •••• ${candidate.idCardLast4}`
+                : `Passport ${candidate.passportNumber}`}
             </KeyValueRow>
-            <KeyValueRow label="Rencana masuk">{formatDate(candidate.intendedJoinDate)}</KeyValueRow>
+            <KeyValueRow label="Intended join">{candidate.intendedJoinDate ? formatDate(candidate.intendedJoinDate) : '—'}</KeyValueRow>
             <KeyValueRow label="Maker">{candidate.maker}</KeyValueRow>
             <KeyValueRow label="Status">
               <CandidateStatusBadge status={candidate.status} />
             </KeyValueRow>
           </KeyValueList>
 
-          {rivals > 0 && (
+          {rivals > 0 && !readOnly && (
             <Note tone="warn" icon={<Users />}>
               <strong>
-                {rivals} kandidat saingan
+                {rivals} rival candidate(s)
               </strong>{' '}
-              di posisi ini akan otomatis ditolak begitu Anda menyetujui.
+              for this position are rejected automatically once you approve.
             </Note>
           )}
 
+          {!readOnly && (
           <div className="flex flex-col gap-1">
-            <Label htmlFor="checker-note">Catatan checker</Label>
+            <Label htmlFor="checker-note">Checker note</Label>
             <Textarea
               id="checker-note"
               rows={2}
               maxLength={150}
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="Tersimpan bersama keputusan"
+              placeholder="Saved with the decision"
             />
           </div>
+          )}
         </div>
       )}
     </Modal>

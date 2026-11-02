@@ -66,6 +66,35 @@ export function inviteAtsCandidate(source: AtsSource, email: string, requestorEm
   return row;
 }
 
+/** Pemilih "From ATS" (§7.4.12 `available_for_new_joiner`): COMPLETED, bukan Bulk Import, belum dipakai. */
+export function availableForNewJoiner(heldIds: string[]): AtsCandidate[] {
+  return rows
+    .filter((row) => row.atsStatus === 'COMPLETED' && row.source !== 'BULK_IMPORT' && !heldIds.includes(row.id))
+    .map((row) => ({ ...row }));
+}
+
+export const findAtsCandidate = (id: string) => {
+  const row = rows.find((item) => item.id === id);
+  return row ? { ...row } : undefined;
+};
+
+/** Portal kandidat selesai (§7.4.11 submit): ATS menjadi COMPLETED dengan consent AGREED. */
+export function completeAtsCandidate(id: string, candidateName: string) {
+  const row = rows.find((item) => item.id === id);
+  if (!row) return;
+  Object.assign(row, { atsStatus: 'COMPLETED', candidateName, consentStatus: 'AGREED', completedAt: new Date().toISOString(), tokenExpiresAt: null });
+}
+
+/** Baris NEW_JOINER dipakai saat materialisasi; batal ⇒ dihapus-lunak di backend (di sini dibuang). */
+export function markAtsUsed(id: string, employeeId: string) {
+  const row = rows.find((item) => item.id === id);
+  if (row) Object.assign(row, { atsStatus: 'USED', usedEmployeeId: employeeId });
+}
+
+export function dropAtsCandidate(id: string) {
+  rows = rows.filter((item) => item.id !== id);
+}
+
 export const hasWaitingInvite = (email: string) =>
   rows.some((row) => row.candidateEmail === email.trim().toLowerCase() && row.atsStatus === 'WAITING_CANDIDATE');
 

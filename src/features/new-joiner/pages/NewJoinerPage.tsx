@@ -10,17 +10,19 @@ import { RowActions, RowButton } from '@/components/RowActions';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { CandidateStatusBadge, StatusTabs, type StatusTab } from '@/features/new-joiner/components/CandidateBits';
-import { CandidateFormModal } from '@/features/new-joiner/components/CandidateFormModal';
+import { InviteCandidateModal } from '@/features/new-joiner/components/InviteCandidateModal';
 import { ReviewCandidateModal } from '@/features/new-joiner/components/ReviewCandidateModal';
 import { MaterializeModal } from '@/features/new-joiner/components/MaterializeModal';
 import {
   useCancelCandidate,
   useCandidates,
   useDeleteCandidate,
+  useResendCandidateLink,
   useSubmitCandidate,
 } from '@/features/new-joiner/hooks/useNewJoiner';
-import { rivalsOf } from '@/features/new-joiner/services/new-joiner.service';
+import { candidateDemoLink, rivalsOf } from '@/features/new-joiner/services/new-joiner.service';
 import {
+  CURRENT_USER,
   NATIONALITY_LABEL,
   POSITION_OPTIONS,
   STATUS_LABEL,
@@ -60,6 +62,7 @@ export function NewJoinerPage() {
   const submit = useSubmitCandidate();
   const cancel = useCancelCandidate();
   const remove = useDeleteCandidate();
+  const resend = useResendCandidateLink();
 
   const tabs: StatusTab[] = useMemo(() => {
     const counted: StatusTab[] = STATUS_ORDER.map((status) => ({
@@ -86,7 +89,7 @@ export function NewJoinerPage() {
       <PageShell
         crumbs={[{ label: 'Employee Management' }, { label: 'New Joiner' }]}
         title="New Joiner"
-        description="Ajukan kandidat atas sebuah posisi, setujui lewat checker, lalu materialisasi menjadi karyawan begitu kontrak ditandatangani. Persetujuan menahan kursi sampai masa berlakunya habis."
+        description="Invite a candidate for a position, let another HR approve, then materialise them as an employee once the contract is signed. Approval holds the seat until it expires."
         actions={
           <>
             <Button variant="secondary" asChild>
@@ -98,10 +101,10 @@ export function NewJoinerPage() {
       >
         <div className="flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="In pipeline" value={inPipeline} footer={<CardFoot>Diajukan &amp; dalam persetujuan</CardFoot>} />
-            <StatCard label="Approved · awaiting sign" value={approved} footer={<CardFoot>Kursi ditahan sampai kedaluwarsa</CardFoot>} />
-            <StatCard label="Materialised" value={materialized} footer={<CardFoot>Kini karyawan berstatus WAITING</CardFoot>} />
-            <StatCard label="Expiring in 7d" value={expiringSoon(rows)} footer={<CardFoot>Tandatangani kontrak untuk menahan kursi</CardFoot>} />
+            <StatCard label="In pipeline" value={inPipeline} footer={<CardFoot>Submitted and in approval</CardFoot>} />
+            <StatCard label="Approved · awaiting sign" value={approved} footer={<CardFoot>Seat held until it expires</CardFoot>} />
+            <StatCard label="Materialised" value={materialized} footer={<CardFoot>Now employees with status WAITING</CardFoot>} />
+            <StatCard label="Expiring in 7d" value={expiringSoon(rows)} footer={<CardFoot>Sign the contract to keep the seat</CardFoot>} />
           </div>
 
           <Card>
@@ -117,13 +120,17 @@ export function NewJoinerPage() {
                 rows={paged.rows}
                 rowKey={(row) => row.id}
                 loading={isLoading}
-                empty="Tidak ada kandidat pada status ini."
+                empty="No candidate in this status."
                 columns={[
                   {
                     key: 'candidate',
                     header: 'Candidate',
                     render: (row) => (
-                      <CellIdentity name={row.name} sub={row.email} leading={<Avatar name={row.name} size="sm" />} />
+                      <CellIdentity
+                        name={row.name || 'Awaiting candidate data'}
+                        sub={row.email}
+                        leading={<Avatar name={row.name || row.email} size="sm" />}
+                      />
                     ),
                   },
                   {
@@ -135,14 +142,14 @@ export function NewJoinerPage() {
                   {
                     key: 'nationality',
                     header: 'Nationality',
-                    render: (row) => NATIONALITY_LABEL[row.nationality],
+                    render: (row) => (row.status === 'WAITING_CANDIDATE' ? '—' : NATIONALITY_LABEL[row.nationality]),
                   },
                   {
                     key: 'join',
                     header: 'Intended join',
                     muted: true,
                     nowrap: true,
-                    render: (row) => formatDate(row.intendedJoinDate),
+                    render: (row) => (row.intendedJoinDate ? formatDate(row.intendedJoinDate) : '—'),
                   },
                   {
                     key: 'status',
@@ -152,7 +159,7 @@ export function NewJoinerPage() {
                         <CandidateStatusBadge status={row.status} />
                         {row.status === 'APPROVED' && row.seatExpiry && (
                           <span className="font-body text-[11.5px] font-semibold text-warning-800">
-                            Kursi ditahan sampai {formatDate(row.seatExpiry)}
+                            Seat held until {formatDate(row.seatExpiry)}
                           </span>
                         )}
                       </div>
@@ -176,11 +183,12 @@ export function NewJoinerPage() {
         </div>
       </PageShell>
 
-      <CandidateFormModal open={creating} onClose={() => setCreating(false)} />
+      <InviteCandidateModal open={creating} onClose={() => setCreating(false)} />
 
       <ReviewCandidateModal
         candidate={reviewing}
         rivals={reviewing ? rivalsOf(rows, reviewing).length : 0}
+        readOnly={reviewing?.maker === CURRENT_USER}
         onClose={() => setReviewing(null)}
       />
 
@@ -188,8 +196,13 @@ export function NewJoinerPage() {
 
       <ConfirmDialog
         open={Boolean(cancelling)}
-        title="Batalkan kandidat?"
-        description={`Kursi untuk ${cancelling?.name ?? ''} akan dilepas dan pengajuan ditutup.`}
+        title="Cancel this candidate?"
+        description={
+          cancelling?.status === 'WAITING_CANDIDATE'
+            ? `The invitation link for ${cancelling.email} stops working.`
+            : `The seat for ${cancelling?.name ?? ''} is released and the submission closes.`
+        }
+        cancelLabel="Back"
         confirmLabel="Cancel submission"
         loading={cancel.isPending}
         onOpenChange={(open) => !open && setCancelling(null)}
@@ -201,8 +214,10 @@ export function NewJoinerPage() {
 
       <ConfirmDialog
         open={Boolean(deleting)}
-        title="Hapus draft kandidat?"
-        description={`Draft ${deleting?.name ?? ''} akan dihapus permanen.`}
+        title="Delete this draft?"
+        description={`The draft for ${deleting?.name ?? ''} is deleted permanently.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
         loading={remove.isPending}
         onOpenChange={(open) => !open && setDeleting(null)}
         onConfirm={() =>
@@ -217,6 +232,18 @@ export function NewJoinerPage() {
    * ≥ 2 aksi = dropdown "Action ▾").
    */
   function RowAction({ row }: { row: Candidate }) {
+    if (row.status === 'WAITING_CANDIDATE') {
+      const link = candidateDemoLink(row.id);
+      return (
+        <RowActions
+          actions={[
+            { label: 'Resend link', onSelect: () => resend.mutate({ id: row.id, email: row.email }) },
+            ...(link ? [{ label: 'Open candidate link (demo)', onSelect: () => navigate(link) }] : []),
+            { label: 'Cancel', danger: true, onSelect: () => setCancelling(row) },
+          ]}
+        />
+      );
+    }
     if (row.status === 'DRAFT') {
       return (
         <RowActions
@@ -231,6 +258,17 @@ export function NewJoinerPage() {
       );
     }
     if (row.status === 'SUBMITTED' || row.status === 'IN_APPROVAL') {
+      // T56: pembuat tidak melihat Approve; server tetap menolak 409.
+      if (row.maker === CURRENT_USER) {
+        return (
+          <RowActions
+            actions={[
+              { label: 'View', onSelect: () => setReviewing(row) },
+              { label: 'Cancel', danger: true, onSelect: () => setCancelling(row) },
+            ]}
+          />
+        );
+      }
       return <RowButton onClick={() => setReviewing(row)}>Review</RowButton>;
     }
     if (row.status === 'APPROVED') {
@@ -246,7 +284,7 @@ export function NewJoinerPage() {
     if (row.status === 'MATERIALIZED') {
       return <RowButton onClick={() => navigate('/employees/directory')}>View employee</RowButton>;
     }
-    return <span className="font-body text-xs font-medium text-fg-4">Tidak ada aksi</span>;
+    return <span className="font-body text-xs font-medium text-fg-4">—</span>;
   }
 }
 

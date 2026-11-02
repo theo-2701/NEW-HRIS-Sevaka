@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { newJoinerService } from '@/features/new-joiner/services/new-joiner.service';
 import { toast } from '@/store/ui.store';
-import type { CandidateDraft, MaterializePayload } from '@/features/new-joiner/types';
+import type { CandidateDraft, CandidateProfile, InviteDraft, MaterializePayload } from '@/features/new-joiner/types';
 import type { AddEmployeeValues } from '@/features/new-joiner/addEmployee';
 
 export const newJoinerKeys = {
@@ -77,8 +77,32 @@ export const useAddEmployee = () =>
     (_result, values) => `${values.fullName} ditambahkan ke direktori dengan status WAITING.`,
   );
 
+export const useInviteCandidate = () =>
+  useCandidateMutation<InviteDraft, { status: string; email: string }>(
+    (draft) => newJoinerService.invite(draft),
+    (row) =>
+      row.status === 'WAITING_CANDIDATE'
+        ? `Invitation sent to ${row.email}. The candidate fills in their own data; the link is valid for 24 hours.`
+        : 'Candidate added from ATS as a draft. Submit it for approval when ready.',
+  );
+
+export const useResendCandidateLink = () =>
+  useCandidateMutation<{ id: string; email: string }>(
+    ({ id }) => newJoinerService.resendLink(id),
+    (_result, { email }) => `A new link was sent to ${email}; the old one no longer works.`,
+  );
+
+export const useAtsOptions = (enabled: boolean) =>
+  useQuery({ queryKey: [...newJoinerKeys.list, 'ats-options'], queryFn: async () => newJoinerService.atsOptions(), enabled });
+
+export const usePortalState = (token: string) =>
+  useQuery({ queryKey: ['candidate-portal', token], queryFn: () => newJoinerService.portalState(token), enabled: Boolean(token), retry: false });
+
+export const usePortalSubmit = () =>
+  useMutation({ mutationFn: ({ token, profile }: { token: string; profile: CandidateProfile }) => newJoinerService.portalSubmit(token, profile) });
+
 export const useMaterializeCandidate = () =>
   useCandidateMutation<{ payload: MaterializePayload; name: string }>(
     ({ payload }) => newJoinerService.materialize(payload),
-    (_result, { name }) => `${name} dimaterialisasi. Undangan akun dikirim; karyawan berstatus WAITING.`,
+    (_result, { name }) => `${name} is now an employee (WAITING). Their company email and phone join the Email and Phone Verification queue.`,
   );
