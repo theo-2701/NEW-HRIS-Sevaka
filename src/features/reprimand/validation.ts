@@ -54,4 +54,17 @@ export const categorySchema = Yup.object({
     .min(0, 'Bobot tidak boleh negatif.')
     .max(999.99, 'Maksimal 999,99.'),
   terminal: Yup.boolean(),
+  // Kosong = tidak turun bertahap; diabaikan untuk kategori terminal (T88 `SPC-D6`).
+  cleanMonths: Yup.number()
+    .transform((value, raw) => (raw === '' || raw === null || Number.isNaN(value) ? null : value))
+    .nullable()
+    .when('terminal', {
+      is: true,
+      then: (schema) => schema.strip(),
+      otherwise: (schema) =>
+        schema
+          .integer('Clean months harus bilangan bulat.')
+          .min(1, 'Clean months minimal 1.')
+          .max(120, 'Clean months maksimal 120.'),
+    }),
 });

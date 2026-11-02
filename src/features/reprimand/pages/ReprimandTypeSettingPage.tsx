@@ -37,8 +37,13 @@ const EMPTY_CATEGORY: ReprimandCategory = {
   levelOrder: 1,
   terminal: false,
   performanceWeight: 0,
+  cleanMonths: null,
   active: true,
 };
+
+/** Input angka Formik memberi '' saat dikosongkan — kontrak memakai null. */
+const toCleanMonths = (value: unknown): number | null =>
+  value === '' || value === null || value === undefined ? null : Number(value);
 
 /** Editor kategori — dipakai untuk create dan update (tanpa hard-delete). */
 function CategoryEditor({
@@ -57,7 +62,14 @@ function CategoryEditor({
       validationSchema={categorySchema}
       onSubmit={(values, helpers) =>
         save.mutate(
-          { category: { ...values, active: true }, originalCode: category?.originalCode },
+          {
+            category: {
+              ...values,
+              cleanMonths: values.terminal ? null : toCleanMonths(values.cleanMonths),
+              active: true,
+            },
+            originalCode: category?.originalCode,
+          },
           {
             onSuccess: () => {
               helpers.resetForm();
@@ -67,7 +79,7 @@ function CategoryEditor({
         )
       }
     >
-      {({ submitForm }) => (
+      {({ submitForm, values }) => (
         <Modal
           open={Boolean(category)}
           onOpenChange={(open) => !open && onClose()}
@@ -109,6 +121,21 @@ function CategoryEditor({
                 label="Bobot kinerja"
                 required
                 hint="Kontribusi ke skor kinerja."
+              />
+              <TextField
+                name="cleanMonths"
+                type="number"
+                min={1}
+                max={120}
+                label="Clean months"
+                value={values.terminal ? '' : (values.cleanMonths ?? '')}
+                disabled={values.terminal}
+                placeholder="Kosong = tidak turun"
+                hint={
+                  values.terminal
+                    ? 'Kategori terminal tidak turun bertahap.'
+                    : 'Bulan tanpa SP baru agar level turun satu tingkat. Hanya berlaku untuk SP yang terbit sesudah disimpan.'
+                }
               />
               <ToggleField
                 name="terminal"
@@ -207,6 +234,12 @@ export function ReprimandTypeSettingPage() {
                   { key: 'validity', header: 'Validity (mo)', align: 'center', render: (row) => row.validityMonths },
                   { key: 'level', header: 'Level', align: 'center', render: (row) => row.levelOrder },
                   { key: 'weight', header: 'Perf. Weight', align: 'center', render: (row) => row.performanceWeight },
+                  {
+                    key: 'clean',
+                    header: 'Clean Months',
+                    align: 'center',
+                    render: (row) => row.cleanMonths ?? <span className="text-fg-3">—</span>,
+                  },
                   {
                     key: 'terminal',
                     header: 'Terminal',
