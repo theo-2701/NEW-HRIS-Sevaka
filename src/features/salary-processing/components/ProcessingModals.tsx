@@ -581,8 +581,8 @@ export function ImportDetailModal({
   onClose: () => void;
 }) {
   const verify = useVerifyImport();
-  const canVerify = Boolean(row) && actor.role === 'ROLE_HR_MANAGER' && !row?.verifiedBy;
-  const ownRow = row?.submittedBy === actor.employeeId;
+  const canVerify =
+    Boolean(row) && actor.role === 'ROLE_HR_MANAGER' && !row?.verifiedBy && row?.submittedBy !== actor.employeeId;
 
   return (
     <Modal
@@ -597,8 +597,7 @@ export function ImportDetailModal({
           </Button>
           {canVerify && (
             <Button
-              disabled={ownRow || verify.isPending}
-              title={ownRow ? 'Pemeriksa tidak boleh memverifikasi impornya sendiri' : undefined}
+              disabled={verify.isPending}
               onClick={() => row && verify.mutate({ actor, id: row.id }, { onSuccess: onClose })}
             >
               {verify.isPending ? 'Verifying…' : 'Verify import'}

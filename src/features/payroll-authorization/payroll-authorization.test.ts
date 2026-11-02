@@ -10,6 +10,8 @@ import {
 } from '@/features/payroll-authorization/services/payroll-authorization.service';
 import { VIEWERS } from '@/features/payroll-authorization/mock-data';
 import type { Actor } from '@/features/payroll-authorization/types';
+import type { PayrollPeriod } from '@/features/salary-processing/types';
+import { canLock } from '@/features/payroll-authorization/rules';
 
 const MAYA = VIEWERS[0];
 const HESTI = VIEWERS[1];
@@ -171,5 +173,14 @@ describe('Otorisasi — ekspor ulang (UIC §3.13)', () => {
 
   it('hanya HR Manager yang boleh mengajukan ekspor ulang', async () => {
     await expect(service.requestReexport(RUDI, 'per-2026-06', 'Coba dari peran lain')).rejects.toThrow(/403/);
+  });
+});
+
+describe('Maker-checker UX (PAY-2610210950 T1)', () => {
+  it('penghitung periode tidak ditawari tombol Lock; checker lain ditawari', () => {
+    const period = { status: 'REVIEWED', calculated: { employeeId: 'emp-a', at: '2026-10-01' } } as unknown as PayrollPeriod;
+    const checker = (employeeId: string) => ({ employeeId, role: 'ROLE_HR_MANAGER' }) as Actor;
+    expect(canLock(period, checker('emp-a'))).toBe(false);
+    expect(canLock(period, checker('emp-b'))).toBe(true);
   });
 });

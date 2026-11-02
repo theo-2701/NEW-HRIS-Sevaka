@@ -377,7 +377,8 @@ export function PayrollAuthorizationPage() {
                       },
                     ]}
                     actions={(row) =>
-                      checker && !traitDecided(row) ? (
+                      // PAY-2610210950 T1: pembuat usulan tidak melihat tombol checker-nya.
+                      row.proposedBy === actor.employeeId ? null : checker && !traitDecided(row) ? (
                         <RowButton onClick={() => setDecidingTrait(row)}>Decide</RowButton>
                       ) : (
                         <RowButton disabled>Decide</RowButton>
@@ -421,7 +422,7 @@ export function PayrollAuthorizationPage() {
                           },
                         ]}
                         actions={(row) =>
-                          checker ? (
+                          row.createdBy === actor.employeeId ? null : checker ? (
                             <RowButton onClick={() => setDecidingProposal(row)}>Decide</RowButton>
                           ) : (
                             <RowButton disabled>Decide</RowButton>
@@ -550,7 +551,7 @@ export function PayrollAuthorizationPage() {
                       },
                     ]}
                     actions={(row) =>
-                      row.status === 'MENUNGGU_PERSETUJUAN' ? (
+                      row.createdBy && row.createdBy === actor.employeeId ? null : row.status === 'MENUNGGU_PERSETUJUAN' ? (
                         <RowButton onClick={() => setDecidingBatch(row)}>Decide</RowButton>
                       ) : (
                         <RowButton disabled>Decide</RowButton>

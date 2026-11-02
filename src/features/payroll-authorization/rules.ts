@@ -41,7 +41,9 @@ export function lockGates(period: PayrollPeriod): LockGate[] {
 export const lockMakerCheckerOk = (period: PayrollPeriod, actor: Actor) =>
   period.calculated.employeeId !== actor.employeeId;
 
-export const canLock = (period: PayrollPeriod, actor: Actor) => isChecker(actor) && period.status === 'REVIEWED';
+/** PAY-2610210950 T1: penghitung tidak melihat tombol Kunci (dulu nonaktif bertooltip). */
+export const canLock = (period: PayrollPeriod, actor: Actor) =>
+  isChecker(actor) && period.status === 'REVIEWED' && lockMakerCheckerOk(period, actor);
 
 /**
  * Buka kembali hanya ditawarkan dari `LOCKED`: kontrak mensyaratkan pemanggil identik dengan

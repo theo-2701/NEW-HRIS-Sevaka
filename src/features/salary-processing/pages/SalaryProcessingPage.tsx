@@ -156,7 +156,8 @@ export function SalaryProcessingPage() {
 
   const importActions = (row: HistoryImport) => {
     const actions = [{ label: 'View Detail', onSelect: () => setImportDetail(row) }];
-    if (actor.role === 'ROLE_HR_MANAGER' && !row.verifiedBy) {
+    // PAY-2610210950 T1: pengunggah tidak melihat Verify miliknya sendiri.
+    if (actor.role === 'ROLE_HR_MANAGER' && !row.verifiedBy && row.submittedBy !== actor.employeeId) {
       actions.unshift({ label: 'Verify', onSelect: () => setImportDetail(row) });
     }
     if (officer && row.isActive) {
