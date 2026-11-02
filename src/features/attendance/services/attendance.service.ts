@@ -2,11 +2,12 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
-import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
+import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES, WFH_PERMISSIONS } from '@/features/attendance/mock-data';
 import {
   nextPunchType,
   punchPolicy,
   punchesToday,
+  radiusApplies,
   radiusVerdict,
   resolveGeofence,
   selfieRequiredFor,
@@ -20,6 +21,7 @@ import {
   TAP_ARRANGEMENTS,
   canApproveCorrection,
   canCreateCorrection,
+  canDecideWfh,
   canSearchPunch,
   isSelfScoped,
 } from '@/features/attendance/types';
@@ -31,6 +33,7 @@ import type {
   Punch,
   PunchPolicy,
   TapLocation,
+  WfhPermission,
   WorkArrangement,
 } from '@/features/attendance/types';
 
@@ -60,9 +63,11 @@ let mockDays: AttendanceDay[] = DAILY.map((row) => ({ ...row }));
 let mockCorrections: Correction[] = CORRECTIONS.map((row) => ({ ...row }));
 /** (karyawan, Idempotency-Key) → id tap yang sudah lahir. */
 let mockPunchKeys = new Map<string, string>();
+let mockWfh: WfhPermission[] = WFH_PERMISSIONS.map((row) => ({ ...row }));
 
 /** Dipakai pengujian supaya setiap berkas uji mulai dari dataset kontrak. */
 export function resetAttendanceMocks() {
+  mockWfh = WFH_PERMISSIONS.map((row) => ({ ...row }));
   mockPunches = PUNCHES.map((row) => ({ ...row }));
   mockDays = DAILY.map((row) => ({ ...row }));
   mockCorrections = CORRECTIONS.map((row) => ({ ...row }));
@@ -74,6 +79,13 @@ export interface DayFilter {
   dayType?: string;
   excused?: 'YES' | 'NO';
   employeeId?: string;
+}
+
+export interface WfhFilter {
+  requestStatus?: string;
+  /** Rentang `work_date` (inklusif). */
+  from?: string;
+  to?: string;
 }
 
 export interface TapFilter {
@@ -209,24 +221,77 @@ export const attendanceService = {
   async punchPolicy(session: AttendanceSession): Promise<PunchPolicy> {
     if (MOCK) {
       await delay(120);
-      return punchPolicy(resolveGeofence(session.employeeId));
+      return punchPolicy(session.employeeId);
     }
+    // UIC-TIME 0.27 §6.1.4: `selfie_required_wfo/wfh/profile` dihapus, diganti flag profil.
     const { data } = await api.get<{
       profile_work_arrangement: WorkArrangement | null;
       can_choose: boolean;
       default_work_arrangement: 'WFO' | 'WFH' | null;
-      selfie_required_wfo: boolean;
-      selfie_required_wfh: boolean;
-      selfie_required_profile: boolean;
+      selfie_required: boolean;
+      radius_validation: boolean;
+      wfh_requires_approval: boolean;
     }>('/attendance-punches/policy');
     return {
       profileWorkArrangement: data.profile_work_arrangement,
       canChoose: data.can_choose,
       defaultWorkArrangement: data.default_work_arrangement,
-      selfieRequiredWfo: data.selfie_required_wfo,
-      selfieRequiredWfh: data.selfie_required_wfh,
-      selfieRequiredProfile: data.selfie_required_profile,
+      selfieRequired: data.selfie_required,
+      radiusValidation: data.radius_validation,
+      wfhRequiresApproval: data.wfh_requires_approval,
     };
+  },
+
+  /**
+   * `POST /wfh-permissions/search` (UIC-TIME 0.27 §6.4.1): karyawan = miliknya, atasan/HR Manager =
+   * yang ia terima (mock: seluruh tenant).
+   */
+  async wfhPermissions(session: AttendanceSession, filter: WfhFilter = {}): Promise<WfhPermission[]> {
+    if (MOCK) {
+      await delay(200);
+      return mockWfh
+        .filter((row) => canApproveCorrection(session) || row.employeeId === session.employeeId)
+        .filter((row) => !filter.requestStatus || row.requestStatus === filter.requestStatus)
+        .filter((row) => (!filter.from || row.workDate >= filter.from) && (!filter.to || row.workDate <= filter.to))
+        .sort((a, b) => (a.workDate < b.workDate ? 1 : -1))
+        .map((row) => ({ ...row }));
+    }
+    const { data } = await api.post<{ data: WfhPermission[] }>('/wfh-permissions/search', {
+      filters: {
+        request_status: filter.requestStatus ? [filter.requestStatus] : undefined,
+        start_date: filter.from || undefined,
+        end_date: filter.to || undefined,
+      },
+      sort_by: 'work_date',
+      sort_direction: 'DESC',
+    });
+    return data.data;
+  },
+
+  /** `POST /wfh-permissions/{id}/approval` (§6.4.3) — pintu menerima keputusan (K9). */
+  async decideWfh(session: AttendanceSession, id: string, decision: 'APPROVED' | 'REJECTED'): Promise<DecisionAck<WfhPermission>> {
+    if (MOCK) {
+      await delay(300);
+      const row = mockWfh.find((item) => item.id === id);
+      if (!row) throw new Error('404 — WFH permission not found.');
+      if (row.requestStatus !== 'PENDING') throw new Error('422 TIM-BIZ-632 — This permission is already final.');
+      if (!canDecideWfh(session, row)) throw new Error('403 TIM-AUZ-633 — You are not an approver of this permission.');
+      return acknowledge(row);
+    }
+    const { data } = await api.post<DecisionAck<WfhPermission>>(`/wfh-permissions/${id}/approval`, { decision });
+    return data;
+  },
+
+  /** Mock saja — agregator FLOW OR menulis status; tap ikut membawa tandanya. */
+  async completeWfhWorkflow(session: AttendanceSession, id: string, decision: 'APPROVED' | 'REJECTED'): Promise<void> {
+    await delay(150);
+    const row = mockWfh.find((item) => item.id === id);
+    if (!row) return;
+    row.requestStatus = decision;
+    row.decidedAt = new Date().toISOString();
+    row.decidedBy = session.employeeId;
+    const punch = mockPunches.find((item) => item.id === row.punchId);
+    if (punch) punch.wfhPermissionStatus = decision;
   },
 
   /**
@@ -247,7 +312,7 @@ export const attendanceService = {
     if (MOCK) {
       await delay(400);
       const geofence = resolveGeofence(session.employeeId);
-      const policy = punchPolicy(geofence);
+      const policy = punchPolicy(session.employeeId);
       const keyScope = `${session.employeeId}:${input.idempotencyKey}`;
       const existingId = mockPunchKeys.get(keyScope);
       if (existingId) {
@@ -285,7 +350,7 @@ export const attendanceService = {
         punchAt: `${ATTENDANCE_TODAY}T${hh}:${mm}:00+07:00`,
         workDate: ATTENDANCE_TODAY,
         // Verdict radius dihitung server dari koordinat × aturan tipe kerja.
-        isWithinGeofence: arrangement ? radiusVerdict(geofence, arrangement, input.location ?? null) : null,
+        isWithinGeofence: radiusVerdict(geofence, radiusApplies(policy, arrangement), input.location ?? null),
         isMockLocationSuspected: false,
         isWorkArrangementUnknown: !arrangement,
         geofenceId: geofence.id,
@@ -296,6 +361,26 @@ export const attendanceService = {
         longitude: input.location?.longitude ?? null,
         gpsAccuracyMeters: input.location?.accuracyMeters ?? null,
       };
+      // Profil WFO memilih WFH ⇒ izin WFH lahir sesudah fakta, tenggat 3 hari (§6.4); absen tetap sah.
+      if (choice === 'WFH' && policy.wfhRequiresApproval) {
+        const existing = mockWfh.find((row) => row.employeeId === session.employeeId && row.workDate === ATTENDANCE_TODAY);
+        punch.wfhPermissionStatus = existing?.requestStatus ?? 'PENDING';
+        if (!existing) {
+          mockWfh = [
+            {
+              id: `wfh-${mockWfh.length + 1}`,
+              employeeId: session.employeeId,
+              punchId: punch.id,
+              workDate: ATTENDANCE_TODAY,
+              requestStatus: 'PENDING',
+              dueAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+              decidedAt: null,
+              decidedBy: null,
+            },
+            ...mockWfh,
+          ];
+        }
+      }
       mockPunches = [...mockPunches, punch];
       mockPunchKeys.set(keyScope, punch.id);
       return { punch, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired };

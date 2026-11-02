@@ -5,6 +5,8 @@ import type {
   Correction,
   Geofence,
   Punch,
+  PunchProfile,
+  WfhPermission,
   WorkArrangement,
 } from '@/features/attendance/types';
 
@@ -101,6 +103,18 @@ export const GEOFENCES: Geofence[] = [
   },
 ];
 
+/**
+ * Flag profil absen per karyawan (employee-service `work_arrangement`, `is_selfie`, `radius_validation`) —
+ * pengganti `GET /attendance-punches/policy` di mode dummy. Tanpa baris = WFO, swafoto wajib, radius dicek.
+ */
+export const PUNCH_PROFILES: PunchProfile[] = [
+  { employeeId: 'emp-rina', workArrangement: 'WFO', isSelfie: true, radiusValidation: true },
+  { employeeId: 'emp-sari', workArrangement: 'WFH', isSelfie: false, radiusValidation: false },
+  // Karyawan uji Dewi: tanpa swafoto dan tanpa radius.
+  { employeeId: 'emp-dewi', workArrangement: 'WFO', isSelfie: false, radiusValidation: false },
+  { employeeId: 'emp-budi', workArrangement: 'WFO', isSelfie: false, radiusValidation: true },
+];
+
 export const PUNCHES: Punch[] = [
   { id: 'pun-1', employeeId: 'emp-hendra', punchType: 'IN', punchAt: '2026-07-27T08:02:00+07:00', workDate: '2026-07-27', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
   { id: 'pun-2', employeeId: 'emp-hendra', punchType: 'OUT', punchAt: '2026-07-27T17:41:00+07:00', workDate: '2026-07-27', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
@@ -110,7 +124,14 @@ export const PUNCHES: Punch[] = [
   { id: 'pun-6', employeeId: 'emp-sari', punchType: 'IN', punchAt: '2026-07-29T09:20:00+07:00', workDate: '2026-07-29', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
   // punch-1/punch-2 contoh UIC-TIME §6.1.3 — riwayat tap milik Rina yang dibaca layar ESS (0.20).
   { id: 'pun-rina-1', employeeId: 'emp-rina', punchType: 'IN', punchAt: '2026-07-27T08:05:00+07:00', workDate: '2026-07-27', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
+  // Demo izin WFH (UIC §6.4): Rina berprofil WFO memilih WFH pada 28 Juli.
+  { id: 'pun-rina-wfh', employeeId: 'emp-rina', punchType: 'IN', punchAt: '2026-07-28T08:10:00+07:00', workDate: '2026-07-28', isWithinGeofence: null, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1', workArrangement: 'WFH', wfhPermissionStatus: 'PENDING' },
   { id: 'pun-rina-2', employeeId: 'emp-rina', punchType: 'OUT', punchAt: '2026-07-27T17:12:00+07:00', workDate: '2026-07-27', isWithinGeofence: true, isMockLocationSuspected: false, isWorkArrangementUnknown: false, geofenceId: 'geo-1' },
+];
+
+export const WFH_PERMISSIONS: WfhPermission[] = [
+  { id: 'wfh-1', employeeId: 'emp-rina', punchId: 'pun-rina-wfh', workDate: '2026-07-28', requestStatus: 'PENDING', dueAt: '2026-07-31T08:10:00+07:00', decidedAt: null, decidedBy: null },
+  { id: 'wfh-2', employeeId: 'emp-dewi', punchId: 'pun-dewi-wfh', workDate: '2026-07-24', requestStatus: 'APPROVED', dueAt: '2026-07-27T08:00:00+07:00', decidedAt: '2026-07-24T10:00:00+07:00', decidedBy: 'emp-budi' },
 ];
 
 export const DAILY: AttendanceDay[] = [

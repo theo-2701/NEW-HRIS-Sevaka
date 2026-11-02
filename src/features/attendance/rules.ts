@@ -1,4 +1,4 @@
-import { ATTENDANCE_TODAY, employeeBranch } from '@/features/attendance/mock-data';
+import { ATTENDANCE_TODAY, PUNCH_PROFILES, employeeBranch } from '@/features/attendance/mock-data';
 import { liveGeofences } from '@/features/attendance/services/geofence.service';
 import { CORRECTION_WINDOW_DAYS } from '@/features/attendance/types';
 import type {
@@ -35,23 +35,31 @@ export function resolveGeofence(employeeId: string) {
  * Kebijakan tap (UIC-TIME 0.26 §6.1.4) versi mode dummy: diturunkan dari matriks titik kerja cabang +
  * status kerja profil. Profil `MOBILE` tak ditawari pilihan; profil WFH ⇒ pilihan awal WFH, selain itu WFO.
  */
-export function punchPolicy(geofence: Geofence, profile: WorkArrangement = 'WFO'): PunchPolicy {
-  const canChoose = profile !== 'MOBILE';
+export function punchPolicy(employeeId: string): PunchPolicy {
+  const profile = PUNCH_PROFILES.find((row) => row.employeeId === employeeId) ?? {
+    workArrangement: 'WFO' as const,
+    isSelfie: true,
+    radiusValidation: true,
+  };
   return {
-    profileWorkArrangement: profile,
-    canChoose,
-    defaultWorkArrangement: canChoose ? (profile === 'WFH' ? 'WFH' : 'WFO') : null,
-    selfieRequiredWfo: geofence.rules.WFO.selfie,
-    selfieRequiredWfh: geofence.rules.WFH.selfie,
-    selfieRequiredProfile: geofence.rules[profile].selfie,
+    profileWorkArrangement: profile.workArrangement,
+    canChoose: true,
+    defaultWorkArrangement: profile.workArrangement,
+    selfieRequired: profile.isSelfie,
+    radiusValidation: profile.radiusValidation,
+    wfhRequiresApproval: profile.workArrangement === 'WFO',
   };
 }
 
-/** Swafoto wajib untuk pilihan ini; tanpa pilihan (profil lapangan) aturan profil yang berlaku. */
-export function selfieRequiredFor(policy: PunchPolicy, arrangement: WorkArrangement | null): boolean {
-  if (arrangement === 'WFO') return policy.selfieRequiredWfo;
-  if (arrangement === 'WFH') return policy.selfieRequiredWfh;
-  return policy.selfieRequiredProfile;
+/** Swafoto mengikuti flag profil `is_selfie`, bukan pilihan WFO/WFH (UIC-TIME 0.27 §6.1.1). */
+export function selfieRequiredFor(policy: PunchPolicy, _arrangement?: WorkArrangement | null): boolean {
+  void _arrangement;
+  return policy.selfieRequired;
+}
+
+/** Radius dicek hanya untuk pilihan WFO dengan flag profil `radius_validation` aktif. */
+export function radiusApplies(policy: PunchPolicy | undefined, arrangement: WorkArrangement | null): boolean {
+  return arrangement === 'WFO' && Boolean(policy?.radiusValidation);
 }
 
 /**
@@ -62,9 +70,9 @@ export const LEGACY_PUNCH_POLICY: PunchPolicy = {
   profileWorkArrangement: null,
   canChoose: true,
   defaultWorkArrangement: 'WFO',
-  selfieRequiredWfo: false,
-  selfieRequiredWfh: false,
-  selfieRequiredProfile: false,
+  selfieRequired: false,
+  radiusValidation: false,
+  wfhRequiresApproval: false,
 };
 
 /** Jarak dua titik (haversine), meter. */
@@ -80,12 +88,8 @@ export function distanceMeters(a: { latitude: number; longitude: number }, b: { 
  * Putusan radius: `null` bila tipe kerja ini tidak memeriksa radius atau lokasi tidak ada —
  * keduanya "tidak bisa dievaluasi", bukan pelanggaran.
  */
-export function radiusVerdict(
-  geofence: Geofence,
-  arrangement: WorkArrangement,
-  location: TapLocation | null,
-): boolean | null {
-  if (!geofence.rules[arrangement]?.radius || !location) return null;
+export function radiusVerdict(geofence: Geofence, enforce: boolean, location: TapLocation | null): boolean | null {
+  if (!enforce || !location) return null;
   const center = { latitude: geofence.centerLatitude, longitude: geofence.centerLongitude };
   return distanceMeters(center, location) <= geofence.radiusMeters;
 }

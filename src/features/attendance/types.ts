@@ -88,6 +88,8 @@ export interface Punch {
   geofenceId: string | null;
   /** Tipe kerja yang dipilih saat tap in (OUT mewarisi dari IN). PROVISIONAL — belum ada di UIC §6.1.1. */
   workArrangement?: WorkArrangement | null;
+  /** Status izin WFH yang lahir dari tap ini (UIC §6.1.1 0.27); `null` bila tak ada izin. */
+  wfhPermissionStatus?: WfhStatus | null;
   /** Catatan karyawan saat tap. PROVISIONAL — belum ada di UIC §6.1.1. */
   note?: string | null;
   /** UIC §6.1.1: `latitude`/`longitude` opsional tapi wajib berpasangan. */
@@ -100,18 +102,52 @@ export interface Punch {
 export const TAP_ARRANGEMENTS: WorkArrangement[] = ['WFO', 'WFH'];
 
 /**
- * Kebijakan tap pemanggil sendiri — UIC-TIME 0.26 §6.1.4 `GET /attendance-punches/policy`, dibaca sebelum tap.
- * Swafoto mengikuti kolom Required matriks titik kerja untuk pilihan WFO/WFH; profil `MOBILE` tak ditawari
- * pilihan dan memakai aturan profilnya.
+ * Kebijakan tap pemanggil sendiri — UIC-TIME 0.27 §6.1.4 `GET /attendance-punches/policy`, dibaca sebelum tap.
+ * Sejak 0.27 swafoto dan radius mengikuti flag PROFIL karyawan (`is_selfie`, `radius_validation`), bukan
+ * matriks Settings; pilihan WFO/WFH selalu ditawarkan (`HYBRID`/`MOBILE` dicabut).
  */
 export interface PunchPolicy {
   profileWorkArrangement: WorkArrangement | null;
+  /** Selalu `true` sejak 0.27. */
   canChoose: boolean;
   defaultWorkArrangement: 'WFO' | 'WFH' | null;
-  selfieRequiredWfo: boolean;
-  selfieRequiredWfh: boolean;
-  selfieRequiredProfile: boolean;
+  /** Flag profil `is_selfie`; `false` ⇒ komponen swafoto disembunyikan. */
+  selfieRequired: boolean;
+  /** Flag profil `radius_validation` — radius dicek hanya untuk pilihan WFO. */
+  radiusValidation: boolean;
+  /** Profil WFO ⇒ memilih WFH memicu izin WFH ke atasan; absen tetap tersimpan. */
+  wfhRequiresApproval: boolean;
 }
+
+/** Flag profil absen per karyawan (milik employee-service, TSD-EMPLOYEE 0.204 §6.2). */
+export interface PunchProfile {
+  employeeId: string;
+  workArrangement: 'WFO' | 'WFH';
+  isSelfie: boolean;
+  radiusValidation: boolean;
+}
+
+/** Izin WFH lahir otomatis dari tap WFH berprofil WFO (UIC-TIME 0.27 §6.4). */
+export type WfhStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'TIMED_OUT';
+
+export interface WfhPermission {
+  id: string;
+  employeeId: string;
+  punchId: string;
+  workDate: string;
+  requestStatus: WfhStatus;
+  /** Tenggat tiga hari sejak tap; lewat tenggat ⇒ `TIMED_OUT`. */
+  dueAt: string;
+  decidedAt: string | null;
+  decidedBy: string | null;
+}
+
+export const WFH_STATUS_LABEL: Record<WfhStatus, string> = {
+  PENDING: 'Awaiting approval',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  TIMED_OUT: 'Timed out',
+};
 
 export const PUNCH_NOTE_MAX = 500;
 
@@ -233,6 +269,11 @@ export function canCreateCorrection(session: AttendanceSession): boolean {
 /** `attendance-correction:approve` — HR_MANAGER · DEPT_MANAGER (§6.3.3). */
 export function canApproveCorrection(session: AttendanceSession): boolean {
   return session.role === 'HR_MANAGER' || session.role === 'DEPT_MANAGER';
+}
+
+/** `wfh-permission:approve` (§6.4.3) — atasan/HR Manager, bukan pemilik izin, hanya yang masih menunggu. */
+export function canDecideWfh(session: AttendanceSession, row: WfhPermission): boolean {
+  return canApproveCorrection(session) && row.employeeId !== session.employeeId && row.requestStatus === 'PENDING';
 }
 
 /**

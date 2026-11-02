@@ -4,12 +4,14 @@ import {
   ATTENDANCE_STATUS_LABEL,
   EXCUSED_REASON_LABEL,
   CORRECTION_STATUS_LABEL,
+  WFH_STATUS_LABEL,
 } from '@/features/attendance/types';
 import type {
   AttendanceDay,
   AttendanceStatus,
   CorrectionStatus,
   Punch,
+  WfhStatus,
 } from '@/features/attendance/types';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +60,17 @@ export function CorrectionStatusBadge({ status }: { status: CorrectionStatus }) 
  * Verdict radius. Kosong berarti **tidak bisa dievaluasi** — bukan pelanggaran:
  * izin lokasi ditolak, tapnya tetap tersimpan.
  */
+const WFH_TONE: Record<WfhStatus, 'ok' | 'warn' | 'err'> = {
+  PENDING: 'warn',
+  APPROVED: 'ok',
+  REJECTED: 'err',
+  TIMED_OUT: 'err',
+};
+
+export function WfhStatusBadge({ status }: { status: WfhStatus }) {
+  return <StatusBadge tone={WFH_TONE[status]}>{WFH_STATUS_LABEL[status]}</StatusBadge>;
+}
+
 export function RadiusCell({ punch }: { punch: Punch }) {
   if (punch.isWithinGeofence === true) return <StatusBadge tone="ok">Inside radius</StatusBadge>;
   if (punch.isWithinGeofence === false) return <StatusBadge tone="err">Outside radius</StatusBadge>;
@@ -68,6 +81,8 @@ export function FlagsCell({ punch }: { punch: Punch }) {
   const flags: string[] = [];
   if (punch.isMockLocationSuspected) flags.push('Mock location suspected');
   if (punch.isWorkArrangementUnknown) flags.push('Arrangement unreadable');
+  // REJECTED/TIMED_OUT = tanda «WFH rejected»; absen tetap sah (UIC-TIME 0.27 §6.4).
+  if (punch.wfhPermissionStatus === 'REJECTED' || punch.wfhPermissionStatus === 'TIMED_OUT') flags.push('WFH rejected');
   if (!flags.length) return <span className="font-body text-[13px] font-medium text-fg-4">—</span>;
   return (
     <div className="flex flex-wrap gap-1.5">

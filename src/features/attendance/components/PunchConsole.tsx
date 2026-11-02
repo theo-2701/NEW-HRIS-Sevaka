@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
-import { distanceMeters, radiusVerdict, selfieRequiredFor } from '@/features/attendance/rules';
+import { distanceMeters, radiusApplies, radiusVerdict } from '@/features/attendance/rules';
 import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
-import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS } from '@/features/attendance/types';
+import { ARRANGEMENT_LABEL, PUNCH_NOTE_MAX, TAP_ARRANGEMENTS, WFH_STATUS_LABEL } from '@/features/attendance/types';
 import type { Geofence, Punch, PunchPolicy, TapLocation, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import type { ShiftOn } from '@/features/scheduler/services/scheduler.service';
@@ -85,16 +85,12 @@ function useLiveLocation(geofence: Geofence) {
  * terbuka lagi sendiri karena Radix mengembalikan fokus ke tombol saat menutup.
  */
 function TapRules({ geofence, policy }: { geofence: Geofence; policy: PunchPolicy | undefined }) {
-  const rule = (value: WorkArrangement) => (geofence.rules[value].radius ? `Within ${geofence.radiusMeters} m of the work point` : 'Anywhere');
-  // Profil lapangan tak ditawari pilihan — hanya baris profilnya yang berlaku (UIC-TIME 0.26 §6.1.4).
-  const rows: WorkArrangement[] =
-    policy && !policy.canChoose && policy.profileWorkArrangement ? [policy.profileWorkArrangement] : TAP_ARRANGEMENTS;
-  // Swafoto mengikuti pilihan WFO/WFH (Required matriks Settings), bukan satu flag per lokasi.
-  const selfieRows = rows.filter((value) =>
-    policy ? selfieRequiredFor(policy, policy.canChoose ? value : null) : geofence.rules[value].selfie,
-  );
-  const selfieText =
-    rows.length === 1 || selfieRows.length === rows.length ? 'Required' : `Required for ${selfieRows.join(' and ')}`;
+  // UIC-TIME 0.27: radius & swafoto mengikuti flag profil; radius hanya untuk pilihan WFO.
+  const rule = (value: WorkArrangement) =>
+    radiusApplies(policy, value) ? `Within ${geofence.radiusMeters} m of the work point` : 'Anywhere';
+  const rows: WorkArrangement[] = TAP_ARRANGEMENTS;
+  const selfieRows = policy?.selfieRequired ? rows : [];
+  const selfieText = 'Required';
 
   return (
     <Popover>
@@ -125,7 +121,12 @@ function TapRules({ geofence, policy }: { geofence: Geofence; policy: PunchPolic
             </>
           )}
         </dl>
-        {rows.some((value) => geofence.rules[value].radius) && (
+        {policy?.wfhRequiresApproval && (
+          <p className="m-0 mt-2.5 border-t border-border-1 pt-2 font-body text-[11.5px] font-medium leading-snug text-fg-3">
+            Working from home asks your manager for approval. The tap is saved either way.
+          </p>
+        )}
+        {rows.some((value) => radiusApplies(policy, value)) && (
           <p className="m-0 mt-2.5 border-t border-border-1 pt-2 font-body text-[11.5px] font-medium leading-snug text-fg-3">
             Taps outside the radius are still saved, flagged.
           </p>
@@ -141,7 +142,7 @@ function TapRules({ geofence, policy }: { geofence: Geofence; policy: PunchPolic
  */
 function LocationStatus({ geofence, policy }: { geofence: Geofence; policy: PunchPolicy | undefined }) {
   const { state, locate } = useLiveLocation(geofence);
-  const checked = geofence.rules.WFO.radius;
+  const checked = radiusApplies(policy, 'WFO');
   const name = geofence.geofenceName;
 
   let icon: ReactNode = <MapPin />;
@@ -620,7 +621,7 @@ export function TapModal({
   const [note, setNote] = useState('');
   const [locating, setLocating] = useState(false);
   const choice = canChoose ? arrangement || null : null;
-  const selfieNeeded = policy ? selfieRequiredFor(policy, choice) : false;
+  const selfieNeeded = policy?.selfieRequired ?? false;
   const steps: Step[] = selfieNeeded ? ['details', 'selfie'] : ['details'];
   const camera = useSelfieCamera(open && selfieNeeded && step === 'selfie' && !frame);
   const fallback = useMemo(
@@ -667,14 +668,15 @@ export function TapModal({
 
   // Peringatan dini: koordinat sudah terbaca dan tipe kerja ini memeriksa radius, tapi posisinya di luar.
   const judged = choice ?? policy?.profileWorkArrangement ?? null;
-  const outside = Boolean(judged && radiusVerdict(geofence, judged, resolved) === false);
+  const outside = radiusVerdict(geofence, radiusApplies(policy, judged), resolved) === false;
   const away = resolved ? distanceFrom(geofence, resolved) : null;
 
   const describe = (value: WorkArrangement) => {
-    const where = geofence.rules[value].radius
-      ? `Within ${geofence.radiusMeters} m of ${value === 'WFO' ? geofence.geofenceName : 'the work point'}`
+    const where = radiusApplies(policy, value)
+      ? `Within ${geofence.radiusMeters} m of ${geofence.geofenceName}`
       : "Location radius isn't checked";
-    return policy && selfieRequiredFor(policy, value) ? `${where} · Selfie required` : where;
+    const approval = value === 'WFH' && policy?.wfhRequiresApproval ? ' · Needs manager approval' : '';
+    return `${where}${policy?.selfieRequired ? ' · Selfie required' : ''}${approval}`;
   };
 
   const sendLabel = saving ? 'Saving…' : verb;
@@ -789,6 +791,13 @@ export function TapModal({
               )
             )}
 
+            {choice === 'WFH' && policy?.wfhRequiresApproval && (
+              <Note tone="info" icon={<Info />}>
+                Your profile is work from office, so a WFH permission request goes to your manager. Your tap is saved
+                either way.
+              </Note>
+            )}
+
             {outside && (
               <Note tone="warn" icon={<MapPinOff />}>
                 You&rsquo;re about <strong>{away != null ? distanceLabel(away) : 'far'}</strong> from {geofence.geofenceName},
@@ -826,7 +835,9 @@ type ReceiptState = 'ok' | 'outside' | 'unchecked';
 /** Keadaan tanda terima dari putusan radius tap + aturan titik kerja untuk tipe kerjanya. */
 function receiptState(punch: Punch, geofence: Geofence): ReceiptState {
   if (punch.isWithinGeofence === false) return 'outside';
-  const radiusChecked = punch.workArrangement ? geofence.rules[punch.workArrangement]?.radius : false;
+  // Radius hanya dicek untuk WFO berflag profil; tanpa putusan + WFO = tak terevaluasi.
+  void geofence;
+  const radiusChecked = punch.workArrangement === 'WFO';
   if (punch.isWithinGeofence === null && radiusChecked) return 'unchecked';
   return 'ok';
 }
@@ -895,6 +906,9 @@ export function PunchSavedModal({
               <RadiusCell punch={punch} />
             </KeyValueRow>
             <KeyValueRow label="Selfie">{result.selfieRequired ? 'Captured' : 'Not required'}</KeyValueRow>
+            {punch.wfhPermissionStatus && (
+              <KeyValueRow label="WFH permission">{WFH_STATUS_LABEL[punch.wfhPermissionStatus]}</KeyValueRow>
+            )}
             <KeyValueRow label="Note">{punch.note ?? '—'}</KeyValueRow>
           </KeyValueList>
         </div>

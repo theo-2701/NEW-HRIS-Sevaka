@@ -10,6 +10,7 @@ import type {
   DayFilter,
   TapInput,
   TapFilter,
+  WfhFilter,
 } from '@/features/attendance/services/attendance.service';
 import type { AttendanceSession, CorrectionDraft, PunchPolicy } from '@/features/attendance/types';
 import { LEGACY_PUNCH_POLICY } from '@/features/attendance/rules';
@@ -155,3 +156,33 @@ export const useWithdrawCorrection = (session: AttendanceSession) =>
       tone: 'warn' as const,
     }),
   );
+
+/** Grid izin WFH (UIC-TIME 0.27 §6.4.1). */
+export function useWfhPermissions(session: AttendanceSession, filter: WfhFilter) {
+  return useQuery({
+    queryKey: [...attendanceKeys.all, 'wfh', session.employeeId, filter],
+    queryFn: () => attendanceService.wfhPermissions(session, filter),
+  });
+}
+
+/** Keputusan izin WFH (K9): diterima dulu, status ditulis agregator FLOW OR. */
+export function useDecideWfh(session: AttendanceSession) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, decision }: { id: string; decision: 'APPROVED' | 'REJECTED' }) => {
+      await attendanceService.decideWfh(session, id, decision);
+      return decision;
+    },
+    onSuccess: async (decision, { id }) => {
+      await attendanceService.completeWfhWorkflow(session, id, decision);
+      toast(
+        decision === 'APPROVED'
+          ? 'WFH permission approved.'
+          : 'WFH permission rejected. The tap stays recorded and is marked WFH rejected.',
+        decision === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}

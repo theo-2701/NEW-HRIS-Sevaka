@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { attendanceService, resetAttendanceMocks } from '@/features/attendance/services/attendance.service';
-import { captureChannel, eligibleDays, nextPunchType, punchPolicy, selfieRequiredFor } from '@/features/attendance/rules';
-import { DAILY, GEOFENCES, VIEWERS } from '@/features/attendance/mock-data';
+import { captureChannel, eligibleDays, nextPunchType, punchPolicy, radiusApplies, selfieRequiredFor } from '@/features/attendance/rules';
+import { DAILY, VIEWERS } from '@/features/attendance/mock-data';
 import type { AttendanceSession } from '@/features/attendance/types';
 
 const RINA: AttendanceSession = { employeeId: 'emp-rina', role: 'EMPLOYEE' };
@@ -74,11 +74,18 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     expect(result.punch.latitude).toBe(-5.1478);
   });
 
-  it('Makassar: WFO tanpa swafoto, WFH wajib swafoto — mengikuti matriks Settings per pilihan', async () => {
+  it('profil WFO memilih WFH: tap tersimpan tanpa cek radius dan izin WFH lahir PENDING (UIC 0.27 §6.4)', async () => {
     const BUDI: AttendanceSession = { employeeId: 'emp-budi', role: 'DEPT_MANAGER' };
-    await expect(
-      attendanceService.recordPunch(BUDI, { selfieCaptured: false, idempotencyKey: 'budi-wfh', workArrangement: 'WFH' }),
-    ).rejects.toThrow(/selfie/);
+    const result = await attendanceService.recordPunch(BUDI, {
+      selfieCaptured: false,
+      idempotencyKey: 'budi-wfh',
+      workArrangement: 'WFH',
+      location: { latitude: -6.3, longitude: 106.9, accuracyMeters: 20 },
+    });
+    expect(result.punch.isWithinGeofence).toBeNull();
+    expect(result.punch.wfhPermissionStatus).toBe('PENDING');
+    const rows = await attendanceService.wfhPermissions(BUDI);
+    expect(rows.some((row) => row.employeeId === 'emp-budi' && row.requestStatus === 'PENDING')).toBe(true);
   });
 
   it('karyawan uji Dewi: tanpa selfie dan tanpa radius, tap WFO di mana pun tersimpan tanpa tanda luar radius', async () => {
@@ -114,12 +121,12 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
 
   it('audit tap mentah tertutup untuk peran tanpa kewenangan penyelidikan', async () => {
     await expect(attendanceService.punches(SARI)).rejects.toThrow(/403/);
-    await expect(attendanceService.punches(HENDRA)).resolves.toHaveLength(8);
+    await expect(attendanceService.punches(HENDRA)).resolves.toHaveLength(9);
   });
 
   it('EMPLOYEE membaca tap miliknya sendiri; filter karyawan dan mock location diabaikan (UIC 0.20)', async () => {
     const rows = await attendanceService.punches(RINA, { employeeId: 'emp-hendra', mockLocation: 'YES' });
-    expect(rows.map((row) => row.id).sort()).toEqual(['pun-rina-1', 'pun-rina-2']);
+    expect(rows.map((row) => row.id).sort()).toEqual(['pun-rina-1', 'pun-rina-2', 'pun-rina-wfh']);
   });
 });
 
@@ -287,29 +294,33 @@ describe('Gerbang tap in — cuti dan hari libur (Theo, 26 Okt 2026)', () => {
   });
 });
 
-describe('Kebijakan tap — GET /attendance-punches/policy (UIC-TIME 0.26 §6.1.4)', () => {
-  const makassar = GEOFENCES.find((row) => row.id === 'geo-3')!;
-
-  it('swafoto dibaca per pilihan dari matriks titik kerja; pilihan awal WFO', async () => {
-    expect(punchPolicy(makassar)).toEqual({
+describe('Kebijakan tap — GET /attendance-punches/policy (UIC-TIME 0.27 §6.1.4)', () => {
+  it('swafoto & radius mengikuti flag profil; profil WFO memilih WFH butuh izin', async () => {
+    expect(punchPolicy('emp-rina')).toEqual({
       profileWorkArrangement: 'WFO',
       canChoose: true,
       defaultWorkArrangement: 'WFO',
-      selfieRequiredWfo: false,
-      selfieRequiredWfh: true,
-      selfieRequiredProfile: false,
+      selfieRequired: true,
+      radiusValidation: true,
+      wfhRequiresApproval: true,
     });
-    expect(await attendanceService.punchPolicy({ employeeId: 'emp-budi', role: 'DEPT_MANAGER' })).toMatchObject({
-      selfieRequiredWfo: false,
-      selfieRequiredWfh: true,
-    });
+    const sari = await attendanceService.punchPolicy({ employeeId: 'emp-sari', role: 'HR_STAFF' });
+    expect(sari).toMatchObject({ defaultWorkArrangement: 'WFH', selfieRequired: false, wfhRequiresApproval: false });
+    expect(selfieRequiredFor(sari, 'WFO')).toBe(false);
+    expect(radiusApplies(punchPolicy('emp-rina'), 'WFH')).toBe(false);
+    expect(radiusApplies(punchPolicy('emp-rina'), 'WFO')).toBe(true);
   });
 
-  it('profil WFH mulai dari WFH; profil MOBILE tak ditawari pilihan dan memakai aturan profilnya', () => {
-    expect(punchPolicy(makassar, 'WFH').defaultWorkArrangement).toBe('WFH');
-    const field = punchPolicy(makassar, 'MOBILE');
-    expect(field.canChoose).toBe(false);
-    expect(field.defaultWorkArrangement).toBeNull();
-    expect(selfieRequiredFor(field, null)).toBe(makassar.rules.MOBILE.selfie);
+  it('izin WFH: hanya atasan bukan pemilik yang memutus; keputusan menandai tap', async () => {
+    const rina = { employeeId: 'emp-rina', role: 'EMPLOYEE' as const };
+    const budi = { employeeId: 'emp-budi', role: 'DEPT_MANAGER' as const };
+    const own = await attendanceService.wfhPermissions(rina);
+    expect(own.every((row) => row.employeeId === 'emp-rina')).toBe(true);
+    const pending = own.find((row) => row.requestStatus === 'PENDING')!;
+    await expect(attendanceService.decideWfh(rina, pending.id, 'APPROVED')).rejects.toThrow(/403/);
+    await attendanceService.decideWfh(budi, pending.id, 'REJECTED');
+    await attendanceService.completeWfhWorkflow(budi, pending.id, 'REJECTED');
+    const after = await attendanceService.wfhPermissions(budi, { requestStatus: 'REJECTED' });
+    expect(after.map((row) => row.id)).toContain(pending.id);
   });
 });
