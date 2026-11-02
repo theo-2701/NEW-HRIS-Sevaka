@@ -135,6 +135,12 @@ export const NAV: NavSection[] = [
             note: 'TSD-001-EMPLOYEE 0.212 §7.13.3; CATATAN-PERUBAHAN 21 Okt 2026 (EMP-2610181639 T48)',
           },
           {
+            label: 'Bulk Account Activation',
+            path: '/employees/bulk-account-activation',
+            status: 'done',
+            note: 'TSD-001-AUTH 0.167 §14.2.1 (FSD-EMPLOYEE §9); CATATAN-PERUBAHAN 12 Okt 2026',
+          },
+          {
             label: 'Email and Phone Verification',
             path: '/employees/email-phone-verification',
             status: 'done',
