@@ -1,3 +1,4 @@
+import { employeeName } from '@/features/time-off/mock-data';
 import type { ReactNode } from 'react';
 import { AlarmClock, Calendar, CalendarOff, Check, Info, Link2, ShieldAlert, User } from 'lucide-react';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
@@ -25,6 +26,7 @@ const TASK_TONE: Record<TaskStatus, BadgeTone> = {
   RELEASED: 'info',
   IN_PROGRESS: 'info',
   AWAITING_CONFIRM: 'warn',
+  AWAITING_APPROVAL: 'warn',
   COMPLETED: 'ok',
   WAIVED: 'brand',
   SKIPPED: 'mute',
@@ -183,6 +185,10 @@ export function TaskCard({
         )}
         {task.dependsOn && <MetaRow icon={<Link2 />}>Menunggu: {task.dependsOn}</MetaRow>}
         {task.skipReason && <MetaRow icon={<Info />}>Alasan: {task.skipReason}</MetaRow>}
+        {task.approvalRequired && (
+          <MetaRow icon={<ShieldAlert />}>Approver: {task.approverId ? employeeName(task.approverId) : '— (none eligible)'}</MetaRow>
+        )}
+        {task.rejectReason && task.status !== 'COMPLETED' && <MetaRow icon={<Info />}>Sent back: {task.rejectReason}</MetaRow>}
       </div>
 
       {(overdue || !closed) && (

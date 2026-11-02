@@ -114,13 +114,13 @@ export function TransitionDetailPage() {
 
   const crumbs = [
     { label: 'Employee Management' },
-    { label: 'Employee Transfer', to: '/employees/transfer' },
+    { label: 'Transition', to: '/employees/transition' },
     { label: transition?.id ?? 'Detail' },
   ];
 
   if (isLoading || !transition) {
     return (
-      <PageShell crumbs={crumbs} title="Transfer Dashboard">
+      <PageShell crumbs={crumbs} title="Transition detail">
         <p className="py-10 text-center font-body text-[13px] font-medium text-fg-3">Memuat transisi…</p>
       </PageShell>
     );
@@ -134,11 +134,11 @@ export function TransitionDetailPage() {
     <>
       <PageShell
         crumbs={crumbs}
-        title="Transfer Dashboard"
+        title="Transition detail"
         description="Progres & daftar task untuk satu transisi. Perpindahan struktural terjadi atomik pada tanggal efektif setelah task wajib selesai."
         actions={
           <>
-            <Button variant="secondary" onClick={() => navigate('/employees/transfer')}>
+            <Button variant="secondary" onClick={() => navigate('/employees/transition')}>
               Back to list
             </Button>
             {showClearance && (

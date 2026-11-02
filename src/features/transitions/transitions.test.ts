@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { transitionSchema, waiveSchema } from '@/features/transitions/validation';
 import { transitionService } from '@/features/transitions/services/transition.service';
+import { setupService } from '@/features/transitions/services/setup.service';
 import { doneCount, progressPct } from '@/features/transitions/types';
 
 const base = { employeeId: 'emp-eka', effectiveDate: '2027-01-01' };
@@ -26,13 +27,13 @@ describe('TR-CREATE — field bercabang per tipe', () => {
         type: 'TRANSFER',
         destinationPositionId: '',
       }),
-    ).rejects.toThrow(/Posisi tujuan/);
+    ).rejects.toThrow(/Destination seat/);
   });
 
   it('target job grade hanya wajib untuk promosi/demosi', async () => {
     await expect(
       transitionSchema.validateAt('targetJobGradeId', { ...base, type: 'TRANSFER', subtype: 'PROMOTION', targetJobGradeId: '' }),
-    ).rejects.toThrow(/target job grade/i);
+    ).rejects.toThrow(/target grade/i);
     await expect(
       transitionSchema.validateAt('targetJobGradeId', { ...base, type: 'TRANSFER', subtype: 'LATERAL', targetJobGradeId: '' }),
     ).resolves.toBeDefined();
@@ -41,7 +42,7 @@ describe('TR-CREATE — field bercabang per tipe', () => {
   it('offboarding mewajibkan alasan keluar', async () => {
     await expect(
       transitionSchema.validateAt('reason', { ...base, type: 'OFFBOARDING', reason: '' }),
-    ).rejects.toThrow(/Alasan keluar/);
+    ).rejects.toThrow(/Reason is required/);
   });
 });
 
@@ -152,5 +153,63 @@ describe('Task — dua pihak, waive, dan clearance', () => {
 describe('Waive — alasan wajib', () => {
   it('menolak waive tanpa alasan', async () => {
     await expect(waiveSchema.validate({ control: 'STANDARD', reason: '  ' })).rejects.toThrow(/Alasan waive/);
+  });
+});
+
+describe('Transition terpadu (TSD-EMPLOYEE 0.212 §7.23–§7.26)', () => {
+  it('transfer disetujui ⇒ paket dari setup lahir; IN tertahan sampai OUT tuntas; petugas bukan pengaju', async () => {
+    const draft = {
+      type: 'TRANSFER' as const,
+      employeeId: 'emp-hub-test',
+      subtype: 'LATERAL',
+      destinationPositionId: 'pos-lead-ops',
+      targetJobGradeId: '',
+      reason: '',
+      effectiveDate: '2027-02-01',
+      facilityWithdrawnNote: 'Laptop',
+      facilityProvidedNote: '',
+    };
+    const created = await transitionService.create(draft, 'emp-sari');
+    expect(created.tasks).toHaveLength(0);
+    const row = await transitionService.completeApprovalWorkflow(created.id);
+    expect(row.setupId).toBe('setup-trf');
+    expect(row.tasks.some((t) => t.name === 'Facility provided')).toBe(false);
+    expect(row.tasks.filter((t) => t.side === 'PROVISION').every((t) => t.status === 'PENDING')).toBe(true);
+    expect(row.tasks.every((t) => t.handlerId !== 'emp-sari')).toBe(true);
+  });
+
+  it('selesai → konfirmasi karyawan → persetujuan; penyetuju keliru ditolak', async () => {
+    const [tr] = (await transitionService.list()).filter((t) => t.id === 'TR-2026-0405');
+    const laptop = tr.tasks.find((t) => t.name === 'Assign laptop & access card')!;
+    expect(await transitionService.completeTask(tr.id, laptop.id)).toBe('AWAITING_CONFIRM');
+    await transitionService.confirmTask(tr.id, laptop.id);
+    await expect(transitionService.approveTask('emp-sari', tr.id, laptop.id)).rejects.toThrow(/403/);
+    await expect(transitionService.rejectTask('emp-hendra', tr.id, laptop.id, ' ')).rejects.toThrow(/422/);
+    await transitionService.approveTask('emp-hendra', tr.id, laptop.id);
+    expect((await transitionService.get(tr.id)).tasks.find((t) => t.id === laptop.id)?.status).toBe('COMPLETED');
+  });
+
+  it('antrean onboarding ditutup HR Manager; ESS hanya melihat miliknya', async () => {
+    const queue = await transitionService.escalations();
+    const onboarding = queue.find((row) => row.type === 'ONBOARDING')!;
+    expect(await transitionService.closeQueue(onboarding.transitionId, 'Promoted before onboarding finished')).toBe(1);
+    await expect(transitionService.closeQueue(onboarding.transitionId, '')).rejects.toThrow(/404/);
+    const mine = await transitionService.myTransitions('emp-eka');
+    expect(mine.every((row) => row.employeeId === 'emp-eka')).toBe(true);
+  });
+});
+
+describe('Materialization setup (§7.23.3)', () => {
+  it('minimal dua petugas, tanpa nama ganda, role harus ditandai', async () => {
+    const [onb] = await setupService.list();
+    const bad = { ...onb, tasks: onb.tasks.map((t, i) => (i === 1 ? { ...t, handlers: ['emp-rina'] } : t)) };
+    await expect(setupService.save('HR_MANAGER', bad, 'emp-hendra')).rejects.toThrow(/EMP-VAL-710/);
+    const overlap = { ...onb, tasks: onb.tasks.map((t, i) => (i === 2 ? { ...t, approvers: ['emp-budi', 'emp-hendra'] } : t)) };
+    await expect(setupService.save('HR_MANAGER', overlap, 'emp-hendra')).rejects.toThrow(/EMP-VAL-711/);
+    await expect(setupService.save('HR_STAFF', onb, 'emp-sari')).rejects.toThrow(/403/);
+    const saved = await setupService.save('HR_MANAGER', onb, 'emp-hendra');
+    expect(saved.version).toBe(onb.version + 1);
+    await setupService.setRole('HR_MANAGER', 'acc-5', false);
+    await expect(setupService.save('HR_MANAGER', saved, 'emp-hendra')).rejects.toThrow(/EMP-VAL-712/);
   });
 });

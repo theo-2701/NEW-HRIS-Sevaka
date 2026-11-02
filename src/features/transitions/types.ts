@@ -18,6 +18,7 @@ export type TaskStatus =
   | 'RELEASED'
   | 'IN_PROGRESS'
   | 'AWAITING_CONFIRM'
+  | 'AWAITING_APPROVAL'
   | 'COMPLETED'
   | 'WAIVED'
   | 'SKIPPED';
@@ -27,7 +28,17 @@ export type TaskSide = 'RELINQUISH' | 'PROVISION' | 'NONE';
 
 export type TransferSubtype = 'LATERAL' | 'PROMOTION' | 'DEMOTION' | 'RELOCATION' | 'MUTUAL_TRANSFER';
 
-export type OffboardingReason = 'RESIGN' | 'CONTRACT_END' | 'TERMINATION' | 'LAYOFF' | 'RETIREMENT';
+export type OffboardingReason = 'RESIGN' | 'CONTRACT_END' | 'TERMINATION' | 'LAYOFF' | 'RETIREMENT' | 'DECEASED';
+
+/** Alasan antrean HR Manager (§7.22, §7.23.1). */
+export type HrQueueReason =
+  | 'ACCESS_CANCELLED'
+  | 'STRUCTURAL_TRANSITION'
+  | 'WORKFLOW_CANCELLED'
+  | 'NO_SETUP'
+  | 'NO_ELIGIBLE_ASSIGNEE'
+  | 'CONFLICT_EXHAUSTED'
+  | 'PAST_EFFECTIVE_DATE';
 
 export interface TransitionTask {
   id: string;
@@ -50,6 +61,17 @@ export interface TransitionTask {
    * TANPA mengubah `task_status`.
    */
   timedOut?: boolean;
+  /** Pemegang tugas (petugas) dan penyetujunya — dibagikan dari daftar hidup setup (§7.23.5). */
+  handlerId?: string | null;
+  approverId?: string | null;
+  /** Wajib disetujui sesudah petugas selesai (§7.23.1). */
+  approvalRequired?: boolean;
+  /** Dua pihak: karyawan subjek mengonfirmasi sebelum selesai. */
+  twoParty?: boolean;
+  /** Alasan penolakan penyetuju terakhir (§7.24 MT4). */
+  rejectReason?: string;
+  /** Antrean HR Manager (§7.22) — PENDING sampai ditutup. */
+  hrQueue?: { reason: HrQueueReason; at: string; status: 'PENDING' | 'CLOSED'; note?: string };
 }
 
 export interface Transition {
@@ -65,6 +87,16 @@ export interface Transition {
   status: TransitionStatus;
   targetJobGradeId?: string;
   tasks: TransitionTask[];
+  /** Subjek (karyawan) dan pengaju — dipakai ESS My Transition dan konflik pembagian. */
+  employeeId?: string;
+  requesterId?: string;
+  branch?: string;
+  /** Catatan fasilitas bebas; kosong ⇒ tugas fasilitas tidak lahir (TSU-D9). */
+  facilityProvidedNote?: string;
+  facilityWithdrawnNote?: string;
+  /** Setup dan versi yang dibekukan saat transisi lahir (§7.23.4). */
+  setupId?: string;
+  setupVersion?: number;
 }
 
 export interface TransitionDraft {
@@ -75,6 +107,8 @@ export interface TransitionDraft {
   targetJobGradeId: string;
   reason: string;
   effectiveDate: string;
+  facilityProvidedNote?: string;
+  facilityWithdrawnNote?: string;
 }
 
 export const TYPE_LABEL: Record<TransitionType, string> = {
@@ -95,6 +129,7 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
   RELEASED: 'Released',
   IN_PROGRESS: 'In progress',
   AWAITING_CONFIRM: 'Awaiting confirm',
+  AWAITING_APPROVAL: 'Awaiting approval',
   COMPLETED: 'Completed',
   WAIVED: 'Waived',
   SKIPPED: 'Skipped',
@@ -143,7 +178,30 @@ export const REASON_OPTIONS: SelectOption[] = [
   { value: 'TERMINATION', label: 'Termination (with cause)' },
   { value: 'LAYOFF', label: 'Layoff' },
   { value: 'RETIREMENT', label: 'Retirement' },
+  { value: 'DECEASED', label: 'Deceased' },
 ];
+
+export const HR_QUEUE_REASON_LABEL: Record<HrQueueReason, string> = {
+  ACCESS_CANCELLED: 'Access cancelled before start',
+  STRUCTURAL_TRANSITION: 'Closed by a newer transition',
+  WORKFLOW_CANCELLED: 'Workflow rejected or cancelled',
+  NO_SETUP: 'No materialization setup',
+  NO_ELIGIBLE_ASSIGNEE: 'No eligible assignee',
+  CONFLICT_EXHAUSTED: 'Every assignee has a conflict',
+  PAST_EFFECTIVE_DATE: 'Past the effective date',
+};
+
+/** Tugas terbuka menurut sisi petugas (§7.24 MT1). */
+export const HANDLER_OPEN: TaskStatus[] = ['RELEASED', 'IN_PROGRESS', 'AWAITING_CONFIRM', 'AWAITING_APPROVAL'];
+
+/** Empat tombol ajukan (§7.25): Mutation = TRANSFER lateral. */
+export type RequestKind = 'OFFBOARDING' | 'MUTATION' | 'PROMOTION' | 'DEMOTION';
+export const REQUEST_KIND_LABEL: Record<RequestKind, string> = {
+  OFFBOARDING: 'Offboarding',
+  MUTATION: 'Mutation',
+  PROMOTION: 'Promotion',
+  DEMOTION: 'Demotion',
+};
 
 /** Sub-tipe yang mewajibkan target job grade (bukan sekadar posisi struktural). */
 export const GRADE_REQUIRED_SUBTYPES = ['PROMOTION', 'DEMOTION'];

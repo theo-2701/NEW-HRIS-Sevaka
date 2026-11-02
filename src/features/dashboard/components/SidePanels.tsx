@@ -51,7 +51,7 @@ export function SecurityCard({ lockedCount, onUnlock }: { lockedCount: number; o
 
 const QUICK_LINKS = [
   { label: 'Employee Profile', to: '/me/profile', icon: User },
-  { label: 'Employee Transfer', to: '/employees/transfer', icon: Repeat },
+  { label: 'Transition', to: '/employees/transition', icon: Repeat },
   { label: 'Company Settings', to: '/company/branch', icon: Building },
   { label: 'Integrations', to: '/settings/configuration/organization', icon: Puzzle },
 ];

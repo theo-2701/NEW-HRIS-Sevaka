@@ -57,6 +57,11 @@ import { PtkpAdjustmentPage } from '@/features/ptkp/pages/PtkpAdjustmentPage';
 import { MassResignationPage } from '@/features/mass-resignation/pages/MassResignationPage';
 import { TransitionsPage } from '@/features/transitions/pages/TransitionsPage';
 import { TransitionDetailPage } from '@/features/transitions/pages/TransitionDetailPage';
+import { MyTransitionTasksPage } from '@/features/transitions/pages/MyTransitionTasksPage';
+import { MaterializationPage } from '@/features/transitions/pages/MaterializationPage';
+import { MaterializationRoleMappingPage } from '@/features/transitions/pages/MaterializationRoleMappingPage';
+import { EssMyTransitionPage } from '@/features/transitions/pages/EssMyTransitionPage';
+import { LegacyTransitionDetail } from '@/features/transitions/pages/LegacyTransitionDetail';
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
 import { AddEmployeePage } from '@/features/new-joiner/pages/AddEmployeePage';
 import { EmployeeDirectoryPage } from '@/features/employees/pages/EmployeeDirectoryPage';
@@ -89,8 +94,15 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/organization', element: <EmployeeDirectoryPage /> },
   { path: 'employees/new-joiner', element: <NewJoinerPage /> },
   { path: 'employees/new-joiner/add', element: <AddEmployeePage /> },
-  { path: 'employees/transfer', element: <TransitionsPage /> },
-  { path: 'employees/transfer/dashboard', element: <TransitionDetailPage /> },
+  { path: 'employees/transition', element: <TransitionsPage /> },
+  { path: 'employees/transition/detail', element: <TransitionDetailPage /> },
+  { path: 'employees/transition/my-tasks', element: <MyTransitionTasksPage /> },
+  { path: 'employees/transition/materialization', element: <MaterializationPage /> },
+  { path: 'employees/transition/materialization-roles', element: <MaterializationRoleMappingPage /> },
+  { path: 'me/transition', element: <EssMyTransitionPage /> },
+  /* Alamat lama Employee Transfer dialihkan (Clean-Replacement §7.25). */
+  { path: 'employees/transfer', element: <Navigate to="/employees/transition" replace /> },
+  { path: 'employees/transfer/dashboard', element: <LegacyTransitionDetail /> },
   { path: 'employees/mass-resignation', element: <MassResignationPage /> },
   { path: 'employees/ptkp-adjustment', element: <PtkpAdjustmentPage /> },
   { path: 'employees/manpower/requisition', element: <ManpowerRequisitionPage /> },
@@ -161,8 +173,12 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/organization',
   '/employees/new-joiner',
   '/employees/new-joiner/add',
-  '/employees/transfer',
-  '/employees/transfer/dashboard',
+  '/employees/transition',
+  '/employees/transition/detail',
+  '/employees/transition/my-tasks',
+  '/employees/transition/materialization',
+  '/employees/transition/materialization-roles',
+  '/me/transition',
   '/employees/mass-resignation',
   '/employees/ptkp-adjustment',
   '/employees/manpower/requisition',

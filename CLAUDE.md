@@ -38,7 +38,7 @@ Skill: `scaffold feature <nama>`, `caveman mode`.
   `docs/PAGE-INVENTORY.md`.
 - Sudah dikonversi: **Auth** (10 layar), **Dashboard**, dan seluruh **Batch 1 —
   Employee Management** (Directory, Profile ESS, New Joiner + Add Employee,
-  Employee Transfer, Mass Resignation, PTKP Adjustment, Manpower & Requisition,
+  Transition (dulu Employee Transfer), Mass Resignation, PTKP Adjustment, Manpower & Requisition,
   Reprimand + Type Setting). Auth dan Dashboard tetap jadi pola acuan struktur;
   modul Batch 1 adalah contoh terbaru untuk pola tabel, modal, dan maker→checker.
   **Batch 2 — Time Management selesai**: Time Off (Request, Balance, Settings),

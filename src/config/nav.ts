@@ -91,6 +91,13 @@ export const NAV: NavSection[] = [
         ],
       },
       { label: 'Finance', icon: 'hand-coins', path: '/me/finance', source: 'finance-ess.html', status: 'done' },
+      {
+        label: 'My Transition',
+        icon: 'user-check',
+        path: '/me/transition',
+        status: 'done',
+        note: 'TSD-001-EMPLOYEE 0.212 §7.26 ES1/ES2',
+      },
       { label: 'Files', icon: 'folder', path: '/me/files', source: 'document-ess-files.html', status: 'todo' },
       { label: 'Assets', icon: 'box' },
       {
@@ -116,9 +123,6 @@ export const NAV: NavSection[] = [
               { label: 'Organization', path: '/employees/organization', source: 'employee-directory.html', status: 'done' },
             ],
           },
-          // Detail transisi (`/employees/transfer/dashboard`) sengaja TIDAK ada di
-          // menu: layar itu selalu dibuka lewat "View Detail" dari daftar transfer.
-          { label: 'Employee Transfer', path: '/employees/transfer', source: 'transition.html', status: 'done' },
           { label: 'Mass Resignation', path: '/employees/mass-resignation', source: 'mass-resignation.html', status: 'done' },
           { label: 'Import/Export Prorate' },
           { label: 'PTKP Status Adjustment', path: '/employees/ptkp-adjustment', source: 'ptkp-adjustment.html', status: 'done' },
@@ -194,10 +198,24 @@ export const NAV: NavSection[] = [
         source: 'new-joiner.html',
         status: 'done',
       },
+      // Grup Transition menggantikan Employee Transfer + dua dashboard Onboarding/Offboarding
+      // (Clean-Replacement, TSD-001-EMPLOYEE 0.212 §7.25 `TSU-D33`). Detail transisi dibuka
+      // lewat "View Detail", bukan baris menu.
       {
-        label: 'Onboarding',
+        label: 'Transition',
         icon: 'user-check',
-        children: [{ label: 'Onboarding Dashboard' }, { label: 'Offboarding Dashboard' }],
+        note: 'TSD-001-EMPLOYEE 0.212 §7.23–§7.25',
+        children: [
+          { label: 'Transition', path: '/employees/transition', source: 'transition.html', status: 'done', note: '§7.25 TL1/TL2' },
+          { label: 'My Transition Tasks', path: '/employees/transition/my-tasks', status: 'done', note: '§7.24 MT1–MT4, §7.22' },
+          { label: 'Materialization', path: '/employees/transition/materialization', status: 'done', note: '§7.23 MS1–MS7' },
+          {
+            label: 'Materialization Role Mapping',
+            path: '/employees/transition/materialization-roles',
+            status: 'done',
+            note: '§7.23.10 MR1/MR2',
+          },
+        ],
       },
       {
         label: 'Reprimand',

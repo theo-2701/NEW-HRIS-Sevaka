@@ -342,8 +342,21 @@ kandidat Bulk Import) dan **Bulk Import** (`/employees/bulk-import`, §7.16) —
 saling tersambung: Bulk Import yang disetujui melahirkan baris ATS; Create Employee memasukkan
 karyawan ke Directory dan antrean Email and Phone Verification.
 
-**Sisa Employee dari dokumen yang belum dibangun** (besar, butuh giliran sendiri): Transition terpadu + Materialization + Materialization Role
-Mapping + My Transition Tasks + ESS My Transition (§7.23–§7.26, menggantikan Employee Transfer dan
-dua dashboard Onboarding/Offboarding), serta Planning: Ubah Baris rencana Draft dan pemilih unit
-berbasis periode.
+**Paket Transition (§7.22–§7.26) — dibangun 2 November 2026, atas izin pengguna mengganti layar lama.**
+Grup menu **Transition** menggantikan Employee Transfer + dua dashboard Onboarding/Offboarding
+(Clean-Replacement; `/employees/transfer` dan `/employees/transfer/dashboard` dialihkan):
+
+| Layar | Kontrak | Inti |
+| :--- | :--- | :--- |
+| Transition | §7.25 TL1/TL2 | daftar terpadu + filter jenis/status; ajukan Offboarding/Mutation/Promotion/Demotion; catatan fasilitas (kosong ⇒ tugas fasilitas tidak lahir); alasan `DECEASED`; transfer menunggu persetujuan, paket tugas lahir saat disetujui |
+| My Transition Tasks | §7.24 MT1–MT4, §7.22 OQ1/OQ2 | My Tasks (Mark done), My Approvals (Approve / Send back beralasan), Escalations HR Manager (tutup onboarding) |
+| Materialization | §7.23 MS1–MS5 | setup per jenis/subtipe/cabang, status Understaffed, edit tugas + petugas/penyetuju berurutan (min 2, tanpa nama ganda, harus layak), simpan = versi baru, riwayat |
+| Materialization Role Mapping | §7.23.10 MR1/MR2 | role Selected/Not selected; menentukan siapa yang layak dipilih |
+| ESS My Transition | §7.26 ES1/ES2 | transisi milik sendiri + konfirmasi tugas dua pihak |
+
+Mesin yang dibangun di mock: pembekuan setup + versi ke transisi, pembagian ke petugas layak pertama
+yang bukan subjek/pengaju (penyetuju ≠ petugas), gerbang OUT-dulu, Complete → Confirm → Approve/Reject,
+antrean HR `NO_SETUP`/`NO_ELIGIBLE_ASSIGNEE`. **Belum:** sapuan harian 01:00 (pindah otomatis,
+pengingat, `PAST_EFFECTIVE_DATE`), konsumsi kabar cuti/aset, kabar email §7.23.6, pemilih setup per
+subtipe di form simpan baru (setup baru belum bisa dibuat dari layar — hanya diubah).
 

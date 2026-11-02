@@ -43,7 +43,7 @@ Prototype: 88 file HTML · Route bernav: 88
 | `/employees/ptkp-adjustment` | PTKP Status Adjustment | `ptkp-adjustment.html` | done |
 | `/employees/reprimand` | Reprimand List | `reprimand.html` | done |
 | `/employees/reprimand/type-setting` | Type Setting | `reprimand-type-setting.html` | done |
-| `/employees/transfer` | Employee Transfer | `transition.html` | done |
+| `/employees/transition` | Transition (menggantikan Employee Transfer; alamat lama dialihkan) | `transition.html` | done |
 
 ## Time Management
 
@@ -188,7 +188,7 @@ layar di sini tanpa keputusan kontrak.
 | `recruitment-import-log-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
 | `recruitment-import-logs.html` | Belum punya baris menu di kontrak. |
 | `recruitment-job-listing-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
-| `transition-dashboard.html` | Detail transisi — dibuka lewat "View Detail" di daftar Employee Transfer. |
+| `transition-dashboard.html` | Detail transisi `/employees/transition/detail?tr=` — dibuka lewat "View Detail" di daftar Transition. |
 
 ## Menu baru dari dokumen kontrak (tanpa prototype)
 
@@ -209,3 +209,8 @@ dokumen tiap baris ada di `note` leaf `src/config/nav.ts`.
 | — (publik, tanpa menu) Verifikasi kontak karyawan | `/contact-verification/:companyCode#t=<token>` | done |
 | Employee Directory › Bulk Import | `/employees/bulk-import` | done |
 | Manpower Planning › ATS Bridge | `/employees/manpower/ats-bridge` | done |
+| Transition › My Transition Tasks | `/employees/transition/my-tasks` | done |
+| Transition › Materialization | `/employees/transition/materialization` | done |
+| Transition › Materialization Role Mapping | `/employees/transition/materialization-roles` | done |
+| Employee Profile › My Transition (ESS) | `/me/transition` | done |
+
