@@ -17,6 +17,8 @@ import { WorkStatusPage } from '@/features/employee-masters/pages/WorkStatusPage
 import { TempAssignmentPage } from '@/features/temp-assignment/pages/TempAssignmentPage';
 import { ManpowerPlanningPage } from '@/features/manpower/pages/ManpowerPlanningPage';
 import { PlanningHistoryPage } from '@/features/manpower/pages/PlanningHistoryPage';
+import { ContactVerificationPage } from '@/features/contact-verification/pages/ContactVerificationPage';
+import { ContactVerificationConfirmPage } from '@/features/contact-verification/pages/ContactVerificationConfirmPage';
 import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { CalendarPage } from '@/features/calendar/pages/CalendarPage';
 import { SchedulerIndexPage } from '@/features/scheduler/pages/SchedulerIndexPage';
@@ -98,6 +100,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/attendance/settings', element: <AttendanceSettingsPage /> },
   { path: 'time/attendance/wfh-permission', element: <WfhPermissionPage /> },
   { path: 'employees/temporary-assignment', element: <TempAssignmentPage /> },
+  { path: 'employees/email-phone-verification', element: <ContactVerificationPage /> },
   { path: 'employees/manpower/overview', element: <ManpowerPlanningPage /> },
   { path: 'employees/manpower/planning-history', element: <PlanningHistoryPage /> },
   { path: 'employees/work-status', element: <WorkStatusPage /> },
@@ -166,6 +169,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/attendance/settings',
   '/time/attendance/wfh-permission',
   '/employees/temporary-assignment',
+  '/employees/email-phone-verification',
   '/employees/manpower/overview',
   '/employees/manpower/planning-history',
   '/employees/work-status',
@@ -248,6 +252,8 @@ export const routes: RouteObject[] = [
     ),
     children: [...IMPLEMENTED, ...PLACEHOLDERS],
   },
+  /* Verifikasi kontak karyawan — halaman publik tanpa login (TSD-EMPLOYEE §7.20). */
+  { path: '/contact-verification/:companyCode', element: <ContactVerificationConfirmPage /> },
   /* Verifikasi surat publik — tanpa login dan memang tanpa baris menu (DOC-80). */
   {
     path: '/verify',
