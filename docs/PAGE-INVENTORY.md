@@ -204,3 +204,6 @@ dokumen tiap baris ada di `note` leaf `src/config/nav.ts`.
 | Employee Directory › Email Domain | `/employees/email-domain` | done |
 | Manpower Planning › Planning (menu `overview`) | `/employees/manpower/overview` | done |
 | Manpower Planning › Planning History | `/employees/manpower/planning-history` | done |
+| Employee Directory › Bulk Account Activation | `/employees/bulk-account-activation` | done |
+| Employee Directory › Email and Phone Verification | `/employees/email-phone-verification` | done |
+| — (publik, tanpa menu) Verifikasi kontak karyawan | `/contact-verification/:companyCode#t=<token>` | done |

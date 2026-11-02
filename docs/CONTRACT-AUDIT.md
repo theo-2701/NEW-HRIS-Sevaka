@@ -333,9 +333,12 @@ untuk aksi yang tak bisa dibatalkan, umpan balik sukses, URL sendiri per layar, 
 | Manpower Planning › Planning History | TSD-EMPLOYEE 0.212 §3; catatan 18 Okt T1 | `/employees/manpower/planning-history` |
 | Manpower Planning › Requisition — kini hanya Permintaan Posisi | idem | `/employees/manpower/requisition` |
 
+Susulan berikutnya: **Bulk Account Activation** (`/employees/bulk-account-activation`, TSD-AUTH
+0.167 §14.2.1), **Email and Phone Verification** + **Cancel access** (`/employees/email-phone-verification`,
+TSD-EMPLOYEE §7.20/§7.21) dan halaman publik `/contact-verification/:companyCode` — sudah dibangun.
+
 **Sisa Employee dari dokumen yang belum dibangun** (besar, butuh giliran sendiri): ATS Bridge,
-Bulk Import + Bulk Account Activation, Email and Phone Verification (§7.20), batalkan akses
-karyawan yang belum bekerja (§7.21), Transition terpadu + Materialization + Materialization Role
+Bulk Import (unggah CSV email-saja), Transition terpadu + Materialization + Materialization Role
 Mapping + My Transition Tasks + ESS My Transition (§7.23–§7.26, menggantikan Employee Transfer dan
 dua dashboard Onboarding/Offboarding), serta Planning: Ubah Baris rencana Draft dan pemilih unit
 berbasis periode.
