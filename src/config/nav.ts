@@ -123,6 +123,12 @@ export const NAV: NavSection[] = [
           { label: 'Import/Export Prorate' },
           { label: 'PTKP Status Adjustment', path: '/employees/ptkp-adjustment', source: 'ptkp-adjustment.html', status: 'done' },
           {
+            label: 'Temporary Assignment',
+            path: '/employees/temporary-assignment',
+            status: 'done',
+            note: 'TSD-001-EMPLOYEE 0.212 §7.18; CATATAN-PERUBAHAN 21 Okt 2026 (EMP-2610181639 T46)',
+          },
+          {
             label: 'Work Status',
             path: '/employees/work-status',
             status: 'done',
