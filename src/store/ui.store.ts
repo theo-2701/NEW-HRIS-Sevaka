@@ -1,3 +1,4 @@
+import { referenceFor } from '@/lib/errorReference';
 import { create } from 'zustand';
 
 export type ToastTone = 'ok' | 'info' | 'warn' | 'danger';
@@ -16,6 +17,11 @@ export interface Notice {
   /** Status HTTP & kode galat dari ApiError terakhir — hanya untuk `danger`. */
   status?: number;
   code?: string;
+  /**
+   * `trace_id` (CATATAN 18 Okt LNT-2610141244 T16): dari body galat atau header `x-b3-traceid` permintaan.
+   * Ditempel Super Admin di menu System Log › Trace ID. Hanya ditampilkan/disalin, tak pernah dipakai bercabang.
+   */
+  traceId?: string;
   /** Alamat halaman saat galat muncul — dipakai menebak kode service. */
   path: string;
   at: string;
@@ -56,13 +62,15 @@ export const useUiStore = create<UiState>((set, get) => ({
     if (tone === 'ok' || tone === 'danger') {
       const last = get().lastError;
       const fresh = tone === 'danger' && last && Date.now() - last.at < 2000 ? last : null;
+      const reference = tone === 'danger' ? referenceFor(message) : undefined;
       set({
         notice: {
           id: crypto.randomUUID(),
           tone,
           message,
           status: fresh?.status,
-          code: fresh?.code,
+          code: fresh?.code ?? reference?.errorCode,
+          traceId: reference?.traceId,
           path: window.location.pathname,
           at: new Date().toISOString(),
         },

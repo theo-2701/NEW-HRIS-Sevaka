@@ -1,3 +1,5 @@
+import { fileNameFrom, payslipFileName, textPdf } from '@/lib/payslipFile';
+import type { DownloadedFile } from '@/lib/payslipFile';
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { EMPLOYEES, employeeName } from '@/features/salary-processing/mock-data';
@@ -92,6 +94,35 @@ function writeAccessLog(actor: Actor, periodId: string, targetEmployeeId: string
   return row;
 }
 
+/** PDF dari payroll-service: `arraybuffer` + nama dari `Content-Disposition` (galat tetap JSON lewat interceptor). */
+async function downloadPdf(path: string, fallback: string): Promise<DownloadedFile> {
+  const response = await api.get<ArrayBuffer>(path, { responseType: 'arraybuffer' });
+  return {
+    fileName: fileNameFrom(response.headers['content-disposition'] as string | undefined, fallback),
+    blob: new Blob([response.data], { type: 'application/pdf' }),
+  };
+}
+
+/** Mode dummy: slip dirakit jadi PDF teks sederhana. */
+function payslipPdf(slip: Payslip): DownloadedFile {
+  const money = (value: number) => `Rp ${value.toLocaleString('en-US')}`;
+  const group = (title: string, rows: Payslip['groupPenghasilan']) => [
+    title,
+    ...rows.map((row) => `  ${row.label}: ${money(row.amount)}`),
+  ];
+  const lines = [
+    `Payslip - ${slip.periodLabel}`,
+    `${slip.employeeName} (${slip.employeeNik}) - ${slip.branchName}`,
+    '',
+    ...group('Earnings', slip.groupPenghasilan),
+    ...group('Deductions', slip.groupPotongan),
+    '',
+    `Net pay: ${money(slip.netAmount)}`,
+    slip.preparationStatement,
+  ];
+  return { fileName: payslipFileName(slip.periodLabel), blob: textPdf(lines) };
+}
+
 export const essPayrollService = {
   /** `#39` — daftar periode milik pemanggil; hanya periode yang sudah diserahkan yang muncul. */
   async myPeriods(actor: Actor): Promise<PayslipPeriodRow[]> {
@@ -133,17 +164,16 @@ export const essPayrollService = {
    * `#41` — slip sendiri untuk diunduh. Jalur unduhan bersifat ketat: medan yang gagal dirakit
    * menolak permintaan, berbeda dari layar yang tetap menampilkan apa adanya. Nol jejak akses.
    */
-  async myPayslipDownload(actor: Actor, periodId: string): Promise<Payslip> {
+  async myPayslipDownload(actor: Actor, periodId: string): Promise<DownloadedFile> {
     if (MOCK) {
       await delay(300);
       const slip = await this.myPayslip(actor, periodId);
       if (assemblyFails) {
         throw new Error('422 PAY_PAYSLIP_ASSEMBLY_INCOMPLETE — ada medan slip yang gagal dirakit.');
       }
-      return slip;
+      return payslipPdf(slip);
     }
-    const { data } = await api.get<Payslip>(`/payroll/ess/payslip/${periodId}/download`);
-    return data;
+    return downloadPdf(`/payroll/ess/payslip/${periodId}/download`, 'payslip.pdf');
   },
 
   /** `#42` — grid ringkas hasil hitung; satu-satunya tempat `employee_id` boleh tampil. */
@@ -211,10 +241,9 @@ export const essPayrollService = {
       }
       const slip = buildPayslip(seed, periodName(period));
       writeAccessLog(actor, periodId, employeeId, 'UNDUHAN');
-      return slip;
+      return payslipPdf(slip);
     }
-    const { data } = await api.get<Payslip>(`/payroll/period/${periodId}/employee/${employeeId}/payslip/download`);
-    return data;
+    return downloadPdf(`/payroll/period/${periodId}/employee/${employeeId}/payslip/download`, 'payslip.pdf');
   },
 
   /**

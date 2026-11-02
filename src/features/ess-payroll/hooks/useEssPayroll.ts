@@ -1,3 +1,4 @@
+import { saveFile } from '@/lib/payslipFile';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { essPayrollService } from '@/features/ess-payroll/services/ess-payroll.service';
 import { toast } from '@/store/ui.store';
@@ -62,13 +63,14 @@ export const useOpenEmployeePayslip = () =>
 
 export const useDownloadMyPayslip = () =>
   useEssMutation(
-    ({ actor, periodId }: { actor: Actor; periodId: string }) => essPayrollService.myPayslipDownload(actor, periodId),
-    (slip) => `Slip ${slip.periodLabel} siap diunduh.`,
+    ({ actor, periodId }: { actor: Actor; periodId: string }) =>
+      essPayrollService.myPayslipDownload(actor, periodId).then((file) => (saveFile(file), file)),
+    (file) => `${file.fileName} downloaded.`,
   );
 
 export const useDownloadEmployeePayslip = () =>
   useEssMutation(
     ({ actor, periodId, employeeId }: { actor: Actor; periodId: string; employeeId: string }) =>
-      essPayrollService.employeePayslipDownload(actor, periodId, employeeId),
-    (slip) => `Slip ${slip.employeeName} siap diunduh — jejak akses unduhan tertulis.`,
+      essPayrollService.employeePayslipDownload(actor, periodId, employeeId).then((file) => (saveFile(file), file)),
+    (file) => `${file.fileName} downloaded — the download is recorded in the access log.`,
   );

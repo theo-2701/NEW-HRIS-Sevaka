@@ -5,6 +5,7 @@ import { SUPPORT_CONTACT, serviceForPath } from '@/config/serviceCodes';
 import { formatDateTime } from '@/lib/format';
 import { useUiStore } from '@/store/ui.store';
 import { cn } from '@/lib/utils';
+import { referenceText } from '@/lib/errorReference';
 
 /**
  * Modal hasil aksi — pengganti toast berhasil/gagal (Notulen 12 Okt 2026, keputusan #7).
@@ -48,6 +49,12 @@ export function ResultDialog() {
                 {notice.status ? `-${notice.status}` : ''}
                 {notice.code ? ` · ${notice.code}` : ''}
               </dd>
+              {notice.traceId && (
+                <>
+                  <dt className="font-medium text-fg-3">Trace ID</dt>
+                  <dd className="m-0 break-all font-mono text-fg-1">{notice.traceId}</dd>
+                </>
+              )}
               <dt className="font-medium text-fg-3">Service</dt>
               <dd className="m-0 font-semibold text-fg-1">{service.name}</dd>
               <dt className="font-medium text-fg-3">Time</dt>
@@ -59,9 +66,24 @@ export function ResultDialog() {
             </dl>
           )}
 
-          <Button className="w-full" onClick={dismiss} autoFocus>
-            OK
-          </Button>
+          <div className="flex w-full gap-2.5">
+            {notice && !ok && (notice.code || notice.traceId) && (
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() =>
+                  void navigator.clipboard?.writeText(
+                    referenceText({ errorCode: notice.code, traceId: notice.traceId }),
+                  )
+                }
+              >
+                Copy
+              </Button>
+            )}
+            <Button className="flex-1" onClick={dismiss} autoFocus>
+              OK
+            </Button>
+          </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
