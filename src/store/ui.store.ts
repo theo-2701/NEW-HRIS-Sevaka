@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { referenceFor, type ErrorReference } from '@/lib/errorReference';
 
 export type ToastTone = 'ok' | 'info' | 'warn' | 'danger';
 
@@ -6,6 +7,8 @@ export interface Toast {
   id: string;
   tone: ToastTone;
   message: string;
+  /** Galat berkode: Error code + Trace ID yang bisa disalin. */
+  reference?: ErrorReference;
 }
 
 interface UiState {
@@ -26,8 +29,10 @@ export const useUiStore = create<UiState>((set, get) => ({
   toasts: [],
   toast: (message, tone = 'ok') => {
     const id = crypto.randomUUID();
-    set({ toasts: [...get().toasts, { id, tone, message }] });
-    window.setTimeout(() => get().dismissToast(id), 3200);
+    const reference = tone === 'danger' ? referenceFor(message) : undefined;
+    set({ toasts: [...get().toasts, { id, tone, message, reference }] });
+    // Galat berrujukan bertahan lebih lama supaya sempat disalin.
+    window.setTimeout(() => get().dismissToast(id), reference ? 9000 : 3200);
   },
   dismissToast: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
 }));

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { takeReturnPath } from '@/lib/returnPath';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/features/auth/services/auth.service';
@@ -66,7 +67,7 @@ function useCompleteSession() {
   return (session: SessionResponse) => {
     setSession(session);
     reset();
-    navigate('/', { replace: true });
+    navigate(takeReturnPath() ?? '/', { replace: true });
   };
 }
 

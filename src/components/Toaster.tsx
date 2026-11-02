@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, Info, X } from 'lucide-react';
 import { useUiStore, type ToastTone } from '@/store/ui.store';
+import { referenceText } from '@/lib/errorReference';
 import { cn } from '@/lib/utils';
 
 const TONE_ICON: Record<ToastTone, typeof Check> = {
@@ -32,14 +33,32 @@ export function Toaster() {
         return (
           <div
             key={t.id}
-            role="status"
+            role={t.tone === 'danger' ? 'alert' : 'status'}
             onClick={() => dismiss(t.id)}
-            className="pointer-events-auto flex max-w-[380px] items-center gap-3 rounded-[10px] border border-border-1 bg-white px-4 py-3 font-body text-[13px] font-semibold leading-snug text-fg-1 shadow-overlay"
+            className="pointer-events-auto flex max-w-[380px] items-start gap-3 rounded-[10px] border border-border-1 bg-white px-4 py-3 font-body text-[13px] font-semibold leading-snug text-fg-1 shadow-overlay"
           >
             <span className={cn('inline-flex size-[26px] shrink-0 items-center justify-center rounded-full', TONE_CLASS[t.tone])}>
               <Icon className="size-[15px]" />
             </span>
-            {t.message}
+            <span className="flex min-w-0 flex-col gap-1.5">
+              {t.message}
+              {t.reference && (
+                <span className="flex flex-col gap-1 rounded-md bg-vapor px-2.5 py-2 font-mono text-[11px] font-medium text-fg-2">
+                  {t.reference.errorCode && <span>Error code: {t.reference.errorCode}</span>}
+                  {t.reference.traceId && <span className="break-all">Trace ID: {t.reference.traceId}</span>}
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void navigator.clipboard?.writeText(referenceText(t.reference!));
+                    }}
+                    className="self-start font-body text-xs font-bold text-secondary-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500"
+                  >
+                    Copy
+                  </button>
+                </span>
+              )}
+            </span>
           </div>
         );
       })}

@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { useAuthStore } from '@/store/auth.store';
 import { MOCK } from '@/services/mock';
+import { newTraceId, rememberErrorReference } from '@/lib/errorReference';
 
 /**
  * API service layer — SATU axios instance untuk seluruh aplikasi.
@@ -22,6 +23,8 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   // Multi-tenant: satu akun bisa memegang beberapa perusahaan.
   if (companyId) config.headers['X-Company-Id'] = companyId;
+  // Pelacakan lintas service (gerbang mengizinkan header ini); VITE_SEND_TRACE_ID=false mematikannya.
+  if (import.meta.env.VITE_SEND_TRACE_ID !== 'false') config.headers['x-b3-traceid'] = newTraceId();
   return config;
 });
 
@@ -39,6 +42,8 @@ export interface ApiErrorBody {
   message?: string;
   errors?: Record<string, string[]>;
   code?: string;
+  error_code?: string;
+  trace_id?: string;
 }
 
 export class ApiError extends Error {
@@ -61,7 +66,10 @@ function toApiError(error: AxiosError<ApiErrorBody>): ApiError {
   const message =
     body?.message ??
     (status === 0 ? 'Tidak dapat terhubung ke server.' : 'Terjadi kesalahan pada server.');
-  return new ApiError(message, status, body?.code, body?.errors);
+  const errorCode = body?.error_code ?? body?.code;
+  const traceId = body?.trace_id ?? (error.config?.headers?.['x-b3-traceid'] as string | undefined);
+  if (errorCode || traceId) rememberErrorReference({ errorCode, traceId });
+  return new ApiError(message, status, errorCode, body?.errors);
 }
 
 /** Bentuk envelope standar backend SEVAKA. */

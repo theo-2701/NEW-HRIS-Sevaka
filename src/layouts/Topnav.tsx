@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { clearReturnPath } from '@/lib/returnPath';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Award,
@@ -181,6 +182,7 @@ export function Topnav() {
                 // Force logout SELF_LOGOUT mencabut sesi di server; store dibersihkan apa pun hasilnya.
                 const employeeId = useAuthStore.getState().user?.id;
                 if (employeeId) void authService.logout(employeeId).catch(() => undefined);
+                clearReturnPath();
                 clear();
                 navigate('/auth/login');
               }}
