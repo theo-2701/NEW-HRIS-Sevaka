@@ -1021,3 +1021,39 @@ UIC-EMPLOYEE 0.76, UIC-PERFORMANCE 0.26, UIC-COMPANY 0.46; `CATATAN-PERUBAHAN.md
 - Performance `TIMED_OUT` (UIC 0.24): perilaku server; riwayat putaran sudah menampilkan alasan apa adanya.
 - TSD yang ikut naik versi (EMPLOYEE 0.200, TIME 0.103, dst.) tidak ditinjau baris per baris; yang dirujuk FSD/UIC di atas sudah diikuti.
 - Copy berbahasa Indonesia masih tersisa di sebagian layar Finance (Disbursement, Loan, Benefit), Company (Group Structure, Cost Center, SBU, Vendor), dan Performance.
+
+## 37. doc-update 2610311228 (2 November 2026) — selisih terhadap 2610260941
+
+Sumber: paket Drive `doc-update/2610311228` (baca-saja) — `CATATAN-PERUBAHAN.md` FE s.d. 30 Okt,
+FSD-001-TIME 0.21, UIC-001-TIME 0.28, TSD-001-EMPLOYEE 0.212, TSD-001-AUTH 0.167. Branch
+`ui/doc-update-2610311228` dari `ui/candidate-portal-v2`; hanya selisih yang belum ada yang dipindahkan.
+
+| Modul | Kontrak | Realisasi |
+|---|---|---|
+| Time › Punch | UIC 0.27 §6.1.1/§6.1.4, FSD 0.20 §5.2 | kebijakan tap `selfie_required` · `radius_validation` · `wfh_requires_approval` (flag profil; `selfie_required_wfo/wfh/profile` dihapus); radius hanya WFO berflag; peringatan izin WFH di modal tap; `wfh_permission_status` di tanda terima |
+| Time › Attendance › WFH Permission (menu baru) | FSD 0.21 Peta Menu #12 §11A, UIC 0.27 §6.4 (#99–#101) | grid + filter status/rentang tanggal; detail; Approve/Reject hanya penerima (bukan pemilik); tap ditolak/habis waktu bertanda «WFH rejected» |
+| Time › Time Off | UIC 0.28 §3.1.1 #60, FSD 0.21 §2.2 | kotak centang surat dokter diganti unggah PDF ≤ 10 MB (jenis berlampiran saja), `doctor_note_document_id` |
+| Time › Scheduler | CATATAN 22 Okt T18 | «Set up date»: 1–3 shift per tanggal, jam khusus, Copy/Paste; Save menggantikan roster kerja tanggal itu |
+| Time › Approve cuti | UIC 0.24 §10.2a | panel dampak roster shift + pindahkan rekan; tak menahan persetujuan |
+| Time › Calendar | UIC 0.25 §2.2, CATATAN 22 Okt T20 | jam masuk/pulang harian pada Pola Hari Kerja |
+| Employee › Pola Kerja | TSD 0.204–0.207 §6.2/§7.4.4/§7.2.5; CATATAN 27 Okt FRT-2610271835 T1 | `work_arrangement` WFO/WFH saja; `radius_validation` + `is_selfie` di Process Candidate, ATS Create Employee, Edit Work Data, Detail; cost center/SBU opsional saat materialisasi; ATS wajib cabang |
+| Employee › Requisition | TSD 0.212 §7.3.2 (0.130, 0.202); CATATAN 18 Okt T2 | kaskade Unit → Supervisor (+ «No supervisor») + Requestor → checklist posisi kosong; `position_ids` + `requestor_employee_id`, tanpa title/headcount |
+| Employee › New Joiner | TSD 0.203 §7.4.15, 0.208 §7.4.11 | «Correct contact» calon APPROVED (HR Manager/SA, bentrok sebut nama medan); portal kandidat umur ≥ 18 |
+| Employee › Reprimand | TSD 0.186 §7.7.4/§7.7.6, 0.209; CATATAN 22 Okt T88 | Clean Months + standing turun bertahap; backdate sebelum kebijakan berlaku `EMP-VAL-741` |
+| Lintas modul › galat | CATATAN 18 Okt LNT-2610141244 T16 | dialog galat terpusat memuat Trace ID + Copy; header `x-b3-traceid` |
+| Payroll | CATATAN 16 Okt (PDF), 21 Okt PAY-2610210950 T1 | unduh slip = berkas PDF; tombol checker disembunyikan bagi pembuat (Lock, Decide, Verify) |
+
+**Sudah ada di branch dasar (tidak dipindahkan):** Restart Approval, pemilih «Ajukan atas nama», pendarat
+`/finance/open`, tab ESS Cash Advance, System Log, kembali ke alamat asal sesudah login, Detail 404/403/503,
+Grade Chart View, Branch HQ + kop surat, Edit Work Data, Transition terpadu, Materialization + Role Mapping,
+Bulk Activation, ATS Bridge, SoD Requisition/New Joiner. Sidebar Materialization (27 Okt T2) tidak relevan:
+leaf di repo ini dicocokkan persis.
+
+**GAP / tidak dikerjakan:**
+- Early Payoff Result (CATATAN 18 Okt FIN-2610181807 T2) — butuh `TSD-001-FINANCE` §8a/§8b (bentuk respons
+  `early-settlement`), tidak ada di paket 2610311228.
+- Urutan Grade/Class `PUT /job-grades/reorder` (CATATAN 23 Okt CMP T4) — model Grade di branch ini
+  (tangga tingkat + Class default) berbeda; perlu `TSD-001-COMPANY` terbaru untuk memastikan.
+- Matriks `work_arrangement_rule` di Attendance Settings masih memuat HYBRID/MOBILE; UIC 0.27 menyatakan
+  tersimpan tetapi tidak dibaca tap — dibiarkan.
+- TSD TIME 0.123, COMPANY 0.134, DOCUMENT 0.115, NOTIFICATION 0.70, WORKFLOW 0.58 belum ditinjau baris per baris.
