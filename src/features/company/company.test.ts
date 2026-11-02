@@ -401,3 +401,18 @@ describe('cost center, sbu, dan vendor', () => {
     ).rejects.toThrow(/409/);
   });
 });
+
+describe('Grade & Class — urutan ulang (CMP-2610231245 T4)', () => {
+  it('menukar urutan saudara sekandung, kode dihitung ulang, lintas induk ditolak', async () => {
+    const before = await companyService.jobGrades();
+    const roots = before.filter((row) => row.parentId === null).sort((a, b) => a.sortOrder - b.sortOrder);
+    const reversed = roots.map((row) => row.id).reverse();
+    await companyService.reorderJobGrades(null, reversed);
+    const after = await companyService.jobGrades();
+    const first = after.find((row) => row.id === reversed[0])!;
+    expect(first.sortOrder).toBe(1);
+    expect(first.gradeCode).toBe('1.A');
+    await expect(companyService.reorderJobGrades(null, [reversed[0]])).rejects.toThrow(/422/);
+    await companyService.reorderJobGrades(null, roots.map((row) => row.id));
+  });
+});

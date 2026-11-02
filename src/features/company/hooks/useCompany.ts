@@ -175,6 +175,13 @@ export const useSaveJobGrade = () =>
     (row) => `${row.name} (${row.gradeCode}) tersimpan.`,
   );
 
+export const useReorderJobGrades = () =>
+  useCompanyMutation(
+    ({ parentId, orderedIds }: { parentId: string | null; orderedIds: string[] }) =>
+      companyService.reorderJobGrades(parentId, orderedIds),
+    () => 'Urutan diperbarui; kode dihitung ulang.',
+  );
+
 export const useDeleteJobGrade = () =>
   useCompanyMutation((id: string) => companyService.deleteJobGrade(id), () => 'Baris Grade/Class dihapus.');
 

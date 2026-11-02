@@ -675,12 +675,15 @@ export function JobGradeFormModal({
   editing,
   grades,
   mode,
+  parentGradeId,
   onClose,
 }: {
   open: boolean;
   editing: JobGrade | null;
   grades: JobGrade[];
   mode: 'grade' | 'class';
+  /** Grade terpilih di tab Class — mengisi dan mengunci Parent Grade (CMP-2610241547 T8). */
+  parentGradeId?: string;
   onClose: () => void;
 }) {
   const save = useSaveJobGrade();
@@ -697,9 +700,11 @@ export function JobGradeFormModal({
             salaryRangeFrom: editing.salaryRangeFrom === null ? '' : String(editing.salaryRangeFrom),
             salaryRangeTo: editing.salaryRangeTo === null ? '' : String(editing.salaryRangeTo),
           }
-        : EMPTY_JOB_GRADE,
+        : { ...EMPTY_JOB_GRADE, parentId: parentGradeId ?? '' },
     );
-  }, [open, editing]);
+  }, [open, editing, parentGradeId]);
+  // Edit Class selalu terkunci; Add Class terkunci bila Grade tab sudah terpilih.
+  const parentLocked = Boolean(editing) || Boolean(parentGradeId);
 
   return (
     <Modal
@@ -741,6 +746,8 @@ export function JobGradeFormModal({
           <SelectRow
             label="Induk (Grade)"
             required
+            disabled={parentLocked}
+            hint={editing ? 'Induk Class tidak bisa dipindah.' : parentLocked ? 'Mengikuti Grade yang dipilih di tab Class.' : undefined}
             value={draft.parentId}
             onChange={(parentId) => setDraft({ ...draft, parentId })}
             options={grades

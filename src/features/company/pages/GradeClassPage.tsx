@@ -1,4 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Segmented } from '@/components/Segmented';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { GradeLadderChart } from '@/features/company/components/GradeLadderChart';
 import { PageShell } from '@/components/PageShell';
 import { TabMenu } from '@/components/TabMenu';
 import { Card, CardHead } from '@/components/Card';
@@ -9,11 +12,12 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AddButton, RowActions } from '@/components/RowActions';
 import { usePagedRows } from '@/hooks/usePagedRows';
 import { JobGradeFormModal } from '@/features/company/components/CompanyModals';
-import { useDeleteJobGrade, useJobGrades } from '@/features/company/hooks/useCompany';
+import { useDeleteJobGrade, useJobGrades, useReorderJobGrades } from '@/features/company/hooks/useCompany';
 import type { JobGrade } from '@/features/company/types';
 import { formatCurrency } from '@/lib/format';
 
 type Tab = 'grade' | 'class';
+type GradeView = 'chart' | 'table';
 
 /**
  * Settings › Company › Grade & Class — port `_prototype/company-grade-class.html`
@@ -28,6 +32,10 @@ type Tab = 'grade' | 'class';
 export function GradeClassPage() {
   const grades = useJobGrades();
   const remove = useDeleteJobGrade();
+  const reorder = useReorderJobGrades();
+  const [view, setView] = useState<GradeView>('chart');
+  /** Daftar Class wajib Grade (TSD-COMPANY 0.109 §7.3): tab Class selalu memuat satu Grade. */
+  const [classGrade, setClassGrade] = useState('');
 
   const [tab, setTab] = useState<Tab>('grade');
   const [search, setSearch] = useState('');
@@ -38,6 +46,25 @@ export function GradeClassPage() {
   const rows = useMemo(() => grades.data ?? [], [grades.data]);
   const gradeRows = useMemo(() => rows.filter((row) => row.parentId === null), [rows]);
   const classRows = useMemo(() => rows.filter((row) => row.parentId !== null), [rows]);
+
+  useEffect(() => {
+    if (!classGrade && gradeRows.length) setClassGrade(gradeRows[0].id);
+  }, [classGrade, gradeRows]);
+
+  /** Naik/turun satu langkah di antara saudara sekandung — alternatif tanpa seret (T4). */
+  const moveActions = (row: JobGrade) => {
+    const siblings = rows.filter((item) => item.parentId === row.parentId).sort((a, b) => a.sortOrder - b.sortOrder);
+    const index = siblings.findIndex((item) => item.id === row.id);
+    const move = (delta: number) => {
+      const ids = siblings.map((item) => item.id);
+      [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
+      reorder.mutate({ parentId: row.parentId, orderedIds: ids });
+    };
+    return [
+      ...(index > 0 ? [{ label: 'Naikkan urutan', onSelect: () => move(-1) }] : []),
+      ...(index < siblings.length - 1 ? [{ label: 'Turunkan urutan', onSelect: () => move(1) }] : []),
+    ];
+  };
   const gradeName = (id: string | null) => (id ? (rows.find((row) => row.id === id)?.name ?? '—') : '—');
 
   const filteredGrades = useMemo(() => {
@@ -47,14 +74,14 @@ export function GradeClassPage() {
   }, [gradeRows, search]);
   const filteredClasses = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return classRows;
-    return classRows.filter(
+    const inGrade = classRows.filter((row) => row.parentId === classGrade);
+    if (!query) return inGrade;
+    return inGrade.filter(
       (row) =>
         row.name.toLowerCase().includes(query) ||
-        row.gradeCode.toLowerCase().includes(query) ||
-        (rows.find((item) => item.id === row.parentId)?.name.toLowerCase() ?? '').includes(query),
+        row.gradeCode.toLowerCase().includes(query),
     );
-  }, [classRows, rows, search]);
+  }, [classRows, classGrade, search]);
   const pagedGrades = usePagedRows(filteredGrades);
   const pagedClasses = usePagedRows(filteredClasses);
 
@@ -90,6 +117,22 @@ export function GradeClassPage() {
                 search={{ value: search, onChange: setSearch, placeholder: 'Cari nama atau kode' }}
                 actions={<AddButton onClick={() => setForm(true)}>Add Grade</AddButton>}
               />
+              <Segmented<GradeView>
+                className="mb-4"
+                value={view}
+                onChange={setView}
+                options={[
+                  { value: 'chart', label: 'Chart View' },
+                  { value: 'table', label: 'Table View' },
+                ]}
+              />
+              {view === 'chart' ? (
+                <GradeLadderChart
+                  grades={gradeRows}
+                  classCount={(id) => classRows.filter((item) => item.parentId === id).length}
+                />
+              ) : (
+              <>
               <DataTable<JobGrade>
                 rows={pagedGrades.rows}
                 rowKey={(row) => row.id}
@@ -123,6 +166,7 @@ export function GradeClassPage() {
                           setForm(true);
                         },
                       },
+                      ...moveActions(row),
                       { label: 'Hapus', danger: true, onSelect: () => setDeleting(row) },
                     ]}
                   />
@@ -136,6 +180,8 @@ export function GradeClassPage() {
                 onPageChange={pagedGrades.setPage}
                 onPageSizeChange={pagedGrades.setPageSize}
               />
+              </>
+              )}
             </div>
           </Card>
         )}
@@ -145,8 +191,32 @@ export function GradeClassPage() {
             <CardHead title="Class" sub="Selalu berada di bawah sebuah Grade dan wajib membawa rentang gaji" />
             <div>
               <TableToolbar
-                search={{ value: search, onChange: setSearch, placeholder: 'Cari nama, kode, atau Grade' }}
-                actions={<AddButton onClick={() => setForm(true)}>Add Class</AddButton>}
+                filters={
+                  <Select
+                    value={classGrade}
+                    onValueChange={(value) => {
+                      setClassGrade(value);
+                      pagedClasses.resetPage();
+                    }}
+                  >
+                    <SelectTrigger className="w-[220px]" aria-label="Grade">
+                      <SelectValue placeholder="Pilih Grade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gradeRows.map((row) => (
+                        <SelectItem key={row.id} value={row.id}>
+                          {row.name} ({row.gradeCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                }
+                search={{ value: search, onChange: setSearch, placeholder: 'Cari nama atau kode' }}
+                actions={
+                  <AddButton disabled={!classGrade} onClick={() => setForm(true)}>
+                    Add Class
+                  </AddButton>
+                }
               />
               <DataTable<JobGrade>
                 rows={pagedClasses.rows}
@@ -186,6 +256,7 @@ export function GradeClassPage() {
                           setForm(true);
                         },
                       },
+                      ...moveActions(row),
                       { label: 'Hapus', danger: true, onSelect: () => setDeleting(row) },
                     ]}
                   />
@@ -204,7 +275,14 @@ export function GradeClassPage() {
         )}
       </div>
 
-      <JobGradeFormModal open={form} editing={editing} grades={rows} mode={tab} onClose={closeForm} />
+      <JobGradeFormModal
+        open={form}
+        editing={editing}
+        grades={rows}
+        mode={tab}
+        parentGradeId={tab === 'class' ? classGrade : undefined}
+        onClose={closeForm}
+      />
 
       <ConfirmDialog
         open={Boolean(deleting)}

@@ -680,6 +680,30 @@ export const companyService = {
     return data;
   },
 
+  /**
+   * `PUT /job-grades/reorder` (TSD-COMPANY 0.107 §7.3, CMP-2610231245 T4): urutan baru satu
+   * grup sibling. Seret lintas induk ditolak; kode dihitung ulang server.
+   */
+  async reorderJobGrades(parentId: string | null, orderedIds: string[]): Promise<{ parentId: string | null }> {
+    if (MOCK) {
+      await delay(200);
+      const siblings = jobGrades.filter((row) => row.parentId === parentId);
+      if (siblings.length !== orderedIds.length || orderedIds.some((id) => !siblings.some((row) => row.id === id))) {
+        throw new Error('422 — urutan hanya boleh di antara saudara sekandung (satu induk).');
+      }
+      orderedIds.forEach((id, index) => {
+        jobGrades.find((row) => row.id === id)!.sortOrder = index + 1;
+      });
+      recomputeGradeCodes(parentId);
+      return { parentId };
+    }
+    await api.put('/job-grades/reorder', {
+      parent_id: parentId,
+      items: orderedIds.map((id, index) => ({ id, sort_order: index + 1 })),
+    });
+    return { parentId };
+  },
+
   async deleteJobGrade(id: string): Promise<{ id: string }> {
     if (MOCK) {
       await delay(200);
