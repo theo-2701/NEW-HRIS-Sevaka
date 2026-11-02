@@ -38,6 +38,9 @@ export interface WorkCalendar {
   scopeLevel: ScopeLevel;
   scopeRef: string | null;
   workingDays: WorkingDays;
+  /** Jam harian pola `HH:mm` (UIC §2.2.1 0.25) — keduanya terisi atau keduanya null. */
+  workStartTime: string | null;
+  workEndTime: string | null;
   effectiveFrom: string;
   effectiveUntil: string | null;
   createdBy: string;
@@ -58,6 +61,8 @@ export interface WorkCalendarDraft {
   scopeLevel: ScopeLevel | '';
   scopeRef: string;
   workingDays: WorkingDays;
+  workStartTime: string;
+  workEndTime: string;
   effectiveFrom: string;
   effectiveUntil: string;
 }

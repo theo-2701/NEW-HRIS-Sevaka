@@ -194,8 +194,15 @@ export interface RequestDraft {
   startDate: string;
   endDate: string;
   reason: string;
-  hasDoctorNote: boolean;
+  /**
+   * Surat dokter (UIC-TIME 0.28 §3.1.1 `#60`, FSD 0.21 §2.2): PDF maks 10 MB, kategori `doctor_note` milik
+   * pengaju, diunggah dulu lalu `document_id`-nya dikirim sebagai `doctor_note_document_id`. Kotak centang
+   * `has_doctor_note` dihapus. Mock menyimpan nama berkas.
+   */
+  doctorNoteFile: string;
 }
+
+export const DOCTOR_NOTE_MAX_BYTES = 10 * 1024 * 1024;
 
 export const REQUEST_STATUS_LABEL: Record<RequestStatus, string> = {
   PENDING_APPROVAL: 'Pending approval',

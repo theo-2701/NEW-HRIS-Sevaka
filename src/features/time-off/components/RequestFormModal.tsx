@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { DateRangeField } from '@/components/form/DateRangeField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
-import { CheckboxField } from '@/components/form/CheckboxField';
+import { DocumentField } from '@/components/form/DocumentField';
 import { GatePreview } from '@/features/time-off/components/TimeOffBits';
 import { useLeaveRequests, useLeaveTypes, useSubmitRequest } from '@/features/time-off/hooks/useTimeOff';
 import { evaluateGates } from '@/features/time-off/gates';
 import { employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
-import { DEMO_NOW, SESSION_LABEL } from '@/features/time-off/types';
+import { DEMO_NOW, DOCTOR_NOTE_MAX_BYTES, SESSION_LABEL } from '@/features/time-off/types';
 import type { LeaveRequest, RequestDraft, Session } from '@/features/time-off/types';
 
 const EMPTY: RequestDraft = {
@@ -22,7 +22,7 @@ const EMPTY: RequestDraft = {
   startDate: '',
   endDate: '',
   reason: '',
-  hasDoctorNote: false,
+  doctorNoteFile: '',
 };
 
 const SESSION_OPTIONS = (Object.keys(SESSION_LABEL) as (keyof typeof SESSION_LABEL)[]).map((value) => ({
@@ -50,8 +50,9 @@ function DynamicSection({
   // FSD-TIME 0.13 #12/#14: field yang disembunyikan karena bendera berganti DIKOSONGKAN.
   useEffect(() => {
     if (multiDay && values.daySession !== 'FULL') void setFieldValue('daySession', 'FULL');
-    if (!type?.requiresDocument && values.hasDoctorNote) void setFieldValue('hasDoctorNote', false);
-  }, [multiDay, values.daySession, type?.requiresDocument, values.hasDoctorNote, setFieldValue]);
+    // Ganti ke jenis tanpa lampiran ⇒ berkas sisa tidak ikut terkirim.
+    if (!type?.requiresDocument && values.doctorNoteFile) void setFieldValue('doctorNoteFile', '');
+  }, [multiDay, values.daySession, type?.requiresDocument, values.doctorNoteFile, setFieldValue]);
 
   const gate = useMemo(
     () =>
@@ -70,12 +71,15 @@ function DynamicSection({
 
   return (
     <>
-      {type?.requiresDocument && (
-        <>
-          <CheckboxField name="hasDoctorNote">
-            A doctor's note is attached to this request (required by this leave type).
-          </CheckboxField>
-        </>
+      {/* Form Ubah tanpa lampiran (FSD-TIME §2.4); wajib/tidaknya diputus server lewat ambang hari sakit. */}
+      {type?.requiresDocument && !editingId && (
+        <DocumentField
+          name="doctorNoteFile"
+          label="Doctor's Note"
+          accept=".pdf,application/pdf"
+          maxBytes={DOCTOR_NOTE_MAX_BYTES}
+          hint="PDF, up to 10 MB. Needed when the sick leave is longer than the threshold."
+        />
       )}
 
       {values.leaveTypeId && values.startDate && values.endDate && (
@@ -115,7 +119,7 @@ export function RequestFormModal({
         startDate: editing.startDate,
         endDate: editing.endDate,
         reason: editing.reason,
-        hasDoctorNote: editing.hasDoctorNote,
+        doctorNoteFile: '',
       }
     : EMPTY;
 

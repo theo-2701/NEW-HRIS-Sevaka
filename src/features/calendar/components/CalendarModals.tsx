@@ -490,7 +490,7 @@ function DayToggles({
 
 const BLANK_DAYS: WorkingDays = { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false };
 
-const patternSchema = Yup.object({
+const patternSchema = Yup.object().shape({
   calendarName: Yup.string().trim().min(3, 'Pattern name must be at least 3 characters.').required('Pattern name is required.'),
   scopeLevel: Yup.string().required('Choose a scope level.'),
   scopeRef: Yup.string().when('scopeLevel', {
@@ -499,7 +499,22 @@ const patternSchema = Yup.object({
     otherwise: (schema) => schema,
   }),
   effectiveFrom: Yup.string().required('Start date is required.'),
-});
+  // Berdua atau kosong berdua; pulang < masuk sah (melewati tengah malam). UIC-TIME 0.25 §2.2, T20.
+  workStartTime: Yup.string().when('workEndTime', {
+    is: (value: string) => Boolean(value),
+    then: (schema) => schema.required('Enter a start time, or clear the end time.'),
+    otherwise: (schema) => schema,
+  }),
+  workEndTime: Yup.string()
+    .when('workStartTime', {
+      is: (value: string) => Boolean(value),
+      then: (schema) => schema.required('Enter an end time, or clear the start time.'),
+      otherwise: (schema) => schema,
+    })
+    .test('not-same', 'The end time cannot equal the start time.', function (value) {
+      return !value || value !== this.parent.workStartTime;
+    }),
+}, [['workStartTime', 'workEndTime']]);
 
 function PatternScopeRef({ locked }: { locked: boolean }) {
   const { values, setFieldValue } = useFormikContext<WorkCalendarDraft>();
@@ -551,6 +566,8 @@ export function WorkCalendarFormModal({
         scopeLevel: editing.scopeLevel,
         scopeRef: editing.scopeRef ?? '',
         workingDays: editing.workingDays,
+        workStartTime: editing.workStartTime?.slice(0, 5) ?? '',
+        workEndTime: editing.workEndTime?.slice(0, 5) ?? '',
         effectiveFrom: editing.effectiveFrom,
         effectiveUntil: editing.effectiveUntil ?? '',
       }
@@ -559,6 +576,8 @@ export function WorkCalendarFormModal({
         scopeLevel: '',
         scopeRef: '',
         workingDays: BLANK_DAYS,
+        workStartTime: '',
+        workEndTime: '',
         effectiveFrom: '',
         effectiveUntil: '',
       };
@@ -590,7 +609,7 @@ export function WorkCalendarFormModal({
             open={open}
             onOpenChange={(next) => !next && close()}
             title={editing ? 'Edit work pattern' : 'New work pattern'}
-            description="A work pattern always applies forward. Once saved, only the name and end date can be changed."
+            description="A work pattern always applies forward. Once saved, only the name and end date can be changed; days and work hours are frozen."
             size="wide"
             footer={
               <>
@@ -635,6 +654,23 @@ export function WorkCalendarFormModal({
                 locked={locked}
                 onToggle={(key, next) => setDays((prev) => ({ ...prev, [key]: next }))}
               />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextField
+                  name="workStartTime"
+                  type="time"
+                  label="Work start time"
+                  disabled={locked}
+                  hint="Optional. Expected hours on workdays without a roster; a roster always wins."
+                />
+                <TextField
+                  name="workEndTime"
+                  type="time"
+                  label="Work end time"
+                  disabled={locked}
+                  hint="Earlier than the start time means it crosses midnight."
+                />
+              </div>
 
               <DateRangeField
                 fromName="effectiveFrom"

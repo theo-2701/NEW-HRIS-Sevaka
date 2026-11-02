@@ -30,6 +30,7 @@ import {
 import { useAssignments, useShifts, useSwaps, useToggleShift } from '@/features/scheduler/hooks/useScheduler';
 import { ME, SCHEDULER_ROLES, employeeName } from '@/features/scheduler/mock-data';
 import type { SchedulerRole, Shift, ShiftAssignment, ShiftSwap } from '@/features/scheduler/types';
+import { DaySetupModal } from '@/features/scheduler/components/DaySetupModal';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type Tab = 'shifts' | 'roster' | 'swap';
@@ -52,6 +53,7 @@ export function SchedulerSchedulePage() {
   const [editingAssignment, setEditingAssignment] = useState<ShiftAssignment | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [role, setRole] = useState<SchedulerRole>('ROLE_HR_MANAGER');
+  const [daySetupOpen, setDaySetupOpen] = useState(false);
   const [swapForm, setSwapForm] = useState(false);
   const [decidingSwap, setDecidingSwap] = useState<ShiftSwap | null>(null);
   const [withdrawingSwap, setWithdrawingSwap] = useState<ShiftSwap | null>(null);
@@ -121,9 +123,14 @@ export function SchedulerSchedulePage() {
                 </SelectContent>
               </Select>
               {canBulkAssign(role) && (
-                <Button variant="secondary" onClick={() => setBulkOpen(true)}>
-                  Bulk assign
-                </Button>
+                <>
+                  <Button variant="secondary" onClick={() => setDaySetupOpen(true)}>
+                    Set up date
+                  </Button>
+                  <Button variant="secondary" onClick={() => setBulkOpen(true)}>
+                    Bulk assign
+                  </Button>
+                </>
               )}
               <Button onClick={() => openAssignForm(null)}>Assign roster</Button>
             </div>
@@ -238,11 +245,15 @@ export function SchedulerSchedulePage() {
                       header: 'Shift',
                       render: (row) => {
                         const shift = shifts.find((item) => item.id === row.shiftId);
+                        // Jam khusus Setup Tanggal menang atas jam katalog.
+                        const start = row.startTime ?? shift?.startTime;
+                        const end = row.endTime ?? shift?.endTime;
                         return shift ? (
                           <>
                             {shift.shiftName}{' '}
                             <span className="text-fg-4">
-                              · {shift.startTime ? `${shift.startTime}–${shift.endTime}` : 'no fixed hours'}
+                              · {start ? `${start}–${end}` : 'no fixed hours'}
+                              {row.startTime ? ' (this date)' : ''}
                             </span>
                           </>
                         ) : (
@@ -357,6 +368,7 @@ export function SchedulerSchedulePage() {
         onClose={() => setAssignForm(false)}
       />
       <BulkAssignModal role={role} open={bulkOpen} shifts={shifts} onClose={() => setBulkOpen(false)} />
+      <DaySetupModal open={daySetupOpen} shifts={shifts} onClose={() => setDaySetupOpen(false)} />
       <SwapFormModal
         open={swapForm}
         assignments={assignments}

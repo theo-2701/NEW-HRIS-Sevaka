@@ -82,7 +82,7 @@ describe('Pengajuan & keputusan', () => {
         startDate: '2026-07-28',
         endDate: '2026-07-28',
         reason: '',
-        hasDoctorNote: true,
+        doctorNoteFile: 'surat-dokter.pdf',
       },
       DEMO_NOW,
     );
@@ -101,7 +101,7 @@ describe('Pengajuan & keputusan', () => {
         startDate: '2026-10-12',
         endDate: '2026-10-13',
         reason: 'Urusan keluarga.',
-        hasDoctorNote: false,
+        doctorNoteFile: '',
       },
       DEMO_NOW,
     );
@@ -194,7 +194,7 @@ describe('Keputusan (K9) & ledger saldo — koneksi Time Off → Balance', () =>
     startDate,
     endDate,
     reason: 'Urusan keluarga.',
-    hasDoctorNote: false,
+    doctorNoteFile: '',
   });
 
   it('keputusan hanya diterima; status & LEAVE_TAKEN ditulis saat workflow selesai', async () => {

@@ -311,6 +311,14 @@ export function CalendarPage() {
                           render: (row) => <WorkingDaysCell value={row.workingDays} />,
                         },
                         {
+                          key: 'hours',
+                          header: 'Work Hours',
+                          nowrap: true,
+                          muted: true,
+                          render: (row) =>
+                            row.workStartTime ? `${row.workStartTime.slice(0, 5)}–${row.workEndTime?.slice(0, 5)}` : '—',
+                        },
+                        {
                           key: 'from',
                           header: 'Effective From',
                           nowrap: true,

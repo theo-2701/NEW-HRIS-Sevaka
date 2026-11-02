@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Clock, Info, ShieldAlert } from 'lucide-react';
+import { ShiftImpactPanel } from '@/features/time-off/components/ShiftImpactPanel';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -301,7 +302,7 @@ export function DecisionModal({
                 decide.mutate({ id: request.id, decision: 'REJECTED', input: { reject } }, { onSuccess: onClose })
               }
             >
-              {decide.isPending ? 'Memproses…' : 'Reject'}
+              {decide.isPending ? 'Processing…' : 'Reject'}
             </Button>
           ) : (
             <Button
@@ -310,7 +311,7 @@ export function DecisionModal({
                 decide.mutate({ id: request.id, decision: 'APPROVED', input: { note: '' } }, { onSuccess: onClose })
               }
             >
-              {decide.isPending ? 'Memproses…' : 'Approve'}
+              {decide.isPending ? 'Processing…' : 'Approve'}
             </Button>
           )}
         </>
@@ -345,6 +346,9 @@ export function DecisionModal({
         {decision === 'REJECTED' && (
           <RejectFields value={reject} onChange={setReject} reasonLabel="Rejection reason" />
         )}
+
+        {/* UIC-TIME 0.24 §10.2a: dampak roster shift — informatif, tak menahan persetujuan. */}
+        {decision === 'APPROVED' && <ShiftImpactPanel request={request} today={DEMO_NOW.toISOString().slice(0, 10)} />}
       </div>
     </Modal>
   );

@@ -184,7 +184,7 @@ export const timeOffService = {
         endDate: draft.endDate,
         totalDays: gate.totalDays,
         reason: draft.reason.trim(),
-        hasDoctorNote: draft.hasDoctorNote,
+        hasDoctorNote: Boolean(draft.doctorNoteFile),
         status: autoApproved ? 'AUTO_APPROVED' : 'PENDING_APPROVAL',
         extraApprovalReason: primaryExtraReason(gate.extra),
         rejectDeadlineAt: autoApproved ? deadline.toISOString() : null,
@@ -199,7 +199,13 @@ export const timeOffService = {
       if (autoApproved) writeLedger(row, 'LEAVE_TAKEN', session.employeeId, now);
       return row;
     }
-    const { data } = await api.post<LeaveRequest>('/leave-requests', draft);
+    // UIC-TIME 0.28 #60: berkas sudah diunggah ke document-service (kategori `doctor_note`);
+    // yang dikirim hanya `doctor_note_document_id`, dan hanya bila jenisnya berlampiran.
+    const { doctorNoteFile, ...body } = draft;
+    const { data } = await api.post<LeaveRequest>('/leave-requests', {
+      ...body,
+      ...(doctorNoteFile ? { doctor_note_document_id: doctorNoteFile } : {}),
+    });
     return data;
   },
 
@@ -230,13 +236,14 @@ export const timeOffService = {
         startDate: draft.startDate,
         endDate: draft.endDate,
         reason: draft.reason.trim(),
-        hasDoctorNote: draft.hasDoctorNote,
         totalDays: gate.totalDays,
         extraApprovalReason: primaryExtraReason(gate.extra),
       });
       return;
     }
-    await api.put(`/leave-requests/${id}`, draft);
+    const { doctorNoteFile: _ignored, ...body } = draft;
+    void _ignored;
+    await api.put(`/leave-requests/${id}`, body);
   },
 
   /**
