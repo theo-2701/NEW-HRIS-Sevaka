@@ -108,7 +108,7 @@ function payslipPdf(slip: Payslip): DownloadedFile {
   const money = (value: number) => `Rp ${value.toLocaleString('en-US')}`;
   const group = (title: string, rows: Payslip['groupPenghasilan']) => [
     title,
-    ...rows.map((row) => `  ${row.label}: ${money(row.amount)}`),
+    ...rows.map((row) => `  ${row.componentName}: ${money(row.amount)}`),
   ];
   const lines = [
     `Payslip - ${slip.periodLabel}`,
@@ -224,7 +224,7 @@ export const essPayrollService = {
    * `#44` — slip orang lain untuk diunduh. Sama seperti `#43` ditambah jalur ketat: bila perakitan
    * gagal, permintaan ditolak dan nol jejak ditulis.
    */
-  async employeePayslipDownload(actor: Actor, periodId: string, employeeId: string): Promise<Payslip> {
+  async employeePayslipDownload(actor: Actor, periodId: string, employeeId: string): Promise<DownloadedFile> {
     if (MOCK) {
       await delay(320);
       if (actor.role !== 'ROLE_HR_MANAGER') {

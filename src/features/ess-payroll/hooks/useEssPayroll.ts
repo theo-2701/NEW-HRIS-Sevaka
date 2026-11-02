@@ -65,12 +65,12 @@ export const useDownloadMyPayslip = () =>
   useEssMutation(
     ({ actor, periodId }: { actor: Actor; periodId: string }) =>
       essPayrollService.myPayslipDownload(actor, periodId).then((file) => (saveFile(file), file)),
-    (file) => `${file.fileName} downloaded.`,
+    (file) => `${file.fileName} berhasil diunduh.`,
   );
 
 export const useDownloadEmployeePayslip = () =>
   useEssMutation(
     ({ actor, periodId, employeeId }: { actor: Actor; periodId: string; employeeId: string }) =>
       essPayrollService.employeePayslipDownload(actor, periodId, employeeId).then((file) => (saveFile(file), file)),
-    (file) => `${file.fileName} downloaded — the download is recorded in the access log.`,
+    (file) => `${file.fileName} berhasil diunduh — jejak akses unduhan tertulis.`,
   );

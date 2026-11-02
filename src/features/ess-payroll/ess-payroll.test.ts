@@ -43,8 +43,10 @@ describe('ESS Payroll — slip sendiri (UIC §5.2–§5.3)', () => {
   });
 
   it('unduhan slip sendiri bersifat ketat dan tidak menulis jejak akses', async () => {
-    const slip = await service.myPayslipDownload(DEWI, 'per-2026-07');
-    expect(slip.netAmount).toBe(4488500);
+    const file = await service.myPayslipDownload(DEWI, 'per-2026-07');
+    // CATATAN 16 Okt: unduhan = berkas PDF `payslip-<english-month>-<year>.pdf`.
+    expect(file.blob.type).toBe('application/pdf');
+    expect(file.fileName).toMatch(/^payslip-july-2026\.pdf$/);
     expect(await service.sessionAccessLogs()).toHaveLength(0);
 
     setPayslipAssemblyFailure(true);
