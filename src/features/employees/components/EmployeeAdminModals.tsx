@@ -10,6 +10,7 @@ import { FormField } from '@/components/form/FormField';
 import { Input } from '@/components/ui/input';
 import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
+import { WorkPatternFields } from '@/features/new-joiner/components/WorkPatternFields';
 import { BANK_OPTIONS } from '@/features/new-joiner/addEmployee';
 import { BRANCHES } from '@/features/employees/types';
 import type { EmployeeDetail, WorkDataPatch } from '@/features/employees/types';
@@ -27,6 +28,7 @@ import type { RoleCode } from '@/features/role-grant/types';
 import { toast } from '@/store/ui.store';
 
 type WorkDataValues = Required<WorkDataPatch>;
+type WorkDataKey = keyof WorkDataValues;
 
 const workDataSchema = Yup.object({
   accountNumber: Yup.string()
@@ -69,6 +71,9 @@ export function EditWorkDataModal({ employee, open, onClose }: { employee: Emplo
     bankCode: '',
     accountNumber: '',
     accountHolderName: '',
+    workArrangement: employee.workArrangement,
+    radiusValidation: employee.radiusValidation ?? employee.workArrangement === 'WFO',
+    isSelfie: employee.isSelfie ?? true,
   };
 
   return (
@@ -77,15 +82,16 @@ export function EditWorkDataModal({ employee, open, onClose }: { employee: Emplo
       enableReinitialize
       validationSchema={workDataSchema}
       onSubmit={(values) => {
-        const patch: WorkDataPatch = {};
-        (Object.keys(values) as (keyof WorkDataValues)[]).forEach((key) => {
-          if (values[key] && values[key] !== initial[key]) patch[key] = values[key];
+        const patch: Record<string, unknown> = {};
+        (Object.keys(values) as WorkDataKey[]).forEach((key) => {
+          // Boolean `false` ikut terkirim bila berubah; teks kosong = tidak diubah.
+          if (values[key] !== initial[key] && values[key] !== '') patch[key] = values[key];
         });
         if (Object.keys(patch).length === 0) {
           toast('No changes to save.', 'info');
           return;
         }
-        save.mutate(patch);
+        save.mutate(patch as WorkDataPatch);
       }}
     >
       {({ submitForm }) => (
@@ -121,6 +127,7 @@ export function EditWorkDataModal({ employee, open, onClose }: { employee: Emplo
               ) : (
                 <SelectField name="branchId" label="Branch" options={BRANCHES.map((row) => ({ value: row.id, label: row.name }))} />
               )}
+              <WorkPatternFields />
               <SelectField name="costCenter" label="Cost Center" options={COST_CENTER_OPTIONS} />
               <SelectField name="sbu" label="SBU" options={SBU_OPTIONS} />
             </div>

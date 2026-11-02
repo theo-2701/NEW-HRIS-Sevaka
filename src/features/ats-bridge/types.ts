@@ -104,6 +104,8 @@ export interface AtsFilter {
 export interface MaterializeInput extends NewEmployeeFields {
   joinDate: string;
   jobGradeId: string;
+  /** Wajib sejak TSD-EMPLOYEE 0.207. */
+  branchId: string;
 }
 
 /** Respons Create Employee: sandi awal kotak surat tampil SEKALI (panel Mailbox credentials). */

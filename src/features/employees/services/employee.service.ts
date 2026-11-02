@@ -7,6 +7,7 @@ import type {
   EmployeeSearchRequest,
   EmployeeSearchResponse,
   WorkDataPatch,
+  WorkArrangement,
 } from '@/features/employees/types';
 import { useAuthStore } from '@/store/auth.store';
 import { roleGrantService } from '@/features/role-grant/services/role-grant.service';
@@ -58,7 +59,7 @@ const MOCK_EMPLOYEES: EmployeeDetail[] = [
     nik: 'NIK-0012',
     name: 'Lia Permata',
     employmentStatus: 'ACTIVE',
-    workArrangement: 'HYBRID',
+    workArrangement: 'WFO',
     branchId: 'br-jkt',
     branchName: branchName('br-jkt'),
     position: 'HR Specialist',
@@ -146,7 +147,7 @@ const MOCK_EMPLOYEES: EmployeeDetail[] = [
     nik: 'NIK-0027',
     name: 'Doni Prabowo',
     employmentStatus: 'ACTIVE',
-    workArrangement: 'MOBILE',
+    workArrangement: 'WFO',
     branchId: 'br-papua',
     branchName: branchName('br-papua'),
     position: 'Field Technician',
@@ -212,7 +213,7 @@ const MOCK_EMPLOYEES: EmployeeDetail[] = [
     nik: 'NIK-0014',
     name: 'Maya Anggraini',
     employmentStatus: 'TERMINATED',
-    workArrangement: 'HYBRID',
+    workArrangement: 'WFO',
     branchId: 'br-bdg',
     branchName: branchName('br-bdg'),
     position: 'Recruiter',
@@ -234,7 +235,7 @@ const MOCK_EMPLOYEES: EmployeeDetail[] = [
     nik: 'NIK-0036',
     name: 'Yoga Pratama',
     employmentStatus: 'ACTIVE',
-    workArrangement: 'HYBRID',
+    workArrangement: 'WFO',
     branchId: 'br-jkt',
     branchName: branchName('br-jkt'),
     position: 'Data Analyst',
@@ -278,7 +279,7 @@ const MOCK_EMPLOYEES: EmployeeDetail[] = [
     nik: 'NIK-0040',
     name: 'Fajar Nugroho',
     employmentStatus: 'WAITING',
-    workArrangement: 'MOBILE',
+    workArrangement: 'WFO',
     branchId: 'br-papua',
     branchName: branchName('br-papua'),
     position: 'Site Engineer',
@@ -342,6 +343,8 @@ export function registerMaterializedEmployee(input: {
   /** Cabang kursi (KCG-2); kosong = ditebak dari label unit. */
   branchId?: string;
   bank?: EmployeeDetail['bank'];
+  /** Pola Kerja dari Process Candidate / Create Employee (TSD 0.204 §7.4.4). */
+  workPattern?: { workArrangement: 'WFO' | 'WFH'; radiusValidation: boolean; isSelfie: boolean };
 }): EmployeeDetail {
   const [position, unit = ''] = input.positionLabel.split(' — ');
   const branch =
@@ -353,7 +356,9 @@ export function registerMaterializedEmployee(input: {
     nik: input.nik || `NIK-${String(100 + sequence).padStart(4, '0')}`,
     name: input.name,
     employmentStatus: input.joinDate > today ? 'WAITING' : 'ACTIVE',
-    workArrangement: 'WFO',
+    workArrangement: input.workPattern?.workArrangement ?? 'WFO',
+    radiusValidation: input.workPattern ? input.workPattern.workArrangement === 'WFO' && input.workPattern.radiusValidation : true,
+    isSelfie: input.workPattern?.isSelfie ?? true,
     branchId: branch.id,
     branchName: branch.name,
     position,
@@ -446,6 +451,13 @@ export async function updateWorkData(id: string, patch: WorkDataPatch): Promise<
       found.workStatusId = changed.workStatusId;
     }
     if (changed.branchId) Object.assign(found, { branchId: changed.branchId, branchName: branchName(changed.branchId) });
+    if (changed.workArrangement) found.workArrangement = changed.workArrangement as WorkArrangement;
+    if (changed.isSelfie !== undefined) found.isSelfie = Boolean(changed.isSelfie);
+    if (changed.radiusValidation !== undefined || changed.workArrangement) {
+      // WFH ⇒ radius selalu false; kembali ke WFO tanpa nilai ⇒ true (0.205).
+      found.radiusValidation =
+        found.workArrangement === 'WFO' && (changed.radiusValidation === undefined ? true : Boolean(changed.radiusValidation));
+    }
     if (changed.costCenter) found.costCenter = changed.costCenter;
     if (changed.sbu) found.sbu = changed.sbu;
     if (changed.bankCode) {
@@ -457,7 +469,13 @@ export async function updateWorkData(id: string, patch: WorkDataPatch): Promise<
     }
     return;
   }
-  await api.post(`/employees/${id}/work-data`, changed);
+  const { workArrangement, radiusValidation, isSelfie, ...rest } = changed;
+  await api.post(`/employees/${id}/work-data`, {
+    ...rest,
+    ...(workArrangement !== undefined ? { work_arrangement: workArrangement } : {}),
+    ...(radiusValidation !== undefined ? { radius_validation: radiusValidation } : {}),
+    ...(isSelfie !== undefined ? { is_selfie: isSelfie } : {}),
+  });
 }
 
 /** `GET /employees/{id}/role` (TSD §7.4.14). */

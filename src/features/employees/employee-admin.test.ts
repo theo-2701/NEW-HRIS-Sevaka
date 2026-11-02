@@ -41,3 +41,14 @@ describe('Change Role (§15, TSD §7.4.14)', () => {
     expect(await employeeRole('emp-nur')).toBe('ROLE_DEPARTMENT_MANAGER');
   });
 });
+
+describe('Pola Kerja WFO/WFH + flag (TSD-EMPLOYEE 0.204/0.205 §7.2.5)', () => {
+  it('WFH mematikan radius; kembali ke WFO menyalakannya lagi; selfie false ikut tersimpan', async () => {
+    await updateWorkData('emp-eka', { workArrangement: 'WFH', isSelfie: false });
+    let row = await employeeService.getById('emp-eka');
+    expect(row).toMatchObject({ workArrangement: 'WFH', radiusValidation: false, isSelfie: false });
+    await updateWorkData('emp-eka', { workArrangement: 'WFO' });
+    row = await employeeService.getById('emp-eka');
+    expect(row).toMatchObject({ workArrangement: 'WFO', radiusValidation: true });
+  });
+});

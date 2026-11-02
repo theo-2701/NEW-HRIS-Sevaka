@@ -582,6 +582,11 @@ export const newJoinerService = {
         joinDate: payload.joinDate,
         nik,
         branchId: POSITIONS.find((item) => item.value === row.positionId)?.branchId,
+        workPattern: {
+          workArrangement: payload.workArrangement,
+          radiusValidation: payload.radiusValidation,
+          isSelfie: payload.isSelfie,
+        },
         bank: payload.bankCode
           ? { bankCode: payload.bankCode, accountNumber: payload.accountNumber, accountHolderName: payload.accountHolderName }
           : undefined,
@@ -614,6 +619,12 @@ export const newJoinerService = {
         bank_code: payload.bankCode || undefined,
         account_number: payload.accountNumber || undefined,
         account_holder_name: payload.accountHolderName || undefined,
+        // TSD-EMPLOYEE 0.204–0.207 §7.4.4: pola kerja + dua flag; cost center/SBU opsional.
+        work_arrangement: payload.workArrangement,
+        radius_validation: payload.workArrangement === 'WFO' && payload.radiusValidation,
+        is_selfie: payload.isSelfie,
+        cost_center_id: payload.costCenterId || undefined,
+        sbu_id: payload.sbuId || undefined,
       },
       { headers: { 'Idempotency-Key': newId() } },
     );

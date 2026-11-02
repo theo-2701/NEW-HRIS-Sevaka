@@ -549,6 +549,8 @@ export const atsBridgeService = {
   async materialize(id: string, input: MaterializeInput, idempotencyKey: string): Promise<MaterializeResult> {
     if (!input.joinDate) throw new Error('422 — Enter the start date.');
     if (!input.jobGradeId) throw new Error('422 — Choose a grade.');
+    // TSD-EMPLOYEE 0.207 §7.4.4: jalur ATS wajib `branch_id` pilihan HR.
+    if (!input.branchId) throw new Error('422 — Choose the branch.');
     if (MOCK) {
       assertNewEmployee(input);
       await delay(500);
@@ -575,6 +577,8 @@ export const atsBridgeService = {
         jobGrade: labelOf(JOB_GRADE_OPTIONS, input.jobGradeId),
         joinDate: input.joinDate,
         nik,
+        branchId: input.branchId,
+        workPattern: { workArrangement: input.workArrangement, radiusValidation: input.radiusValidation, isSelfie: input.isSelfie },
         bank: input.bankCode
           ? { bankCode: input.bankCode, accountNumber: input.accountNumber, accountHolderName: input.accountHolderName }
           : undefined,
@@ -611,6 +615,13 @@ export const atsBridgeService = {
         bank_code: input.bankCode || undefined,
         account_number: input.accountNumber || undefined,
         account_holder_name: input.accountHolderName || undefined,
+        // TSD-EMPLOYEE 0.204–0.207 §7.4.4: pola kerja + dua flag; cost center/SBU opsional.
+        work_arrangement: input.workArrangement,
+        radius_validation: input.workArrangement === 'WFO' && input.radiusValidation,
+        is_selfie: input.isSelfie,
+        cost_center_id: input.costCenterId || undefined,
+        sbu_id: input.sbuId || undefined,
+        branch_id: input.branchId,
       },
       { headers: { 'Idempotency-Key': idempotencyKey } },
     );

@@ -26,6 +26,7 @@ import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/
 import { employeeService } from '@/features/employees/services/employee.service';
 import { JOB_GRADE_OPTIONS } from '@/features/new-joiner/types';
 import { NewEmployeeFields } from '@/features/new-joiner/components/NewEmployeeFields';
+import { BRANCHES } from '@/features/employees/types';
 import { emptyNewEmployee, newEmployeeSchema } from '@/features/new-joiner/newEmployee';
 import {
   useAtsBridge,
@@ -248,6 +249,8 @@ function DetailModal({ id, onClose }: { id: string | null; onClose: () => void }
 const materializeSchema = Yup.object({
   joinDate: Yup.string().required('Enter the start date.'),
   jobGradeId: Yup.string().required('Choose a grade.'),
+  // TSD-EMPLOYEE 0.207 §7.4.4: jalur ATS wajib cabang pilihan HR (kosong ⇒ 422).
+  branchId: Yup.string().required('Choose the branch.'),
   ...newEmployeeSchema,
 });
 
@@ -362,6 +365,7 @@ function MaterializeModal({ row, onClose }: { row: AtsBridge | null; onClose: ()
       initialValues={{
         joinDate: '',
         jobGradeId: '',
+        branchId: '',
         ...emptyNewEmployee({
           nik: data?.materializeSuggestion?.nik ?? '',
           username: data?.materializeSuggestion?.username ?? '',
@@ -417,6 +421,13 @@ function MaterializeModal({ row, onClose }: { row: AtsBridge | null; onClose: ()
             <div className="grid gap-4 md:grid-cols-2">
               <DateField name="joinDate" label="Start Date" required placeholder="Select a date" />
               <SelectField name="jobGradeId" label="Grade" required placeholder="Select a grade" options={JOB_GRADE_OPTIONS} />
+              <SelectField
+                name="branchId"
+                label="Branch"
+                required
+                placeholder="Select a branch"
+                options={BRANCHES.map((item) => ({ value: item.id, label: item.name }))}
+              />
             </div>
             <NewEmployeeFields companyEmailHint="Required. Suggested as username@domain from the email domain chosen when the batch was approved; change it if IT support uses another address. The system generates the mailbox password, shows it once after you create the employee and never stores it." />
           </Form>

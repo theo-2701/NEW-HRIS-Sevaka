@@ -17,6 +17,7 @@ beforeEach(() => {
 const account = (patch = {}) => ({
   joinDate: '2026-11-02',
   jobGradeId: 'gr-3a',
+  branchId: 'br-jkt',
   ...emptyNewEmployee({ nik: 'NIK-0161', username: 'putri.amalia', companyEmail: 'putri.amalia@ptdika.co.id', ...patch }),
 });
 

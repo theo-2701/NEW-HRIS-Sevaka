@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { SelectField } from '@/components/form/SelectField';
 import { TextField } from '@/components/form/TextField';
 import { BANK_OPTIONS } from '@/features/new-joiner/addEmployee';
+import { WorkPatternFields } from '@/features/new-joiner/components/WorkPatternFields';
+import { COST_CENTER_OPTIONS, SBU_OPTIONS } from '@/features/employees/services/employee.service';
 import { roleGrantService } from '@/features/role-grant/services/role-grant.service';
 import { ROLE_LABEL } from '@/features/role-grant/types';
 import { workStatusService } from '@/features/work-status/services/work-status.service';
@@ -62,6 +64,9 @@ export function NewEmployeeFields({ companyEmailHint }: { companyEmailHint?: str
           hint="The role the new employee gets when signing in. Only roles you may give are listed (Role Grant Rules)."
         />
       </Group>
+      <Group title="Work pattern">
+        <WorkPatternFields />
+      </Group>
       <Group title="Employment and bank (optional)">
         <SelectField
           name="workStatusId"
@@ -70,6 +75,8 @@ export function NewEmployeeFields({ companyEmailHint }: { companyEmailHint?: str
           options={workStatuses.map((row) => ({ value: row.id, label: row.name }))}
           hint="Can also be set later in Edit Work Data."
         />
+        <SelectField name="costCenterId" label="Cost Center" placeholder="Select a cost center" options={COST_CENTER_OPTIONS} />
+        <SelectField name="sbuId" label="SBU" placeholder="Select an SBU" options={SBU_OPTIONS} />
         <SelectField name="bankCode" label="Bank" placeholder="Select a bank" options={BANK_OPTIONS} />
         <TextField name="accountNumber" label="Account Number" inputMode="numeric" maxLength={20} placeholder="Digits only" />
         <TextField name="accountHolderName" label="Account Holder Name" maxLength={100} />

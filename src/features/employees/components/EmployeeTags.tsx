@@ -1,4 +1,4 @@
-import { Building2, Car, House, Shuffle } from 'lucide-react';
+import { Building2, House } from 'lucide-react';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
 import { EMPLOYMENT_STATUS_LABEL } from '@/features/employees/types';
 import type { EmploymentStatus, WorkArrangement } from '@/features/employees/types';
@@ -21,8 +21,6 @@ export function EmploymentStatusBadge({ status }: { status: EmploymentStatus }) 
 const WORK_ARRANGEMENT_ICON = {
   WFO: Building2,
   WFH: House,
-  HYBRID: Shuffle,
-  MOBILE: Car,
 } as const;
 
 /** `work_arrangement` — label netral dengan ikon, bukan chip status. */

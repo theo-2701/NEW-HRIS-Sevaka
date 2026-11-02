@@ -153,6 +153,8 @@ export function EmployeeDetailPage() {
               <Row label="Work arrangement">
                 <WorkArrangementTag arrangement={data.workArrangement} />
               </Row>
+              <Row label="Radius validation">{data.workArrangement === 'WFO' && (data.radiusValidation ?? true) ? 'On' : 'Off'}</Row>
+              <Row label="Selfie on tap">{(data.isSelfie ?? true) ? 'On' : 'Off'}</Row>
               <Row label="Supervisor">{data.supervisor ?? '— (top of the chain)'}</Row>
               <Row label="Contract end date">{data.contractEndDate ? formatDate(data.contractEndDate) : '—'}</Row>
               <Row label="Cost center">

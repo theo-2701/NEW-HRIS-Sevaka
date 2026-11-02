@@ -5,7 +5,22 @@ import { assertGrantable } from '@/features/role-grant/services/role-grant.servi
  * Isian akun & data kerja karyawan baru — sama di NJ-MATERIALIZE (FSD-001-EMPLOYEE 0.83 §4.1) dan
  * ATS-MATERIALIZE "Create Employee" (§4A.1), TSD 0.192 §7.4.4 / §7.4.12.
  */
-export interface NewEmployeeFields {
+/** Pola Kerja — `work_arrangement` wajib + dua flag (TSD-EMPLOYEE 0.204/0.205). */
+export interface WorkPattern {
+  workArrangement: 'WFO' | 'WFH';
+  radiusValidation: boolean;
+  isSelfie: boolean;
+}
+
+export const DEFAULT_WORK_PATTERN: WorkPattern = { workArrangement: 'WFO', radiusValidation: true, isSelfie: true };
+
+export const workPatternSchema = {
+  workArrangement: Yup.string().oneOf(['WFO', 'WFH'], 'Choose WFO or WFH.').required('Choose the work pattern.'),
+  radiusValidation: Yup.boolean(),
+  isSelfie: Yup.boolean(),
+};
+
+export interface NewEmployeeFields extends WorkPattern {
   /** Wajib, ≤ 50, bebas format; kembar hanya peringatan. */
   nik: string;
   /** Wajib sejak 0.62: `a-z0-9._`, diawali huruf, 4–100; bentrok 409. */
@@ -20,6 +35,9 @@ export interface NewEmployeeFields {
   bankCode: string;
   accountNumber: string;
   accountHolderName: string;
+  /** Opsional (TSD-EMPLOYEE 0.206 §7.4.4) — disimpan ke `emp_work_detail`. */
+  costCenterId: string;
+  sbuId: string;
 }
 
 export const USERNAME = /^[a-z][a-z0-9._]{3,99}$/;
@@ -39,6 +57,9 @@ export const emptyNewEmployee = (patch: Partial<NewEmployeeFields> = {}): NewEmp
   bankCode: '',
   accountNumber: '',
   accountHolderName: '',
+  costCenterId: '',
+  sbuId: '',
+  ...DEFAULT_WORK_PATTERN,
   ...patch,
 });
 
@@ -61,6 +82,9 @@ export const newEmployeeSchema = {
   bankCode: Yup.string(),
   accountNumber: needsBank('Choose the bank first.').matches(/^\d{6,20}$/, { message: '6–20 digits.', excludeEmptyString: true }),
   accountHolderName: needsBank('Choose the bank first.').max(100, 'At most 100 characters.'),
+  costCenterId: Yup.string(),
+  sbuId: Yup.string(),
+  ...workPatternSchema,
 };
 
 /** Mode dummy: username yang sudah dipakai akun lain (bentrok = 409). */

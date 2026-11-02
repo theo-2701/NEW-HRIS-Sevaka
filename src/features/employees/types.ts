@@ -12,8 +12,8 @@ export type EmploymentStatus =
   | 'RESIGNED'
   | 'TERMINATED';
 
-/** Empat nilai `work_arrangement` di kontrak. */
-export type WorkArrangement = 'WFO' | 'WFH' | 'HYBRID' | 'MOBILE';
+/** `work_arrangement` — sejak TSD-EMPLOYEE 0.204 hanya WFO/WFH (`HYBRID`/`MOBILE` dihapus, `NULL` ⇒ WFO). */
+export type WorkArrangement = 'WFO' | 'WFH';
 
 /**
  * Cakupan data aktor (granular scope `employee:directory:read`).
@@ -60,6 +60,10 @@ export interface EmployeeDetail extends EmployeeRow {
   phone: string;
   /** Employment Type — master Work Status (FSD-001-EMPLOYEE 0.83 §11). */
   workStatusId?: string;
+  /** `radius_validation` (TSD 0.204 §6.2) — WFH selalu false. */
+  radiusValidation?: boolean;
+  /** `is_selfie` — bawaan true. */
+  isSelfie?: boolean;
   /** Memegang kursi bercabang ⇒ cabang mengikuti kursi, tidak dapat diubah lewat Edit Work Data (KCG-2). */
   seatBranched?: boolean;
 }
@@ -67,6 +71,10 @@ export interface EmployeeDetail extends EmployeeRow {
 /** Isian EMP-WORKDATA (TSD §7.2.5) — hanya medan yang diubah yang dikirim. */
 export interface WorkDataPatch {
   workStatusId?: string;
+  /** TSD 0.204 §7.2.5: Ubah Data Kerja menerima pola kerja + dua flag. */
+  workArrangement?: WorkArrangement;
+  radiusValidation?: boolean;
+  isSelfie?: boolean;
   branchId?: string;
   costCenter?: string;
   sbu?: string;
