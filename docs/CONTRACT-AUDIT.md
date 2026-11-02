@@ -313,3 +313,30 @@ membawa UIC/FSD baru di paket ini, jadi hanya Time yang disinkronkan. Branch:
 baris sidebar, yang dilarang aturan repo tanpa keputusan kontrak; serta TSD (backend) yang tidak
 membawa UIC/FSD baru. Filter tanggal pada grid WFH Permission juga belum dipasang (baru filter
 status).
+
+### 10.1 Susulan 2 November 2026 — sidebar dibuka, menu baru dari dokumen
+
+Keputusan pengguna 2 November 2026: kunci sidebar dibuka; baris menu boleh ditambah bila
+dokumen kontrak terbaru menyebutnya (aturan di `CLAUDE.md` dan `.agents/rules/sevaka-rules.md`
+diperbarui, sumber tiap menu baru dicatat di `note` leaf `nav.ts`). UX layar baru mengikuti
+panduan skill ui-ux-pro-max (galat di bawah field + `aria-describedby`/`role=alert`, konfirmasi
+untuk aksi yang tak bisa dibatalkan, umpan balik sukses, URL sendiri per layar, satu bahasa per layar).
+
+| Menu baru / berubah | Dasar dokumen | Rute |
+| :--- | :--- | :--- |
+| Time › Attendance › WFH Permission (dipindah dari tab) + filter rentang tanggal | FSD-TIME 0.21 Peta Menu #12, §11A; UIC-TIME §6.4.1 | `/time/attendance/wfh-permission` |
+| Panel dampak roster shift di modal Approve cuti | UIC-TIME 0.24 §10.2a | `/time/time-off/requests` |
+| Employee Directory › Temporary Assignment | TSD-EMPLOYEE 0.212 §7.18; catatan 21 Okt T46 | `/employees/temporary-assignment` |
+| Employee Directory › Work Status | TSD-EMPLOYEE 0.212 §7.13.3; catatan 21 Okt T48 | `/employees/work-status` |
+| Employee Directory › Email Domain | TSD-EMPLOYEE 0.212 §7.19; catatan 22 Okt T63 | `/employees/email-domain` |
+| Manpower Planning › Planning (label menu `overview`) | TSD-EMPLOYEE 0.212 §3; catatan 11 Okt | `/employees/manpower/overview` |
+| Manpower Planning › Planning History | TSD-EMPLOYEE 0.212 §3; catatan 18 Okt T1 | `/employees/manpower/planning-history` |
+| Manpower Planning › Requisition — kini hanya Permintaan Posisi | idem | `/employees/manpower/requisition` |
+
+**Sisa Employee dari dokumen yang belum dibangun** (besar, butuh giliran sendiri): ATS Bridge,
+Bulk Import + Bulk Account Activation, Email and Phone Verification (§7.20), batalkan akses
+karyawan yang belum bekerja (§7.21), Transition terpadu + Materialization + Materialization Role
+Mapping + My Transition Tasks + ESS My Transition (§7.23–§7.26, menggantikan Employee Transfer dan
+dua dashboard Onboarding/Offboarding), serta Planning: Ubah Baris rencana Draft dan pemilih unit
+berbasis periode.
+

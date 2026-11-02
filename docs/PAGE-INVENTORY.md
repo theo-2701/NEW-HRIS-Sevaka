@@ -189,4 +189,18 @@ layar di sini tanpa keputusan kontrak.
 | `recruitment-import-logs.html` | Belum punya baris menu di kontrak. |
 | `recruitment-job-listing-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
 | `transition-dashboard.html` | Detail transisi — dibuka lewat "View Detail" di daftar Employee Transfer. |
-| — (layar baru) | WFH Permission (FSD-TIME 0.21 §11A, UIC §6.4) — tab di `/time/attendance`, bukan baris menu, karena sidebar dikunci. |
+
+## Menu baru dari dokumen kontrak (tanpa prototype)
+
+Ditambahkan sejak sidebar dibuka (keputusan pengguna 2 November 2026). Tidak punya
+`source` prototype, jadi generator tidak menghitungnya — rawat manual di sini. Sumber
+dokumen tiap baris ada di `note` leaf `src/config/nav.ts`.
+
+| Menu | Route | Status |
+|---|---|---|
+| Time › Attendance › WFH Permission | `/time/attendance/wfh-permission` | done |
+| Employee Directory › Temporary Assignment | `/employees/temporary-assignment` | done |
+| Employee Directory › Work Status | `/employees/work-status` | done |
+| Employee Directory › Email Domain | `/employees/email-domain` | done |
+| Manpower Planning › Planning (menu `overview`) | `/employees/manpower/overview` | done |
+| Manpower Planning › Planning History | `/employees/manpower/planning-history` | done |
