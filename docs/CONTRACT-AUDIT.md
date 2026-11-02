@@ -337,8 +337,12 @@ Susulan berikutnya: **Bulk Account Activation** (`/employees/bulk-account-activa
 0.167 §14.2.1), **Email and Phone Verification** + **Cancel access** (`/employees/email-phone-verification`,
 TSD-EMPLOYEE §7.20/§7.21) dan halaman publik `/contact-verification/:companyCode` — sudah dibangun.
 
-**Sisa Employee dari dokumen yang belum dibangun** (besar, butuh giliran sendiri): ATS Bridge,
-Bulk Import (unggah CSV email-saja), Transition terpadu + Materialization + Materialization Role
+Lalu **ATS Bridge** (`/employees/manpower/ats-bridge`, §7.4.12, termasuk Create Employee untuk
+kandidat Bulk Import) dan **Bulk Import** (`/employees/bulk-import`, §7.16) — sudah dibangun dan
+saling tersambung: Bulk Import yang disetujui melahirkan baris ATS; Create Employee memasukkan
+karyawan ke Directory dan antrean Email and Phone Verification.
+
+**Sisa Employee dari dokumen yang belum dibangun** (besar, butuh giliran sendiri): Transition terpadu + Materialization + Materialization Role
 Mapping + My Transition Tasks + ESS My Transition (§7.23–§7.26, menggantikan Employee Transfer dan
 dua dashboard Onboarding/Offboarding), serta Planning: Ubah Baris rencana Draft dan pemilih unit
 berbasis periode.

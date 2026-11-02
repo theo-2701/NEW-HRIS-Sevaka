@@ -207,3 +207,5 @@ dokumen tiap baris ada di `note` leaf `src/config/nav.ts`.
 | Employee Directory › Bulk Account Activation | `/employees/bulk-account-activation` | done |
 | Employee Directory › Email and Phone Verification | `/employees/email-phone-verification` | done |
 | — (publik, tanpa menu) Verifikasi kontak karyawan | `/contact-verification/:companyCode#t=<token>` | done |
+| Employee Directory › Bulk Import | `/employees/bulk-import` | done |
+| Manpower Planning › ATS Bridge | `/employees/manpower/ats-bridge` | done |
