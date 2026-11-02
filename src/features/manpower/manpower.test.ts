@@ -1,36 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import { planSchema, requisitionSchema } from '@/features/manpower/validation';
 import { manpowerService } from '@/features/manpower/services/manpower.service';
-import { CURRENT_USER, planTotals } from '@/features/manpower/types';
+import { CURRENT_USER, openPositions, planTotals, requestorOptions, supervisorOptions, titleOf } from '@/features/manpower/types';
 import type { ManpowerPlan } from '@/features/manpower/types';
 
 const validRequisition = {
   planId: '',
   unitId: 'unit-fin-papua',
   parentPositionId: 'pos-fin-mgr',
-  title: 'Staff Finance',
-  headcount: 2,
+  requestorId: 'emp-yohanes',
+  positionIds: ['pos-fin-staff-1', 'pos-fin-staff-2'],
   reason: 'Cabang baru butuh dua staf finance.',
 };
 
-describe('REQ-CREATE — validasi', () => {
-  it('menolak headcount di bawah 1', async () => {
+describe('REQ-CREATE — validasi (kaskade T2)', () => {
+  it('wajib minimal satu posisi dicentang dan requestor dipilih', async () => {
     await expect(
-      requisitionSchema.validateAt('headcount', { ...validRequisition, headcount: 0 }),
-    ).rejects.toThrow(/minimal 1/);
-  });
-
-  it('menolak justifikasi kosong dan judul lebih dari 150 karakter', async () => {
+      requisitionSchema.validateAt('positionIds', { ...validRequisition, positionIds: [] }),
+    ).rejects.toThrow(/at least one/);
+    await expect(
+      requisitionSchema.validateAt('requestorId', { ...validRequisition, requestorId: '' }),
+    ).rejects.toThrow(/Requestor/);
     await expect(
       requisitionSchema.validateAt('reason', { ...validRequisition, reason: '  ' }),
-    ).rejects.toThrow(/Justifikasi wajib/);
-    await expect(
-      requisitionSchema.validateAt('title', { ...validRequisition, title: 'x'.repeat(151) }),
-    ).rejects.toThrow(/150 karakter/);
+    ).rejects.toThrow(/Justification/);
   });
 
   it('menerima requisition yang lengkap', async () => {
     await expect(requisitionSchema.validate(validRequisition)).resolves.toBeTruthy();
+  });
+
+  it('checklist hanya memuat posisi kosong bawahan langsung supervisor', () => {
+    expect(openPositions('pos-fin-mgr').map((row) => row.id)).toEqual(['pos-fin-staff-1', 'pos-fin-staff-2', 'pos-fin-ap']);
+    expect(supervisorOptions('unit-fin-papua').map((row) => row.value)).toEqual(['pos-fin-mgr']);
+    expect(requestorOptions('unit-fin-papua').map((row) => row.value)).toEqual(['emp-yohanes', 'emp-maria']);
+    expect(titleOf(['pos-fin-staff-1', 'pos-fin-staff-2', 'pos-fin-ap'])).toBe('Staff Finance ×2, AP Officer');
   });
 });
 
@@ -39,6 +43,8 @@ describe('REQ-CREATE — draft-first', () => {
     const draft = await manpowerService.createRequisition(validRequisition, false);
     expect(draft.status).toBe('DRAFT');
     expect(draft.maker).toBe(CURRENT_USER);
+    expect(draft.headcount).toBe(2);
+    expect(draft.requestor).toBe('Yohanes Wenda');
 
     const submitted = await manpowerService.createRequisition(validRequisition, true);
     expect(submitted.status).toBe('IN_APPROVAL');
@@ -70,6 +76,12 @@ describe('REQ — guard state (UIC-EMPLOYEE §1.6)', () => {
     if (!other) return;
     await manpowerService.approveRequisition(other.id, 'Disetujui');
     await expect(manpowerService.approveRequisition(other.id, 'Lagi')).rejects.toThrow(/409/);
+  });
+
+  it('server menolak posisi yang bukan kursi kosong bawahan supervisor (422)', async () => {
+    await expect(
+      manpowerService.createRequisition({ ...validRequisition, positionIds: ['pos-fin-ar'] }, false),
+    ).rejects.toThrow(/422/);
   });
 
   it('server menolak requisition tanpa justifikasi (422)', async () => {

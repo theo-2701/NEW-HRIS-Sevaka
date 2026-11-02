@@ -30,10 +30,10 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const newId = () => crypto.randomUUID();
 
 let mockCategories: ReprimandCategory[] = [
-  { code: 'VERBAL', label: 'Verbal warning', point: 0, validityMonths: 3, levelOrder: 0, terminal: false, performanceWeight: 0, active: true },
-  { code: 'SP1', label: 'SP1 — peringatan tertulis pertama', point: 1, validityMonths: 6, levelOrder: 1, terminal: false, performanceWeight: 5, active: true },
-  { code: 'SP2', label: 'SP2 — peringatan tertulis kedua', point: 2, validityMonths: 6, levelOrder: 2, terminal: false, performanceWeight: 10, active: true },
-  { code: 'SP3', label: 'SP3 — peringatan terakhir', point: 3, validityMonths: 6, levelOrder: 3, terminal: true, performanceWeight: 20, active: true },
+  { code: 'VERBAL', label: 'Verbal warning', point: 0, validityMonths: 3, levelOrder: 0, terminal: false, performanceWeight: 0, cleanMonths: null, active: true },
+  { code: 'SP1', label: 'SP1 — peringatan tertulis pertama', point: 1, validityMonths: 6, levelOrder: 1, terminal: false, performanceWeight: 5, cleanMonths: 3, active: true },
+  { code: 'SP2', label: 'SP2 — peringatan tertulis kedua', point: 2, validityMonths: 6, levelOrder: 2, terminal: false, performanceWeight: 10, cleanMonths: 6, active: true },
+  { code: 'SP3', label: 'SP3 — peringatan terakhir', point: 3, validityMonths: 6, levelOrder: 3, terminal: true, performanceWeight: 20, cleanMonths: null, active: true },
 ];
 
 /** `cnf_reprimand_policy` append-only berversi (UIC-EMPLOYEE §7.6, CD-019). */
@@ -54,6 +54,7 @@ function freezeSnapshot(code: string) {
     validityMonths: category.validityMonths,
     levelOrder: category.levelOrder,
     terminal: category.terminal,
+    cleanMonths: category.cleanMonths,
   };
 }
 
@@ -108,7 +109,26 @@ function find(id: string): Reprimand {
  * Standing diturunkan dari snapshot yang aktif — bukan dari konfigurasi yang
  * berlaku sekarang. Mengubah master kategori TIDAK mengubah standing lama.
  */
-function computeStanding(rows: Reprimand[], mode: PolicyMode): Standing[] {
+/** Bulan penuh antara dua tanggal ISO (hari belum genap ⇒ belum dihitung). */
+export function fullMonthsBetween(from: string, to: string): number {
+  const [fy, fm, fd] = from.split('-').map(Number);
+  const [ty, tm, td] = to.split('-').map(Number);
+  const months = (ty - fy) * 12 + (tm - fm) - (td < fd ? 1 : 0);
+  return Math.max(0, months);
+}
+
+/**
+ * Level berlaku sesudah turun bertahap (TSD-EMPLOYEE 0.186 §7.7.4, T88) — dihitung saat
+ * dibaca, snapshot dan status tidak diubah. Hitungan mulai dari SP terakhir (ACTIVE/EXPIRED)
+ * pegawai itu; `cleanMonths` null atau terminal = tidak turun. Hasil < 0 = bersih.
+ */
+export function steppedLevel(row: Reprimand, lastSpDate: string, today: string): number {
+  const { cleanMonths, levelOrder, terminal } = row.snapshot;
+  if (terminal || !cleanMonths) return levelOrder;
+  return levelOrder - Math.floor(fullMonthsBetween(lastSpDate, today) / cleanMonths);
+}
+
+function computeStanding(rows: Reprimand[], mode: PolicyMode, today = toIsoDate(new Date())): Standing[] {
   const byEmployee = new Map<string, Reprimand[]>();
   rows.forEach((row) => {
     byEmployee.set(row.employeeId, [...(byEmployee.get(row.employeeId) ?? []), row]);
@@ -117,7 +137,10 @@ function computeStanding(rows: Reprimand[], mode: PolicyMode): Standing[] {
   return [...byEmployee.entries()].map(([employeeId, list]) => {
     const effective = list.filter(isEffective);
     const points = effective.reduce((sum, row) => sum + row.snapshot.point, 0);
-    const highestLevel = effective.reduce((max, row) => Math.max(max, row.snapshot.levelOrder), 0);
+    const lastSpDate = list
+      .filter((row) => row.status === 'ACTIVE' || row.status === 'EXPIRED')
+      .reduce((latest, row) => (row.issuedDate > latest ? row.issuedDate : latest), '');
+    const highestLevel = effective.reduce((max, row) => Math.max(max, steppedLevel(row, lastSpDate, today)), 0);
     const terminal = effective.some((row) => row.snapshot.terminal);
     const latestIssuedDate = list.reduce((latest, row) => (row.issuedDate > latest ? row.issuedDate : latest), '');
 
@@ -257,11 +280,18 @@ export const reprimandService = {
       if (duplicate) throw new Error('409 — kode kategori sudah dipakai.');
       if (!(category.performanceWeight >= 0)) throw new Error('422 — performance_weight wajib, minimal 0.');
 
+      const cleanMonths = category.terminal ? null : category.cleanMonths;
+      if (cleanMonths !== null && !(Number.isInteger(cleanMonths) && cleanMonths >= 1 && cleanMonths <= 120)) {
+        throw new Error(`422 — clean_months 1..120 (${originalCode ? 'EMP-VAL-722' : 'EMP-VAL-720'}).`);
+      }
+      const row = { ...category, cleanMonths };
       mockCategories = originalCode
-        ? mockCategories.map((row) => (row.code === originalCode ? { ...category } : row))
-        : [...mockCategories, { ...category }];
+        ? mockCategories.map((item) => (item.code === originalCode ? row : item))
+        : [...mockCategories, row];
       return;
     }
+    // Kategori terminal selalu disimpan null (§7.7.6).
+    if (category.terminal) category = { ...category, cleanMonths: null };
     if (originalCode) {
       await api.put(`/reprimand-categories/${originalCode}`, category);
       return;

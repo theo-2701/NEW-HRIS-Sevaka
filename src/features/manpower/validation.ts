@@ -3,18 +3,11 @@ import * as Yup from 'yup';
 /** Skema REQ-CREATE (FSD §3.2 · UIC §3.2). */
 export const requisitionSchema = Yup.object({
   planId: Yup.string(),
-  unitId: Yup.string().required('Unit wajib dipilih.'),
-  parentPositionId: Yup.string().required('Atasan (reports to) wajib dipilih.'),
-  title: Yup.string().trim().required('Nama posisi wajib diisi.').max(150, 'Maksimal 150 karakter.'),
-  headcount: Yup.number()
-    .typeError('Headcount harus berupa angka.')
-    .required('Headcount wajib diisi.')
-    .integer('Headcount harus bilangan bulat.')
-    .min(1, 'Headcount minimal 1.'),
-  reason: Yup.string()
-    .trim()
-    .required('Justifikasi wajib diisi.')
-    .max(150, 'Maksimal 150 karakter.'),
+  unitId: Yup.string().required('Organization unit is required.'),
+  parentPositionId: Yup.string().required('Supervisor position is required.'),
+  requestorId: Yup.string().required('Requestor is required.'),
+  positionIds: Yup.array().of(Yup.string().required()).min(1, 'Tick at least one position to open.'),
+  reason: Yup.string().trim().required('Justification is required.').max(150, 'At most 150 characters.'),
 });
 
 /** Skema MP-CREATE — rencana headcount per unit (FSD §3.1). */

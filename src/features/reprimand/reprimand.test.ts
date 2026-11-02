@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { categorySchema, reprimandSchema } from '@/features/reprimand/validation';
-import { reprimandService } from '@/features/reprimand/services/reprimand.service';
+import { fullMonthsBetween, reprimandService, steppedLevel } from '@/features/reprimand/services/reprimand.service';
 import { CURRENT_USER, deriveLevel } from '@/features/reprimand/types';
+import type { Reprimand } from '@/features/reprimand/types';
 
 const valid = {
   employeeId: 'emp-eka',
@@ -87,7 +88,7 @@ describe('RP-STANDING — derive-on-read dari snapshot', () => {
     const originalPoint = target.snapshot.point;
 
     await reprimandService.saveCategory(
-      { code: 'SP1', label: 'SP1 — diubah', point: 9, validityMonths: 12, levelOrder: 1, terminal: false, performanceWeight: 5, active: true },
+      { code: 'SP1', label: 'SP1 — diubah', point: 9, validityMonths: 12, levelOrder: 1, terminal: false, performanceWeight: 5, cleanMonths: 3, active: true },
       'SP1',
     );
 
@@ -113,6 +114,7 @@ describe('RP-TYPE-SETTING — konfigurasi', () => {
         levelOrder: 5,
         terminal: false,
         performanceWeight: 0,
+        cleanMonths: null,
         active: true,
       }),
     ).rejects.toThrow(/409/);
@@ -131,5 +133,24 @@ describe('RP-TYPE-SETTING — konfigurasi', () => {
     const versions = await reprimandService.policyVersions();
     expect(versions[0]).toMatchObject({ version: 2, isCurrent: true });
     expect(versions.filter((row) => row.isCurrent)).toHaveLength(1);
+  });
+});
+
+describe('RP-TYPE-SETTING — clean months (T88)', () => {
+  it('menerima kosong, menolak di luar 1..120, diabaikan untuk terminal', async () => {
+    await expect(categorySchema.validateAt('cleanMonths', { cleanMonths: '' })).resolves.toBeNull();
+    await expect(categorySchema.validateAt('cleanMonths', { cleanMonths: 0 })).rejects.toThrow(/minimal 1/);
+    await expect(categorySchema.validateAt('cleanMonths', { cleanMonths: 121 })).rejects.toThrow(/maksimal 120/);
+    await expect(categorySchema.validateAt('cleanMonths', { terminal: true, cleanMonths: 0 })).resolves.toBe(0);
+  });
+
+  it('level turun satu tingkat tiap N bulan bersih sejak SP terakhir', () => {
+    const row = {
+      snapshot: { code: 'SP2', label: '', point: 2, validityMonths: 12, levelOrder: 2, terminal: false, cleanMonths: 3 },
+    } as Reprimand;
+    expect(fullMonthsBetween('2026-01-15', '2026-04-14')).toBe(2);
+    expect(steppedLevel(row, '2026-01-15', '2026-04-15')).toBe(1);
+    expect(steppedLevel(row, '2026-01-15', '2026-07-15')).toBe(0);
+    expect(steppedLevel({ ...row, snapshot: { ...row.snapshot, terminal: true } }, '2026-01-15', '2026-07-15')).toBe(2);
   });
 });

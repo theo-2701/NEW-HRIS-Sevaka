@@ -18,7 +18,7 @@ import {
 } from '@/features/manpower/hooks/useManpower';
 import {
   CURRENT_USER,
-  PARENT_POSITION_OPTIONS,
+  positionTitle,
   TERMINAL_REQUISITION,
   UNIT_OPTIONS,
   labelOf,
@@ -81,27 +81,40 @@ export function ManpowerRequisitionPage() {
                 rows={paged.rows}
                 rowKey={(row) => row.id}
                 loading={reqLoading}
-                empty="Belum ada requisition."
+                empty="No requisition yet."
                 columns={[
                   { key: 'id', header: 'Requisition', strong: true, nowrap: true, render: (row) => row.id },
-                  { key: 'title', header: 'Position title', render: (row) => row.title },
+                  { key: 'title', header: 'Positions', render: (row) => row.title },
                   { key: 'unit', header: 'Unit', render: (row) => labelOf(UNIT_OPTIONS, row.unitId) },
                   {
                     key: 'parent',
-                    header: 'Reports to',
+                    header: 'Supervisor Position',
                     muted: true,
-                    render: (row) => labelOf(PARENT_POSITION_OPTIONS, row.parentPositionId),
+                    render: (row) => positionTitle(row.parentPositionId),
                   },
-                  { key: 'headcount', header: 'Headcount', align: 'center', strong: true, render: (row) => row.headcount },
+                  { key: 'headcount', header: 'Count', align: 'center', strong: true, render: (row) => row.headcount },
                   { key: 'status', header: 'Status', render: (row) => <RequisitionStatusBadge status={row.status} /> },
-                  { key: 'maker', header: 'Maker', muted: true, render: (row) => row.maker },
+                  {
+                    key: 'maker',
+                    header: 'Requester',
+                    muted: true,
+                    render: (row) =>
+                      row.requestor && row.requestor !== row.maker ? (
+                        <span className="flex flex-col">
+                          <span>{row.requestor}</span>
+                          <span className="text-fg-4">by {row.maker}</span>
+                        </span>
+                      ) : (
+                        row.requestor ?? row.maker
+                      ),
+                  },
                 ]}
                 actions={(row) =>
                   row.status === 'DRAFT' ? (
                     <RowButton onClick={() => submit.mutate({ id: row.id })}>Submit</RowButton>
                   ) : (
                     <RowButton onClick={() => setReviewing(row)}>
-                      {row.status === 'IN_APPROVAL' ? 'Review' : 'View Detail'}
+                      {row.status === 'IN_APPROVAL' && row.maker !== CURRENT_USER ? 'Review' : 'View Detail'}
                     </RowButton>
                   )
                 }

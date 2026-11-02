@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
-import { CURRENT_USER } from '@/features/manpower/types';
+import { CURRENT_USER, openPositions, requestorName, titleOf } from '@/features/manpower/types';
 import type {
   ManpowerPlan,
   PlanDraft,
@@ -35,6 +35,8 @@ let mockRequisitions: Requisition[] = [
     unitId: 'unit-fin-papua',
     parentPositionId: 'pos-fin-mgr',
     headcount: 2,
+    positionIds: ['pos-fin-staff-1', 'pos-fin-staff-2'],
+    requestor: 'Yohanes Wenda',
     status: 'IN_APPROVAL',
     maker: 'Rina Hartono',
     reason: 'Ekspansi wilayah Papua; dua staf finance untuk menutup ledger cabang baru.',
@@ -46,6 +48,7 @@ let mockRequisitions: Requisition[] = [
     unitId: 'unit-eng-hq',
     parentPositionId: 'pos-eng-mgr',
     headcount: 1,
+    positionIds: [],
     status: 'APPROVED',
     maker: 'Dewi Anggraini',
     reason: 'Backfill backend engineer yang mengundurkan diri.',
@@ -57,6 +60,7 @@ let mockRequisitions: Requisition[] = [
     unitId: 'unit-people-hq',
     parentPositionId: 'pos-head-people',
     headcount: 1,
+    positionIds: [],
     status: 'APPROVED',
     maker: 'Rina Hartono',
     reason: 'HRBP untuk headcount Jakarta yang bertambah.',
@@ -67,6 +71,7 @@ let mockRequisitions: Requisition[] = [
     unitId: 'unit-sales-sby',
     parentPositionId: 'pos-ops-lead',
     headcount: 3,
+    positionIds: [],
     status: 'FULFILLED',
     maker: 'Bagus Pratama',
     reason: 'Ramp-up penjualan Q1 — ketiga kursi sudah terisi.',
@@ -77,6 +82,7 @@ let mockRequisitions: Requisition[] = [
     unitId: 'unit-ops-jkt',
     parentPositionId: 'pos-ops-lead',
     headcount: 1,
+    positionIds: [],
     status: 'DRAFT',
     maker: CURRENT_USER,
     reason: 'Koordinator gudang — justifikasi masih menunggu tanda tangan.',
@@ -87,6 +93,7 @@ let mockRequisitions: Requisition[] = [
     unitId: 'unit-fin-papua',
     parentPositionId: 'pos-fin-mgr',
     headcount: 1,
+    positionIds: [],
     status: 'REJECTED',
     maker: 'Bagus Pratama',
     reason: 'Duplikat REQ-0231 — ditolak checker.',
@@ -195,20 +202,23 @@ export const manpowerService = {
   async createRequisition(draft: RequisitionDraft, submitNow: boolean): Promise<Requisition> {
     if (MOCK) {
       await delay();
-      // Server menegakkan field wajib UIC-EMPLOYEE §3.2 walau form sudah memvalidasi.
-      const title = draft.title.trim();
-      if (!title || title.length > 150) throw new Error('422 — position_title wajib, maksimal 150 karakter.');
-      if (!Number.isInteger(Number(draft.headcount)) || Number(draft.headcount) < 1) {
-        throw new Error('422 — headcount minimal 1.');
-      }
+      // Server menegakkan kontrak T2 walau form sudah memvalidasi.
       if (!draft.reason.trim()) throw new Error('422 — reason wajib diisi.');
-      if (!draft.unitId || !draft.parentPositionId) throw new Error('422 — unit dan atasan posisi wajib dipilih.');
+      if (!draft.unitId || !draft.parentPositionId || !draft.requestorId) {
+        throw new Error('422 — unit, supervisor position, dan requestor wajib dipilih.');
+      }
+      const vacant = new Set(openPositions(draft.parentPositionId).map((row) => row.id));
+      if (!draft.positionIds.length || draft.positionIds.some((id) => !vacant.has(id))) {
+        throw new Error('422 — position_ids harus posisi kosong bawahan langsung supervisor.');
+      }
       const row: Requisition = {
         id: nextRequisitionId(),
-        title: draft.title.trim(),
+        title: titleOf(draft.positionIds),
         unitId: draft.unitId,
         parentPositionId: draft.parentPositionId,
-        headcount: Number(draft.headcount),
+        headcount: draft.positionIds.length,
+        positionIds: [...draft.positionIds],
+        requestor: requestorName(draft.requestorId),
         status: submitNow ? 'IN_APPROVAL' : 'DRAFT',
         maker: CURRENT_USER,
         reason: draft.reason.trim(),
@@ -217,7 +227,15 @@ export const manpowerService = {
       mockRequisitions = [row, ...mockRequisitions];
       return row;
     }
-    const { data } = await api.post<Requisition>('/requisitions', { ...draft, submit: submitNow });
+    const { data } = await api.post<Requisition>('/requisitions', {
+      plan_id: draft.planId || undefined,
+      group_struct_id: draft.unitId,
+      parent_position_id: draft.parentPositionId,
+      requestor_employee_id: draft.requestorId,
+      position_ids: draft.positionIds,
+      reason: draft.reason,
+      submit: submitNow,
+    });
     return data;
   },
 

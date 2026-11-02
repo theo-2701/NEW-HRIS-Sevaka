@@ -23,6 +23,8 @@ export interface CategorySnapshot {
   validityMonths: number;
   levelOrder: number;
   terminal: boolean;
+  /** `clean_months_snapshot` — dibekukan saat terbit (non-retroaktif, T88 `SPC-D2`). */
+  cleanMonths: number | null;
 }
 
 export interface Reprimand {
@@ -61,6 +63,11 @@ export interface ReprimandCategory {
   terminal: boolean;
   /** `performance_weight` numeric(5,2) ≥ 0 (UIC §7.5). */
   performanceWeight: number;
+  /**
+   * `clean_months` 1..120 (TSD-EMPLOYEE 0.186 §7.7.6, T88): bulan bersih tanpa SP baru agar
+   * level turun satu tingkat. `null` = tidak turun; kategori terminal selalu `null`.
+   */
+  cleanMonths: number | null;
   active: boolean;
 }
 
