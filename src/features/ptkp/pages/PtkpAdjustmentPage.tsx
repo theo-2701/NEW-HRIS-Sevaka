@@ -13,8 +13,8 @@ import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
 import { CheckboxField } from '@/components/form/CheckboxField';
 import { usePagedRows } from '@/hooks/usePagedRows';
+import { DocumentField } from '@/components/form/DocumentField';
 import {
-  DocumentField,
   Note,
   PeriodRow,
   PeriodStatusBadge,

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Form, Formik, useFormikContext } from 'formik';
-import { Info, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { DateField } from '@/components/form/DateField';
 import { TextAreaField } from '@/components/form/TextAreaField';
 import { SelectField } from '@/components/form/SelectField';
-import { CheckboxField } from '@/components/form/CheckboxField';
-import { GatePreview, Note } from '@/features/time-off/components/TimeOffBits';
+import { DocumentField } from '@/components/form/DocumentField';
+import { GatePreview } from '@/features/time-off/components/TimeOffBits';
 import { useLeaveRequests, useLeaveTypes, useSubmitRequest } from '@/features/time-off/hooks/useTimeOff';
 import { evaluateGates } from '@/features/time-off/gates';
 import { employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
@@ -22,8 +22,10 @@ const EMPTY: RequestDraft = {
   startDate: '',
   endDate: '',
   reason: '',
-  hasDoctorNote: false,
+  doctorNoteFile: '',
 };
+
+const DOCTOR_NOTE_MAX_BYTES = 10 * 1024 * 1024;
 
 const SESSION_OPTIONS = (Object.keys(SESSION_LABEL) as (keyof typeof SESSION_LABEL)[]).map((value) => ({
   value,
@@ -31,8 +33,9 @@ const SESSION_OPTIONS = (Object.keys(SESSION_LABEL) as (keyof typeof SESSION_LAB
 }));
 
 /**
- * Bagian dinamis form: pratinjau gerbang submit, dan checkbox surat dokter yang
- * hanya muncul untuk jenis cuti yang mensyaratkannya.
+ * Bagian dinamis form: pratinjau gerbang submit, dan unggah surat dokter yang
+ * hanya muncul untuk jenis cuti ber-`requiresDocument` saat mengajukan baru.
+ * Wajib/tidaknya diputus server (ambang hari sakit), jadi layar tidak memaksanya.
  */
 function DynamicSection({
   session,
@@ -63,16 +66,14 @@ function DynamicSection({
 
   return (
     <>
-      {type?.requiresDocument && (
-        <>
-          <CheckboxField name="hasDoctorNote">
-            Surat dokter tersedia untuk pengajuan ini (disyaratkan jenis cuti ini).
-          </CheckboxField>
-          <Note icon={<Info />}>
-            Mekanisme unggah berkas masih tertunda di seluruh HRIS — form ini baru merekam
-            <strong> ketersediaan</strong> suratnya, belum berkasnya.
-          </Note>
-        </>
+      {type?.requiresDocument && !editingId && (
+        <DocumentField
+          name="doctorNoteFile"
+          label="Doctor's note"
+          accept=".pdf"
+          maxBytes={DOCTOR_NOTE_MAX_BYTES}
+          hint="PDF, maks 10 MB. Wajib atau tidaknya diputus server dari lama cuti sakit."
+        />
       )}
 
       {values.leaveTypeId && values.startDate && values.endDate && (
@@ -112,7 +113,7 @@ export function RequestFormModal({
         startDate: editing.startDate,
         endDate: editing.endDate,
         reason: editing.reason,
-        hasDoctorNote: editing.hasDoctorNote,
+        doctorNoteFile: '',
       }
     : EMPTY;
 

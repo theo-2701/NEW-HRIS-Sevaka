@@ -28,8 +28,10 @@ import {
   DEMO_NOW,
   SESSION_LABEL,
   canOpenMedical,
+  REJECT_REASONS,
+  REJECT_REASON_LABEL,
 } from '@/features/time-off/types';
-import type { AccessPurpose, LeaveRequest, MedicalAccessLog, Session } from '@/features/time-off/types';
+import type { AccessPurpose, LeaveRequest, MedicalAccessLog, RejectReason, Session } from '@/features/time-off/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type DetailTab = 'detail' | 'medical';
@@ -111,7 +113,10 @@ export function RequestDetailModal({
                 <RequestStatusBadge status={request.status} />
               </KeyValueRow>
               <KeyValueRow label="Diajukan">{formatDateTime(request.submittedAt)}</KeyValueRow>
-              {request.rejectReason && <KeyValueRow label="Alasan penolakan">{request.rejectReason}</KeyValueRow>}
+              {request.rejectReason && (
+                <KeyValueRow label="Alasan penolakan">{REJECT_REASON_LABEL[request.rejectReason]}</KeyValueRow>
+              )}
+              {request.rejectNote && <KeyValueRow label="Catatan penolakan">{request.rejectNote}</KeyValueRow>}
             </KeyValueList>
 
             {request.rejectDeadlineAt && (
@@ -207,7 +212,58 @@ export function RequestDetailModal({
   );
 }
 
-/** Keputusan approver — menyetujui boleh tanpa catatan, menolak wajib beralasan. */
+/** Alasan enum wajib + catatan opsional — dipakai Tolak biasa dan Tolak sakit (UIC §3.1.6/§3.1.7). */
+function RejectFields({
+  reason,
+  note,
+  onReason,
+  onNote,
+}: {
+  reason: RejectReason | '';
+  note: string;
+  onReason: (value: RejectReason) => void;
+  onNote: (value: string) => void;
+}) {
+  return (
+    <>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="reject-reason">
+          Alasan penolakan<em>*</em>
+        </Label>
+        <Select value={reason} onValueChange={(value) => onReason(value as RejectReason)}>
+          <SelectTrigger id="reject-reason">
+            <SelectValue placeholder="Pilih alasan penolakan" />
+          </SelectTrigger>
+          <SelectContent>
+            {REJECT_REASONS.map((value) => (
+              <SelectItem key={value} value={value}>
+                {REJECT_REASON_LABEL[value]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="reject-note">Catatan penolakan</Label>
+        <Textarea
+          id="reject-note"
+          rows={3}
+          maxLength={500}
+          value={note}
+          onChange={(event) => onNote(event.target.value)}
+          placeholder="Opsional"
+        />
+      </div>
+    </>
+  );
+}
+
+type Decision = 'APPROVED' | 'REJECTED';
+
+/**
+ * Keputusan approver. Alasan enum + catatan tampil hanya saat Tolak dipilih;
+ * kembali ke Setuju mengosongkan keduanya (FSD-TIME §2.2).
+ */
 export function DecisionModal({
   request,
   session,
@@ -217,14 +273,27 @@ export function DecisionModal({
   session: Session;
   onClose: () => void;
 }) {
+  const [decision, setDecision] = useState<Decision>('APPROVED');
+  const [reason, setReason] = useState<RejectReason | ''>('');
   const [note, setNote] = useState('');
   const decide = useDecideRequest(session);
 
   useEffect(() => {
-    if (request) setNote('');
+    if (request) {
+      setDecision('APPROVED');
+      setReason('');
+      setNote('');
+    }
   }, [request]);
 
   if (!request) return null;
+
+  const rejecting = decision === 'REJECTED';
+  const changeDecision = (next: Decision) => {
+    setDecision(next);
+    setReason('');
+    setNote('');
+  };
 
   return (
     <Modal
@@ -232,25 +301,23 @@ export function DecisionModal({
       onOpenChange={(next) => !next && onClose()}
       size="wide"
       title={`Leave approval — ${request.id}`}
-      description="Menyetujui boleh membawa catatan; menolak wajib beralasan. Keduanya dijawab 200 diterima — status final ditulis setelah proses persetujuan selesai."
+      description="Keputusan dijawab 200 diterima — status final ditulis setelah proses persetujuan selesai."
       footer={
         <>
-          <Button
-            variant="danger"
-            disabled={decide.isPending}
-            onClick={() =>
-              decide.mutate({ id: request.id, decision: 'REJECTED', note }, { onSuccess: onClose })
-            }
-          >
-            Reject
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
           </Button>
           <Button
-            disabled={decide.isPending}
+            variant={rejecting ? 'danger' : 'primary'}
+            disabled={decide.isPending || (rejecting && !reason)}
             onClick={() =>
-              decide.mutate({ id: request.id, decision: 'APPROVED', note }, { onSuccess: onClose })
+              decide.mutate(
+                { id: request.id, decision, rejectReason: rejecting ? reason || null : null, note },
+                { onSuccess: onClose },
+              )
             }
           >
-            {decide.isPending ? 'Memproses…' : 'Approve'}
+            {decide.isPending ? 'Memproses…' : rejecting ? 'Reject' : 'Approve'}
           </Button>
         </>
       }
@@ -272,17 +339,30 @@ export function DecisionModal({
           </KeyValueRow>
         </KeyValueList>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="decision-note">Catatan keputusan</Label>
-          <Textarea
-            id="decision-note"
-            rows={3}
-            maxLength={500}
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Wajib diisi bila menolak"
-          />
-        </div>
+        <Segmented<Decision>
+          options={[
+            { value: 'APPROVED', label: 'Approve' },
+            { value: 'REJECTED', label: 'Reject' },
+          ]}
+          value={decision}
+          onChange={changeDecision}
+        />
+
+        {rejecting ? (
+          <RejectFields reason={reason} note={note} onReason={setReason} onNote={setNote} />
+        ) : (
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="decision-note">Catatan keputusan</Label>
+            <Textarea
+              id="decision-note"
+              rows={3}
+              maxLength={500}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Opsional"
+            />
+          </div>
+        )}
       </div>
     </Modal>
   );
@@ -298,11 +378,15 @@ export function SickRejectModal({
   session: Session;
   onClose: () => void;
 }) {
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState<RejectReason | ''>('');
+  const [note, setNote] = useState('');
   const reject = useRejectSick(session);
 
   useEffect(() => {
-    if (request) setReason('');
+    if (request) {
+      setReason('');
+      setNote('');
+    }
   }, [request]);
 
   if (!request) return null;
@@ -320,8 +404,8 @@ export function SickRejectModal({
           </Button>
           <Button
             variant="danger"
-            disabled={reason.trim().length === 0 || reject.isPending}
-            onClick={() => reject.mutate({ id: request.id, reason }, { onSuccess: onClose })}
+            disabled={!reason || reject.isPending}
+            onClick={() => reject.mutate({ id: request.id, reason: reason || null, note }, { onSuccess: onClose })}
           >
             {reject.isPending ? 'Memproses…' : 'Reject sick leave'}
           </Button>
@@ -340,19 +424,7 @@ export function SickRejectModal({
           </KeyValueRow>
         </KeyValueList>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="sick-reason">
-            Alasan penolakan<em>*</em>
-          </Label>
-          <Textarea
-            id="sick-reason"
-            rows={3}
-            maxLength={500}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            placeholder="Wajib diisi"
-          />
-        </div>
+        <RejectFields reason={reason} note={note} onReason={setReason} onNote={setNote} />
       </div>
     </Modal>
   );
@@ -377,7 +449,7 @@ export function WithdrawModal({
       open
       onOpenChange={(next) => !next && onClose()}
       title="Withdraw this request?"
-      description="Boleh selagi menunggu atau otomatis disetujui, dan — setelah disetujui — hanya sebelum tanggal mulainya tiba."
+      description="Boleh selagi menunggu; setelah disetujui (termasuk otomatis) hanya sebelum tanggal mulainya tiba."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>

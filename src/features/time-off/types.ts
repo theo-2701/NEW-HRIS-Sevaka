@@ -23,6 +23,26 @@ export type DaySession = 'FULL' | 'HALF_AM' | 'HALF_PM';
 /** Pemicu lapis persetujuan tambahan — mengangkat pengajuan, bukan memblokir. */
 export type ExtraApprovalReason = 'NEGATIVE_BALANCE' | 'SOFT_BLACKOUT' | 'UNPAID_TYPE' | 'LONG_DURATION';
 
+/** UIC §3.1.6/§3.1.7 — dasar penolakan wajib, enum 15 nilai (`K12`). */
+export const REJECT_REASONS = [
+  'INCOMPLETE_PROOF',
+  'LATE_SUBMISSION',
+  'POLICY_MISMATCH',
+  'DATA_MISMATCH',
+  'DUPLICATE_CLAIM',
+  'EXCEEDS_QUOTA',
+  'UNAUTHORIZED_CLINIC',
+  'INCONSISTENT_HISTORY',
+  'WRONG_LEAVE_TYPE',
+  'RETROACTIVE_LIMIT',
+  'MISSING_APPROVAL_STEP',
+  'SUSPECTED_FRAUD',
+  'ALREADY_ON_UNPAID',
+  'EMPLOYMENT_STATUS_INELIGIBLE',
+  'SYSTEM_ERROR_RESUBMIT',
+] as const;
+export type RejectReason = (typeof REJECT_REASONS)[number];
+
 export type DelegationStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 /** UIC §3.1.8 — `DSR` lama diganti `DATA_SUBJECT_REQUEST`. */
@@ -96,7 +116,9 @@ export interface LeaveRequest {
   extraApprovalReason: ExtraApprovalReason | null;
   /** Dibekukan saat submit untuk cuti sakit. */
   rejectDeadlineAt: string | null;
-  rejectReason: string | null;
+  rejectReason: RejectReason | null;
+  /** Catatan bebas opsional pendamping `rejectReason` (≤500). */
+  rejectNote: string | null;
   submittedAt: string;
   approvedBy: string | null;
   approvedAt: string | null;
@@ -132,7 +154,8 @@ export interface RequestDraft {
   startDate: string;
   endDate: string;
   reason: string;
-  hasDoctorNote: boolean;
+  /** Nama berkas surat dokter (PDF ≤10 MB) — hanya terkirim bila jenisnya `requiresDocument`. */
+  doctorNoteFile: string;
 }
 
 export const REQUEST_STATUS_LABEL: Record<RequestStatus, string> = {
@@ -161,6 +184,24 @@ export const EXTRA_REASON_LABEL: Record<ExtraApprovalReason, string> = {
   SOFT_BLACKOUT: 'Soft blackout',
   UNPAID_TYPE: 'Unpaid leave type',
   LONG_DURATION: 'Long duration',
+};
+
+export const REJECT_REASON_LABEL: Record<RejectReason, string> = {
+  INCOMPLETE_PROOF: 'Incomplete proof',
+  LATE_SUBMISSION: 'Late submission',
+  POLICY_MISMATCH: 'Policy mismatch',
+  DATA_MISMATCH: 'Data mismatch',
+  DUPLICATE_CLAIM: 'Duplicate claim',
+  EXCEEDS_QUOTA: 'Exceeds quota',
+  UNAUTHORIZED_CLINIC: 'Unauthorized clinic',
+  INCONSISTENT_HISTORY: 'Inconsistent history',
+  WRONG_LEAVE_TYPE: 'Wrong leave type',
+  RETROACTIVE_LIMIT: 'Retroactive limit exceeded',
+  MISSING_APPROVAL_STEP: 'Missing approval step',
+  SUSPECTED_FRAUD: 'Suspected fraud',
+  ALREADY_ON_UNPAID: 'Already on unpaid leave',
+  EMPLOYMENT_STATUS_INELIGIBLE: 'Employment status ineligible',
+  SYSTEM_ERROR_RESUBMIT: 'System error — resubmit',
 };
 
 export const ACCESS_PURPOSE_LABEL: Record<AccessPurpose, string> = {
