@@ -224,8 +224,9 @@ export function AttendanceSettingsPage() {
           </Card>
 
           <Note icon={<Info />}>
-            All four work arrangements must be filled in explicitly — there is no implied default, and no fifth row can
-            be added: the list is system-locked. Deleting a point is refused as soon as a single tap has ever
+            Both work arrangements (WFO and WFH) must be filled in explicitly — there is no implied default and no third
+            row: the list is system-locked. The matrix is stored but no longer read by a tap; radius and selfie follow the
+            employee&rsquo;s profile flags. Deleting a point is refused as soon as a single tap has ever
             referenced it; the lawful way to retire one is the Active toggle.
           </Note>
         </div>

@@ -7,8 +7,9 @@ import type {
   DayFilter,
   PunchResult,
   TapFilter,
+  WfhFilter,
 } from '@/features/attendance/services/attendance.service';
-import type { AttendanceSession, CorrectionDraft } from '@/features/attendance/types';
+import type { AttendanceSession, CorrectionDraft, WorkArrangement } from '@/features/attendance/types';
 import type { ToastTone } from '@/store/ui.store';
 
 export const attendanceKeys = {
@@ -18,7 +19,15 @@ export const attendanceKeys = {
   taps: (employeeId: string, filter: TapFilter) => ['attendance', 'taps', employeeId, filter] as const,
   corrections: (employeeId: string, filter: CorrectionFilter) =>
     ['attendance', 'corrections', employeeId, filter] as const,
+  wfh: (employeeId: string, filter: WfhFilter) => ['attendance', 'wfh', employeeId, filter] as const,
 };
+
+export function useWfhPermissions(session: AttendanceSession, filter: WfhFilter) {
+  return useQuery({
+    queryKey: attendanceKeys.wfh(session.employeeId, filter),
+    queryFn: () => attendanceService.wfhPermissions(session, filter),
+  });
+}
 
 export function useTodayPunches(session: AttendanceSession) {
   return useQuery({
@@ -67,7 +76,10 @@ function useAttendanceMutation<TVars, TResult = void>(
 }
 
 export const useRecordPunch = (session: AttendanceSession) =>
-  useAttendanceMutation<{ selfieCaptured: boolean; idempotencyKey: string }, PunchResult>(
+  useAttendanceMutation<
+    { selfieCaptured: boolean; idempotencyKey: string; workArrangement?: WorkArrangement },
+    PunchResult
+  >(
     (vars) => attendanceService.recordPunch(session, vars),
     (result) => ({
       text: result.replayed
@@ -98,6 +110,29 @@ export function useDecideCorrection(session: AttendanceSession) {
           ? 'workflow.process.completed — hari itu kini excused; menit terukurnya tidak berubah sedikit pun.'
           : 'workflow.process.completed — koreksi ditolak dan hari itu tetap membawa putusan aslinya.',
         kind === 'APPROVED' ? 'ok' : 'warn',
+      );
+      void queryClient.invalidateQueries();
+    },
+    onError: (error: Error) => toast(error.message, 'danger'),
+  });
+}
+
+/** Keputusan izin WFH (K9): diterima dulu, status ditulis agregator FLOW OR. */
+export function useDecideWfh(session: AttendanceSession) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, decision }: { id: string; decision: 'APPROVED' | 'REJECTED' }) => {
+      await attendanceService.decideWfh(session, id, decision);
+      return decision;
+    },
+    onSuccess: async (decision, { id }) => {
+      toast('200 — keputusan diterima dan diteruskan ke proses persetujuan.', 'info');
+      await attendanceService.completeWfhWorkflow(session, id, decision);
+      toast(
+        decision === 'APPROVED'
+          ? 'Izin WFH disetujui.'
+          : 'Izin WFH ditolak — tap hari itu bertanda WFH rejected; status kehadiran tidak berubah.',
+        decision === 'APPROVED' ? 'ok' : 'warn',
       );
       void queryClient.invalidateQueries();
     },

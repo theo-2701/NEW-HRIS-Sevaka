@@ -17,7 +17,11 @@ export interface AttendanceSession {
 }
 
 export type PunchType = 'IN' | 'OUT';
-export type WorkArrangement = 'WFO' | 'HYBRID' | 'WFH' | 'MOBILE';
+/** UIC-TIME 0.27: `HYBRID`/`MOBILE` dicabut — tap dan matriks hanya mengenal dua nilai. */
+export type WorkArrangement = 'WFO' | 'WFH';
+
+/** Izin WFH lahir otomatis dari tap WFH berprofil WFO (UIC §6.4). */
+export type WfhStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'TIMED_OUT';
 export type DayType = 'WORKDAY' | 'WEEKLY_REST' | 'PUBLIC_HOLIDAY';
 
 export type AttendanceStatus =
@@ -70,8 +74,40 @@ export interface GeofenceDraft {
   rules: Record<WorkArrangement, GeofenceRule>;
 }
 
-/** Urutan baris matriks — dikunci sistem, tidak ada baris kelima. */
-export const ARRANGEMENTS: WorkArrangement[] = ['WFO', 'HYBRID', 'WFH', 'MOBILE'];
+/**
+ * Urutan baris matriks — dikunci sistem, tepat dua kunci. Sejak TSD-TIME 0.105
+ * matriks tersimpan tetapi tidak dibaca tap; penentunya flag profil karyawan.
+ */
+export const ARRANGEMENTS: WorkArrangement[] = ['WFO', 'WFH'];
+
+/** Flag profil karyawan yang dibaca layar Punch (pengganti employee-service). */
+export interface PunchProfile {
+  employeeId: string;
+  workArrangement: WorkArrangement;
+  isSelfie: boolean;
+  radiusValidation: boolean;
+}
+
+/** `GET /attendance-punches/policy` (UIC §6.1.4) — kebijakan milik pemanggil. */
+export interface PunchPolicy {
+  profileWorkArrangement: WorkArrangement | null;
+  defaultWorkArrangement: WorkArrangement;
+  selfieRequired: boolean;
+  radiusValidation: boolean;
+  wfhRequiresApproval: boolean;
+}
+
+export interface WfhPermission {
+  id: string;
+  employeeId: string;
+  punchId: string;
+  workDate: string;
+  requestStatus: WfhStatus;
+  /** Tenggat tiga hari sejak tap; lewat tenggat ⇒ `TIMED_OUT`. */
+  dueAt: string;
+  decidedAt: string | null;
+  decidedBy: string | null;
+}
 
 export interface Punch {
   id: string;
@@ -86,6 +122,10 @@ export interface Punch {
   isMockLocationSuspected: boolean;
   isWorkArrangementUnknown: boolean;
   geofenceId: string | null;
+  /** Pilihan WFO/WFH pada tap ini; `null` = tap tanpa pilihan (profil yang menentukan). */
+  workArrangement?: WorkArrangement | null;
+  /** Status izin WFH yang lahir dari tap ini; `REJECTED`/`TIMED_OUT` = tanda «WFH rejected». */
+  wfhPermissionStatus?: WfhStatus | null;
 }
 
 export interface AttendanceDay {
@@ -128,19 +168,26 @@ export interface CorrectionDraft {
   requestedOut: string;
 }
 
-/** Kanal capture hasil persilangan pengaturan kerja × aturan titik geofence. */
+/** Kanal capture tap: pilihan WFO/WFH × flag profil (UIC §6.1.1/§6.1.4 0.27). */
 export interface CaptureChannel {
   geofence: Geofence;
   arrangement: WorkArrangement;
   radius: boolean;
   selfie: boolean;
+  /** Profil WFO memilih WFH ⇒ izin WFH ke atasan; absen tetap tersimpan. */
+  wfhRequiresApproval: boolean;
 }
 
 export const ARRANGEMENT_LABEL: Record<WorkArrangement, string> = {
   WFO: 'Work from office',
-  HYBRID: 'Hybrid',
   WFH: 'Work from home',
-  MOBILE: 'Mobile / field',
+};
+
+export const WFH_STATUS_LABEL: Record<WfhStatus, string> = {
+  PENDING: 'WFH awaiting approval',
+  APPROVED: 'WFH approved',
+  REJECTED: 'WFH rejected',
+  TIMED_OUT: 'WFH timed out',
 };
 
 export const DAY_TYPE_LABEL: Record<DayType, string> = {
@@ -198,6 +245,11 @@ export function canCreateCorrection(session: AttendanceSession): boolean {
 /** `attendance-correction:approve` — HR_MANAGER · DEPT_MANAGER (§6.3.3). */
 export function canApproveCorrection(session: AttendanceSession): boolean {
   return session.role === 'HR_MANAGER' || session.role === 'DEPT_MANAGER';
+}
+
+/** `wfh-permission:approve` — HR_MANAGER · DEPT_MANAGER (§6.4.3). */
+export function canDecideWfh(session: AttendanceSession, row: WfhPermission): boolean {
+  return canApproveCorrection(session) && row.employeeId !== session.employeeId && row.requestStatus === 'PENDING';
 }
 
 /** `attendance-summary:search` bukan scope EMPLOYEE (§6.2.2). */

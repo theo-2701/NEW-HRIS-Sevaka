@@ -5,9 +5,10 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { KeyValueList, KeyValueRow, Note } from '@/features/time-off/components/TimeOffBits';
-import { RadiusCell } from '@/features/attendance/components/AttendanceBits';
-import { ARRANGEMENT_LABEL } from '@/features/attendance/types';
-import type { CaptureChannel } from '@/features/attendance/types';
+import { Segmented } from '@/components/Segmented';
+import { RadiusCell, WfhStatusBadge } from '@/features/attendance/components/AttendanceBits';
+import { ARRANGEMENT_LABEL, ARRANGEMENTS } from '@/features/attendance/types';
+import type { CaptureChannel, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { toast } from '@/store/ui.store';
 import { formatDate, formatDateTime } from '@/lib/format';
@@ -53,7 +54,7 @@ function LocationInfo({ channel }: { channel: CaptureChannel }) {
             <dd className="m-0 font-semibold text-fg-1">{channel.geofence.geofenceName}</dd>
             <dt className="font-medium text-fg-3">Radius</dt>
             <dd className="m-0 font-semibold text-fg-1">
-              {channel.geofence.radiusMeters} m · {channel.radius ? 'must be inside' : 'not required'}
+              {channel.geofence.radiusMeters} m · {channel.radius ? 'must be inside' : 'not checked'}
             </dd>
             <dt className="font-medium text-fg-3">Selfie</dt>
             <dd className="m-0 font-semibold text-fg-1">{channel.selfie ? 'Required' : 'Not required'}</dd>
@@ -67,8 +68,9 @@ function LocationInfo({ channel }: { channel: CaptureChannel }) {
 /**
  * Konsol tap — port `.tm-punch`.
  *
- * Tombolnya tidak pernah dipilih: keadaan hari yang menentukan mana yang
- * muncul. Waktu, koordinat, akurasi, dan detail perangkat diambil di latar.
+ * Tombol IN/OUT tidak pernah dipilih: keadaan hari yang menentukan. Yang
+ * dipilih pegawai hanya WFO/WFH untuk tap ini — pilihannya menang atas profil
+ * (UIC §6.1.1). Swafoto tampil hanya bila flag profil `is_selfie` menyala.
  * Kartu jam di kiri, isi `children` (tabel tap hari ini) di kanan.
  */
 export function PunchConsole({
@@ -79,6 +81,7 @@ export function PunchConsole({
   tappedInAt,
   selfieCaptured,
   onTakeSelfie,
+  onArrangementChange,
   onPunch,
   busy,
   children,
@@ -90,6 +93,7 @@ export function PunchConsole({
   tappedInAt: string | null;
   selfieCaptured: boolean;
   onTakeSelfie: () => void;
+  onArrangementChange: (value: WorkArrangement) => void;
   onPunch: () => void;
   busy: boolean;
   children?: ReactNode;
@@ -123,6 +127,18 @@ export function PunchConsole({
           </span>
           <LocationInfo channel={channel} />
 
+          <Segmented<WorkArrangement>
+            className="mb-3"
+            options={ARRANGEMENTS.map((value) => ({ value, label: ARRANGEMENT_LABEL[value] }))}
+            value={channel.arrangement}
+            onChange={onArrangementChange}
+          />
+          {channel.wfhRequiresApproval && (
+            <span className="mb-3 font-body text-xs font-medium leading-[1.5] text-white/90">
+              Your profile is WFO, so working from home asks your manager for approval. The tap is still saved.
+            </span>
+          )}
+
           <button
             type="button"
             disabled={!nextType || busy}
@@ -147,7 +163,7 @@ export function PunchConsole({
                 )}
               </div>
               <span className="font-body text-[11px] font-medium leading-[1.45] text-white/80">
-                Required by this capture channel. Live camera only — no file picker, so a photo out of the gallery can
+                Required by your profile. Live camera only — no file picker, so a photo out of the gallery can
                 never stand in for the person tapping. Without a frame the tap is refused 422.
               </span>
             </div>
@@ -173,8 +189,7 @@ export function PunchConsole({
         <Note icon={<MapPin />}>
           If the device refuses location permission, both coordinates stay empty and <strong>the tap is still saved</strong>.
           Whether it was inside the radius is computed by the server — never accepted from the client — and an empty
-          verdict means <em>could not be evaluated</em>, not a violation. The crossing of arrangement × location is the
-          rule, not the button.
+          verdict means <em>could not be evaluated</em>, not a violation. Work from home is never radius-checked.
         </Note>
       </div>
     </div>
@@ -326,8 +341,16 @@ export function PunchSavedModal({
             <KeyValueRow label="Radius verdict">
               <RadiusCell punch={result.punch} />
             </KeyValueRow>
+            <KeyValueRow label="Work arrangement">
+              {result.punch.workArrangement ? ARRANGEMENT_LABEL[result.punch.workArrangement] : 'From profile'}
+            </KeyValueRow>
+            {result.punch.wfhPermissionStatus && (
+              <KeyValueRow label="WFH permission">
+                <WfhStatusBadge status={result.punch.wfhPermissionStatus} />
+              </KeyValueRow>
+            )}
             <KeyValueRow label="Selfie">
-              {selfieRequired ? 'Required by this channel — captured live, camera source' : 'Not required by this channel'}
+              {selfieRequired ? 'Required by your profile — captured live, camera source' : 'Not required by your profile'}
             </KeyValueRow>
           </KeyValueList>
           {result.replayed && (

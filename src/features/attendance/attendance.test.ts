@@ -21,8 +21,8 @@ beforeEach(() => {
 });
 
 describe('Punch — append-only dan bergantung keadaan hari', () => {
-  it('kanal WFO × geo-1 mewajibkan selfie, tap tanpa frame ditolak 422', async () => {
-    const channel = captureChannel(RINA, DAILY);
+  it('profil is_selfie mewajibkan selfie, tap tanpa frame ditolak 422', async () => {
+    const channel = captureChannel(RINA);
     expect(channel.selfie).toBe(true);
     await expect(
       attendanceService.recordPunch(RINA, { selfieCaptured: false, idempotencyKey: 'key-1' }),
@@ -44,6 +44,36 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
     expect(retry.replayed).toBe(true);
     expect(retry.punch.id).toBe(first.punch.id);
     expect(await attendanceService.todayPunches(RINA)).toHaveLength(1);
+  });
+
+  it('profil tanpa is_selfie tidak meminta frame; WFH tak dicek radius', async () => {
+    const channel = captureChannel(SARI);
+    expect(channel).toMatchObject({ arrangement: 'WFH', selfie: false, radius: false, wfhRequiresApproval: false });
+    const result = await attendanceService.recordPunch(SARI, { selfieCaptured: false, idempotencyKey: 'sari-1' });
+    expect(result.punch.isWithinGeofence).toBeNull();
+  });
+
+  it('profil WFO memilih WFH: tap tersimpan dan izin WFH lahir PENDING', async () => {
+    expect(captureChannel(RINA, 'WFH').wfhRequiresApproval).toBe(true);
+    const result = await attendanceService.recordPunch(RINA, {
+      selfieCaptured: true,
+      idempotencyKey: 'rina-wfh',
+      workArrangement: 'WFH',
+    });
+    expect(result.punch).toMatchObject({ workArrangement: 'WFH', wfhPermissionStatus: 'PENDING', isWithinGeofence: null });
+    const [permit] = await attendanceService.wfhPermissions(RINA);
+    expect(permit.requestStatus).toBe('PENDING');
+  });
+
+  it('izin WFH: pemiliknya tidak bisa memutus; ditolak menandai tap', async () => {
+    await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k', workArrangement: 'WFH' });
+    const [permit] = await attendanceService.wfhPermissions(HENDRA);
+    await expect(attendanceService.decideWfh(RINA, permit.id, 'APPROVED')).rejects.toThrow(/403/);
+    await attendanceService.decideWfh(HENDRA, permit.id, 'REJECTED');
+    await attendanceService.completeWfhWorkflow(HENDRA, permit.id, 'REJECTED');
+    const [tap] = await attendanceService.todayPunches(RINA);
+    expect(tap.wfhPermissionStatus).toBe('REJECTED');
+    await expect(attendanceService.decideWfh(HENDRA, permit.id, 'APPROVED')).rejects.toThrow(/422/);
   });
 
   it('audit tap mentah tertutup untuk peran tanpa kewenangan penyelidikan', async () => {

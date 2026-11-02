@@ -1,11 +1,13 @@
-import { ATTENDANCE_TODAY, GEOFENCES, employeeBranch } from '@/features/attendance/mock-data';
+import { ATTENDANCE_TODAY, GEOFENCES, PUNCH_PROFILES, employeeBranch } from '@/features/attendance/mock-data';
 import type {
   AttendanceDay,
   AttendanceSession,
   CaptureChannel,
   Correction,
   Punch,
+  PunchPolicy,
   PunchType,
+  WorkArrangement,
 } from '@/features/attendance/types';
 
 /**
@@ -24,21 +26,36 @@ export function resolveGeofence(employeeId: string) {
   return GEOFENCES.find((row) => row.scopeRef === branch && row.isActive) ?? GEOFENCES[0];
 }
 
-/** Pengaturan kerja hari ini menurut baris harian; default WFO bila belum ada. */
-export function arrangementToday(employeeId: string, days: AttendanceDay[]) {
-  const row = days.find((item) => item.employeeId === employeeId && item.workDate === ATTENDANCE_TODAY);
-  return row?.workArrangement ?? 'WFO';
+/**
+ * `GET /attendance-punches/policy` (UIC §6.1.4): kebijakan tap pemanggil dari
+ * flag profilnya. Profil tak terbaca ⇒ default WFO dan swafoto opsional.
+ */
+export function punchPolicy(employeeId: string): PunchPolicy {
+  const profile = PUNCH_PROFILES.find((row) => row.employeeId === employeeId);
+  return {
+    profileWorkArrangement: profile?.workArrangement ?? null,
+    defaultWorkArrangement: profile?.workArrangement === 'WFH' ? 'WFH' : 'WFO',
+    selfieRequired: profile?.isSelfie ?? false,
+    radiusValidation: profile?.radiusValidation ?? false,
+    wfhRequiresApproval: profile?.workArrangement === 'WFO',
+  };
 }
 
 /**
- * Kanal capture = persilangan pengaturan kerja × aturan titik.
- * Persilangannya yang jadi aturan, bukan tombolnya.
+ * Kanal capture tap = pilihan WFO/WFH × flag profil. Pilihan menang atas
+ * profil: WFH tak dicek radius; WFO dicek bila `radiusValidation`. Swafoto
+ * mengikuti `is_selfie` profil, bukan matriks titik (UIC §6.1.1 0.27).
  */
-export function captureChannel(session: AttendanceSession, days: AttendanceDay[]): CaptureChannel {
-  const geofence = resolveGeofence(session.employeeId);
-  const arrangement = arrangementToday(session.employeeId, days);
-  const rule = geofence.rules[arrangement] ?? { radius: false, selfie: false };
-  return { geofence, arrangement, radius: rule.radius, selfie: rule.selfie };
+export function captureChannel(session: AttendanceSession, choice?: WorkArrangement): CaptureChannel {
+  const policy = punchPolicy(session.employeeId);
+  const arrangement = choice ?? policy.defaultWorkArrangement;
+  return {
+    geofence: resolveGeofence(session.employeeId),
+    arrangement,
+    radius: arrangement === 'WFO' && policy.radiusValidation,
+    selfie: policy.selfieRequired,
+    wfhRequiresApproval: arrangement === 'WFH' && policy.wfhRequiresApproval,
+  };
 }
 
 /** Tap milik sesi ini pada hari berjalan. */

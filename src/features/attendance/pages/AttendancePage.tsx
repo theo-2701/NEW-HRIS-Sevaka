@@ -23,6 +23,7 @@ import {
   RadiusCell,
 } from '@/features/attendance/components/AttendanceBits';
 import { PunchConsole, PunchSavedModal, SelfieModal } from '@/features/attendance/components/PunchConsole';
+import { WfhPermissionPanel } from '@/features/attendance/components/WfhPermissionPanel';
 import {
   CorrectionDecisionModal,
   CorrectionDetailModal,
@@ -54,7 +55,7 @@ import {
   useTodayPunches,
 } from '@/features/attendance/hooks/useAttendance';
 import { ATTENDANCE_TODAY, VIEWERS, employeeName } from '@/features/attendance/mock-data';
-import { captureChannel, eligibleDays, newIdempotencyKey, nextPunchType } from '@/features/attendance/rules';
+import { captureChannel, eligibleDays, newIdempotencyKey, nextPunchType, punchPolicy } from '@/features/attendance/rules';
 import {
   ARRANGEMENT_LABEL,
   ATTENDANCE_STATUS_LABEL,
@@ -65,11 +66,11 @@ import {
   canSearchPunch,
   canSearchSummary,
 } from '@/features/attendance/types';
-import type { AttendanceDay, AttendanceSession, Correction, Punch } from '@/features/attendance/types';
+import type { AttendanceDay, AttendanceSession, Correction, Punch, WorkArrangement } from '@/features/attendance/types';
 import type { PunchResult } from '@/features/attendance/services/attendance.service';
 import { formatDate, formatDateTime } from '@/lib/format';
 
-type Tab = 'punch' | 'history' | 'correction';
+type Tab = 'punch' | 'history' | 'correction' | 'wfh';
 type SubTab = 'daily' | 'taps';
 
 const hhmm = (iso: string) => iso.slice(11, 16);
@@ -97,6 +98,9 @@ export function AttendancePage() {
 
   const [selfieOpen, setSelfieOpen] = useState(false);
   const [selfieCaptured, setSelfieCaptured] = useState(false);
+  const [arrangement, setArrangement] = useState<WorkArrangement>(
+    () => punchPolicy(VIEWERS[0].employeeId).defaultWorkArrangement,
+  );
   const [punchResult, setPunchResult] = useState<PunchResult | null>(null);
 
   const [filing, setFiling] = useState(false);
@@ -147,7 +151,7 @@ export function AttendancePage() {
   const pagedCorrections = usePagedRows(corrections);
 
   const punch = useRecordPunch(session);
-  const channel = captureChannel(session, allDays);
+  const channel = captureChannel(session, arrangement);
   const next = nextPunchType(session.employeeId, today);
   const tappedIn = today.find((row) => row.punchType === 'IN');
   const formDays = eligibleDays(session, allDays, allCorrections);
@@ -159,6 +163,7 @@ export function AttendancePage() {
     try {
       const result = await punch.mutateAsync({
         selfieCaptured,
+        workArrangement: arrangement,
         // Satu kunci per percobaan tap; dipakai ulang apa adanya bila ditekan lagi.
         idempotencyKey: newIdempotencyKey(),
       });
@@ -215,6 +220,7 @@ export function AttendancePage() {
                 const nextSession = VIEWERS.find((row) => row.employeeId === value);
                 if (nextSession) {
                   setSession(nextSession);
+                  setArrangement(punchPolicy(nextSession.employeeId).defaultWorkArrangement);
                   pagedDays.resetPage();
                   pagedTaps.resetPage();
                   pagedCorrections.resetPage();
@@ -263,6 +269,7 @@ export function AttendancePage() {
               { value: 'punch', label: 'Punch' },
               { value: 'history', label: 'History & Summary', count: days.length },
               { value: 'correction', label: 'Correction', count: corrections.length },
+              { value: 'wfh', label: 'WFH Permission' },
             ]}
           />
 
@@ -275,6 +282,7 @@ export function AttendancePage() {
               tappedInAt={tappedIn ? hhmm(tappedIn.punchAt) : null}
               selfieCaptured={selfieCaptured}
               onTakeSelfie={() => setSelfieOpen(true)}
+              onArrangementChange={setArrangement}
               onPunch={doPunch}
               busy={punch.isPending}
             >
@@ -477,6 +485,8 @@ export function AttendancePage() {
               )}
             </div>
           )}
+
+          {tab === 'wfh' && <WfhPermissionPanel session={session} />}
 
           {tab === 'correction' && (
             <Card>

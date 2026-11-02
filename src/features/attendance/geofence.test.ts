@@ -72,12 +72,10 @@ describe('Work point — keunikan nama', () => {
 });
 
 describe('Work point — matriks capture', () => {
-  it('menyimpan empat baris eksplisit apa adanya', async () => {
+  it('menyimpan dua baris eksplisit WFO/WFH apa adanya', async () => {
     const mixed = {
-      WFO: { radius: true, selfie: true },
-      HYBRID: { radius: true, selfie: false },
+      WFO: { radius: true, selfie: false },
       WFH: { radius: false, selfie: true },
-      MOBILE: { radius: false, selfie: false },
     };
     const result = await geofenceService.save({ ...draft, rules: mixed });
     expect(Object.keys(result.row.rules)).toEqual(ARRANGEMENTS);
@@ -85,10 +83,10 @@ describe('Work point — matriks capture', () => {
   });
 
   it('mengubah matriks tidak menyentuh baris lain', async () => {
-    await geofenceService.save({ ...draft, rules: { ...rules, MOBILE: { radius: true, selfie: false } } }, 'geo-3');
+    await geofenceService.save({ ...draft, rules: { ...rules, WFH: { radius: true, selfie: false } } }, 'geo-3');
     const rows = await geofenceService.list();
-    expect(rows.find((row) => row.id === 'geo-3')!.rules.MOBILE).toEqual({ radius: true, selfie: false });
-    expect(rows.find((row) => row.id === 'geo-1')!.rules.MOBILE).toEqual({ radius: false, selfie: true });
+    expect(rows.find((row) => row.id === 'geo-3')!.rules.WFH).toEqual({ radius: true, selfie: false });
+    expect(rows.find((row) => row.id === 'geo-1')!.rules.WFH).toEqual({ radius: false, selfie: true });
   });
 });
 

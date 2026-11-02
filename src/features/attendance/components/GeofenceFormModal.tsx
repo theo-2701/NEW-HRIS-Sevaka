@@ -44,7 +44,7 @@ function toDraft(row: Geofence | null): GeofenceDraft {
 }
 
 /**
- * Matriks capture — empat baris terkunci sistem × dua flag eksplisit.
+ * Matriks capture — dua baris WFO/WFH terkunci sistem × dua flag eksplisit.
  * Tidak ada default tersirat dan tidak ada baris kelima yang bisa ditambahkan.
  */
 function CaptureMatrix({
@@ -105,7 +105,7 @@ function CaptureMatrix({
         </table>
       </div>
       <span className="font-body text-xs font-normal text-fg-3">
-        All four rows, both checkboxes each — explicit by design, no implied defaults.
+        Both rows, both checkboxes each — explicit by design. Stored for reference: taps now follow each employee&rsquo;s profile flags.
       </span>
     </div>
   );

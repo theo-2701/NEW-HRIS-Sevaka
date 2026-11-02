@@ -5,6 +5,7 @@ import type {
   Correction,
   Geofence,
   Punch,
+  PunchProfile,
   WorkArrangement,
 } from '@/features/attendance/types';
 
@@ -27,7 +28,7 @@ export const VIEWERS: AttendanceSession[] = [
 const ALL_ARRANGEMENTS = (rule: Record<WorkArrangement, { radius: boolean; selfie: boolean }>) => rule;
 
 export const GEOFENCES: Geofence[] = [
-  // geo-1 = `geo-hq` §7.2: radius 150, MOBILE tanpa paksaan radius — titik yang
+  // geo-1 = `geo-hq` §7.2: radius 150, WFH tanpa paksaan radius — titik yang
   // dirujuk contoh punch §6.1.1, jadi DELETE padanya adalah 409 yang terdokumentasi.
   {
     id: 'geo-1',
@@ -40,9 +41,7 @@ export const GEOFENCES: Geofence[] = [
     usedByPunch: true,
     rules: ALL_ARRANGEMENTS({
       WFO: { radius: true, selfie: true },
-      HYBRID: { radius: true, selfie: true },
       WFH: { radius: false, selfie: true },
-      MOBILE: { radius: false, selfie: true },
     }),
   },
   {
@@ -56,9 +55,7 @@ export const GEOFENCES: Geofence[] = [
     usedByPunch: false,
     rules: ALL_ARRANGEMENTS({
       WFO: { radius: true, selfie: true },
-      HYBRID: { radius: true, selfie: true },
       WFH: { radius: false, selfie: true },
-      MOBILE: { radius: false, selfie: true },
     }),
   },
   {
@@ -72,9 +69,7 @@ export const GEOFENCES: Geofence[] = [
     usedByPunch: false,
     rules: ALL_ARRANGEMENTS({
       WFO: { radius: true, selfie: true },
-      HYBRID: { radius: true, selfie: true },
       WFH: { radius: false, selfie: true },
-      MOBILE: { radius: false, selfie: true },
     }),
   },
 ];
@@ -91,7 +86,7 @@ export const PUNCHES: Punch[] = [
 export const DAILY: AttendanceDay[] = [
   { id: 'day-1', employeeId: 'emp-hendra', workDate: '2026-07-27', dayType: 'WORKDAY', workArrangement: 'WFO', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'PRESENT', workedMinutes: 519, lateMinutes: 0, undertimeMinutes: 0, isExcused: false, excusedReason: null },
   { id: 'day-2', employeeId: 'emp-hendra', workDate: '2026-07-28', dayType: 'WORKDAY', workArrangement: 'WFO', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'LATE', workedMinutes: 445, lateMinutes: 32, undertimeMinutes: 0, isExcused: false, excusedReason: null },
-  { id: 'day-3', employeeId: 'emp-hendra', workDate: '2026-07-29', dayType: 'WORKDAY', workArrangement: 'HYBRID', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'INCOMPLETE', workedMinutes: 0, lateMinutes: 0, undertimeMinutes: 0, isExcused: false, excusedReason: null },
+  { id: 'day-3', employeeId: 'emp-hendra', workDate: '2026-07-29', dayType: 'WORKDAY', workArrangement: 'WFH', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'INCOMPLETE', workedMinutes: 0, lateMinutes: 0, undertimeMinutes: 0, isExcused: false, excusedReason: null },
   { id: 'day-4', employeeId: 'emp-hendra', workDate: '2026-07-30', dayType: 'WORKDAY', workArrangement: 'WFO', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'ABSENT', workedMinutes: 0, lateMinutes: 0, undertimeMinutes: 480, isExcused: false, excusedReason: null },
   // §6.2.1/§6.2.2 — 27 Juli sudah excused; 26 Juli sengaja bersih sebagai jalur demo pengajuan baru.
   { id: 'day-rina-27', employeeId: 'emp-rina', workDate: '2026-07-27', dayType: 'WORKDAY', workArrangement: 'WFO', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'PRESENT', workedMinutes: 547, lateMinutes: 5, undertimeMinutes: 0, isExcused: true, excusedReason: 'APPROVED_CORRECTION' },
@@ -99,6 +94,17 @@ export const DAILY: AttendanceDay[] = [
   { id: 'day-5', employeeId: 'emp-rina', workDate: '2026-07-23', dayType: 'WORKDAY', workArrangement: 'WFO', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'SICK', workedMinutes: 0, lateMinutes: 0, undertimeMinutes: 0, isExcused: false, excusedReason: null },
   { id: 'day-6', employeeId: 'emp-rina', workDate: '2026-07-20', dayType: 'WORKDAY', workArrangement: 'WFO', expectedIn: '08:00', expectedOut: '17:00', appliedLateToleranceMinutes: 15, attendanceStatus: 'ON_LEAVE', workedMinutes: 0, lateMinutes: 0, undertimeMinutes: 0, isExcused: false, excusedReason: null },
   { id: 'day-7', employeeId: 'emp-sari', workDate: '2026-07-26', dayType: 'WEEKLY_REST', workArrangement: 'WFO', expectedIn: null, expectedOut: null, appliedLateToleranceMinutes: 0, attendanceStatus: 'NOT_SCHEDULED', workedMinutes: 0, lateMinutes: 0, undertimeMinutes: 0, isExcused: false, excusedReason: null },
+];
+
+/**
+ * Flag profil absen per karyawan — milik employee-service (`is_selfie`,
+ * `radius_validation`, status kerja). Disalin di sini sebagai pengganti
+ * `GET /attendance-punches/policy`.
+ */
+export const PUNCH_PROFILES: PunchProfile[] = [
+  { employeeId: 'emp-rina', workArrangement: 'WFO', isSelfie: true, radiusValidation: true },
+  { employeeId: 'emp-sari', workArrangement: 'WFH', isSelfie: false, radiusValidation: false },
+  { employeeId: 'emp-hendra', workArrangement: 'WFO', isSelfie: true, radiusValidation: true },
 ];
 
 export const CORRECTIONS: Correction[] = [

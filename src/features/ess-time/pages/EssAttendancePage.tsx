@@ -14,7 +14,7 @@ import type { PunchResult } from '@/features/attendance/services/attendance.serv
 import { useMyAttendanceDays, useMyPunchesToday } from '@/features/ess-time/hooks/useEssTime';
 import { ESS_VIEWERS } from '@/features/ess-time/mock-data';
 import { ARRANGEMENT_LABEL, ATTENDANCE_STATUS_LABEL, DAY_TYPE_LABEL } from '@/features/attendance/types';
-import type { AttendanceDay, AttendanceStatus, Punch } from '@/features/attendance/types';
+import type { AttendanceDay, AttendanceStatus, Punch, WorkArrangement } from '@/features/attendance/types';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type Tone = 'ok' | 'warn' | 'err' | 'info' | 'mute';
@@ -44,11 +44,13 @@ export function EssAttendancePage() {
 
   const punch = useRecordPunch(session);
   const [selfieCaptured, setSelfieCaptured] = useState(false);
+  // Kosong = default kebijakan profil pemanggil (UIC §6.1.4).
+  const [choice, setChoice] = useState<WorkArrangement>();
   const [selfieOpen, setSelfieOpen] = useState(false);
   const [punchResult, setPunchResult] = useState<PunchResult | null>(null);
 
   const today = punches.data ?? [];
-  const channel = captureChannel(session, days.data ?? []);
+  const channel = captureChannel(session, choice);
   const nextType = nextPunchType(session.employeeId, today);
   const tappedIn = today.find((row) => row.punchType === 'IN');
 
@@ -56,6 +58,7 @@ export function EssAttendancePage() {
     try {
       const result = await punch.mutateAsync({
         selfieCaptured,
+        workArrangement: channel.arrangement,
         // Satu kunci per percobaan tap; ditekan ulang dengan kunci yang sama = baris yang sama.
         idempotencyKey: newIdempotencyKey(),
       });
@@ -74,7 +77,15 @@ export function EssAttendancePage() {
       crumbs={[{ label: 'Employee Self-Service' }, { label: 'Time Management' }, { label: 'Attendance' }]}
       title="Attendance"
       description="Rekap kehadiran harian Anda beserta tap masuk/pulang hari ini."
-      actions={<EssActorPicker actor={actor} onChange={setActor} />}
+      actions={
+        <EssActorPicker
+          actor={actor}
+          onChange={(next) => {
+            setActor(next);
+            setChoice(undefined);
+          }}
+        />
+      }
     >
       <div className="flex flex-col gap-5">
         <PunchConsole
@@ -85,6 +96,7 @@ export function EssAttendancePage() {
           tappedInAt={tappedIn ? tappedIn.punchAt.slice(11, 16) : null}
           selfieCaptured={selfieCaptured}
           onTakeSelfie={() => setSelfieOpen(true)}
+          onArrangementChange={setChoice}
           onPunch={doPunch}
           busy={punch.isPending}
         />

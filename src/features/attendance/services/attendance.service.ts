@@ -10,6 +10,7 @@ import {
   canCreateCorrection,
   canSearchPunch,
   canSearchSummary,
+  canDecideWfh,
 } from '@/features/attendance/types';
 import type {
   AttendanceDay,
@@ -17,6 +18,8 @@ import type {
   Correction,
   CorrectionDraft,
   Punch,
+  WfhPermission,
+  WorkArrangement,
 } from '@/features/attendance/types';
 
 /**
@@ -45,6 +48,7 @@ let mockDays: AttendanceDay[] = DAILY.map((row) => ({ ...row }));
 let mockCorrections: Correction[] = CORRECTIONS.map((row) => ({ ...row }));
 /** (karyawan, Idempotency-Key) → id tap yang sudah lahir. */
 let mockPunchKeys = new Map<string, string>();
+let mockWfh: WfhPermission[] = [];
 
 /** Dipakai pengujian supaya setiap berkas uji mulai dari dataset kontrak. */
 export function resetAttendanceMocks() {
@@ -52,6 +56,11 @@ export function resetAttendanceMocks() {
   mockDays = DAILY.map((row) => ({ ...row }));
   mockCorrections = CORRECTIONS.map((row) => ({ ...row }));
   mockPunchKeys = new Map();
+  mockWfh = [];
+}
+
+export interface WfhFilter {
+  requestStatus?: string;
 }
 
 export interface DayFilter {
@@ -177,7 +186,7 @@ export const attendanceService = {
    */
   async recordPunch(
     session: AttendanceSession,
-    input: { selfieCaptured: boolean; idempotencyKey: string; now?: Date },
+    input: { selfieCaptured: boolean; idempotencyKey: string; workArrangement?: WorkArrangement; now?: Date },
   ): Promise<PunchResult> {
     if (MOCK) {
       await delay(400);
@@ -185,7 +194,7 @@ export const attendanceService = {
       const existingId = mockPunchKeys.get(keyScope);
       if (existingId) {
         const existing = mockPunches.find((row) => row.id === existingId)!;
-        const channel = captureChannel(session, mockDays);
+        const channel = captureChannel(session, input.workArrangement);
         return { punch: { ...existing }, idempotencyKey: input.idempotencyKey, replayed: true, selfieRequired: channel.selfie };
       }
 
@@ -194,7 +203,7 @@ export const attendanceService = {
       const todays = [...punchesToday(session.employeeId, mockPunches)].sort((a, b) => (a.punchAt < b.punchAt ? -1 : 1));
       const type = nextPunchType(session.employeeId, mockPunches) ?? (todays.at(-1)?.punchType === 'IN' ? 'OUT' : 'IN');
 
-      const channel = captureChannel(session, mockDays);
+      const channel = captureChannel(session, input.workArrangement);
       if (channel.selfie && !input.selfieCaptured) {
         throw new Error('422 — kanal ini mewajibkan selfie langsung dan tidak ada frame yang terlampir; barisnya tidak pernah lahir.');
       }
@@ -214,15 +223,34 @@ export const attendanceService = {
         isMockLocationSuspected: false,
         isWorkArrangementUnknown: false,
         geofenceId: channel.geofence.id,
+        workArrangement: input.workArrangement ?? null,
+        wfhPermissionStatus: channel.wfhRequiresApproval ? 'PENDING' : null,
       };
       mockPunches = [...mockPunches, punch];
       mockPunchKeys.set(keyScope, punch.id);
+      // Profil WFO memilih WFH ⇒ izin WFH lahir sesudah fakta, tenggat 3 hari (§6.4).
+      if (channel.wfhRequiresApproval && !mockWfh.some((row) => row.employeeId === session.employeeId && row.workDate === ATTENDANCE_TODAY)) {
+        const due = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        mockWfh = [
+          {
+            id: `wfh-${mockWfh.length + 1}`,
+            employeeId: session.employeeId,
+            punchId: punch.id,
+            workDate: ATTENDANCE_TODAY,
+            requestStatus: 'PENDING',
+            dueAt: due.toISOString(),
+            decidedAt: null,
+            decidedBy: null,
+          },
+          ...mockWfh,
+        ];
+      }
       return { punch, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired: channel.selfie };
     }
 
     const { data } = await api.post<Punch>(
       '/attendance-punches',
-      { selfieCaptured: input.selfieCaptured },
+      { selfieCaptured: input.selfieCaptured, work_arrangement: input.workArrangement },
       { headers: { 'Idempotency-Key': input.idempotencyKey } },
     );
     return { punch: data, idempotencyKey: input.idempotencyKey, replayed: false, selfieRequired: input.selfieCaptured };
@@ -319,6 +347,56 @@ export const attendanceService = {
       }
     }
     return { ...row };
+  },
+
+  /**
+   * `POST /wfh-permissions/search` (§6.4.1): karyawan = miliknya, atasan/HR =
+   * yang ia terima (mock: seluruh tenant).
+   */
+  async wfhPermissions(session: AttendanceSession, filter: WfhFilter = {}): Promise<WfhPermission[]> {
+    if (MOCK) {
+      await delay(200);
+      return mockWfh
+        .filter((row) => canApproveCorrection(session) || row.employeeId === session.employeeId)
+        .filter((row) => !filter.requestStatus || row.requestStatus === filter.requestStatus)
+        .map((row) => ({ ...row }));
+    }
+    const { data } = await api.post<{ data: WfhPermission[] }>('/wfh-permissions/search', {
+      filters: { request_status: filter.requestStatus ? [filter.requestStatus] : undefined },
+      sort_by: 'work_date',
+      sort_direction: 'DESC',
+    });
+    return data.data;
+  },
+
+  /** `POST /wfh-permissions/{id}/approval` (§6.4.3) — pintu menerima keputusan (K9). */
+  async decideWfh(
+    session: AttendanceSession,
+    id: string,
+    decision: 'APPROVED' | 'REJECTED',
+  ): Promise<DecisionAck<WfhPermission>> {
+    if (MOCK) {
+      await delay(300);
+      const row = mockWfh.find((item) => item.id === id);
+      if (!row) throw new Error('404 — izin WFH tidak ditemukan.');
+      if (row.requestStatus !== 'PENDING') throw new Error('422 TIM-BIZ-632 — tak ada task aktif; izin sudah final.');
+      if (!canDecideWfh(session, row)) throw new Error('403 TIM-AUZ-633 — Anda bukan penerima task izin ini.');
+      return acknowledge(row);
+    }
+    const { data } = await api.post<DecisionAck<WfhPermission>>(`/wfh-permissions/${id}/approval`, { decision });
+    return data;
+  },
+
+  /** Mock saja — agregator FLOW OR menulis status; punch ikut membawa tandanya. */
+  async completeWfhWorkflow(session: AttendanceSession, id: string, decision: 'APPROVED' | 'REJECTED'): Promise<void> {
+    await delay(150);
+    const row = mockWfh.find((item) => item.id === id);
+    if (!row) return;
+    row.requestStatus = decision;
+    row.decidedAt = new Date().toISOString();
+    row.decidedBy = session.employeeId;
+    const punch = mockPunches.find((item) => item.id === row.punchId);
+    if (punch) punch.wfhPermissionStatus = decision;
   },
 
   /** Penarikan bukan penghapusan: barisnya tinggal sebagai Cancelled. */
