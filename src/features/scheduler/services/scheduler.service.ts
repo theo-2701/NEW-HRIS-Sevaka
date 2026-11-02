@@ -4,10 +4,13 @@ import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
 import { ASSIGNMENTS, ME, SHIFTS, SWAPS } from '@/features/scheduler/mock-data';
 import { datesBetween } from '@/features/scheduler/rules';
+import { DAY_SETUP_MAX_SHIFTS } from '@/features/scheduler/types';
 import type {
   AssignmentDraft,
   BulkDraft,
   BulkPreview,
+  DaySetup,
+  DaySetupBlock,
   Shift,
   ShiftAssignment,
   ShiftDraft,
@@ -282,6 +285,86 @@ export const schedulerService = {
     });
 
     return { created, overwritten, skippedIndividual, skippedSwap, employees: draft.employeeIds.length, dates };
+  },
+
+  /** `GET /shift-assignments/day-setup?work_date=` — roster kerja tanggal itu, dikelompokkan per shift. */
+  async daySetup(workDate: string): Promise<DaySetup> {
+    if (MOCK) {
+      await delay(150);
+      const shifts: DaySetupBlock[] = [];
+      mockAssignments
+        .filter((row) => row.workDate === workDate && row.shiftId && !row.isOffDay)
+        .forEach((row) => {
+          const block = shifts.find((item) => item.shiftId === row.shiftId);
+          if (block) return void block.employeeIds.push(row.employeeId);
+          const shift = findShift(row.shiftId!);
+          shifts.push({
+            shiftId: row.shiftId!,
+            startTime: row.startTime ?? shift.startTime ?? '',
+            endTime: row.endTime ?? shift.endTime ?? '',
+            employeeIds: [row.employeeId],
+          });
+        });
+      return { workDate, shifts };
+    }
+    const { data } = await api.get<DaySetup>('/shift-assignments/day-setup', { params: { work_date: workDate } });
+    return data;
+  },
+
+  /**
+   * `PUT /shift-assignments/day-setup` — menggantikan seluruh roster kerja tanggal
+   * itu; karyawan yang tidak lagi disebut dilepas. Hari libur roster tak tersentuh.
+   */
+  async saveDaySetup(setup: DaySetup): Promise<void> {
+    if (MOCK) {
+      await delay(350);
+      if (!setup.workDate) throw new Error('422 — tanggal wajib dipilih.');
+      if (setup.shifts.length > DAY_SETUP_MAX_SHIFTS) throw new Error('422 — paling banyak tiga shift per tanggal.');
+      const ids = setup.shifts.map((row) => row.shiftId);
+      if (ids.some((id) => !id)) throw new Error('422 — setiap blok wajib memilih shift.');
+      if (new Set(ids).size !== ids.length) throw new Error('422 — shift yang sama dipakai dua kali.');
+      if (setup.shifts.some((row) => Boolean(row.startTime) !== Boolean(row.endTime))) {
+        throw new Error('422 — jam masuk dan jam pulang diisi berpasangan.');
+      }
+      const people = setup.shifts.flatMap((row) => row.employeeIds);
+      if (new Set(people).size !== people.length) throw new Error('422 — satu karyawan hanya boleh di satu shift.');
+
+      const working = mockAssignments.filter((row) => row.workDate === setup.workDate && row.shiftId && !row.isOffDay);
+      const touched = mockAssignments.filter(
+        (row) => row.workDate === setup.workDate && (working.includes(row) || people.includes(row.employeeId)),
+      );
+      if (touched.some((row) => swapBusy(row.id))) {
+        throw new Error('422 — ada baris tanggal ini yang masih terikat tukar shift.');
+      }
+
+      const kept = mockAssignments.filter((row) => !touched.includes(row));
+      const written = setup.shifts.flatMap((block) => {
+        const shift = findShift(block.shiftId);
+        // Jam sama dengan katalog tidak disimpan sebagai jam khusus.
+        const custom = block.startTime !== (shift.startTime ?? '') || block.endTime !== (shift.endTime ?? '');
+        return block.employeeIds.map((employeeId) => ({
+          id: touched.find((row) => row.employeeId === employeeId)?.id ?? `as-${crypto.randomUUID().slice(0, 6)}`,
+          employeeId,
+          workDate: setup.workDate,
+          shiftId: block.shiftId,
+          isOffDay: false,
+          assignmentSource: 'INDIVIDUAL_OVERRIDE' as const,
+          startTime: custom ? block.startTime || null : null,
+          endTime: custom ? block.endTime || null : null,
+        }));
+      });
+      mockAssignments = [...kept, ...written];
+      return;
+    }
+    await api.put('/shift-assignments/day-setup', {
+      work_date: setup.workDate,
+      shifts: setup.shifts.map((row) => ({
+        shift_id: row.shiftId,
+        start_time: row.startTime || undefined,
+        end_time: row.endTime || undefined,
+        employee_ids: row.employeeIds,
+      })),
+    });
   },
 
   async runBulk(draft: BulkDraft): Promise<BulkResult> {

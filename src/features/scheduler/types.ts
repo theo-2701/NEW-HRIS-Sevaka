@@ -36,7 +36,26 @@ export interface ShiftAssignment {
   shiftId: string | null;
   isOffDay: boolean;
   assignmentSource: AssignmentSource;
+  /** Jam khusus tanggal ini dari Setup Tanggal (UIC §10.2a); kosong = jam katalog. */
+  startTime?: string | null;
+  endTime?: string | null;
 }
+
+/** Satu blok formulir Setup Tanggal: shift katalog + jam + karyawannya. */
+export interface DaySetupBlock {
+  shiftId: string;
+  startTime: string;
+  endTime: string;
+  employeeIds: string[];
+}
+
+/** `GET`/`PUT /shift-assignments/day-setup` — 1 sampai 3 blok per tanggal. */
+export interface DaySetup {
+  workDate: string;
+  shifts: DaySetupBlock[];
+}
+
+export const DAY_SETUP_MAX_SHIFTS = 3;
 
 export const SHIFT_TYPE_LABEL: Record<ShiftType, string> = {
   FIXED: 'Fixed',

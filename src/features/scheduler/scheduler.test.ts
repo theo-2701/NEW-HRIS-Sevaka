@@ -222,3 +222,57 @@ describe('Aturan tanggal', () => {
     expect(week[6]).toBe('2026-08-02');
   });
 });
+
+describe('Setup Tanggal (UIC §10.2a)', () => {
+  const block = (shiftId: string, employeeIds: string[], startTime = '08:00', endTime = '17:00') => ({
+    shiftId,
+    startTime,
+    endTime,
+    employeeIds,
+  });
+
+  it('membaca roster kerja tanggal sebagai blok per shift', async () => {
+    const setup = await schedulerService.daySetup('2026-07-27');
+    expect(setup.shifts.map((row) => row.shiftId).sort()).toEqual(['sh-1', 'sh-2']);
+    expect(setup.shifts.find((row) => row.shiftId === 'sh-1')!.employeeIds.sort()).toEqual([
+      'emp-budi',
+      'emp-hendra',
+      'emp-rina',
+    ]);
+  });
+
+  it('menolak lebih dari tiga shift, shift ganda, dan karyawan di dua shift', async () => {
+    const four = ['sh-1', 'sh-2', 'sh-3', 'sh-4'].map((id) => block(id, []));
+    await expect(schedulerService.saveDaySetup({ workDate: '2026-08-10', shifts: four })).rejects.toThrow(/tiga/);
+    await expect(
+      schedulerService.saveDaySetup({ workDate: '2026-08-10', shifts: [block('sh-1', []), block('sh-1', [])] }),
+    ).rejects.toThrow(/dua kali/);
+    await expect(
+      schedulerService.saveDaySetup({
+        workDate: '2026-08-10',
+        shifts: [block('sh-1', ['emp-rina']), block('sh-2', ['emp-rina'], '22:00', '06:00')],
+      }),
+    ).rejects.toThrow(/satu shift/);
+  });
+
+  it('save menggantikan roster kerja tanggal itu dan menyimpan jam khusus', async () => {
+    await schedulerService.saveDaySetup({
+      workDate: '2026-08-10',
+      shifts: [block('sh-1', ['emp-rina'], '09:00', '18:00')],
+    });
+    const rows = await schedulerService.assignments({ from: '2026-08-10', to: '2026-08-10' });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ employeeId: 'emp-rina', startTime: '09:00', endTime: '18:00' });
+
+    await schedulerService.saveDaySetup({ workDate: '2026-08-10', shifts: [block('sh-1', ['emp-budi'])] });
+    const after = await schedulerService.assignments({ from: '2026-08-10', to: '2026-08-10' });
+    expect(after.map((row) => row.employeeId)).toEqual(['emp-budi']);
+    expect(after[0].startTime).toBeNull();
+  });
+
+  it('baris terikat tukar shift yang belum diputus menolak 422', async () => {
+    await expect(
+      schedulerService.saveDaySetup({ workDate: '2026-07-27', shifts: [block('sh-1', ['emp-rina'])] }),
+    ).rejects.toThrow(/422/);
+  });
+});

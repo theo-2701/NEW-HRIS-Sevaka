@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { schedulerService } from '@/features/scheduler/services/scheduler.service';
 import { toast } from '@/store/ui.store';
 import type { AssignmentFilter, BulkResult } from '@/features/scheduler/services/scheduler.service';
-import type { AssignmentDraft, BulkDraft, Shift, ShiftDraft } from '@/features/scheduler/types';
+import type { AssignmentDraft, BulkDraft, DaySetup, Shift, ShiftDraft } from '@/features/scheduler/types';
 import type { ToastTone } from '@/store/ui.store';
 
 export const schedulerKeys = {
@@ -10,7 +10,16 @@ export const schedulerKeys = {
   shifts: ['scheduler', 'shifts'] as const,
   assignments: (filter: AssignmentFilter) => ['scheduler', 'assignments', filter] as const,
   swaps: ['scheduler', 'swaps'] as const,
+  daySetup: (workDate: string) => ['scheduler', 'day-setup', workDate] as const,
 };
+
+export function useDaySetup(workDate: string) {
+  return useQuery({
+    queryKey: schedulerKeys.daySetup(workDate),
+    queryFn: () => schedulerService.daySetup(workDate),
+    enabled: Boolean(workDate),
+  });
+}
 
 export function useShifts() {
   return useQuery({ queryKey: schedulerKeys.shifts, queryFn: () => schedulerService.shifts() });
@@ -83,6 +92,14 @@ export const useDeleteAssignment = () =>
   useSchedulerMutation<{ id: string }>(
     ({ id }) => schedulerService.deleteAssignment(id),
     () => ({ text: '200 — baris roster dihapus.', tone: 'warn' }),
+  );
+
+export const useSaveDaySetup = () =>
+  useSchedulerMutation<DaySetup>(
+    (setup) => schedulerService.saveDaySetup(setup),
+    (_result, setup) => ({
+      text: `200 — roster kerja ${setup.workDate} diganti: ${setup.shifts.length} shift, ${setup.shifts.reduce((n, row) => n + row.employeeIds.length, 0)} karyawan.`,
+    }),
   );
 
 export const useRunBulk = () =>
