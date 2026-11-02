@@ -422,6 +422,15 @@ export const NAV: NavSection[] = [
       { label: 'Announcement', icon: 'megaphone' },
       { label: 'Activity Log', icon: 'activity' },
       {
+        label: 'System Log',
+        icon: 'scroll-text',
+        note: 'TSD-001-AUTH 0.167 §3.7.5 butir 6 + §14.6; CATATAN 25 Okt LNT-2610242255 T5. Super Admin saja.',
+        children: [
+          { label: 'Trace ID', path: '/company-management/system-log/trace-id', status: 'done' },
+          { label: 'Error Code', path: '/company-management/system-log/error-code', status: 'done' },
+        ],
+      },
+      {
         label: 'Notification',
         icon: 'bell',
         path: '/company-management/notifications',

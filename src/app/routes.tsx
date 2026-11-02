@@ -66,6 +66,8 @@ import { LegacyTransitionDetail } from '@/features/transitions/pages/LegacyTrans
 import { NewJoinerPage } from '@/features/new-joiner/pages/NewJoinerPage';
 import { AddEmployeePage } from '@/features/new-joiner/pages/AddEmployeePage';
 import { EmployeeDirectoryPage } from '@/features/employees/pages/EmployeeDirectoryPage';
+import { TraceIdPage } from '@/features/system-log/pages/TraceIdPage';
+import { ErrorCodePage } from '@/features/system-log/pages/ErrorCodePage';
 import { EmployeeDetailPage } from '@/features/employees/pages/EmployeeDetailPage';
 import { EssAttendancePage } from '@/features/ess-time/pages/EssAttendancePage';
 import { EssTimeOffPage } from '@/features/ess-time/pages/EssTimeOffPage';
@@ -115,6 +117,8 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'time/attendance', element: <AttendancePage /> },
   { path: 'time/attendance/settings', element: <AttendanceSettingsPage /> },
   { path: 'time/attendance/wfh-permission', element: <WfhPermissionPage /> },
+  { path: 'company-management/system-log/trace-id', element: <TraceIdPage /> },
+  { path: 'company-management/system-log/error-code', element: <ErrorCodePage /> },
   { path: 'employees/temporary-assignment', element: <TempAssignmentPage /> },
   { path: 'employees/email-phone-verification', element: <ContactVerificationPage /> },
   { path: 'employees/bulk-account-activation', element: <BulkActivationPage /> },
@@ -191,6 +195,8 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/time/attendance',
   '/time/attendance/settings',
   '/time/attendance/wfh-permission',
+  '/company-management/system-log/trace-id',
+  '/company-management/system-log/error-code',
   '/employees/temporary-assignment',
   '/employees/email-phone-verification',
   '/employees/bulk-account-activation',

@@ -375,3 +375,16 @@ subtipe di form simpan baru (setup baru belum bisa dibuat dari layar — hanya d
 Belum: segmen mode policy berversi di Type Setting tetap versi lama; Employment Type bagi
 `HR_STAFF` (lookup bergerbang `SUPER_ADMIN`/`HR_MANAGER`) belum dibedakan; peran di dialog Edit
 Work Data masih tetap `HR_MANAGER` (belum dari sesi).
+
+**Company — susulan 2 November 2026.**
+
+| Perubahan | Dasar dokumen | Letak |
+| :--- | :--- | :--- |
+| Menu baru Company Management › System Log › Trace ID / Error Code (Super Admin saja; galat muat = spanduk + Try again tanpa teks kosong) | TSD-AUTH 0.167 §3.7.5 butir 6, §14.6; CATATAN 25 Okt LNT-2610242255 T5/T9 | `/company-management/system-log/trace-id`, `/error-code` (demo 503: `?trace_id=deadbeefdeadbeef`) |
+| Grade: Chart View (tangga per tingkat, bawaan) / Table View | UIC-COMPANY 0.46 §2.4; CATATAN 25 Okt CMP-2610241547 T38 | `/company/grade-class` |
+| Urutan Grade/Class: Naikkan/Turunkan urutan (alternatif seret) → `PUT /job-grades/reorder` | TSD-COMPANY 0.107 §7.3; CATATAN 23 Okt CMP-2610231245 T4 | idem |
+| Tab Class wajib Grade; Parent Grade terkunci di Add (Grade tab) dan Edit Class | CATATAN 24 Okt CMP-2610241547 T8 + T4 sambungan | idem |
+| Branch: Cabang Utama (HQ) level 1 + konfirmasi pindah; kop surat cabang + logo JPEG/PNG; kolom Penanda | TSD-COMPANY 0.117 §7.3; CATATAN 25 Okt CMP-2610241547 T27 | `/company/branch` |
+
+Belum: seret-dan-lepas sungguhan (butuh `@dnd-kit`, belum terpasang); pratinjau gambar logo
+(mock menyimpan nama berkas saja); garis bagan Grade antar-tingkat disederhanakan menjadi panah.
