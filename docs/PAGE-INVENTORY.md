@@ -189,3 +189,4 @@ layar di sini tanpa keputusan kontrak.
 | `recruitment-import-logs.html` | Belum punya baris menu di kontrak. |
 | `recruitment-job-listing-detail.html` | Halaman detail; bentuk `:id` saat modul Recruitment dikonversi. |
 | `transition-dashboard.html` | Detail transisi — dibuka lewat "View Detail" di daftar Employee Transfer. |
+| — (layar baru) | WFH Permission (FSD-TIME 0.21 §11A, UIC §6.4) — tab di `/time/attendance`, bukan baris menu, karena sidebar dikunci. |

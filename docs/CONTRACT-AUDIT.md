@@ -21,7 +21,7 @@ dengan versi tanpa sufiks — diabaikan.
 | Auth | 0.7 | 0.14 | 0.23 | 0.11 | `auth`, unlock di `dashboard` |
 | Employee | 0.12 | 0.27 | 0.13 | 0.9 | `employees`, `manpower`, `new-joiner`, `transitions`, `mass-resignation`, `reprimand`, `ptkp` |
 | Employee Profile | 0.4 | 0.6 | — | 0.2 | `profile` |
-| Time | 0.3 | 0.6 | 0.6 | 0.4 | `calendar`, `time-off`, `attendance`, `overtime`, `scheduler`, `oncall` |
+| Time | 0.21 | 0.28 | 0.6 (0.123 belum diaudit) | 0.4 | `calendar`, `time-off`, `attendance`, `overtime`, `scheduler`, `oncall` |
 | Finance | 0.2 | 0.2 | 0.3 | 0.2 | `benefit`, `loan`, `cash-advance`, `disbursement`, `finance-settings`, `finance-security` |
 
 FSD/UIC Auth, Employee, Profile, dan Time memakai rilis **FE-terusan 15 September 2026**
@@ -286,3 +286,30 @@ ERD-EMPLOYEE 0.32 selain yang disebut di atas (mayoritas tabel backend-internal 
 `map_notified_menu`, `log_pii_access`, `outbox_event`, keputusan `nik` sequence — nol tampak di
 FE); audit setara untuk **Auth** dan **Finance** (TSD/ERD keduanya juga jauh tertinggal, lihat §1A
 lama) masih menunggu giliran.
+
+## 10. Sinkronisasi Time ke UIC 0.28 / FSD 0.21 (paket `doc-update/2610311228`, 2 November 2026)
+
+Sumber: paket dokumen `doc-update/2610311228` (TSD AUTH 0.167, EMPLOYEE 0.212, TIME 0.123,
+COMPANY 0.134, DOCUMENT 0.115, NOTIFICATION 0.70, WORKFLOW 0.58; UIC TIME 0.28; FSD TIME 0.21;
+`CATATAN-PERUBAHAN.md` FE). Repo sebelumnya mengaudit Time terhadap UIC 0.6. Hanya Time yang
+membawa UIC/FSD baru di paket ini, jadi hanya Time yang disinkronkan. Branch:
+`feat/time-uic-0.28`.
+
+| Versi UIC | Perubahan kontrak | Status di repo |
+| :--- | :--- | :--- |
+| 0.7 | `reject_reason` cuti = enum 15 nilai wajib + `reject_note` opsional | **Dibangun.** Dropdown alasan muncul hanya saat Reject dipilih; kembali ke Approve mengosongkan isinya (FSD §2.2). Berlaku juga untuk tolak sakit |
+| 0.12 | Grid cuti membawa `requires_extra_approval_reason` + `reject_deadline_at` | Sudah ada (kolom Extra layer, jendela tolak di detail) |
+| 0.14 | Tarik cuti: `AUTO_APPROVED`/`APPROVED` hanya sebelum `start_date` | **Dibetulkan.** `AUTO_APPROVED` sebelumnya boleh ditarik kapan saja |
+| 0.21 | Tombol keputusan disembunyikan dari pembuatnya (libur, tukar shift) | Sudah ada |
+| 0.22 | `approver_reason` pada `TIM-BIZ-620` (atasan tak ditemukan) | Tidak relevan di mode dummy (tak ada resolusi atasan) |
+| 0.24 | Setup Tanggal `GET`/`PUT /shift-assignments/day-setup` | **Dibangun.** Tombol Set up date di Scheduler › Roster: 1–3 shift, jam khusus tanggal, satu karyawan satu blok, Salin/Tempel |
+| 0.24 | Panel dampak shift di drawer Setujui cuti | **Belum.** Butuh sambungan Time Off ↔ Scheduler; dicatat sebagai sisa |
+| 0.25 | `work_start_time`/`work_end_time` pada pola kerja | **Dibangun.** Berdua atau kosong, tidak sama, lewat tengah malam sah; beku setelah tersimpan |
+| 0.26–0.27 | Punch: pilihan WFO/WFH, kebijakan dari flag profil (`is_selfie`, `radius_validation`), izin WFH §6.4 | **Dibangun.** Matriks geofence kini dua kunci WFO/WFH dan tidak dibaca tap. Izin WFH tampil sebagai tab **WFH Permission** di Attendance (FSD §11A menyebutnya menu baru, tapi sidebar dikunci — lihat `PAGE-INVENTORY.md`) |
+| 0.28 | Unggah surat dokter (PDF ≤10 MB, kategori `doctor_note`) menggantikan kotak centang | **Dibangun.** Hanya untuk jenis `requires_document`, hanya di form baru. `DocumentField` dipindah ke `src/components/form` |
+
+**Tidak dikerjakan di giliran ini:** perubahan Employee/Company/Auth di `CATATAN-PERUBAHAN.md`
+(menu baru Email Domain, Work Status, Temporary Assignment, ATS Bridge, dll.) — semuanya menambah
+baris sidebar, yang dilarang aturan repo tanpa keputusan kontrak; serta TSD (backend) yang tidak
+membawa UIC/FSD baru. Filter tanggal pada grid WFH Permission juga belum dipasang (baru filter
+status).
