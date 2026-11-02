@@ -20,6 +20,7 @@ import { PlanningHistoryPage } from '@/features/manpower/pages/PlanningHistoryPa
 import { ContactVerificationPage } from '@/features/contact-verification/pages/ContactVerificationPage';
 import { BulkActivationPage } from '@/features/bulk-activation/pages/BulkActivationPage';
 import { AtsBridgePage } from '@/features/ats-bridge/pages/AtsBridgePage';
+import { BulkImportPage } from '@/features/bulk-import/pages/BulkImportPage';
 import { ContactVerificationConfirmPage } from '@/features/contact-verification/pages/ContactVerificationConfirmPage';
 import { OvertimePage } from '@/features/overtime/pages/OvertimePage';
 import { CalendarPage } from '@/features/calendar/pages/CalendarPage';
@@ -105,6 +106,7 @@ const IMPLEMENTED: RouteObject[] = [
   { path: 'employees/email-phone-verification', element: <ContactVerificationPage /> },
   { path: 'employees/bulk-account-activation', element: <BulkActivationPage /> },
   { path: 'employees/manpower/ats-bridge', element: <AtsBridgePage /> },
+  { path: 'employees/bulk-import', element: <BulkImportPage /> },
   { path: 'employees/manpower/overview', element: <ManpowerPlanningPage /> },
   { path: 'employees/manpower/planning-history', element: <PlanningHistoryPage /> },
   { path: 'employees/work-status', element: <WorkStatusPage /> },
@@ -176,6 +178,7 @@ const IMPLEMENTED_PATHS = new Set<string>([
   '/employees/email-phone-verification',
   '/employees/bulk-account-activation',
   '/employees/manpower/ats-bridge',
+  '/employees/bulk-import',
   '/employees/manpower/overview',
   '/employees/manpower/planning-history',
   '/employees/work-status',
