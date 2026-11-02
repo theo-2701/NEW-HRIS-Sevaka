@@ -72,6 +72,15 @@ export interface Branch {
   /** `RESOLVED PROB-FRONTEND-001` — radius (meter) toleransi lokasi absen; null = tak dibatasi. */
   attendanceRadius: number | null;
   attendanceOnMobile: boolean;
+  /**
+   * Cabang Utama (TSD-COMPANY 0.117 §7.3, CMP-2610241547 T27): tepat satu per perusahaan,
+   * hanya kategori level 1. Menyalakannya di cabang lain memindahkan HQ.
+   */
+  isHeadOffice?: boolean;
+  /** Pakai kop surat cabang (wajib logo). */
+  useBranchLetterhead?: boolean;
+  /** `logo_document_id` — mock menyimpan nama berkas. */
+  logoDocumentId?: string | null;
   employeeCount: number;
   createdAt: string;
 }
@@ -95,6 +104,8 @@ export interface BranchDraft {
   lateToleranceMinutes: string;
   latitude: string;
   longitude: string;
+  isHeadOffice: boolean;
+  useBranchLetterhead: boolean;
 }
 
 export interface BranchGroupDraft {

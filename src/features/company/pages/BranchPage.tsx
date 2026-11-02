@@ -100,6 +100,20 @@ export function BranchPage() {
                 columns={[
                   { key: 'name', header: 'Cabang', strong: true, render: (row) => row.branchName },
                   {
+                    key: 'marks',
+                    header: 'Penanda',
+                    nowrap: true,
+                    render: (row) =>
+                      row.isHeadOffice || row.useBranchLetterhead ? (
+                        <span className="flex items-center gap-1.5">
+                          {row.isHeadOffice && <StatusBadge tone="ok">HQ</StatusBadge>}
+                          {row.useBranchLetterhead && <StatusBadge tone="mute">Kop surat</StatusBadge>}
+                        </span>
+                      ) : (
+                        <span className="text-fg-4">—</span>
+                      ),
+                  },
+                  {
                     key: 'code',
                     header: 'Kode',
                     nowrap: true,

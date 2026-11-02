@@ -122,6 +122,15 @@ export const useSaveBranch = () =>
     (row) => `Cabang ${row.branchName} tersimpan.`,
   );
 
+export const useUploadBranchLogo = () =>
+  useCompanyMutation(
+    ({ id, file }: { id: string; file: File }) => companyService.uploadBranchLogo(id, file),
+    () => 'Logo cabang tersimpan.',
+  );
+
+export const useDeleteBranchLogo = () =>
+  useCompanyMutation((id: string) => companyService.deleteBranchLogo(id), () => 'Logo cabang dihapus.');
+
 export const useDeleteBranch = () =>
   useCompanyMutation((id: string) => companyService.deleteBranch(id), () => 'Cabang dihapus.');
 

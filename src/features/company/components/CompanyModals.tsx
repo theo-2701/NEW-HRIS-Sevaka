@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/Modal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { BranchLetterhead } from '@/features/company/components/BranchLetterhead';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/input';
@@ -156,6 +158,8 @@ const EMPTY_BRANCH: BranchDraft = {
   taxKlu: '',
   attendanceRadius: '',
   attendanceOnMobile: false,
+  isHeadOffice: false,
+  useBranchLetterhead: false,
 };
 
 export function BranchFormModal({
@@ -199,12 +203,19 @@ export function BranchFormModal({
             taxKlu: editing.taxKlu ?? '',
             attendanceRadius: editing.attendanceRadius === null ? '' : String(editing.attendanceRadius),
             attendanceOnMobile: editing.attendanceOnMobile,
+            isHeadOffice: Boolean(editing.isHeadOffice),
+            useBranchLetterhead: Boolean(editing.useBranchLetterhead),
           }
         : EMPTY_BRANCH,
     );
   }, [open, editing]);
 
   const derived = useMemo(() => deriveZip(draft.zip), [draft.zip]);
+  const [confirmMove, setConfirmMove] = useState(false);
+  const levelOne = groups.find((group) => group.id === draft.branchGroupId)?.levelOrder === 1;
+  const currentHq = branches.find((row) => row.isHeadOffice && row.id !== editing?.id);
+  const hqLocked = Boolean(editing?.isHeadOffice);
+  const submit = () => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose });
 
   return (
     <Modal
@@ -217,7 +228,7 @@ export function BranchFormModal({
         <FooterButtons
           onClose={onClose}
           saving={save.isPending}
-          onSave={() => save.mutate({ draft, id: editing?.id }, { onSuccess: onClose })}
+          onSave={() => (draft.isHeadOffice && !hqLocked && currentHq ? setConfirmMove(true) : submit())}
         />
       }
     >
@@ -243,6 +254,24 @@ export function BranchFormModal({
           onChange={(branchGroupId) => setDraft({ ...draft, branchGroupId })}
           options={groups.map((group) => ({ value: group.id, label: group.name }))}
         />
+        <label className="flex cursor-pointer items-start gap-2.5 self-end pb-1">
+          <Checkbox
+            className="mt-0.5"
+            disabled={hqLocked || !levelOne}
+            checked={draft.isHeadOffice}
+            onCheckedChange={(value) => setDraft({ ...draft, isHeadOffice: value === true })}
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-body text-[13px] font-semibold text-fg-1">Cabang Utama (HQ)</span>
+            <span className="font-body text-xs font-medium text-fg-3">
+              {hqLocked
+                ? 'Cabang ini HQ. Pindahkan dengan menyalakannya di cabang lain.'
+                : levelOne
+                  ? 'Satu per perusahaan.'
+                  : 'Hanya untuk kategori level 1.'}
+            </span>
+          </span>
+        </label>
         {hierarchy && (
           <SelectRow
             label="Cabang induk"
@@ -331,9 +360,34 @@ export function BranchFormModal({
           </span>
         </span>
       </label>
+      {editing ? (
+        <BranchLetterhead
+          key={editing.id}
+          branchId={editing.id}
+          initialLogo={editing.logoDocumentId ?? null}
+          checked={draft.useBranchLetterhead}
+          onCheckedChange={(useBranchLetterhead) => setDraft((prev) => ({ ...prev, useBranchLetterhead }))}
+        />
+      ) : (
+        <p className="font-body text-xs font-medium text-fg-3">Kop surat dan logo diatur sesudah cabang disimpan.</p>
+      )}
       <p className="font-body text-xs font-medium text-fg-4">
         FAX cabang belum punya kolom penyimpan di kontrak (GAP) — sengaja tidak ditampilkan di form ini.
       </p>
+      <ConfirmDialog
+        open={confirmMove}
+        title="Pindahkan Cabang Utama?"
+        description={`${currentHq?.branchName ?? 'HQ lama'} tidak lagi menjadi Cabang Utama sesudah disimpan.`}
+        confirmLabel="Pindahkan"
+        cancelLabel="Batal"
+        tone="primary"
+        loading={save.isPending}
+        onOpenChange={(next) => !next && setConfirmMove(false)}
+        onConfirm={() => {
+          setConfirmMove(false);
+          submit();
+        }}
+      />
     </Modal>
   );
 }

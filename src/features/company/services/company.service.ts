@@ -240,6 +240,41 @@ export const companyService = {
   },
 
   /** Kode cabang unik antar baris aktif, dan tidak bisa diubah setelah dibuat. */
+  /** `POST /branches/{id}/logo` (multipart `file` + `Idempotency-Key`) — JPEG/PNG saja. */
+  async uploadBranchLogo(id: string, file: File): Promise<Branch> {
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      throw new Error('422 CMP-VAL-589 — logo harus JPEG atau PNG.');
+    }
+    if (file.size > 2 * 1024 * 1024) throw new Error('422 CMP-VAL-590 — logo maksimal 2 MB.');
+    if (MOCK) {
+      await delay(300);
+      const row = branches.find((item) => item.id === id);
+      if (!row) throw new Error('404 NOT_FOUND — cabang tidak ditemukan.');
+      row.logoDocumentId = file.name;
+      return { ...row };
+    }
+    const body = new FormData();
+    body.append('file', file);
+    const { data } = await api.post<Branch>(`/branches/${id}/logo`, body, {
+      headers: { 'Idempotency-Key': crypto.randomUUID() },
+    });
+    return data;
+  },
+
+  /** `DELETE /branches/{id}/logo` — kop surat ikut mati. */
+  async deleteBranchLogo(id: string): Promise<Branch> {
+    if (MOCK) {
+      await delay(200);
+      const row = branches.find((item) => item.id === id);
+      if (!row) throw new Error('404 NOT_FOUND — cabang tidak ditemukan.');
+      row.logoDocumentId = null;
+      row.useBranchLetterhead = false;
+      return { ...row };
+    }
+    const { data } = await api.delete<Branch>(`/branches/${id}/logo`);
+    return data;
+  },
+
   async saveBranch(draft: BranchDraft, id?: string): Promise<Branch> {
     if (MOCK) {
       await delay(280);
@@ -274,6 +309,23 @@ export const companyService = {
       }
       const parent = parentId ? branches.find((row) => row.id === parentId) : undefined;
 
+      const group = branchGroups.find((row) => row.id === draft.branchGroupId);
+      if (draft.isHeadOffice && group?.levelOrder !== 1) {
+        throw new Error('422 CMP-VAL-586 — Cabang Utama hanya untuk kategori level 1.');
+      }
+      const current = id ? branches.find((row) => row.id === id) : undefined;
+      if (current?.isHeadOffice && !draft.isHeadOffice) {
+        throw new Error('422 CMP-VAL-587 — HQ dipindah dengan menyalakan Cabang Utama di cabang lain.');
+      }
+      if (draft.useBranchLetterhead && !current?.logoDocumentId) {
+        throw new Error('422 CMP-VAL-588 — kop surat cabang butuh logo; unggah logo dulu.');
+      }
+      if (draft.isHeadOffice) {
+        branches.forEach((row) => {
+          if (row.id !== id) row.isHeadOffice = false;
+        });
+      }
+
       const latitude = draft.latitude.trim() ? parseNumber(draft.latitude) : null;
       const longitude = draft.longitude.trim() ? parseNumber(draft.longitude) : null;
       const attendanceRadius = draft.attendanceRadius.trim() ? parseNumber(draft.attendanceRadius) : null;
@@ -304,6 +356,8 @@ export const companyService = {
           taxKlu: draft.taxKlu.trim() || null,
           attendanceRadius,
           attendanceOnMobile: draft.attendanceOnMobile,
+          isHeadOffice: draft.isHeadOffice,
+          useBranchLetterhead: draft.useBranchLetterhead,
         });
         return { ...row };
       }
@@ -329,6 +383,9 @@ export const companyService = {
         taxKlu: draft.taxKlu.trim() || null,
         attendanceRadius,
         attendanceOnMobile: draft.attendanceOnMobile,
+        isHeadOffice: draft.isHeadOffice,
+        useBranchLetterhead: false,
+        logoDocumentId: null,
         employeeCount: 0,
         createdAt: now(),
       };

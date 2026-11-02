@@ -22,6 +22,8 @@ const BRANCH: BranchDraft = {
   taxKlu: '',
   attendanceRadius: '',
   attendanceOnMobile: false,
+  isHeadOffice: false,
+  useBranchLetterhead: false,
 };
 
 beforeEach(() => resetCompanyMocks());
@@ -414,5 +416,33 @@ describe('Grade & Class — urutan ulang (CMP-2610231245 T4)', () => {
     expect(first.gradeCode).toBe('1.A');
     await expect(companyService.reorderJobGrades(null, [reversed[0]])).rejects.toThrow(/422/);
     await companyService.reorderJobGrades(null, roots.map((row) => row.id));
+  });
+});
+
+describe('Branch — Cabang Utama + kop surat (CMP-2610241547 T27)', () => {
+  it('HQ hanya kategori level 1 dan berpindah dari HQ lama', async () => {
+    await expect(companyService.saveBranch({ ...BRANCH, isHeadOffice: true })).rejects.toThrow(/CMP-VAL-586/);
+    const hq = await companyService.saveBranch({
+      ...BRANCH,
+      branchCode: 'BR-HQ-02',
+      branchGroupId: 'bg-hq',
+      parentId: '',
+      isHeadOffice: true,
+    });
+    const rows = await companyService.branches();
+    expect(rows.filter((row) => row.isHeadOffice).map((row) => row.id)).toEqual([hq.id]);
+  });
+
+  it('kop surat butuh logo; hapus logo mematikan kop', async () => {
+    const row = await companyService.saveBranch(BRANCH);
+    await expect(companyService.saveBranch({ ...BRANCH, useBranchLetterhead: true }, row.id)).rejects.toThrow(/CMP-VAL-588/);
+    await expect(
+      companyService.uploadBranchLogo(row.id, new File(['x'], 'logo.gif', { type: 'image/gif' })),
+    ).rejects.toThrow(/JPEG atau PNG/);
+    await companyService.uploadBranchLogo(row.id, new File(['x'], 'logo.png', { type: 'image/png' }));
+    const saved = await companyService.saveBranch({ ...BRANCH, useBranchLetterhead: true }, row.id);
+    expect(saved.useBranchLetterhead).toBe(true);
+    const cleared = await companyService.deleteBranchLogo(row.id);
+    expect(cleared.useBranchLetterhead).toBe(false);
   });
 });
