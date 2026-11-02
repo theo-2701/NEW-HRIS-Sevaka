@@ -171,6 +171,12 @@ export const NAV: NavSection[] = [
             note: 'TSD-001-EMPLOYEE 0.212 §3; CATATAN-PERUBAHAN 18 Okt 2026 (EMP-2610181639 T1)',
           },
           { label: 'Requisition', path: '/employees/manpower/requisition', source: 'manpower-requisition.html', status: 'done' },
+          {
+            label: 'ATS Bridge',
+            path: '/employees/manpower/ats-bridge',
+            status: 'done',
+            note: 'TSD-001-EMPLOYEE 0.212 §7.4.12 (menu-tree manpower_planning.ats_bridge); CATATAN-PERUBAHAN 19 Okt 2026 T6',
+          },
         ],
       },
       // `add-employee.html` sengaja TIDAK punya baris menu di prototype; layarnya

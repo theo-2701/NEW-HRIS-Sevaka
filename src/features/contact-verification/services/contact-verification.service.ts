@@ -38,6 +38,29 @@ const randomToken = () => {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
+/**
+ * Koneksi antar modul (tanpa API): materialisasi (New Joiner / ATS Bridge) mendaftarkan
+ * karyawan ke antrean verifikasi dalam transaksi yang sama (§7.20, `register`).
+ */
+export function registerContactVerification(input: {
+  employeeId: string;
+  employeeName: string;
+  companyEmail: string | null;
+  phoneMasked: string | null;
+  joinDate: string;
+}) {
+  if (!input.companyEmail && !input.phoneMasked) return;
+  rows = [
+    {
+      id: `cv-${crypto.randomUUID().slice(0, 6)}`,
+      ...input,
+      emailStatus: input.companyEmail ? 'NOT_SENT' : 'NOT_REQUIRED',
+      phoneStatus: input.phoneMasked ? 'NOT_SENT' : 'NOT_REQUIRED',
+    },
+    ...rows,
+  ];
+}
+
 export const contactVerificationService = {
   /** Hanya baris terbuka; email kantor utuh, nomor selalu ter-mask. */
   async search(filter: { keyword?: string; status?: QueueFilter } = {}): Promise<ContactVerification[]> {

@@ -1,0 +1,11 @@
+import type { AtsCandidate } from '@/features/ats-bridge/types';
+
+export const ATS_TODAY = '2026-11-02';
+
+export const ATS_CANDIDATES: AtsCandidate[] = [
+  { id: 'ats-1', candidateEmail: 'nadia.putri@gmail.com', candidateName: null, source: 'ATS', atsStatus: 'WAITING_CANDIDATE', consentStatus: null, requestorEmployeeId: 'emp-hendra', linkSentAt: '2026-11-01T09:00:00+07:00', linkSendCount: 1, tokenExpiresAt: '2026-11-02T09:00:00+07:00', completedAt: null, parentId: null, usedEmployeeId: null, emailDomain: null, createdAt: '2026-11-01T09:00:00+07:00' },
+  { id: 'ats-2', candidateEmail: 'omar.fadil@yahoo.com', candidateName: 'Omar Fadil', source: 'BULK_IMPORT', atsStatus: 'COMPLETED', consentStatus: 'AGREED', requestorEmployeeId: 'emp-sari', linkSentAt: '2026-10-28T10:00:00+07:00', linkSendCount: 1, tokenExpiresAt: null, completedAt: '2026-10-29T14:00:00+07:00', parentId: null, usedEmployeeId: null, emailDomain: 'ptdika.co.id', createdAt: '2026-10-28T10:00:00+07:00' },
+  { id: 'ats-3', candidateEmail: 'putri.ayu@gmail.com', candidateName: 'Putri Ayu', source: 'ATS', atsStatus: 'COMPLETED', consentStatus: 'AGREED', requestorEmployeeId: 'emp-hendra', linkSentAt: '2026-10-25T10:00:00+07:00', linkSendCount: 2, tokenExpiresAt: null, completedAt: '2026-10-26T08:00:00+07:00', parentId: 'ats-0', usedEmployeeId: null, emailDomain: null, createdAt: '2026-10-25T10:00:00+07:00' },
+  { id: 'ats-4', candidateEmail: 'rizky.akbar@gmail.com', candidateName: 'Rizky Akbar', source: 'NEW_JOINER', atsStatus: 'USED', consentStatus: 'AGREED', requestorEmployeeId: 'emp-sari', linkSentAt: '2026-10-10T10:00:00+07:00', linkSendCount: 1, tokenExpiresAt: null, completedAt: '2026-10-11T10:00:00+07:00', parentId: null, usedEmployeeId: 'emp-rizky', emailDomain: null, createdAt: '2026-10-10T10:00:00+07:00' },
+  { id: 'ats-5', candidateEmail: 'siti.rahma@outlook.com', candidateName: null, source: 'BULK_IMPORT', atsStatus: 'WAITING_CANDIDATE', consentStatus: null, requestorEmployeeId: 'emp-sari', linkSentAt: '2026-10-28T10:00:00+07:00', linkSendCount: 1, tokenExpiresAt: '2026-10-29T10:00:00+07:00', completedAt: null, parentId: null, usedEmployeeId: null, emailDomain: 'ptdika.co.id', createdAt: '2026-10-28T10:00:00+07:00' },
+];

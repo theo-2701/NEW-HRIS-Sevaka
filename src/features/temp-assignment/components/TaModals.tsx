@@ -158,8 +158,8 @@ export function TaCreateModal({ open, session, onClose }: { open: boolean; sessi
                 <SeatField />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <DateField name="startDate" label="Start date" required min={TA_TODAY} />
-                <DateField name="returnDate" label="Return date" required min={values.startDate || TA_TODAY} />
+                <DateField name="startDate" label="Start date" required min={TA_TODAY} placeholder="Select date" />
+                <DateField name="returnDate" label="Return date" required min={values.startDate || TA_TODAY} placeholder="Select date" />
               </div>
               <TextAreaField name="reason" label="Reason" rows={3} maxLength={500} placeholder="Optional" />
             </Form>
@@ -210,7 +210,7 @@ export function TaExtendModal({
         <Label>
           New return date<em>*</em>
         </Label>
-        <DatePicker value={date} min={minDate} onChange={setDate} />
+        <DatePicker value={date} min={minDate} onChange={setDate} placeholder="Select date" />
         <span className="font-body text-xs font-normal text-fg-3">Must be after the current return date and after today.</span>
       </div>
     </Modal>

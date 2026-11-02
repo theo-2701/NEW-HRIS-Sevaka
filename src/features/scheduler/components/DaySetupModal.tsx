@@ -83,7 +83,7 @@ export function DaySetupModal({ open, shifts, onClose }: { open: boolean; shifts
             <Label>
               Work date<em>*</em>
             </Label>
-            <DatePicker value={workDate} onChange={setWorkDate} />
+            <DatePicker value={workDate} onChange={setWorkDate} placeholder="Select date" />
           </div>
           <Button variant="secondary" disabled={!workDate} onClick={() => setClipboard(cloneBlocks(blocks))}>
             Copy
