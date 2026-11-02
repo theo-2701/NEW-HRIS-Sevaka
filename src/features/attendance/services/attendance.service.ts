@@ -2,7 +2,7 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { acknowledge } from '@/services/decision';
 import type { DecisionAck } from '@/services/decision';
-import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES } from '@/features/attendance/mock-data';
+import { ATTENDANCE_TODAY, CORRECTIONS, DAILY, PUNCHES, WFH_PERMISSIONS } from '@/features/attendance/mock-data';
 import { captureChannel, nextPunchType, punchesToday } from '@/features/attendance/rules';
 import {
   EXCUSED_FROM_REASON,
@@ -48,7 +48,7 @@ let mockDays: AttendanceDay[] = DAILY.map((row) => ({ ...row }));
 let mockCorrections: Correction[] = CORRECTIONS.map((row) => ({ ...row }));
 /** (karyawan, Idempotency-Key) → id tap yang sudah lahir. */
 let mockPunchKeys = new Map<string, string>();
-let mockWfh: WfhPermission[] = [];
+let mockWfh: WfhPermission[] = WFH_PERMISSIONS.map((row) => ({ ...row }));
 
 /** Dipakai pengujian supaya setiap berkas uji mulai dari dataset kontrak. */
 export function resetAttendanceMocks() {
@@ -56,7 +56,7 @@ export function resetAttendanceMocks() {
   mockDays = DAILY.map((row) => ({ ...row }));
   mockCorrections = CORRECTIONS.map((row) => ({ ...row }));
   mockPunchKeys = new Map();
-  mockWfh = [];
+  mockWfh = WFH_PERMISSIONS.map((row) => ({ ...row }));
 }
 
 export interface WfhFilter {

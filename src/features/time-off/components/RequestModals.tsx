@@ -22,6 +22,7 @@ import {
   useWithdrawRequest,
 } from '@/features/time-off/hooks/useTimeOff';
 import { sickWindowOpen } from '@/features/time-off/services/time-off.service';
+import { ShiftImpactPanel } from '@/features/time-off/components/ShiftImpactPanel';
 import { employeeName, leaveTypeOf } from '@/features/time-off/mock-data';
 import {
   ACCESS_PURPOSE_LABEL,
@@ -347,6 +348,8 @@ export function DecisionModal({
           value={decision}
           onChange={changeDecision}
         />
+
+        {!rejecting && <ShiftImpactPanel request={request} today={DEMO_NOW.toISOString().slice(0, 10)} />}
 
         {rejecting ? (
           <RejectFields reason={reason} note={note} onReason={setReason} onNote={setNote} />

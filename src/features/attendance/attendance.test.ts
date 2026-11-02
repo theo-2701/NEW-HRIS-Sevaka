@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { attendanceService, resetAttendanceMocks } from '@/features/attendance/services/attendance.service';
 import { captureChannel, eligibleDays, nextPunchType } from '@/features/attendance/rules';
-import { DAILY, VIEWERS } from '@/features/attendance/mock-data';
+import { DAILY, PUNCHES, VIEWERS } from '@/features/attendance/mock-data';
 import type { AttendanceSession } from '@/features/attendance/types';
 
 const RINA: AttendanceSession = { employeeId: 'emp-rina', role: 'EMPLOYEE' };
@@ -61,13 +61,13 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
       workArrangement: 'WFH',
     });
     expect(result.punch).toMatchObject({ workArrangement: 'WFH', wfhPermissionStatus: 'PENDING', isWithinGeofence: null });
-    const [permit] = await attendanceService.wfhPermissions(RINA);
-    expect(permit.requestStatus).toBe('PENDING');
+    const permits = await attendanceService.wfhPermissions(RINA);
+    expect(permits.find((row) => row.punchId === result.punch.id)?.requestStatus).toBe('PENDING');
   });
 
   it('izin WFH: pemiliknya tidak bisa memutus; ditolak menandai tap', async () => {
     await attendanceService.recordPunch(RINA, { selfieCaptured: true, idempotencyKey: 'k', workArrangement: 'WFH' });
-    const [permit] = await attendanceService.wfhPermissions(HENDRA);
+    const permit = (await attendanceService.wfhPermissions(HENDRA)).find((row) => row.workDate === '2026-07-30')!;
     await expect(attendanceService.decideWfh(RINA, permit.id, 'APPROVED')).rejects.toThrow(/403/);
     await attendanceService.decideWfh(HENDRA, permit.id, 'REJECTED');
     await attendanceService.completeWfhWorkflow(HENDRA, permit.id, 'REJECTED');
@@ -78,7 +78,7 @@ describe('Punch — append-only dan bergantung keadaan hari', () => {
 
   it('audit tap mentah tertutup untuk peran tanpa kewenangan penyelidikan', async () => {
     await expect(attendanceService.punches(SARI)).rejects.toThrow(/403/);
-    await expect(attendanceService.punches(HENDRA)).resolves.toHaveLength(6);
+    await expect(attendanceService.punches(HENDRA)).resolves.toHaveLength(PUNCHES.length);
   });
 });
 

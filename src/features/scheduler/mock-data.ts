@@ -20,6 +20,10 @@ export const ASSIGNMENTS: ShiftAssignment[] = [
   { id: 'as-7', employeeId: 'emp-budi', workDate: '2026-07-27', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
   { id: 'as-8', employeeId: 'emp-budi', workDate: '2026-07-28', shiftId: null, isOffDay: true, assignmentSource: 'INDIVIDUAL_OVERRIDE' },
   { id: 'as-9', employeeId: 'emp-hendra', workDate: '2026-07-27', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  // Demo panel dampak shift (UIC §10.2a): roster tanggal cuti leave-8 (Sari, 5 Agustus).
+  { id: 'as-10', employeeId: 'emp-sari', workDate: '2026-08-05', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  { id: 'as-11', employeeId: 'emp-rina', workDate: '2026-08-05', shiftId: 'sh-1', isOffDay: false, assignmentSource: 'BULK_UNIT' },
+  { id: 'as-12', employeeId: 'emp-budi', workDate: '2026-08-05', shiftId: 'sh-2', isOffDay: false, assignmentSource: 'BULK_UNIT' },
 ];
 
 export const SWAPS: ShiftSwap[] = [
