@@ -23,6 +23,7 @@ import {
 import { CandidateFormModal } from '@/features/new-joiner/components/CandidateFormModal';
 import { InviteCandidateModal } from '@/features/new-joiner/components/InviteCandidateModal';
 import { ReviewCandidateModal } from '@/features/new-joiner/components/ReviewCandidateModal';
+import { ContactCorrectionModal } from '@/features/new-joiner/components/ContactCorrectionModal';
 import { MaterializeModal } from '@/features/new-joiner/components/MaterializeModal';
 import {
   useCancelCandidate,
@@ -75,6 +76,7 @@ export function NewJoinerPage() {
   const [legendOpen, setLegendOpen] = useState(false);
   const [reviewing, setReviewing] = useState<Candidate | null>(null);
   const [materializing, setMaterializing] = useState<Candidate | null>(null);
+  const [correcting, setCorrecting] = useState<Candidate | null>(null);
   const [cancelling, setCancelling] = useState<Candidate | null>(null);
   const [deleting, setDeleting] = useState<Candidate | null>(null);
   const [editing, setEditing] = useState<Candidate | null>(null);
@@ -334,6 +336,7 @@ export function NewJoinerPage() {
       />
 
       <MaterializeModal candidate={materializing} onClose={() => setMaterializing(null)} />
+      <ContactCorrectionModal candidate={correcting} role={role} onClose={() => setCorrecting(null)} />
 
       <ConfirmDialog
         open={Boolean(cancelling)}
@@ -391,6 +394,8 @@ export function NewJoinerPage() {
       ...(draft && maker ? [{ label: 'Submit', onSelect: () => submit.mutate({ id: row.id, name: row.name }) }] : []),
       ...(draft && maker ? [{ label: 'Edit', onSelect: () => setEditing(row) }] : []),
       ...(row.status === 'APPROVED' && maker ? [{ label: 'Materialize', onSelect: () => setMaterializing(row) }] : []),
+      // TSD-EMPLOYEE 0.203 §7.4.15: koreksi telepon/email calon APPROVED — checker saja.
+      ...(row.status === 'APPROVED' && checker ? [{ label: 'Correct contact', onSelect: () => setCorrecting(row) }] : []),
       ...(row.status === 'MATERIALIZED'
         ? [{ label: 'View Employee', onSelect: () => navigate('/employees/directory') }]
         : []),

@@ -2,7 +2,7 @@ import { api } from '@/services/api';
 import { MOCK } from '@/services/mock';
 import { CANDIDATE_NAME, CANDIDATE_PHONE, normalizePhone } from '@/features/new-joiner/validation';
 import { toIsoDate } from '@/lib/format';
-import { CURRENT_USER, CURRENT_USER_ID, POSITIONS, positionsForRequisition } from '@/features/new-joiner/types';
+import { CURRENT_USER, CURRENT_USER_ID, POSITIONS, isNjChecker, positionsForRequisition } from '@/features/new-joiner/types';
 import { assertNewEmployee, claimUsername } from '@/features/new-joiner/newEmployee';
 import { queueContactVerification } from '@/features/contact-verification/services/contact-verification.service';
 import type { Candidate, CandidateDraft, InviteDraft, MaterializePayload, Nationality } from '@/features/new-joiner/types';
@@ -243,6 +243,10 @@ function find(id: string): Candidate {
 }
 
 /** SoD (FSD §4.2): maker tidak boleh menjadi checker atas pengajuannya sendiri. */
+/** Mode dummy: kontak yang sudah dipakai akun lain di auth-service (bentrok = 409 EMP-CNF-728). */
+const TAKEN_PHONES = new Set(['+628120000001']);
+const TAKEN_EMAILS = new Set(['tony.stark@ptdika.co.id']);
+
 function assertChecker(row: Candidate) {
   if (row.makerId === CURRENT_USER_ID) {
     throw new Error('409 — You added this candidate, so someone else must approve it.');
@@ -483,6 +487,43 @@ export const newJoinerService = {
     }
     const { data } = await api.post<{ autoRejected: number }>(`/new-joiners/${id}/approve`, { note });
     return data.autoRejected;
+  },
+
+  /**
+   * Koreksi kontak calon APPROVED (TSD-EMPLOYEE 0.203 §7.4.15 B) — HR Manager/Super Admin saja. Nilai baru
+   * melewati cek bentrok yang menyebut NAMA medan tanpa nilai/pemilik (`EMP-CNF-728`); status tetap APPROVED
+   * dan kontak ATS tertaut ikut diselaraskan.
+   */
+  async correctContact(id: string, input: { phone: string; email: string }, role?: string): Promise<Candidate> {
+    const phone = input.phone.trim();
+    const email = input.email.trim();
+    if (!phone && !email) throw new Error('422 EMP-VAL-734 — Enter a new phone number or email.');
+    if (phone && !CANDIDATE_PHONE.test(normalizePhone(phone))) {
+      throw new Error('422 EMP-VAL-733 — Use a mobile number that starts with 08 or +628.');
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('422 EMP-VAL-732 — Enter a valid email address.');
+    if (MOCK) {
+      await delay();
+      if (!isNjChecker(role)) throw new Error('403 EMP-AUZ-730 — Only an HR Manager or Super Admin can correct an approved candidate.');
+      const row = mockRows.find((item) => item.id === id);
+      if (!row) throw new Error('404 EMP-NFD-731 — Candidate not found.');
+      if (row.status !== 'APPROVED') throw new Error('409 EMP-CNF-729 — Only an approved candidate can be corrected.');
+      const clash = [
+        phone && TAKEN_PHONES.has(normalizePhone(phone)) ? 'phone number' : '',
+        email && TAKEN_EMAILS.has(email.toLowerCase()) ? 'email address' : '',
+      ].filter(Boolean);
+      if (clash.length) {
+        throw new Error(`409 EMP-CNF-728 — The ${clash.join(' and ')} is already used by another account.`);
+      }
+      if (phone) row.phone = normalizePhone(phone);
+      if (email) row.email = email;
+      return { ...row };
+    }
+    const { data } = await api.post<Candidate>(`/new-joiners/${id}/contact-correction`, {
+      candidate_phone: phone || undefined,
+      candidate_email: email || undefined,
+    });
+    return data;
   },
 
   /** Calon APPROVED tidak dapat dibatalkan sejak FSD 0.22 (409). Undangan yang belum diisi ikut dicabut. */

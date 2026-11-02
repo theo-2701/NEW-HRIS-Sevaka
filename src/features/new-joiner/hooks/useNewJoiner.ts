@@ -59,6 +59,12 @@ export const useUpdateCandidate = () =>
     (_result, { draft }) => `${draft.name}'s draft was updated.`,
   );
 
+export const useCorrectCandidateContact = () =>
+  useCandidateMutation<{ id: string; phone: string; email: string; role?: string }, Candidate>(
+    ({ id, phone, email, role }) => newJoinerService.correctContact(id, { phone, email }, role),
+    (row) => `${row.name}'s contact was corrected. The candidate stays approved.`,
+  );
+
 export const useSubmitCandidate = () =>
   useCandidateMutation<{ id: string; name: string }>(
     ({ id }) => newJoinerService.submit(id),

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   EMPTY_PROFILE,
+  ageOn,
   atsBridgeService,
   candidatePortalService,
   previewLink,
@@ -103,5 +104,12 @@ describe('Portal kandidat (FSD-001-EMPLOYEE §4B)', () => {
     await expect(
       candidatePortalService.upload(token, 'DIKA', 'cv', new File(['x'], 'cv.docx', { type: 'application/msword' })),
     ).rejects.toThrow(/PDF/);
+  });
+});
+
+describe('Portal kandidat — usia minimum (TSD-EMPLOYEE 0.208)', () => {
+  it('umur penuh dihitung dari ulang tahun', () => {
+    expect(ageOn('2008-11-03', new Date('2026-11-02'))).toBe(17);
+    expect(ageOn('2008-11-02', new Date('2026-11-02'))).toBe(18);
   });
 });

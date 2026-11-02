@@ -397,6 +397,13 @@ function state(target: Stored, companyCode: string): PortalState {
 }
 
 /** Validasi isian portal (UIC §4B.2 #3); kembalikan pesan per medan. */
+/** Umur penuh pada tanggal `on` (ulang tahun belum lewat = belum genap). */
+export function ageOn(dateOfBirth: string, on: Date): number {
+  const [y, m, d] = dateOfBirth.split('-').map(Number);
+  const before = on.getMonth() + 1 < m || (on.getMonth() + 1 === m && on.getDate() < d);
+  return on.getFullYear() - y - (before ? 1 : 0);
+}
+
 export function validateProfile(profile: CandidateProfile): Record<string, string> {
   const errors: Record<string, string> = {};
   const need = (key: keyof CandidateProfile, message: string) => {
@@ -417,6 +424,10 @@ export function validateProfile(profile: CandidateProfile): Record<string, strin
   }
   need('placeOfBirth', 'Enter your place of birth.');
   need('dateOfBirth', 'Enter your date of birth.');
+  // TSD-EMPLOYEE 0.208 §7.4.11: usia minimum 18 tahun.
+  if (profile.dateOfBirth && !errors.dateOfBirth && ageOn(profile.dateOfBirth, new Date()) < 18) {
+    errors.dateOfBirth = 'You must be at least 18 years old.';
+  }
   need('gender', 'Choose your gender.');
   need('maritalStatus', 'Choose your marital status.');
   need('lastEducation', 'Choose your last education.');

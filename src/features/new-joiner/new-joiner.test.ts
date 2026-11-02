@@ -264,3 +264,16 @@ describe('NJ-MATERIALIZE & Add Employee', () => {
     await expect(newJoinerService.materialize({ id: approved.id, ...materialize, nik: 'NIK-0300' })).rejects.toThrow(/409/);
   });
 });
+
+describe('Koreksi kontak calon APPROVED (TSD-EMPLOYEE 0.203 §7.4.15)', () => {
+  it('checker saja, hanya APPROVED, bentrok menyebut nama medan, minimal satu medan', async () => {
+    await expect(newJoinerService.correctContact('nj-5', { phone: '', email: '' }, 'ROLE_HR_MANAGER')).rejects.toThrow(/EMP-VAL-734/);
+    await expect(newJoinerService.correctContact('nj-5', { phone: '081299990000', email: '' }, 'ROLE_HR_STAFF')).rejects.toThrow(/EMP-AUZ-730/);
+    await expect(newJoinerService.correctContact('nj-1', { phone: '081299990000', email: '' }, 'ROLE_HR_MANAGER')).rejects.toThrow(/EMP-CNF-729/);
+    await expect(newJoinerService.correctContact('nj-5', { phone: '08120000001', email: '' }, 'ROLE_HR_MANAGER')).rejects.toThrow(
+      /phone number is already used/,
+    );
+    const row = await newJoinerService.correctContact('nj-5', { phone: '081299990000', email: '' }, 'ROLE_HR_MANAGER');
+    expect(row).toMatchObject({ status: 'APPROVED', phone: '+6281299990000' });
+  });
+});
