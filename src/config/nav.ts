@@ -122,6 +122,18 @@ export const NAV: NavSection[] = [
           { label: 'Mass Resignation', path: '/employees/mass-resignation', source: 'mass-resignation.html', status: 'done' },
           { label: 'Import/Export Prorate' },
           { label: 'PTKP Status Adjustment', path: '/employees/ptkp-adjustment', source: 'ptkp-adjustment.html', status: 'done' },
+          {
+            label: 'Work Status',
+            path: '/employees/work-status',
+            status: 'done',
+            note: 'TSD-001-EMPLOYEE 0.212 §7.13.3; CATATAN-PERUBAHAN 21 Okt 2026 (EMP-2610181639 T48)',
+          },
+          {
+            label: 'Email Domain',
+            path: '/employees/email-domain',
+            status: 'done',
+            note: 'TSD-001-EMPLOYEE 0.212 §7.19; CATATAN-PERUBAHAN 22 Okt 2026 (EMP-2610181639 T63)',
+          },
         ],
       },
       {
