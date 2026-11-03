@@ -20,7 +20,9 @@ Zustand).
 Workflow: `@[/feature]` (modul baru), `@[/fixing]` (bug), `@[/test]` (pengujian).
 Skill: `scaffold feature <nama>`, `caveman mode`, `ponytail` (aktif di setiap tugas koding — solusi
 paling sederhana yang jalan; matikan dengan `stop ponytail`), `ponytail-review`, `ponytail-audit`,
-`ponytail-debt`. Semua di `.agents/skills/`.
+`ponytail-debt`. Semua di `.agents/skills/` (salinan untuk Claude Code di `.claude/skills/`).
+Skill handoff 3 Nov 2026 (urut): `hris-settings-split` (#1, selesai) · `ats-recruitment-build` (#2) ·
+`ats-hris-integration` (#3) · `hris-local-backend` (#4). Ringkasan MOM HR 28 Okt 2026: `docs/MOM-2026-10-28.md`.
 
 ## Konteks singkat
 
