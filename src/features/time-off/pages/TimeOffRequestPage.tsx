@@ -143,6 +143,7 @@ export function TimeOffRequestPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Time off settings', to: '/time/time-off/settings' }}
         crumbs={[{ label: 'Time Management' }, { label: 'Time Off Request' }]}
         title="Time Off Request"
         description="Leave is always filed for yourself. Regular leave waits for a decision and changes nothing until decided; sick leave applies immediately and in return opens a limited window for rejection. Every request passes four gates before its row is created."

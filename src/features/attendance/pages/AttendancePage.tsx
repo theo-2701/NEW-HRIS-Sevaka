@@ -213,6 +213,7 @@ export function AttendancePage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Attendance settings', to: '/time/attendance/settings' }}
         crumbs={[{ label: 'Time Management' }, { label: 'Attendance' }]}
         title="Attendance"
         description="Your daily taps and attendance summary. To fix a day's record, submit a correction request."

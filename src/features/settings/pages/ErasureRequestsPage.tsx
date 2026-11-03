@@ -75,7 +75,7 @@ export function ErasureRequestsPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'System' }, { label: 'Settings' }, { label: 'Personal Data Erasure' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'System', to: '/settings/system' }, { label: 'Personal Data Erasure' }]}
       title="Personal Data Erasure"
       description="Record erasure requests received from data subjects and follow how far each service has erased the data."
       actions={

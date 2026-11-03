@@ -197,6 +197,7 @@ export function NewJoinerPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Account activation & verification', to: '/settings/users-access' }}
         crumbs={[{ label: 'Employee Management' }, { label: 'New Joiner' }]}
         title="New Joiner"
         description="Invite a candidate for an open seat. The candidate fills in their own data, a checker approves, and you create the employee once the contract is signed. Approval holds the seat until it expires."

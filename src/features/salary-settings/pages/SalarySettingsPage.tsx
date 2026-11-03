@@ -117,7 +117,7 @@ export function SalarySettingsPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Payroll' }, { label: 'Salary Settings' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Payroll', to: '/settings/payroll' }, { label: 'Salary Settings' }]}
         title="Salary Settings"
         description="Susun katalog komponen gaji, ajukan perubahan nilai per karyawan, dan siapkan kumpulan perubahan massal. Semua usulan di sini diputuskan HR Manager di menu Authorization & Handover."
         actions={

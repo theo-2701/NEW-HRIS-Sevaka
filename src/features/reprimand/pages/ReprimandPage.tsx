@@ -67,6 +67,7 @@ export function ReprimandPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Reprimand types', to: '/employees/reprimand/type-setting' }}
         crumbs={[{ label: 'Employee Management' }, { label: 'Reprimand' }]}
         title="Reprimand"
         description="Terbitkan surat peringatan lewat tinjauan maker→checker. Standing karyawan dihitung dari reprimand yang aktif."

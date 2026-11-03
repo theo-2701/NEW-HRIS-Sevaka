@@ -75,7 +75,7 @@ export function FinanceSettingsPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Finance' }, { label: 'Finance Settings' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Finance', to: '/settings/finance' }, { label: 'Finance Settings' }]}
         title="Cross-Module Finance Settings"
         description="Data induk yang dipakai bersama Benefit Reimbursement, Loan, dan Cash Advance. Loan Limit dikelola di sini; Advance Purpose Type dan Rejection Reasons hanya ditampilkan."
         actions={

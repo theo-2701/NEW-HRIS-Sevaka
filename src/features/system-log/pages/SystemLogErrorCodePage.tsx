@@ -68,7 +68,7 @@ export function SystemLogErrorCodePage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Company Management' }, { label: 'System Log' }, { label: 'Error Code' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'System', to: '/settings/system' }, { label: 'Error Code' }]}
       title="Error Code"
       description="Every occurrence of one error code in a time range. Open a Trace ID to see that request's full flow."
     >

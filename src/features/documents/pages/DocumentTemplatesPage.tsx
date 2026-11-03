@@ -427,7 +427,7 @@ export function DocumentTemplatesPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Company Management' }, { label: 'Files' }, { label: 'Document Templates' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Documents & Assets', to: '/settings/documents-assets' }, { label: 'Document Templates' }]}
       title="Document Templates"
       description="Letter templates and their body versions. Every new body needs a second person to approve it before letters can use it."
       actions={<ActorSelect actors={VIEWERS.templates} value={actor} onChange={setActor} />}

@@ -126,7 +126,7 @@ export function FinanceSecurityPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Finance' }, { label: 'Finance Security' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Finance', to: '/settings/finance' }, { label: 'Finance Security' }]}
         title="Finance Security"
         description="Tiga kontrol lintas modul yang tidak dimiliki satu modul transaksi: penandaan sengketa atas jenis pengajuan apa pun, jejak ekspor manual, dan jejak pembukaan lampiran medis."
         actions={

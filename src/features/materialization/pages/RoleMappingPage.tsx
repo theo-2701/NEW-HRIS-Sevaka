@@ -85,7 +85,7 @@ export function RoleMappingPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Employee Management' }, { label: 'Materialization', to: '/employees/materialization' }, { label: 'Materialization Role Mapping' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Employee', to: '/settings/employee' }, { label: 'Materialization', to: '/employees/materialization' }, { label: 'Materialization Role Mapping' }]}
       title="Materialization Role Mapping"
       description="Only employees whose role is selected here can be picked as handlers or approvers in Materialization setups."
     >

@@ -176,7 +176,7 @@ export function ReprimandTypeSettingPage() {
   if (role !== 'ROLE_SUPER_ADMIN') {
     return (
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Reprimand', to: '/employees/reprimand' }, { label: 'Type Setting' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Employee', to: '/settings/employee' }, { label: 'Reprimand Type' }]}
         title="Reprimand Type Setting"
       >
         <Note icon={<Info />}>Anda tidak memiliki akses ke layar ini. Konfigurasi kategori SP hanya untuk Super Admin.</Note>

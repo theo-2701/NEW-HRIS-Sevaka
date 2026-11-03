@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, LayoutGrid, LogOut, PanelLeftClose, Search, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, LayoutGrid, LogOut, PanelLeftClose, Search, Settings, X } from 'lucide-react';
 import { flattenNav, navForPath, type NavLeaf, type NavPathEntry, type NavSection } from '@/config/nav';
 import { NavIcon } from '@/components/NavIcon';
 import { useAuthStore } from '@/store/auth.store';
@@ -440,6 +440,21 @@ function SidebarNode({
   }
 
   const isOn = location.pathname === node.path;
+
+  /* Pintu ke Settings modul — hyperlink kecil, bukan menu kerja (keputusan Theo 3 Nov 2026). */
+  if (node.settingsLink && expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate(node.path!)}
+        className="mt-1 inline-flex w-full items-center gap-1.5 rounded-md border-none bg-transparent px-3 py-1.5 text-left font-body text-xs font-semibold text-fg-3 underline-offset-2 transition-colors duration-200 ease-standard hover:text-secondary-700 hover:underline"
+      >
+        <Settings className="size-3.5 shrink-0" strokeWidth={1.75} />
+        <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{node.label}</span>
+        <ArrowUpRight className="size-3.5 shrink-0" strokeWidth={1.75} />
+      </button>
+    );
+  }
 
   return (
     <button

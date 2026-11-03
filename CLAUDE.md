@@ -35,6 +35,10 @@ paling sederhana yang jalan; matikan dengan `stop ponytail`), `ponytail-review`,
   menambahkan `path`/`source`/`status`. Jangan menambah, mengganti nama, atau
   memecah baris menu — layar tanpa baris menu dibuka dari tombol di dalam halaman
   dan dicatat di bagian "Belum masuk peta nav" pada `docs/PAGE-INVENTORY.md`.
+  **Pengecualian (keputusan Theo 3 Nov 2026, MOM HR 28 Okt 2026):** menu master/setting
+  dipindah dari sidebar kerja ke area **Settings** (`NAV_SETTINGS`, dikelompokkan per modul,
+  pola Talenta). Sidebar kerja hanya menyisakan hyperlink "<Modul> settings". Aturan dan cara
+  menambah setting baru: `docs/SETTINGS-SPLIT.md` dan skill `hris-settings-split`.
 - Sudah dikonversi: **Auth** (10 layar), **Dashboard**, dan seluruh **Batch 1 —
   Employee Management** (Directory, Profile ESS, New Joiner + Add Employee,
   Employee Transfer, Mass Resignation, PTKP Adjustment, Manpower & Requisition,

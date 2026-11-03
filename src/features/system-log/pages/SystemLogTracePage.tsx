@@ -73,7 +73,7 @@ export function SystemLogTracePage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Company Management' }, { label: 'System Log' }, { label: 'Trace ID' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'System', to: '/settings/system' }, { label: 'Trace ID' }]}
       title="Trace ID"
       description="Every log line of one request across services, from the last 7 days. Paste the Trace ID from an error dialog."
     >

@@ -204,9 +204,9 @@ export function Topnav() {
               <User />
               My profile
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/settings/configuration/employee')}>
+            <DropdownMenuItem onSelect={() => navigate('/settings')}>
               <Settings />
-              Account settings
+              Settings
             </DropdownMenuItem>
             <DropdownMenuItem>
               <HelpCircle />

@@ -117,3 +117,7 @@ beberapa anak, atau membuat section baru. Layar yang tidak punya baris menu
 (mis. `add-employee.html`, `transition-dashboard.html`) dibuka lewat tombol di
 dalam halaman, dan otomatis tercatat di bagian "Belum masuk peta nav"
 `docs/PAGE-INVENTORY.md` saat inventaris diregenerasi.
+
+**Pengecualian disengaja (Theo, 3 Nov 2026):** master/setting tidak tampil di sidebar kerja HR.
+Leaf itu tinggal di `NAV_SETTINGS` (area Settings, per modul) dan sidebar kerja hanya memuat
+pintu hyperlink `settingsDoor()`. Lihat `docs/SETTINGS-SPLIT.md`.

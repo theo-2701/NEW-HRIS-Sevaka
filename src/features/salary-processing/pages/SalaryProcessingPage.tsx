@@ -179,6 +179,7 @@ export function SalaryProcessingPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Salary settings', to: '/payroll/salary-settings' }}
         crumbs={[{ label: 'Payroll' }, { label: 'Salary Processing' }]}
         title="Salary Processing"
         description="Jalankan dan tinjau periode gaji, tutup temuan, dan impor riwayat penggajian dari sistem lama. Payroll menyiapkan angka — penguncian dan penyerahan dilakukan HR Manager di menu Authorization & Handover."

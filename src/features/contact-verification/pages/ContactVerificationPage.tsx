@@ -258,7 +258,7 @@ export function ContactVerificationPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Email and Phone Verification' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Users & Access', to: '/settings/users-access' }, { label: 'Email and Phone Verification' }]}
         title="Email and Phone Verification"
         description="New employees sign in with their personal email until they prove their company email and phone number. Send each of them a link; a row leaves the list once both are verified."
       >

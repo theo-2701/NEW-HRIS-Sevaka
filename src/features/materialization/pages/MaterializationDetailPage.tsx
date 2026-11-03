@@ -235,7 +235,7 @@ export function MaterializationDetailPage() {
     onError: (error: Error) => toast(error.message, 'danger'),
   });
 
-  const crumbs = [{ label: 'Employee Management' }, { label: 'Materialization', to: '/employees/materialization' }, { label: 'Setup' }];
+  const crumbs = [{ label: 'Settings', to: '/settings' }, { label: 'Employee', to: '/settings/employee' }, { label: 'Materialization', to: '/employees/materialization' }, { label: 'Setup' }];
   if (!canReadMaterialization(role)) {
     return (
       <PageShell crumbs={crumbs} title="Setup">

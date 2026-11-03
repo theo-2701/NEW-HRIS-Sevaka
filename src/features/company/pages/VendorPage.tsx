@@ -45,7 +45,7 @@ export function VendorPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'Vendor' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Company', to: '/settings/company' }, { label: 'Vendor' }]}
       title="Vendor"
       description="Mitra penyedia barang dan jasa perusahaan beserta kontak penanggung jawabnya."
     >

@@ -112,7 +112,7 @@ export function GroupStructurePage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'Group Structure' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Company', to: '/settings/company' }, { label: 'Group Structure' }]}
       title="Group Structure"
       description="Jalur persetujuan antar posisi. Group menampung Level, Level menampung Posisi. Karyawan hanya pengisi sementara — posisi tetap ada meski kosong."
       actions={

@@ -128,6 +128,7 @@ export function TransitionsPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Transition setups (Materialization)', to: '/employees/materialization' }}
         crumbs={[{ label: 'Employee Management' }, { label: 'Transition' }]}
         title="Transition"
         description="Every onboarding, transfer and offboarding in one list. Open a row to follow its tasks. Onboarding starts from New Joiner materialization; submit the other kinds here."

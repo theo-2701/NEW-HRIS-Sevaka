@@ -107,6 +107,7 @@ export function TimeOffBalancePage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Time off settings', to: '/time/time-off/settings' }}
         crumbs={[{ label: 'Time Management' }, { label: 'Time Off Balance' }]}
         title="Time Off Balance"
         description="A balance is never stored as a number someone typed — it is the sum of every mutation in the ledger below. The grid is read-only both ways; the only human path is HR adjustment, and even that is create-only."

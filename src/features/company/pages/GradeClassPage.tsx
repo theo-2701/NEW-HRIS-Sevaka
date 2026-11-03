@@ -75,7 +75,7 @@ export function GradeClassPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'Grade & Class' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Company', to: '/settings/company' }, { label: 'Grade & Class' }]}
       title="Grade & Class"
       description="Job levels as a ladder (Grades) and the salary classes inside each grade."
     >

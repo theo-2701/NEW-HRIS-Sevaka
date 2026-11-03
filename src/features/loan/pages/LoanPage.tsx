@@ -124,6 +124,7 @@ export function LoanPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Finance settings', to: '/finance/settings' }}
         crumbs={[{ label: 'Finance' }, { label: 'Loan' }]}
         title="Loan"
         description="Empat layar melayani empat peran: karyawan mengirim pokok + tenor, atasan langsung meneruskan keputusan, karyawan mengakui jadwal yang dikirim pihak pemberi dana, dan back office memantau setiap permintaan — termasuk yang tertahan menunggu pihak luar itu."

@@ -61,7 +61,7 @@ export function RoleGrantRulesPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Role Grant Rules' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Users & Access', to: '/settings/users-access' }, { label: 'Role Grant Rules' }]}
       title="Role Grant Rules"
       description="Who may give which role when a candidate becomes an employee (New Joiner and ATS Bridge). It does not change the roles of existing employees."
     >

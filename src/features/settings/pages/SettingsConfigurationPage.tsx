@@ -244,7 +244,7 @@ export function SettingsConfigurationPage({ menu }: { menu: SettingsMenuId }) {
 
   return (
     <PageShell
-      crumbs={[{ label: 'System' }, { label: 'Settings' }, { label: MENU_LABELS[menu] }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: `${MENU_LABELS[menu]} Configuration` }]}
       title={TITLES[menu].title}
       description={TITLES[menu].description}
       actions={

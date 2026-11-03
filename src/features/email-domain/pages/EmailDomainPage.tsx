@@ -115,7 +115,7 @@ export function EmailDomainPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Email Domain' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Employee', to: '/settings/employee' }, { label: 'Email Domain' }]}
         title="Email Domain"
         description="Your company's email domains. When a Bulk Import batch is approved with a domain, each new employee's company email is suggested as username@domain."
         actions={manager && <Button onClick={() => setEditing('new')}>Add Email Domain</Button>}

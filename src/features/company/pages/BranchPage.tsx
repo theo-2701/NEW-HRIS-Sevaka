@@ -81,7 +81,7 @@ export function BranchPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'Branch' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Company', to: '/settings/company' }, { label: 'Branch' }]}
       title="Branch"
       description="Company branches with their working hours, regional wage, and clock-in points."
     >

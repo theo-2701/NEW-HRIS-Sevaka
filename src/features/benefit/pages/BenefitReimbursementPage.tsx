@@ -149,6 +149,7 @@ export function BenefitReimbursementPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Finance settings', to: '/finance/settings' }}
         crumbs={[{ label: 'Finance' }, { label: 'Benefit Reimbursement' }]}
         title="Benefit Reimbursement"
         description="Satu klaim menahan hak Anda lebih dulu, memakainya saat disetujui, dan melepasnya saat ditolak atau dibatalkan. Status diperbarui setelah proses approval selesai."

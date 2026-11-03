@@ -164,7 +164,7 @@ export function MaterializationPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Materialization' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Employee', to: '/settings/employee' }, { label: 'Materialization' }]}
         title="Materialization"
         description="Define the tasks each transition creates and who receives them. Onboarding and offboarding are set per branch, transfer per company; a branch without its own setup uses the company default."
         actions={canWrite && <Button onClick={() => setCreating(true)}>New Setup</Button>}

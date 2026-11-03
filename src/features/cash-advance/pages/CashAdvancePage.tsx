@@ -376,6 +376,7 @@ export function CashAdvancePage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Finance settings', to: '/finance/settings' }}
         crumbs={[{ label: 'Finance' }, { label: 'Cash Advance' }]}
         title="Cash Advance"
         description="Cash advances for yourself or made by a Finance Officer on an employee's behalf, settled in two stages: Finance checks the receipts, then the recipient's manager decides. Differences are counted only at the closing stage."

@@ -63,7 +63,7 @@ export function SbuPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'SBU' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Company', to: '/settings/company' }, { label: 'SBU' }]}
       title="SBU"
       description="Unit bisnis strategis beserta grup dan penanggung jawabnya."
     >

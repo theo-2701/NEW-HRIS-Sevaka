@@ -71,7 +71,7 @@ export function CostCenterPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Settings' }, { label: 'Company' }, { label: 'Cost Center' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Company', to: '/settings/company' }, { label: 'Cost Center' }]}
       title="Cost Center"
       description="Pusat biaya yang dibebani biaya karyawan, beserta kategori dan penanggung jawabnya."
     >

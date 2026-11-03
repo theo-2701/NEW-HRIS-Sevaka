@@ -31,7 +31,7 @@ export function AssetCategoryPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'Company Management' }, { label: 'Assets' }, { label: 'Asset Category' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Documents & Assets', to: '/settings/documents-assets' }, { label: 'Asset Category' }]}
       title="Asset Category"
       description="Pengelompokan aset beserta interval perawatan berkalanya."
     >

@@ -4,7 +4,7 @@ import { AppLayout } from '@/layouts/AppLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { RequireAuth } from '@/app/RequireAuth';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
-import { NAV_PATHS } from '@/config/nav';
+import { NAV_PATHS, NAV_SETTINGS } from '@/config/nav';
 
 // ---- Modul yang SUDAH dikonversi -------------------------------------------
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
@@ -54,6 +54,7 @@ import { PublicVerifyPage } from '@/features/documents/pages/PublicVerifyPage';
 import { SettingsConfigurationPage } from '@/features/settings/pages/SettingsConfigurationPage';
 import { SettingsChangeHistoryPage } from '@/features/settings/pages/SettingsChangeHistoryPage';
 import { ErasureRequestsPage } from '@/features/settings/pages/ErasureRequestsPage';
+import { SettingsHomePage } from '@/features/settings/pages/SettingsHomePage';
 import { ProjectsPage } from '@/features/productivity/pages/ProjectsPage';
 import { TasksPage } from '@/features/productivity/pages/TasksPage';
 import { TimeTrackerPage } from '@/features/productivity/pages/TimeTrackerPage';
@@ -256,6 +257,8 @@ const IMPLEMENTED: RouteObject[] = [
   },
   { path: 'settings/configuration/employee', element: <SettingsConfigurationPage key="employee" menu="employee" /> },
   { path: 'settings/change-history', element: <SettingsChangeHistoryPage /> },
+  { path: 'settings', element: <SettingsHomePage /> },
+  { path: 'settings/:module', element: <SettingsHomePage /> },
   { path: 'settings/erasure-requests', element: <ErasureRequestsPage /> },
   { path: 'productivity/projects', element: <ProjectsPage key="active" state="AKTIF" /> },
   { path: 'performance/cycles', element: <CyclesPage /> },
@@ -302,6 +305,8 @@ const IMPLEMENTED: RouteObject[] = [
 /** Path yang sudah punya komponen (dipakai untuk melewati placeholder). */
 const IMPLEMENTED_PATHS = new Set<string>([
   '/',
+  '/settings',
+  ...NAV_SETTINGS.map((section) => `/settings/${section.slug}`),
   '/dashboard/classic',
   '/employees/directory',
   '/employees/directory/detail',

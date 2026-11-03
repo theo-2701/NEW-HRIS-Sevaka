@@ -142,7 +142,7 @@ export function WorkStatusPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Work Status' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Employee', to: '/settings/employee' }, { label: 'Work Status' }]}
         title="Work Status"
         description="The employment types your company uses, with the tax and benefit settings Payroll and Time read. Types are never deleted: deactivate the ones you no longer use."
         actions={manager && <Button onClick={() => setEditing('new')}>Add Work Status</Button>}

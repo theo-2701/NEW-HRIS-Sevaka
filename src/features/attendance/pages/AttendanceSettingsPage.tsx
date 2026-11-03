@@ -85,7 +85,7 @@ export function AttendanceSettingsPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Time Management' }, { label: 'Attendance' }, { label: 'Settings' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Time Management', to: '/settings/time-management' }, { label: 'Attendance' }]}
         title="Attendance Settings"
         description="One resource: the work points a tap is measured against — their tolerance radius and the capture matrix that says, per work arrangement, whether being inside the radius and whether a selfie are required. Changing a point never rewrites a tap that was already assessed; the new rule starts with the next tap."
         actions={<Button onClick={() => openForm(null)}>New work point</Button>}

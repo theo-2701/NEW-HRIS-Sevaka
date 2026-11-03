@@ -158,7 +158,7 @@ export function CalendarPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Time Management' }, { label: 'Calendar' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Time Management', to: '/settings/time-management' }, { label: 'Calendar & Holidays' }]}
         title="Calendar"
         description="Two resources answer one question — is this date a working day? Holidays have two layers: the national layer seeded automatically from government decrees, and the regional/company layer filled by HR that only applies after maker–checker approval. Work patterns set the working week and always apply forward."
         actions={

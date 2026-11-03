@@ -117,7 +117,7 @@ export function TimeOffSettingsPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Time Management' }, { label: 'Time Off' }, { label: 'Settings' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Time Management', to: '/settings/time-management' }, { label: 'Time Off' }]}
         title="Time Off Settings"
         description="Three rules weigh a leave request: the leave type catalogue, the accrual policy that grants entitlement month by month, and blackout periods that hold requests. Statutory leave types are seeded by the system and immune to both blackout modes."
         actions={action}

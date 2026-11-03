@@ -124,7 +124,7 @@ export function SettingsChangeHistoryPage() {
 
   return (
     <PageShell
-      crumbs={[{ label: 'System' }, { label: 'Settings' }, { label: 'Change History' }]}
+      crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'System', to: '/settings/system' }, { label: 'Change History' }]}
       title="Change History"
       description="Every change to company settings across all modules, newest first. Read-only — there is no approval step, so this history is the control."
       actions={

@@ -1,5 +1,9 @@
 import {
   Activity,
+  AtSign,
+  Award,
+  IdCard,
+  Shuffle,
   AlertTriangle,
   BadgeCheck,
   Banknote,
@@ -72,6 +76,10 @@ import {
  */
 const ICONS: Record<string, LucideIcon> = {
   activity: Activity,
+  'at-sign': AtSign,
+  award: Award,
+  'id-card': IdCard,
+  shuffle: Shuffle,
   'alert-triangle': AlertTriangle,
   'badge-check': BadgeCheck,
   banknote: Banknote,

@@ -64,6 +64,7 @@ export function EmployeeDirectoryPage() {
   return (
     <>
       <PageShell
+        settingsLink={{ label: 'Employee settings', to: '/settings/employee' }}
         crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }]}
         title="Employee Directory"
         description="Cari direktori karyawan aktif dan buka profil gabungan (work data + identitas + posisi). Read-only — tidak ada data yang diubah."

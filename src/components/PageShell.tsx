@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { House } from 'lucide-react';
+import { ArrowUpRight, House, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Crumb {
@@ -84,6 +84,11 @@ interface PageShellProps {
   description?: string;
   /** Aksi tingkat halaman — tombol TANPA ikon (kecuali pembuka dropdown). */
   actions?: ReactNode;
+  /**
+   * Hyperlink ke setting modul ini (keputusan Theo 3 Nov 2026): setting tidak lagi jadi menu kerja HR,
+   * hanya ditautkan dari halaman kerja. Tampil kecil di bawah deskripsi.
+   */
+  settingsLink?: { label: string; to: string };
   children: ReactNode;
   className?: string;
 }
@@ -92,7 +97,7 @@ interface PageShellProps {
  * Kerangka halaman standar — port `.pg-shell` + `.crumbs`.
  * Semua halaman modul memakai ini supaya header, padding, dan radius seragam.
  */
-export function PageShell({ crumbs, title, description, actions, children, className }: PageShellProps) {
+export function PageShell({ crumbs, title, description, actions, settingsLink, children, className }: PageShellProps) {
   return (
     <div className={cn('overflow-hidden rounded-[14px] border border-border-1 bg-bg-surface shadow-card-sm', className)}>
       <header className="border-b border-border-1 px-[22px] pb-5 pt-[18px]">
@@ -104,6 +109,16 @@ export function PageShell({ crumbs, title, description, actions, children, class
             <h1 className="t-h2 m-0">{title}</h1>
             {description && (
               <p className="mt-1.5 max-w-[68ch] font-body text-[13px] font-medium text-fg-3">{description}</p>
+            )}
+            {settingsLink && (
+              <Link
+                to={settingsLink.to}
+                className="mt-2 inline-flex items-center gap-1.5 font-body text-xs font-semibold text-secondary-700 underline-offset-2 hover:underline"
+              >
+                <Settings className="size-3.5" strokeWidth={1.75} />
+                {settingsLink.label}
+                <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
+              </Link>
             )}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

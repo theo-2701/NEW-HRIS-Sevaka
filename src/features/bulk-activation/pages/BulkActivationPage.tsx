@@ -228,7 +228,7 @@ export function BulkActivationPage() {
   return (
     <>
       <PageShell
-        crumbs={[{ label: 'Employee Management' }, { label: 'Employee Directory' }, { label: 'Bulk Account Activation' }]}
+        crumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Users & Access', to: '/settings/users-access' }, { label: 'Bulk Account Activation' }]}
         title="Bulk Account Activation"
         description="Accounts created by Bulk Import that are not activated yet. Send activation invitations by email, and fix the email or phone number if needed. A row leaves the list once the employee has set their first password."
       >
